@@ -1,48 +1,20 @@
-name: CI
+[app]
+title = Smart Worker Pro
+package.name = smartworker
+package.domain = com.sahebghati
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,ttf,db
+version = 1.0
+requirements = python3,kivy,reportlab
+orientation = portrait
+author = Saheb Ghati
 
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-            python3-pip \
-            build-essential \
-            git \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            libsqlite3-dev
-        pip install --upgrade pip
-        pip install cython==0.29.36 buildozer
-
-    - name: Build with Buildozer
-      run: |
-        yes | buildozer -v android release
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: bin/*.aab
+[android]
+android.permissions = WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, INTERNET
+android.api = 33
+android.minapi = 21
+android.sdk_api_version = 33
+android.ndk_version = 25b
+android.accept_sdk_license = True
+android.archs = arm64-v8a, armeabi-v7a
+android.release_artifact = aab
