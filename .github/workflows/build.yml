@@ -41,7 +41,9 @@ jobs:
         pip install cython==0.29.36 buildozer
 
     - name: Build with Buildozer
-      run: buildozer -v android release
+      run: |
+        set +o pipefail
+        yes | buildozer -v android release
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
