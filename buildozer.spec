@@ -1,9 +1,9 @@
-[a[app][a[app]pp]pp]
+[app]
 title = Smart Worker Pro
 package.name = smartworker
 package.domain = com.sahebghati
-source.dir = .[a[app]pp]
-source.i[a[app]pp]nclude_exts = py,png,jpg,kv,atlas,ttf,db
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,ttf,db
 version = 1.0
 requirements = python3,kivy,reportlab
 orientation = portrait
