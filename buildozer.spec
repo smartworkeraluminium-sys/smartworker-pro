@@ -2,6 +2,7 @@
 title = Smart Worker Pro
 package.name = smartworker
 package.domain = com.sahebghati
+source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,db
 version = 1.0
 requirements = python3,kivy,reportlab
