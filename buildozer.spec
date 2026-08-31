@@ -12,14 +12,14 @@ package.name = smartworkerpro
 # (str) Package domain (needed for android packaging)
 package.domain = org.smartworker
 
-# (list) Source files to include (let it empty to include all files)
-source.include_exts = py,png,jpg,kv,atlas,ttf
+# (list) Source files to include
+source.include_exts = py,png,jpg,kv,atlas,ttf,pdf
 
-# (str) Application versioning (method 1)
+# (str) Application versioning
 version = 1.0
 
-# (list) Application requirements
-requirements = python3,kivy,pillow
+# (list) Application requirements (আপনার পিডিএফ বা ডেটাবেস থাকলে কাজে লাগবে)
+requirements = python3,kivy,pillow,sqlite3
 
 # (str) Supported orientations
 orientation = portrait
@@ -27,17 +27,17 @@ orientation = portrait
 # (str) Supported architectures
 android.archs = arm64-v8a
 
-# Auto-accept Android SDK licenses (এটিই আপনার বর্তমান সমস্যার সমাধান)
+# Auto-accept Android SDK licenses
 android.accept_sdk_license = True
 
-# Use stable Android API
-android.api = 34
+# Kivy-র জন্য সবচেয়ে স্ট্যাবল API এবং NDK ভার্সন
+android.api = 33
 android.minapi = 21
+android.ndk = 25b
 
 [buildozer]
 
-# (int) Log level (0 = error, 1 = info, 2 = debug (with command output))
+# (int) Log level
 log_level = 2
-
-# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
 warn_on_root = 1
+
