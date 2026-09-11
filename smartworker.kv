@@ -1,0 +1,3276 @@
+<PremiumBtn@Button>:
+    markup: True
+    font_size: '16sp'
+    bold: True
+    color: 1, 1, 1, 1
+    background_normal: ''
+    background_color: 0, 0, 0, 0  
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+    canvas.before:
+        Color:
+            rgba: self.bg_color if hasattr(self, 'bg_color') else (0.2, 0.5, 0.8, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [12]
+
+<MenuCard@Button>:
+    markup: True
+    background_normal: ''
+    background_color: 0, 0, 0, 0
+    bg_color: 0.2, 0.5, 0.8, 1
+    title: ''
+    icon: ''
+    text: '[font=emoji.ttf][size=32sp]' + self.icon + '[/size][/font]\n[size=13sp][b]' + self.title + '[/b][/size]'
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+    color: 1, 1, 1, 1
+    canvas.before:
+        Color:
+            rgba: self.bg_color if hasattr(self, 'bg_color') else (0.2, 0.5, 0.8, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [15]
+
+<NavBtn@Button>:
+    markup: True
+    background_normal: ''
+    background_color: 0, 0, 0, 0
+    title: ''
+    icon: ''
+    text_color: 0.4, 0.4, 0.4, 1
+    color: self.text_color
+    text: '[font=emoji.ttf][size=22sp]' + self.icon + '[/size][/font]\n[size=11sp][b]' + self.title + '[/b][/size]'
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+
+<DashCard@BoxLayout>:
+    orientation: 'vertical'
+    padding: '10dp'
+    spacing: '5dp'
+    card_title: ''
+    card_value: ''
+    bg_color: (0.9, 0.9, 0.9, 1)
+    canvas.before:
+        Color:
+            rgba: self.bg_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [10]
+    Label:
+        text: root.card_title
+        color: 1,1,1,1
+        bold: True
+        font_size: '14sp'
+        size_hint_y: 0.4
+    Label:
+        text: root.card_value
+        color: 1,1,1,1
+        bold: True
+        font_size: '18sp'
+        size_hint_y: 0.6
+
+<NumInput@Button>:
+    background_normal: ''
+    background_color: 0, 0, 0, 0
+    color: 0, 0, 0, 1
+    halign: 'left'
+    valign: 'middle'
+    text_size: self.width - 20, self.height
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [8]
+        Color:
+            rgba: 0.7, 0.7, 0.7, 1
+        Line:
+            rounded_rectangle: [self.x, self.y, self.width, self.height, 8]
+            width: 1
+    on_release: app.open_keypad(self)
+
+<CalcBtn@Button>:
+    font_size: '22sp'
+    background_normal: ''
+    background_color: 0.85, 0.85, 0.85, 1
+    color: 0, 0, 0, 1
+    bold: True
+    canvas.before:
+        Color:
+            rgba: 0.5, 0.5, 0.5, 1
+        Line:
+            width: 1
+            rectangle: (self.x, self.y, self.width, self.height)
+
+<KeypadPopup>:
+    size_hint: 0.95, 0.95
+    background_color: 0, 0, 0, 0.8
+    auto_dismiss: False
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '5dp'
+        spacing: '5dp'
+        canvas.before:
+            Color:
+                rgba: 0.9, 0.9, 0.92, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        BoxLayout:
+            size_hint_y: 0.15
+            spacing: '5dp'
+            Label:
+                text: root.display_text
+                color: 0.2, 0.4, 0.4, 1
+                font_size: '34sp'
+                text_size: self.width - 20, self.height
+                halign: 'right'
+                valign: 'middle'
+            Button:
+                text: 'OK'
+                size_hint_x: 0.2
+                background_color: 0, 0.7, 0, 1
+                color: 1, 1, 1, 1
+                font_size: '20sp'
+                bold: True
+                on_release: root.enter()
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.75
+            spacing: '5dp'
+            GridLayout:
+                cols: 2
+                size_hint_x: 0.4
+                spacing: '3dp'
+                CalcBtn:
+                    text: 'C'
+                    color: 1, 0, 0, 1
+                    background_color: 1, 0.6, 0.6, 1
+                    on_release: root.clear()
+                CalcBtn:
+                    text: '<'
+                    background_color: 0.7, 0.7, 0.8, 1
+                    on_release: root.backspace()
+                CalcBtn:
+                    text: '1'
+                    on_release: root.add_whole('1')
+                CalcBtn:
+                    text: '2'
+                    on_release: root.add_whole('2')
+                CalcBtn:
+                    text: '3'
+                    on_release: root.add_whole('3')
+                CalcBtn:
+                    text: '4'
+                    on_release: root.add_whole('4')
+                CalcBtn:
+                    text: '5'
+                    on_release: root.add_whole('5')
+                CalcBtn:
+                    text: '6'
+                    on_release: root.add_whole('6')
+                CalcBtn:
+                    text: '7'
+                    on_release: root.add_whole('7')
+                CalcBtn:
+                    text: '8'
+                    on_release: root.add_whole('8')
+                CalcBtn:
+                    text: '9'
+                    on_release: root.add_whole('9')
+                CalcBtn:
+                    text: '0'
+                    on_release: root.add_whole('0')
+                CalcBtn:
+                    text: '.'
+                    on_release: root.add_whole('.')
+                CalcBtn:
+                    text: '+/-'
+                    on_release: root.add_whole('-')
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: 0.6
+                spacing: '5dp'
+                BoxLayout:
+                    orientation: 'vertical'
+                    spacing: '3dp'
+                    GridLayout:
+                        cols: 3
+                        spacing: '3dp'
+                        CalcBtn:
+                            text: '1'
+                            on_release: root.add_num('1')
+                        CalcBtn:
+                            text: '2'
+                            on_release: root.add_num('2')
+                        CalcBtn:
+                            text: '3'
+                            on_release: root.add_num('3')
+                        CalcBtn:
+                            text: '4'
+                            on_release: root.add_num('4')
+                        CalcBtn:
+                            text: '5'
+                            on_release: root.add_num('5')
+                        CalcBtn:
+                            text: '6'
+                            on_release: root.add_num('6')
+                        CalcBtn:
+                            text: '7'
+                            on_release: root.add_num('7')
+                        CalcBtn:
+                            text: '8'
+                            on_release: root.add_num('8')
+                        CalcBtn:
+                            text: '9'
+                            on_release: root.add_num('9')
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint_y: 0.33 
+                        spacing: '3dp'
+                        CalcBtn:
+                            text: '0'
+                            size_hint_x: 0.66
+                            on_release: root.add_num('0')
+                        CalcBtn:
+                            text: '<'
+                            background_color: 0.7, 0.7, 0.8, 1
+                            size_hint_x: 0.34
+                            on_release: root.backspace()
+                Widget:
+                    size_hint_y: None
+                    height: '4dp'
+                BoxLayout:
+                    orientation: 'vertical'
+                    spacing: '3dp'
+                    GridLayout:
+                        cols: 3
+                        spacing: '3dp'
+                        CalcBtn:
+                            text: '1'
+                            on_release: root.add_denom('1')
+                        CalcBtn:
+                            text: '2'
+                            on_release: root.add_denom('2')
+                        CalcBtn:
+                            text: '3'
+                            on_release: root.add_denom('3')
+                        CalcBtn:
+                            text: '4'
+                            on_release: root.add_denom('4')
+                        CalcBtn:
+                            text: '5'
+                            on_release: root.add_denom('5')
+                        CalcBtn:
+                            text: '6'
+                            on_release: root.add_denom('6')
+                        CalcBtn:
+                            text: '7'
+                            on_release: root.add_denom('7')
+                        CalcBtn:
+                            text: '8'
+                            on_release: root.add_denom('8')
+                        CalcBtn:
+                            text: '9'
+                            on_release: root.add_denom('9')
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint_y: 0.33
+                        spacing: '3dp'
+                        CalcBtn:
+                            text: '0'
+                            size_hint_x: 0.66
+                            on_release: root.add_denom('0')
+                        CalcBtn:
+                            text: '<'
+                            background_color: 0.7, 0.7, 0.8, 1
+                            size_hint_x: 0.34
+                            on_release: root.backspace()
+        GridLayout:
+            cols: 5
+            size_hint_y: 0.15
+            spacing: '3dp'
+            CalcBtn:
+                text: '+'
+                background_color: 0.7, 0.7, 0.8, 1
+                on_release: root.add_whole('+')
+            CalcBtn:
+                text: '-'
+                background_color: 0.7, 0.7, 0.8, 1
+                on_release: root.add_whole('-')
+            CalcBtn:
+                text: '*'
+                background_color: 0.7, 0.7, 0.8, 1
+                on_release: root.add_whole('*')
+            CalcBtn:
+                text: '/'
+                background_color: 0.7, 0.7, 0.8, 1
+                on_release: root.add_whole('/')
+            CalcBtn:
+                text: '='
+                background_color: 1, 0.6, 0.2, 1
+                on_release: root.calculate_result()
+
+ScreenManager:
+    SplashScreen:
+    ActivationScreen:
+    SetupScreen:
+    HomeScreen:
+    SettingsScreen:
+    ProfileScreen:
+    HistoryScreen:
+    CustomerLookupScreen:
+    DashboardScreen:
+    BillSettingsScreen:
+    DomalScreen:
+    SlidingScreen:
+    CustomCasementScreen:
+    DoorScreen:
+    PartitionScreen:      
+    QuotationScreen:
+    CeilingScreen:
+
+<SplashScreen>:
+    name: 'splash'
+    canvas.before:
+        Color:
+            rgba: 0.08, 0.12, 0.24, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '30dp'
+        spacing: '15dp'
+        Widget:
+            size_hint_y: 0.25
+        Label:
+            text: "[font=emoji.ttf][size=54sp]🪟[/size][/font]"
+            markup: True
+            size_hint_y: None
+            height: '70dp'
+        Label:
+            text: "SMART WORKER PRO"
+            font_size: '28sp'
+            bold: True
+            color: 1, 0.82, 0.15, 1
+            size_hint_y: None
+            height: '45dp'
+        Label:
+            text: "Aluminium & Glass Fabrication Management"
+            font_size: '14sp'
+            color: 0.8, 0.88, 1, 1
+            size_hint_y: None
+            height: '25dp'
+        Widget:
+            size_hint_y: 0.35
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: '55dp'
+            spacing: '6dp'
+            Label:
+                text: "[font=emoji.ttf]⚙️[/font] Loading System... Please Wait"
+                markup: True
+                font_size: '14sp'
+                bold: True
+                color: 0.6, 0.8, 1, 1
+            Label:
+                text: "Smart Worker Aluminium • Amta"
+                font_size: '12sp'
+                color: 0.45, 0.6, 0.75, 1
+        Widget:
+            size_hint_y: 0.15
+
+<ActivationScreen>:
+    name: 'activation'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '25dp'
+        spacing: '15dp'
+        canvas.before:
+            Color:
+                rgba: 0.1, 0.1, 0.15, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '50dp'
+            Button:
+                text: "< BACK"
+                bold: True
+                color: 1, 1, 1, 1
+                background_normal: ''
+                background_color: 0, 0, 0, 0
+                size_hint_x: 0.3
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.2, 0.2, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "PRO UPGRADE"
+                font_size: '22sp'
+                bold: True
+                color: 0.9, 0.7, 0.1, 1
+                size_hint_x: 0.7
+                
+        Label:
+            text: "Unlock PDF Billing, Quotations & Premium Features!\nClick the WhatsApp button below to get Key:"
+            font_size: '15sp'
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.width, None
+            size_hint_y: None
+            height: '60dp'
+            
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: '50dp'
+            spacing: '10dp'
+            Label:
+                text: "Device ID:"
+                bold: True
+                size_hint_x: 0.3
+            TextInput:
+                text: root.device_id_text
+                readonly: True
+                font_size: '18sp'
+                multiline: False
+                size_hint_x: 0.7
+
+        Button:
+            text: "[font=emoji.ttf]💬[/font] SEND DEVICE ID TO WHATSAPP (9239413517)"
+            markup: True
+            font_size: '14sp'
+            bold: True
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            color: 1, 1, 1, 1
+            size_hint_y: None
+            height: '60dp'
+            canvas.before:
+                Color:
+                    rgba: 0.15, 0.7, 0.3, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [12]
+            on_release: root.subscribe_via_whatsapp()
+                
+        TextInput:
+            id: activation_input
+            hint_text: "Enter Pro Activation Key"
+            font_size: '18sp'
+            multiline: False
+            size_hint_y: None
+            height: '50dp'
+            
+        Button:
+            text: "ACTIVATE PRO"
+            bold: True
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            color: 1, 1, 1, 1
+            size_hint_y: None
+            height: '55dp'
+            canvas.before:
+                Color:
+                    rgba: 0.1, 0.5, 0.8, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [12]
+            on_release: root.activate_app()
+            
+        Widget:
+
+<SetupScreen>:
+    name: 'setup'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '20dp'
+        spacing: '10dp'
+        Label:
+            text: "WELCOME TO SMART WORKER PRO"
+            color: 0.1, 0.2, 0.4, 1
+            font_size: '22sp'
+            bold: True
+            size_hint_y: None
+            height: '40dp'
+        Label:
+            text: "Please set up your profile to generate bills in your Shop's name."
+            color: 0.3, 0.3, 0.3, 1
+            font_size: '14sp'
+            size_hint_y: None
+            height: '30dp'
+        ScrollView:
+            GridLayout:
+                cols: 1
+                spacing: '10dp'
+                size_hint_y: None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "Your Name (Required):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: setup_name
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Shop / Company Name (Required):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: setup_shop
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Phone Number (Required):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: setup_phone
+                    multiline: False
+                    input_type: 'number'
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Email / Gmail ID (Optional):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: setup_email
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "GST Number (Optional):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: setup_gst
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Shop Address (Required):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: setup_address
+                    multiline: True
+                    size_hint_y: None
+                    height: '80dp'
+        PremiumBtn:
+            text: "SAVE & CONTINUE"
+            size_hint_y: None
+            height: '55dp'
+            bg_color: 0.1, 0.6, 0.2, 1
+            on_release: root.save_profile()
+
+<HomeScreen>:
+    name: 'home'
+    canvas.before:
+        Color:
+            rgba: 0.94, 0.96, 0.98, 1  
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    FloatLayout:
+        BoxLayout:
+            orientation: 'vertical'
+            BoxLayout:
+                size_hint_y: None
+                height: '110dp'
+                padding: ['20dp', '30dp', '20dp', '15dp']
+                canvas.before:
+                    Color:
+                        rgba: 0.15, 0.25, 0.45, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [0, 0, 25, 25]
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: root.greeting
+                        font_size: '14sp'
+                        color: 0.7, 0.8, 1, 1
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                    Label:
+                        text: root.shop_name_display
+                        font_size: '20sp'
+                        bold: True
+                        color: 1, 1, 1, 1
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                Button:
+                    size_hint_x: None
+                    width: '40dp'
+                    background_normal: ''
+                    background_color: 0, 0, 0, 0
+                    text: "[font=emoji.ttf]⚙️[/font]"
+                    markup: True
+                    font_size: '24sp'
+                    on_release: root.manager.current = 'settings'
+            
+            ScrollView:
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: '20dp'
+                    spacing: '20dp'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    canvas.before:
+                        Color:
+                            rgba: 0.94, 0.96, 0.98, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    
+                    Label:
+                        text: "FABRICATION SYSTEMS"
+                        color: 0.5, 0.5, 0.6, 1
+                        font_size: '13sp'
+                        bold: True
+                        size_hint_y: None
+                        height: '25dp'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        
+                    GridLayout:
+                        cols: 2
+                        spacing: '15dp'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        row_default_height: '130dp'
+                        row_force_default: True
+                        MenuCard:
+                            icon: "🪟"
+                            title: "Domal Window"
+                            bg_color: 0.1, 0.5, 0.8, 1 
+                            on_release: root.manager.current = 'domal'
+                        MenuCard:
+                            icon: "🪟"
+                            title: "Sliding Window"
+                            bg_color: 0.8, 0.4, 0.1, 1 
+                            on_release: root.manager.current = 'slidingscreen'
+                        MenuCard:
+                            icon: "🪟"
+                            title: "Custom Casement"
+                            bg_color: 0.8, 0.2, 0.4, 1 
+                            on_release: root.manager.current = 'custom_casement'
+                        MenuCard:
+                            icon: "🚪"
+                            title: "Partition & Door"
+                            bg_color: 0.9, 0.3, 0.3, 1 
+                            on_release: root.manager.current = 'partition'
+                            
+                    MenuCard:
+                        size_hint_y: None
+                        height: '100dp'
+                        icon: "🚪"
+                        title: "Simple Door Option"
+                        bg_color: 0.7, 0.3, 0.1, 1 
+                        on_release: root.manager.current = 'door'
+                        
+                    Label:
+                        text: "BUSINESS & BILLING"
+                        color: 0.5, 0.5, 0.6, 1
+                        font_size: '13sp'
+                        bold: True
+                        size_hint_y: None
+                        height: '25dp'
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        
+                    GridLayout:
+                        cols: 2
+                        spacing: '15dp'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        row_default_height: '130dp'
+                        row_force_default: True
+                        MenuCard:
+                            icon: "🧾"
+                            title: "Pro Quotation"
+                            bg_color: 0.6, 0.2, 0.6, 1 
+                            on_release: root.manager.current = 'quotation'
+                        MenuCard:
+                            icon: "📏"
+                            title: "Ceiling Estimator"
+                            bg_color: 0.1, 0.7, 0.7, 1 
+                            on_release: root.manager.current = 'ceiling'
+                            
+                    Widget:
+                        size_hint_y: None
+                        height: '20dp' 
+
+            BoxLayout:
+                size_hint_y: None
+                height: '60dp'
+                padding: '5dp'
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [20, 20, 0, 0]
+                    Color:
+                        rgba: 0.9, 0.9, 0.9, 1
+                    Line:
+                        points: [self.x, self.top, self.right, self.top]
+                        width: 1
+                NavBtn:
+                    icon: "🏠"
+                    title: "Home"
+                    text_color: 0.2, 0.5, 0.8, 1 
+                    on_release: root.manager.current = 'home'
+                NavBtn:
+                    icon: "📊"
+                    title: "Dashboard"
+                    text_color: 0.4, 0.4, 0.4, 1
+                    on_release: root.manager.current = 'dashboard'
+                NavBtn:
+                    icon: "🗂️"
+                    title: "Records"
+                    text_color: 0.4, 0.4, 0.4, 1
+                    on_release: root.manager.current = 'history'
+                NavBtn:
+                    icon: "👤"
+                    title: "Profile"
+                    text_color: 0.4, 0.4, 0.4, 1
+                    on_release: root.manager.current = 'profile'
+        
+        Button:
+            size_hint: None, None
+            size: '65dp', '65dp'
+            pos_hint: {'right': 0.92, 'y': 0.16}
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            text: "[font=emoji.ttf]➕[/font]"
+            markup: True
+            font_size: '28sp'
+            bold: True
+            color: 1, 1, 1, 1
+            on_release: root.manager.current = 'quotation'
+            canvas.before:
+                Color:
+                    rgba: 0.9, 0.2, 0.4, 1 
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+<SettingsScreen>:
+    name: 'settings'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.1, 0.2, 0.4, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "SETTINGS"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        ScrollView:
+            BoxLayout:
+                orientation: 'vertical'
+                padding: '30dp'
+                spacing: '20dp'
+                size_hint_y: None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                PremiumBtn:
+                    text: "[font=emoji.ttf]🔒[/font] Privacy Policy & Terms"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.3, 0.4, 0.5, 1
+                    on_release: app.open_privacy_policy()
+
+                PremiumBtn:
+                    text: "[font=emoji.ttf]⭐[/font] PRO Subscription / Activation"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.2, 0.6, 0.3, 1
+                    on_release: root.manager.current = 'activation'
+
+                PremiumBtn:
+                    text: "[font=emoji.ttf]👤[/font] Edit Profile"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.2, 0.5, 0.8, 1
+                    on_release: root.manager.current = 'profile'
+                
+                PremiumBtn:
+                    text: "[font=emoji.ttf]⚙️[/font] Dynamic Costing & Bill Setup"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.6, 0.4, 0.2, 1
+                    on_release: root.manager.current = 'bill_settings'
+                    
+                PremiumBtn:
+                    text: "[font=emoji.ttf]🗂️[/font] Data History"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.3, 0.3, 0.4, 1
+                    on_release: root.manager.current = 'history'
+                PremiumBtn:
+                    text: "[font=emoji.ttf]🔒[/font] Customer Book (PIN)"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.8, 0.4, 0.1, 1
+                    on_release: root.manager.current = 'customer_lookup'
+                PremiumBtn:
+                    text: "[font=emoji.ttf]📊[/font] Business Dashboard"
+                    size_hint_y: None
+                    height: '65dp'
+                    bg_color: 0.4, 0.2, 0.6, 1
+                    on_release: root.manager.current = 'dashboard'
+
+<BillSettingsScreen>:
+    name: 'bill_settings'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.6, 0.4, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'settings'
+            Label:
+                text: "DYNAMIC COSTING & BILL SETUP"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        ScrollView:
+            BoxLayout:
+                orientation: 'vertical'
+                padding: '15dp'
+                spacing: '15dp'
+                size_hint_y: None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                
+                Label:
+                    text: "--- GENERAL SETTINGS ---"
+                    color: 0.8, 0.2, 0.2, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "Default Unit:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: bs_unit
+                        values: ["Feet", "Inches", "Millimeters"]
+                    Label:
+                        text: "Default GST (%):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_gst
+                    Label:
+                        text: "Default Discount (Rs):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_discount
+
+                Label:
+                    text: "=== DYNAMIC COSTING ENGINE SETUP ==="
+                    color: 0.1, 0.6, 0.2, 1
+                    bold: True
+                    font_size: '15sp'
+                    size_hint_y: None
+                    height: '35dp'
+
+                # STEP 1: SLIDING WINDOW & ALL ITS COLOR VARIANTS
+                Label:
+                    text: "--- STEP 1: SLIDING 18x40 & COLOR VARIANTS (Rs/Kg) ---"
+                    color: 0.1, 0.6, 0.2, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '170dp'
+                    Label:
+                        text: "Sliding Mill/Natural (Base):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_sl_mill
+                        text: "260"
+                    Label:
+                        text: "Sliding Silver Anodized:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_sl_anod
+                        text: "275"
+                    Label:
+                        text: "Sliding Powder Coated:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_sl_powder
+                        text: "290"
+                    Label:
+                        text: "Sliding Wooden Finish:"
+                        bold: True
+                        color: 0.8, 0.4, 0.1, 1
+                    NumInput:
+                        id: bs_sl_wooden
+                        text: "345"
+
+                # STEP 2: DOMAL WINDOW & ALL ITS COLOR VARIANTS
+                Label:
+                    text: "--- STEP 2: DOMAL SYSTEM & COLOR VARIANTS (Rs/Kg) ---"
+                    color: 0.1, 0.4, 0.8, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '170dp'
+                    Label:
+                        text: "Domal Mill/Natural (Base):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_dm_mill
+                        text: "280"
+                    Label:
+                        text: "Domal Silver Anodized:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_dm_anod
+                        text: "295"
+                    Label:
+                        text: "Domal Powder Coated:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_dm_powder
+                        text: "310"
+                    Label:
+                        text: "Domal Wooden Finish:"
+                        bold: True
+                        color: 0.8, 0.4, 0.1, 1
+                    NumInput:
+                        id: bs_dm_wooden
+                        text: "365"
+
+                # STEP 3: DOORS, PARTITIONS & CASEMENT
+                Label:
+                    text: "--- STEP 3: DOORS, PARTITION & CASEMENT (Rs/Kg) ---"
+                    color: 0.6, 0.2, 0.6, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '130dp'
+                    Label:
+                        text: "Door Master Material:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_alu_door
+                        text: "270"
+                    Label:
+                        text: "Partition Material:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_alu_partition
+                        text: "265"
+                    Label:
+                        text: "Casement Material:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_alu_casement
+                        text: "275"
+
+                # STEP 4: GLASS & TOUGHENED RATES
+                Label:
+                    text: "--- STEP 4: GLASS & TOUGHENED CHARGES (Rs/Sq.Ft) ---"
+                    color: 0.2, 0.5, 0.7, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '130dp'
+                    Label:
+                        text: "Clear Glass (Base):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_glass_clear
+                        text: "35"
+                    Label:
+                        text: "Reflective Glass:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_glass_refl
+                        text: "55"
+                    Label:
+                        text: "Toughened Extra Charge:"
+                        bold: True
+                        color: 0.8, 0.1, 0.1, 1
+                    NumInput:
+                        id: bs_glass_tough
+                        text: "25"
+
+                # STEP 5: SYSTEM LABOUR CHARGES
+                Label:
+                    text: "--- STEP 5: SYSTEM LABOUR CHARGES (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '210dp'
+                    Label:
+                        text: "Sliding Window Labour:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_labour_sliding
+                        text: "35"
+                    Label:
+                        text: "Domal Window Labour:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_labour_domal
+                        text: "50"
+                    Label:
+                        text: "Casement Shutter Labour:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_labour_casement
+                        text: "60"
+                    Label:
+                        text: "Door Master Labour:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_labour_door
+                        text: "65"
+                    Label:
+                        text: "Partition Labour:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_labour_partition
+                        text: "40"
+
+                # STEP 6: COMPANY PROFIT MARGIN (%)
+                Label:
+                    text: "--- STEP 6: COMPANY PROFIT MARGIN (%) ---"
+                    color: 0.6, 0.2, 0.6, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '170dp'
+                    Label:
+                        text: "Sliding Profit (%):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_profit_sliding
+                        text: "15"
+                    Label:
+                        text: "Domal Profit (%):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_profit_domal
+                        text: "20"
+                    Label:
+                        text: "Casement Profit (%):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_profit_casement
+                        text: "25"
+                    Label:
+                        text: "Door & Partition Profit (%):"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_profit_door
+                        text: "20"
+
+                Label:
+                    text: "--- DOMAL 27x65 (Rs/Sq.Ft) ---"
+                    color: 0.1, 0.5, 0.8, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_d27_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_d27_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_d27_4t
+                        
+                Label:
+                    text: "--- DOMAL 35x75 (Rs/Sq.Ft) ---"
+                    color: 0.1, 0.5, 0.8, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_d35_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_d35_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_d35_4t
+                
+                Label:
+                    text: "--- SLIDING 18x40 (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1840_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1840_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1840_4t
+                        
+                Label:
+                    text: "--- SLIDING 18x50 (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1850_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1850_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1850_4t
+                        
+                Label:
+                    text: "--- SLIDING 18x60 (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1860_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1860_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s1860_4t
+                        
+                Label:
+                    text: "--- SLIDING 25x50 (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s2550_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s2550_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s2550_4t
+                        
+                Label:
+                    text: "--- SLIDING 25x65 (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "2-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s2565_2t
+                    Label:
+                        text: "3-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s2565_3t
+                    Label:
+                        text: "4-Track:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_s2565_4t
+                        
+                Label:
+                    text: "--- CASEMENT WINDOW (Rs/Sq.Ft) ---"
+                    color: 0.8, 0.2, 0.4, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '90dp'
+                    Label:
+                        text: "Casement 34 Series:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_c34
+                    Label:
+                        text: "Casement 40 Series:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_c40
+                        
+                Label:
+                    text: "--- DOORS (Rs/Sq.Ft) ---"
+                    color: 0.7, 0.3, 0.1, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '190dp'
+                    Label:
+                        text: "Standard Door:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_door_std
+                    Label:
+                        text: "Floor Spring Door:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_door_fs
+                    Label:
+                        text: "Top Hung Door:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_door_th
+                    Label:
+                        text: "Domal Door:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_door_domal
+
+                Label:
+                    text: "--- PARTITION (Rs/Sq.Ft) ---"
+                    color: 0.9, 0.3, 0.3, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '90dp'
+                    Label:
+                        text: "Fixed Partition:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_part_fix
+                    Label:
+                        text: "Door Partition:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_part_door
+                        
+                Label:
+                    text: "--- FALSE CEILING & OTHER (Rs/Sq.Ft) ---"
+                    color: 0.1, 0.7, 0.7, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                GridLayout:
+                    cols: 2
+                    spacing: '10dp'
+                    size_hint_y: None
+                    height: '140dp'
+                    Label:
+                        text: "Gypsum Ceiling:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_ceil_gyp
+                    Label:
+                        text: "PVC Ceiling:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_ceil_pvc
+                    Label:
+                        text: "Other Work:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: bs_other
+
+                PremiumBtn:
+                    text: "SAVE ALL SETTINGS"
+                    bg_color: 0.2, 0.7, 0.3, 1
+                    size_hint_y: None
+                    height: '55dp'
+                    on_release: root.save_settings()
+
+<DashboardScreen>:
+    name: 'dashboard'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.4, 0.2, 0.6, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'settings'
+            Label:
+                text: "DASHBOARD"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        BoxLayout:
+            orientation: 'vertical'
+            padding: '10dp'
+            spacing: '10dp'
+            size_hint_y: None
+            height: '140dp'
+            BoxLayout:
+                size_hint_y: 0.3
+                Label:
+                    text: "Select Month:"
+                    color: 0,0,0,1
+                    bold: True
+                    size_hint_x: 0.4
+                Spinner:
+                    id: dash_month
+                    text: root.current_month
+                    values: [root.current_month]
+                    size_hint_x: 0.6
+                    on_text: root.load_dashboard()
+            BoxLayout:
+                size_hint_y: 0.7
+                spacing: '5dp'
+                DashCard:
+                    card_title: 'TOTAL SALES'
+                    card_value: root.total_sales
+                    bg_color: (0.1, 0.6, 0.2, 1)
+                DashCard:
+                    card_title: 'PURCHASES'
+                    card_value: root.total_purchases
+                    bg_color: (0.8, 0.2, 0.2, 1)
+                DashCard:
+                    card_title: 'BALANCE'
+                    card_value: root.net_balance
+                    bg_color: (0.1, 0.5, 0.8, 1)
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 0, 10, 10]
+            PremiumBtn:
+                text: "+ ADD MATERIAL PURCHASE"
+                bg_color: 0.9, 0.5, 0.1, 1
+                on_release: root.open_add_expense()
+        ScrollView:
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.98, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            TextInput:
+                id: dash_details
+                readonly: True
+                use_bubble: False
+                use_handles: False
+                font_size: '13sp'
+                size_hint_y: None
+                height: max(self.minimum_height, dp(350))
+
+<ExpensePopup@ModalView>:
+    size_hint: 0.9, 0.75
+    background_color: 0, 0, 0, 0.7
+    auto_dismiss: False
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '15dp'
+        spacing: '10dp'
+        canvas.before:
+            Color:
+                rgba: 0.95, 0.95, 0.98, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [15]
+        Label:
+            text: "ADD NEW PURCHASE"
+            color: 0.1, 0.2, 0.4, 1
+            font_size: '18sp'
+            bold: True
+            size_hint_y: None
+            height: '30dp'
+        ScrollView:
+            GridLayout:
+                cols: 1
+                spacing: '10dp'
+                size_hint_y: None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "Material Category:"
+                    color: 0,0,0,1
+                    size_hint_y: None
+                    height: '25dp'
+                    text_size: self.size
+                    halign: 'left'
+                Spinner:
+                    id: exp_cat
+                    text: "Aluminum Profile"
+                    values: ["Aluminum Profile", "Glass / Board", "Hardware & Accessories", "Labor / Transport", "Other"]
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Shop / Supplier Name:"
+                    color: 0,0,0,1
+                    size_hint_y: None
+                    height: '25dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: exp_supplier
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Bill No / Memo Ref:"
+                    color: 0,0,0,1
+                    size_hint_y: None
+                    height: '25dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: exp_memo
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Total Amount (Rs):"
+                    color: 0,0,0,1
+                    size_hint_y: None
+                    height: '25dp'
+                    text_size: self.size
+                    halign: 'left'
+                TextInput:
+                    id: exp_amt
+                    multiline: False
+                    input_type: 'number'
+                    size_hint_y: None
+                    height: '40dp'
+        BoxLayout:
+            size_hint_y: None
+            height: '50dp'
+            spacing: '10dp'
+            Button:
+                text: "CANCEL"
+                bold: True
+                background_color: 0.8, 0.2, 0.2, 1
+                color: 1,1,1,1
+                on_release: root.dismiss()
+            Button:
+                text: "SAVE PURCHASE"
+                bold: True
+                background_color: 0.2, 0.7, 0.3, 1
+                color: 1,1,1,1
+                on_release: app.save_expense(root)
+
+<CustomerLookupScreen>:
+    name: 'customer_lookup'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.8, 0.4, 0.1, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'settings'
+            Label:
+                text: "CUSTOMER BOOK"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: '140dp'
+            padding: '20dp'
+            spacing: '10dp'
+            Label:
+                text: "Enter Customer PIN (Last 4 digits of Phone):"
+                color: 0,0,0,1
+                size_hint_y: None
+                height: '30dp'
+                text_size: self.size
+                halign: 'left'
+            TextInput:
+                id: lookup_pin
+                multiline: False
+                input_type: 'number'
+                size_hint_y: None
+                height: '40dp'
+            PremiumBtn:
+                text: "[font=emoji.ttf]🔍[/font] SEARCH CUSTOMER"
+                bg_color: 0.2, 0.6, 0.4, 1
+                size_hint_y: None
+                height: '50dp'
+                on_release: root.search_customer()
+        ScrollView:
+            padding: '20dp'
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.98, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            TextInput:
+                id: lookup_results
+                readonly: True
+                use_bubble: False
+                use_handles: False
+                font_size: '14sp'
+                size_hint_y: None
+                height: max(self.minimum_height, dp(350))
+
+<ProfileScreen>:
+    name: 'profile'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.5, 0.8, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'settings'
+            Label:
+                text: "EDIT PROFILE"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        ScrollView:
+            GridLayout:
+                cols: 1
+                padding: '20dp'
+                spacing: '10dp'
+                size_hint_y: None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "Your Name:"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                TextInput:
+                    id: set_name
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Shop / Company Name:"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                TextInput:
+                    id: set_shop
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Phone Number:"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                TextInput:
+                    id: set_phone
+                    multiline: False
+                    input_type: 'number'
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Email / Gmail ID (Optional):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                TextInput:
+                    id: set_email
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "GST Number (Optional):"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                TextInput:
+                    id: set_gst
+                    multiline: False
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: "Shop Address:"
+                    color: 0, 0, 0, 1
+                    size_hint_y: None
+                    height: '30dp'
+                TextInput:
+                    id: set_address
+                    multiline: True
+                    size_hint_y: None
+                    height: '80dp'
+                PremiumBtn:
+                    text: "UPDATE PROFILE"
+                    size_hint_y: None
+                    height: '55dp'
+                    bg_color: 0.1, 0.6, 0.2, 1
+                    on_release: root.update_profile()
+
+<HistoryScreen>:
+    name: 'history'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.3, 0.3, 0.4, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'settings'
+            Label:
+                text: "DATA HISTORY"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: '110dp'
+            padding: '10dp'
+            spacing: '10dp'
+            Spinner:
+                id: hist_spinner
+                size_hint_y: 0.5
+                text: "Saved Measurements"
+                values: ["Saved Measurements", "Saved Bills"]
+                on_text: root.load_history()
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: 0.5
+                spacing: '10dp'
+                PremiumBtn:
+                    text: "[font=emoji.ttf]🔄[/font] REFRESH"
+                    bg_color: 0.1, 0.6, 0.9, 1
+                    on_release: root.load_history()
+                PremiumBtn:
+                    text: "[font=emoji.ttf]💾[/font] BACKUP"
+                    bg_color: 0.2, 0.8, 0.2, 1
+                    on_release: root.backup_db()
+                PremiumBtn:
+                    text: "[font=emoji.ttf]🗑️[/font] DELETE ALL"
+                    bg_color: 0.9, 0.1, 0.1, 1
+                    on_release: root.confirm_delete()
+        ScrollView:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.98, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            TextInput:
+                id: history_out
+                readonly: True
+                use_bubble: False
+                use_handles: False
+                size_hint_y: None
+                height: max(self.minimum_height, dp(450))
+                font_size: '14sp'   
+
+<DomalScreen>:
+    name: 'domal'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.1, 0.5, 0.8, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "DOMAL WINDOW"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            height: '240dp'
+            padding: '10dp'
+            spacing: '8dp'
+            Label:
+                text: "Track Height:"
+                bold: True
+                color: 0.1, 0.6, 0.2, 1
+            Spinner:
+                id: domal_track_h
+                text: "45 mm"
+                values: ["40 mm", "42 mm", "45 mm", "48 mm", "50 mm", "54 mm", "60 mm"]
+            Label:
+                text: "Handle (HxW):"
+                bold: True
+                color: 0.7, 0.3, 0.1, 1
+            Spinner:
+                id: domal_handle_hw
+                text: "27x65 mm"
+                values: ["27x60 mm", "27x65 mm", "28x65 mm", "26x66 mm", "27x70 mm", "32x72 mm", "35x75 mm", "37x82 mm", "45x85 mm"]
+            Label:
+                text: "Track & Sash Type:"
+                color: 0,0,0,1
+            Spinner:
+                id: combo_type_cut
+                text: "2-Track (2-Sash)"
+                values: ["2-Track (2-Sash)", "3-Track (3-Sash)", "4-Track (4-Sash)", "2-Track (Center Open)"]
+            Label:
+                text: "Input Unit:"
+                color: 0,0,0,1
+            Spinner:
+                id: combo_unit_cut
+                text: "Inch"
+                values: ["Inch", "Millimeter"]
+            Label:
+                text: "Height:"
+                color: 0,0,0,1
+            NumInput:
+                id: entry_h_cut
+            Label:
+                text: "Width:"
+                color: 0,0,0,1
+            NumInput:
+                id: entry_w_cut
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "CLEAR"
+                size_hint_x: 0.3
+                bg_color: 0.8, 0.2, 0.2, 1
+                on_release: root.clear_all()
+            PremiumBtn:
+                text: "+ CALCULATE"
+                size_hint_x: 0.7
+                bg_color: 0.1, 0.5, 0.8, 1
+                on_release: root.calculate_domal()
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "SAVE"
+                bg_color: 0.2, 0.7, 0.3, 1
+                on_release: root.save_data(self)
+            PremiumBtn:
+                text: "CUT PDF"
+                bg_color: 0.6, 0.3, 0.6, 1
+                on_release: root.export_full(self)
+            PremiumBtn:
+                text: "GLASS PDF"
+                bg_color: 0.1, 0.6, 0.8, 1
+                on_release: root.export_glass(self)
+                
+        ScrollView:
+            size_hint_y: 1
+            padding: '10dp'
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: '10dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "CUTTING SIZES:"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.1, 0.5, 0.8, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: domal_alu_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+                Label:
+                    text: "MATERIAL PURCHASE (AUTO-UPDATED):"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.2, 0.7, 0.3, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: domal_mat_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+
+<SlidingScreen>:
+    name: 'slidingscreen'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.8, 0.4, 0.1, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "SLIDING WINDOW"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+                
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            height: '180dp'
+            padding: '10dp'
+            spacing: '10dp'
+            Label:
+                text: "System Size:"
+                color: 0,0,0,1
+            Spinner:
+                id: sl_sys
+                text: "Door Sliding Master"
+                values: ["18x40 System", "18x50 System", "18x60 System", "25x50 System", "25x65 System", "Door Sliding Master"]
+            Label:
+                text: "Track Type:"
+                color: 0,0,0,1
+            Spinner:
+                id: sl_type
+                text: "2-Track"
+                values: ["2-Track", "3-Track", "4-Track", "Center Open"]
+            Label:
+                text: "Input Unit:"
+                color: 0,0,0,1
+            Spinner:
+                id: sl_unit
+                text: "Millimeter"
+                values: ["Inch", "Millimeter"]
+            Label:
+                text: "Height:"
+                color: 0,0,0,1
+            NumInput:
+                id: sl_h
+            Label:
+                text: "Width:"
+                color: 0,0,0,1
+            NumInput:
+                id: sl_w
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "CLEAR"
+                size_hint_x: 0.3
+                bg_color: 0.8, 0.2, 0.2, 1
+                on_release: root.clear_all()
+            PremiumBtn:
+                text: "+ CALCULATE"
+                size_hint_x: 0.7
+                bg_color: 0.8, 0.4, 0.1, 1
+                on_release: root.calculate_sliding()
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "SAVE"
+                bg_color: 0.2, 0.7, 0.3, 1
+                on_release: root.save_data(self)
+            PremiumBtn:
+                text: "CUT PDF"
+                bg_color: 0.6, 0.3, 0.6, 1
+                on_release: root.export_full(self)
+            PremiumBtn:
+                text: "GLASS PDF"
+                bg_color: 0.1, 0.6, 0.8, 1
+                on_release: root.export_glass(self)
+                
+        ScrollView:
+            size_hint_y: 1
+            padding: '10dp'
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: '10dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "CUTTING SIZES:"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.8, 0.4, 0.1, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: sl_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+                Label:
+                    text: "MATERIAL PURCHASE (AUTO-UPDATED):"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.2, 0.7, 0.3, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: sl_mat_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+
+<CustomCasementScreen>:
+    name: 'custom_casement'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.8, 0.2, 0.4, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "CUSTOM CASEMENT"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+                
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            height: '340dp'
+            padding: '10dp'
+            spacing: '10dp'
+            Label:
+                text: "Input Unit:"
+                color: 0,0,0,1
+            Spinner:
+                id: cc_unit
+                text: "Millimeter"
+                values: ["Inch", "Millimeter"]
+            Label:
+                text: "Series Type:"
+                color: 0,0,0,1
+            Spinner:
+                id: cc_series
+                text: "40 Series"
+                values: ["34 Series", "40 Series"]
+            Label:
+                text: "Total Height (H):"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_h
+            Label:
+                text: "Total Width (W):"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_w
+            Label:
+                text: "Bottom Part Height:"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_bot_h
+                text: "0"
+            Label:
+                text: "Clear Gap for 1 Palla:"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_mid_w
+                text: "0"
+            Label:
+                text: "Top Total Sections:"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_top_cols
+                text: "1"
+            Label:
+                text: "Top Openable (Sash):"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_top_open
+                text: "1"
+            Label:
+                text: "Bottom Total Sections:"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_bot_cols
+                text: "0"
+            Label:
+                text: "Bottom Openable (Sash):"
+                color: 0,0,0,1
+            NumInput:
+                id: cc_bot_open
+                text: "0"
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "CLEAR"
+                size_hint_x: 0.3
+                bg_color: 0.8, 0.2, 0.2, 1
+                on_release: root.clear_all()
+            PremiumBtn:
+                text: "+ CALCULATE"
+                size_hint_x: 0.7
+                bg_color: 0.8, 0.2, 0.4, 1
+                on_release: root.calculate_custom()
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "SAVE"
+                bg_color: 0.2, 0.7, 0.3, 1
+                on_release: root.save_data(self)
+            PremiumBtn:
+                text: "CUT PDF"
+                bg_color: 0.6, 0.3, 0.6, 1
+                on_release: root.export_full(self)
+            PremiumBtn:
+                text: "GLASS PDF"
+                bg_color: 0.1, 0.6, 0.8, 1
+                on_release: root.export_glass(self)
+                
+        ScrollView:
+            size_hint_y: 1
+            padding: '10dp'
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: '10dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "CUTTING SIZES:"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.8, 0.2, 0.4, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: cc_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+                Label:
+                    text: "MATERIAL PURCHASE (AUTO-UPDATED):"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.2, 0.7, 0.3, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: cc_mat_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+
+<DoorScreen>:
+    name: 'door'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.7, 0.3, 0.1, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "DOOR OPTION"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+                
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            height: '180dp'
+            padding: '10dp'
+            spacing: '10dp'
+            Label:
+                text: "Door Type:"
+                color: 0,0,0,1
+            Spinner:
+                id: d_master_type
+                text: "Standard Door"
+                values: ["Standard Door", "Floor Spring Door", "Top Hung Door", "Domal System Door"]
+            Label:
+                text: "Input Unit:"
+                color: 0,0,0,1
+            Spinner:
+                id: d_master_unit
+                text: "Inch"
+                values: ["Inch", "Millimeter"]
+            Label:
+                text: "Total Height (H):"
+                color: 0,0,0,1
+            NumInput:
+                id: d_master_h
+            Label:
+                text: "Total Width (W):"
+                color: 0,0,0,1
+            NumInput:
+                id: d_master_w
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "CLEAR"
+                size_hint_x: 0.3
+                bg_color: 0.8, 0.2, 0.2, 1
+                on_release: root.clear_all()
+            PremiumBtn:
+                text: "+ CALCULATE"
+                size_hint_x: 0.7
+                bg_color: 0.7, 0.3, 0.1, 1
+                on_release: root.calculate_door()
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "SAVE"
+                bg_color: 0.2, 0.7, 0.3, 1
+                on_release: root.save_data(self)
+            PremiumBtn:
+                text: "CUT PDF"
+                bg_color: 0.6, 0.3, 0.6, 1
+                on_release: root.export_full(self)
+            PremiumBtn:
+                text: "GLASS PDF"
+                bg_color: 0.1, 0.6, 0.8, 1
+                on_release: root.export_glass(self)
+                
+        ScrollView:
+            size_hint_y: 1
+            padding: '10dp'
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: '10dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "CUTTING SIZES:"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.7, 0.3, 0.1, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: d_master_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+                Label:
+                    text: "MATERIAL PURCHASE (AUTO-UPDATED):"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.2, 0.7, 0.3, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: d_master_mat_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+
+<PartitionScreen>:
+    name: 'partition'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.9, 0.3, 0.3, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "PARTITION MASTER"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+                
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            height: '280dp'
+            padding: '10dp'
+            spacing: '10dp'
+            Label:
+                text: "Input Unit:"
+                color: 0,0,0,1
+            Spinner:
+                id: p_unit
+                text: "Inch"
+                values: ["Inch", "Millimeter"]
+            Label:
+                text: "Partition Type:"
+                color: 0,0,0,1
+            Spinner:
+                id: part_type
+                text: "Fixed Partition"
+                values: ["Fixed Partition", "Door + Partition"]
+            Label:
+                text: "Total Wall Height (H):"
+                color: 0,0,0,1
+            NumInput:
+                id: p_h
+            Label:
+                text: "Total Wall Width (W):"
+                color: 0,0,0,1
+            NumInput:
+                id: p_w
+            Label:
+                text: "Door Height (Optional):"
+                color: 0,0,0,1
+            NumInput:
+                id: d_h
+            Label:
+                text: "Door Width (Optional):"
+                color: 0,0,0,1
+            NumInput:
+                id: d_w
+            Label:
+                text: "Horizontal Sections:"
+                color: 0,0,0,1
+            NumInput:
+                id: p_cols
+                text: "3"
+            Label:
+                text: "Vertical Sections:"
+                color: 0,0,0,1
+            NumInput:
+                id: p_rows
+                text: "3"
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "CLEAR"
+                size_hint_x: 0.3
+                bg_color: 0.8, 0.2, 0.2, 1
+                on_release: root.clear_all()
+            PremiumBtn:
+                text: "+ CALCULATE"
+                size_hint_x: 0.7
+                bg_color: 0.9, 0.3, 0.3, 1
+                on_release: root.calculate_partition()
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "SAVE"
+                bg_color: 0.2, 0.7, 0.3, 1
+                on_release: root.save_data(self)
+            PremiumBtn:
+                text: "CUT PDF"
+                bg_color: 0.6, 0.3, 0.6, 1
+                on_release: root.export_full(self)
+            PremiumBtn:
+                text: "GLASS PDF"
+                bg_color: 0.1, 0.6, 0.8, 1
+                on_release: root.export_glass(self)
+                
+        ScrollView:
+            size_hint_y: 1
+            padding: '10dp'
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: '10dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: "CUTTING SIZES:"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.9, 0.3, 0.3, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: part_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+                Label:
+                    text: "MATERIAL PURCHASE (AUTO-UPDATED):"
+                    size_hint_y: None
+                    height: '25dp'
+                    color: 0.2, 0.7, 0.3, 1
+                    bold: True
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                TextInput:
+                    id: part_mat_out
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(250))
+
+<CeilingScreen>:
+    name: 'ceiling'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.1, 0.7, 0.7, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "CEILING ESTIMATOR"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+                
+        GridLayout:
+            cols: 2
+            size_hint_y: None
+            height: '150dp'
+            padding: '10dp'
+            spacing: '10dp'
+            Label:
+                text: "Material Type:"
+                color: 0,0,0,1
+            Spinner:
+                id: c_type
+                text: "Gypsum Board"
+                values: ["Gypsum Board", "PVC Panel"]
+            Label:
+                text: "Room Length (Ft):"
+                color: 0,0,0,1
+            NumInput:
+                id: c_l
+            Label:
+                text: "Room Width (Ft):"
+                color: 0,0,0,1
+            NumInput:
+                id: c_w
+                
+        BoxLayout:
+            size_hint_y: None
+            height: '55dp'
+            padding: [10, 5, 10, 5]
+            spacing: '10dp'
+            PremiumBtn:
+                text: "CLEAR"
+                size_hint_x: 0.3
+                bg_color: 0.8, 0.2, 0.2, 1
+                on_release: root.clear_all()
+            PremiumBtn:
+                text: "CALCULATE"
+                size_hint_x: 0.7
+                bg_color: 0.1, 0.7, 0.7, 1
+                on_release: root.calculate_ceiling()
+                
+        ScrollView:
+            size_hint_y: 1
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.98, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            TextInput:
+                id: c_out
+                readonly: True
+                use_bubble: False
+                use_handles: False
+                font_size: '15sp'
+                size_hint_y: None
+                height: max(self.minimum_height, dp(350))
+
+<QuotationScreen>:
+    name: 'quotation'
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.95, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '65dp'
+            padding: '10dp'
+            canvas.before:
+                Color:
+                    rgba: 0.6, 0.2, 0.6, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [0, 0, 20, 20]
+            Button:
+                text: "< Back"
+                bold: True
+                size_hint_x: 0.25
+                background_normal: ''
+                background_color: 0,0,0,0
+                canvas.before:
+                    Color:
+                        rgba: 0.8, 0.1, 0.1, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10]
+                on_release: root.manager.current = 'home'
+            Label:
+                text: "PRO QUOTATION"
+                font_size: '18sp'
+                bold: True
+                size_hint_x: 0.75
+        ScrollView:
+            size_hint: 1, 1
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: '15dp'
+                spacing: '15dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.95, 0.95, 0.98, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                
+                Label:
+                    text: "--- CUSTOMER & BILL DETAILS ---"
+                    color: 0.6, 0.2, 0.6, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: '210dp'
+                    spacing: '10dp'
+                    Label:
+                        text: "Bill Stage:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_stage
+                        text: "Quotation / Estimate"
+                        values: ["Quotation / Estimate", "First Bill", "Second Bill", "Third Bill", "Final Bill"]
+                    Label:
+                        text: "Name:"
+                        color: 0,0,0,1
+                    TextInput:
+                        id: q_name
+                        multiline: False
+                    Label:
+                        text: "Phone / PIN:"
+                        color: 0,0,0,1
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        spacing: '5dp'
+                        TextInput:
+                            id: q_phone
+                            multiline: False
+                            input_type: 'number'
+                        Button:
+                            text: "[font=emoji.ttf]🔍[/font]"
+                            markup: True
+                            size_hint_x: None
+                            width: '45dp'
+                            background_color: 0.2, 0.6, 0.8, 1
+                            color: 1,1,1,1
+                            on_release: root.autofill_customer()
+                    Label:
+                        text: "Address:"
+                        color: 0,0,0,1
+                    TextInput:
+                        id: q_addr
+                        multiline: False
+                
+                Label:
+                    text: "--- ADD BILL ITEM ---"
+                    color: 0.6, 0.2, 0.6, 1
+                    bold: True
+                    size_hint_y: None
+                    height: '30dp'
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: '510dp'  
+                    spacing: '8dp'
+                    
+                    Label:
+                        text: "Type:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_type
+                        text: "Domal 27x65 (2-Track)"
+                        values: ["Domal 27x65 (2-Track)", "Domal 27x65 (3-Track)", "Domal 27x65 (4-Track)", "Domal 35x75 (2-Track)", "Domal 35x75 (3-Track)", "Domal 35x75 (4-Track)", "Sliding 18x40 (2-Track)", "Sliding 18x40 (3-Track)", "Sliding 18x40 (4-Track)", "Sliding 18x50 (2-Track)", "Sliding 18x50 (3-Track)", "Sliding 18x50 (4-Track)", "Sliding 18x60 (2-Track)", "Sliding 18x60 (3-Track)", "Sliding 18x60 (4-Track)", "Sliding 25x50 (2-Track)", "Sliding 25x50 (3-Track)", "Sliding 25x50 (4-Track)", "Sliding 25x65 (2-Track)", "Sliding 25x65 (3-Track)", "Sliding 25x65 (4-Track)", "Casement 34 Series", "Casement 40 Series", "Standard Door", "Floor Spring Door", "Top Hung Door", "Domal Door", "Fixed Partition", "Door Partition", "Gypsum Ceiling", "PVC Ceiling", "Other Work"]
+                        on_text: root.update_auto_rate()
+
+                    Label:
+                        text: "Room / Location:"
+                        color: 0,0,0,1
+                    TextInput:
+                        id: q_loc
+                        multiline: False
+                        hint_text: "e.g. Bed-1, Hall, Kitchen"
+
+                    Label:
+                        text: "Alu Color:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_color
+                        text: "Jet Black"
+                        values: ["Jet Black", "Pure White", "Silver Anodized", "Champagne / Bronze", "Chocolate Brown", "Charcoal Grey", "Wooden Finish", "Mill Finish"]
+                        on_text: root.update_auto_rate()
+
+                    Label:
+                        text: "Thickness:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_thick
+                        text: "1.5 mm"
+                        values: ["0.8 mm", "1.0 mm", "1.2 mm", "1.5 mm", "1.6 mm", "1.8 mm", "2.0 mm", "2.5 mm", "3.0 mm"]
+                        on_text: root.update_auto_rate()
+
+                    Label:
+                        text: "Glass Thick:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_g_thick
+                        text: "5.0 mm"
+                        values: ["3.5 mm", "4.0 mm", "5.0 mm", "6.0 mm", "8.0 mm", "10.0 mm", "12.0 mm", "DGU Soundproof"]
+                        on_text: root.update_auto_rate()
+
+                    Label:
+                        text: "Glass Type:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_g_type
+                        text: "Clear Float"
+                        values: ["Clear Float", "Pinhead / Figured", "Frosted / Acid", "Black / Grey Tinted", "Royal Blue Reflective", "Emerald Green Reflective", "Bronze / Gold Reflective"]
+                        on_text: root.update_auto_rate()
+
+                    Label:
+                        text: "Toughened?:"
+                        color: 0,0,0,1
+                    Spinner:
+                        id: q_tough
+                        text: "No"
+                        values: ["No", "Yes (Toughened)"]
+                        on_text: root.update_auto_rate()
+
+                    Label:
+                        text: "Rate (Rs/Sq.Ft):"
+                        bold: True
+                        color: 0.1, 0.5, 0.2, 1
+                    NumInput:
+                        id: q_rate
+                        text: "400"
+                        bold: True
+
+                    Label:
+                        text: "Qty:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: q_qty
+                        text: "1"
+                        
+                    Label:
+                        text: "Height:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: q_h
+
+                    Label:
+                        text: "Width:"
+                        color: 0,0,0,1
+                    NumInput:
+                        id: q_w
+                        
+                BoxLayout:
+                    size_hint_y: None
+                    height: '55dp'
+                    spacing: '10dp'
+                    PremiumBtn:
+                        text: "CLEAR"
+                        size_hint_x: 0.3
+                        bg_color: 0.8, 0.2, 0.2, 1
+                        on_release: root.clear_items()
+                    PremiumBtn:
+                        text: "+ ADD ITEM"
+                        size_hint_x: 0.7
+                        bg_color: 0.1, 0.6, 0.2, 1
+                        on_release: root.add_item()
+                
+                TextInput:
+                    id: bill_queue_text
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(120))
+                    font_size: '12sp'
+                    
+                BoxLayout:
+                    size_hint_y: None
+                    height: '40dp'
+                    Label:
+                        text: "Advance Paid (Rs):"
+                        color: 0.6, 0.2, 0.6, 1
+                        bold: True
+                        size_hint_x: 0.4
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                    NumInput:
+                        id: q_advance
+                        text: "0"
+                        size_hint_x: 0.6
+                
+                BoxLayout:
+                    size_hint_y: None
+                    height: '40dp'
+                    Label:
+                        text: "Transport/Labor (Rs):"
+                        color: 0.8, 0.4, 0.1, 1
+                        bold: True
+                        size_hint_x: 0.4
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                    NumInput:
+                        id: q_extra_charge
+                        text: "0"
+                        size_hint_x: 0.6
+                        
+                BoxLayout:
+                    size_hint_y: None
+                    height: '40dp'
+                    Label:
+                        text: "Special Note:"
+                        color: 0.1, 0.5, 0.8, 1
+                        bold: True
+                        size_hint_x: 0.4
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                    TextInput:
+                        id: q_remarks
+                        hint_text: "Ex: Balance after fitting"
+                        multiline: False
+                        size_hint_x: 0.6
+                
+                BoxLayout:
+                    size_hint_y: None
+                    height: '55dp'
+                    PremiumBtn:
+                        text: "GENERATE BILL"
+                        bg_color: 0.6, 0.2, 0.6, 1
+                        on_release: root.generate_bill()
+                
+                BoxLayout:
+                    size_hint_y: None
+                    height: '55dp'
+                    spacing: '10dp'
+                    PremiumBtn:
+                        text: "SAVE BILL"
+                        bg_color: 0.2, 0.5, 0.8, 1
+                        on_release: root.save_to_db(self)
+                    PremiumBtn:
+                        text: "PDF BILL"
+                        bg_color: 0.8, 0.2, 0.2, 1
+                        on_release: root.export_bill_pdf(self)
+                    PremiumBtn:
+                        text: "[font=emoji.ttf]🟢[/font] WhatsApp"
+                        bg_color: 0.1, 0.7, 0.3, 1
+                        on_release: root.share_to_whatsapp(self)
+                
+                TextInput:
+                    id: bill_output
+                    readonly: True
+                    use_bubble: False
+                    use_handles: False
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(450))
+                    font_size: '14sp'
