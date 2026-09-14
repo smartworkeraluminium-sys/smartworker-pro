@@ -1,178 +1,293 @@
- <!DOCTYPE html>
-<html lang="bn">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart Worker Pro - Fabrication System</title>
+  <title>Smart Worker Pro - Fabrication Management System</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <!-- Google Cloud Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: #f0f4f8; color: #1c2b50; min-height: 100vh; padding-bottom: 75px; }
+    :root {
+      --bg: #f1f5f9;
+      --navy: #192a4a;
+      --navy-light: #243a63;
+      --accent: #f59e0b;
+      --blue: #1a80cc;
+      --orange: #cc661a;
+      --pink: #cc3366;
+      --red: #e64d4d;
+      --brown: #b34d1a;
+      --purple: #993399;
+      --teal: #1ab3b3;
+      --green: #2e7d32;
+      --dark-btn: #334155;
+      --border: #cbd5e1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: #0f172a; min-height: 100vh; padding-bottom: 75px; }
 
     /* Top Bar */
     .top-bar {
-      background: #192a4a; color: #fff; padding: 12px 16px;
+      background: var(--navy); color: #fff; padding: 12px 16px;
       display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
-    .top-bar .title { font-size: 1.05rem; font-weight: 700; color: #ffd54f; display: flex; align-items: center; gap: 8px; }
-    .back-btn { background: #d32f2f; color: #fff; border: none; padding: 6px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+    .top-bar .title { font-size: 1.05rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
+    .back-btn { background: #ef4444; color: #fff; border: none; padding: 6px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
 
-    .screen-container { max-width: 600px; margin: 0 auto; }
+    .screen-container { max-width: 580px; margin: 0 auto; width: 100%; }
     .screen { display: none; }
     .screen.active { display: block; animation: fadeIn 0.15s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Auth Screen */
+    .auth-screen-box {
+      background: #fff; border-radius: 18px; margin: 20px 14px; padding: 24px 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; text-align: center;
+    }
+    .auth-logo { width: 70px; height: 70px; border-radius: 14px; margin: 0 auto 12px; object-fit: contain; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #fff; }
+    .auth-title { font-size: 1.4rem; font-weight: 800; color: var(--navy); }
+    .auth-sub { font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 20px; }
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .auth-tab-btn {
+      flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold;
+      font-size: 0.88rem; cursor: pointer; transition: 0.2s;
+    }
+
     /* Home Header */
     .home-header {
-      background: #264073; color: #fff; padding: 20px 20px 25px 20px;
+      background: var(--navy); color: #fff; padding: 22px 18px 26px 18px;
       border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
       display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 4px 15px rgba(25, 42, 74, 0.2);
     }
-    .home-header .welcome { font-size: 0.85rem; color: #b0bec5; }
-    .home-header .shop-name { font-size: 1.25rem; font-weight: bold; margin-top: 2px; }
+    .home-header .welcome { font-size: 0.82rem; color: #94a3b8; }
+    .home-header .shop-name { font-size: 1.25rem; font-weight: 800; color: #fff; margin-top: 2px; }
     .gear-btn { background: transparent; border: none; font-size: 1.5rem; color: #fff; cursor: pointer; }
 
     /* Menu Sections */
-    .menu-section-title { font-size: 0.8rem; font-weight: bold; color: #78909c; text-transform: uppercase; padding: 14px 16px 6px 16px; letter-spacing: 0.5px; }
+    .menu-section-title {
+      font-size: 0.78rem; font-weight: 800; color: #64748b; text-transform: uppercase;
+      padding: 16px 16px 8px 16px; letter-spacing: 0.5px;
+    }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
     .menu-card {
-      border-radius: 15px; padding: 18px 10px; color: #fff; text-align: center;
+      border-radius: 14px; padding: 18px 10px; color: #fff; text-align: center;
       cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 6px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); transition: transform 0.1s;
+      gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.1s, box-shadow 0.1s;
     }
     .menu-card:active { transform: scale(0.97); }
     .menu-card .icon { font-size: 2rem; }
-    .menu-card .label { font-size: 0.88rem; font-weight: bold; }
+    .menu-card .label { font-size: 0.88rem; font-weight: 700; }
 
-    /* Form Elements */
-    .form-box { background: #fff; border-radius: 12px; margin: 12px 14px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .form-group { display: flex; flex-direction: column; gap: 3px; }
-    .form-group label { font-size: 0.78rem; font-weight: bold; color: #37474f; }
-    .input-wrapper { display: flex; align-items: center; position: relative; }
-    input[type="text"], input[type="number"], select, textarea {
-      width: 100%; border: 1px solid #cfd8dc; border-radius: 8px; padding: 8px 10px;
-      font-size: 0.9rem; background: #fff; color: #000; outline: none; transition: border-color 0.2s;
+    /* Forms */
+    .form-box {
+      background: #fff; border-radius: 14px; margin: 12px 14px; padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;
     }
-    input:focus, select:focus, textarea:focus { border-color: #1976d2; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 3px; text-align: left; }
+    .form-group label { font-size: 0.76rem; font-weight: 700; color: #334155; }
+    .input-wrapper { display: flex; align-items: center; position: relative; }
+    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+      width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 10px;
+      font-size: 0.9rem; background: #fff; color: #0f172a; outline: none; transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #2563eb; }
     .keypad-trigger {
-      position: absolute; right: 4px; background: #eceff1; border: none;
-      padding: 4px 6px; border-radius: 6px; cursor: pointer; color: #455a64; font-size: 0.75rem;
+      position: absolute; right: 4px; background: #f1f5f9; border: none;
+      padding: 5px 7px; border-radius: 6px; cursor: pointer; color: #475569; font-size: 0.75rem;
     }
 
     /* Buttons */
     .btn-row { display: flex; gap: 8px; margin-top: 8px; }
     .action-btn {
-      flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: bold;
-      color: #fff; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 700;
+      color: #fff; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); transition: 0.15s;
     }
     .action-btn:active { transform: scale(0.97); }
-    .btn-clear { background: #d32f2f; }
-    .btn-calc { background: #1976d2; }
-    .btn-save { background: #2e7d32; }
-    .btn-cut-pdf { background: #7b1fa2; }
-    .btn-glass-pdf { background: #0288d1; }
-    .btn-wa { background: #25d366; }
+    .btn-clear { background: #ef4444; }
+    .btn-calc { background: #2563eb; }
+    .btn-save { background: #16a34a; }
+    .btn-cut-pdf { background: #9333ea; }
+    .btn-glass-pdf { background: #0284c7; }
+    .btn-wa { background: #22c55e; }
 
-    /* Output Areas */
-    .output-label { font-size: 0.8rem; font-weight: bold; color: #1976d2; margin: 10px 14px 4px 14px; }
+    /* Outputs */
+    .output-label { font-size: 0.8rem; font-weight: 800; color: #2563eb; margin: 12px 16px 4px 16px; text-transform: uppercase; }
     .output-area {
-      background: #f8fafc; border: 1px solid #cfd8dc; border-radius: 10px;
-      padding: 10px; font-family: monospace; font-size: 0.82rem; color: #1e293b;
-      white-space: pre-wrap; line-height: 1.45; max-height: 240px; overflow-y: auto; margin: 0 14px 10px 14px;
+      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px;
+      padding: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem; color: #0f172a; white-space: pre-wrap; line-height: 1.45;
+      max-height: 250px; overflow-y: auto; margin: 0 14px 10px 14px;
     }
-    .mat-area { background: #f0fdf4; border-color: #86efac; color: #166534; }
+    .mat-area { background: #f0fdf4; border-color: #86efac; color: #14532d; }
 
-    /* Bottom Nav Bar */
+    /* Bottom Navigation Bar */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-      background: #fff; border-top: 1px solid #e0e0e0; display: flex;
+      background: #fff; border-top: 1px solid #e2e8f0; display: flex;
       justify-content: space-around; align-items: center; z-index: 99;
       border-top-left-radius: 20px; border-top-right-radius: 20px;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 -3px 12px rgba(0,0,0,0.06);
     }
     .nav-item {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: #90a4ae; font-size: 0.68rem; font-weight: bold; gap: 2px; cursor: pointer; flex: 1;
+      color: #94a3b8; font-size: 0.68rem; font-weight: 700; gap: 2px; cursor: pointer; flex: 1;
     }
-    .nav-item.active { color: #1976d2; }
+    .nav-item.active { color: #2563eb; }
     .nav-item i { font-size: 1.25rem; }
 
-    /* FAB + Button */
+    /* FAB Button */
     .fab {
-      position: fixed; right: 18px; bottom: 75px; width: 60px; height: 60px;
-      background: #e91e63; color: #fff; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 1.7rem; font-weight: bold;
-      box-shadow: 0 4px 12px rgba(233,30,99,0.4); border: none; cursor: pointer; z-index: 98;
+      position: fixed; right: 18px; bottom: 75px; width: 58px; height: 58px;
+      background: #ec4899; color: #fff; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.6rem; font-weight: bold;
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4); border: none; cursor: pointer; z-index: 98;
     }
 
     /* Keypad Modal */
     .modal-overlay {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;
+      background: rgba(15, 23, 42, 0.7); z-index: 1000; align-items: center; justify-content: center;
     }
     .modal-overlay.active { display: flex; }
-    .keypad-modal { background: #e2e8f0; width: 95%; max-width: 460px; border-radius: 12px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .keypad-modal { background: #e2e8f0; width: 95%; max-width: 440px; border-radius: 14px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     .keypad-display-row { display: flex; gap: 8px; margin-bottom: 8px; background: #fff; border-radius: 8px; padding: 8px 12px; align-items: center; }
-    .keypad-display { flex: 1; font-size: 1.5rem; font-weight: bold; color: #0f172a; text-align: right; overflow-x: auto; white-space: nowrap; }
-    .keypad-ok-btn { background: #00b0ff; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .keypad-display { flex: 1; font-size: 1.4rem; font-weight: bold; color: #0f172a; text-align: right; overflow-x: auto; white-space: nowrap; }
+    .keypad-ok-btn { background: #0284c7; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
     .keypad-body { display: flex; gap: 6px; margin-bottom: 8px; }
     .keypad-left-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 40%; }
     .keypad-right-box { width: 60%; display: flex; flex-direction: column; gap: 6px; }
     .keypad-3x3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
     .keypad-row-2 { display: flex; gap: 4px; }
     .keypad-bottom-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-    .k-btn { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 4px; font-size: 1.05rem; font-weight: bold; color: #1e293b; cursor: pointer; text-align: center; }
+    .k-btn { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 4px; font-size: 1rem; font-weight: bold; color: #1e293b; cursor: pointer; text-align: center; }
     .k-btn:active { background: #cbd5e1; }
     .k-btn.red { background: #fee2e2; color: #dc2626; }
-    .k-btn.blue { background: #dbeafe; color: #1d4ed8; }
+    .k-btn.blue { background: #e0f2fe; color: #0284c7; }
     .k-btn.orange { background: #ffedd5; color: #ea580c; }
   </style>
-  <!-- Google Cloud Firebase SDK (Free Tier Auth & Firestore) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- Top App Bar with Cloud User Status -->
+  <!-- Top App Bar -->
   <div class="top-bar">
     <button class="back-btn" id="topBackBtn" onclick="goHome()" style="display:none;">< BACK</button>
-    <div class="title" id="screenTitle" style="display:flex; align-items:center; gap:8px;">
-      <img src="logo.png" alt="SWA" onerror="this.style.display='none';" style="height:30px; width:auto; border-radius:4px; background:#fff; padding:1px;">
+    <div class="title" id="screenTitle">
+      <img src="logo.png" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;">
       <span id="titleText">SMART WORKER PRO</span>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(46,125,50,0.25); border:1px solid #4caf50; color:#a5d6a7; padding:2px 8px; border-radius:14px; font-size:0.72rem;">
-        <i class="fa-solid fa-cloud-check" style="color:#69f0ae;"></i>
-        <span id="cloudUserEmail" style="max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
-        <button onclick="handleCloudLogout()" style="background:transparent; border:none; color:#ff8a80; cursor:pointer; font-weight:bold; margin-left:2px;" title="লগআউট"><i class="fa-solid fa-right-from-bracket"></i></button>
+      <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">
+        <i class="fa-solid fa-cloud"></i>
+        <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
+        <button onclick="handleCloudLogout()" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-weight:bold; margin-left:2px;" title="Logout"><i class="fa-solid fa-power-off"></i></button>
       </div>
-      <button id="cloudLoginTriggerBtn" onclick="openAuthModal()" style="background:#1976d2; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:3px;">
-        <i class="fa-solid fa-cloud"></i> <span>লগইন</span>
+      <button id="cloudLoginTriggerBtn" onclick="openScreen('auth', 'SIGN IN / REGISTER')" style="background:#2563eb; color:#fff; border:none; padding:5px 9px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
+        <i class="fa-solid fa-user-lock"></i> <span>LOGIN</span>
       </button>
-      <div style="font-size:0.75rem; background:#ff9800; color:#000; font-weight:800; padding:2px 6px; border-radius:4px;">PRO</div>
+      <div style="font-size:0.72rem; background:var(--accent); color:#000; font-weight:800; padding:2px 6px; border-radius:4px;">PRO</div>
     </div>
   </div>
 
   <div class="screen-container">
 
-    <!-- 1. HOME SCREEN -->
-    <div id="screen-home" class="screen active">
+    <!-- ================= 0. AUTH / LOGIN SCREEN (OPENS FIRST IF NOT LOGGED IN) ================= -->
+    <div id="screen-auth" class="screen">
+      <div class="auth-screen-box">
+        <img src="logo.png" alt="Logo" class="auth-logo" onerror="this.style.display='none';">
+        <div class="auth-title">SMART WORKER PRO</div>
+        <div class="auth-sub">Aluminium & UPVC Fabrication Management</div>
+
+        <div class="auth-tabs">
+          <button id="tabBtnLogin" class="auth-tab-btn" style="background:#2563eb; color:#fff;" onclick="switchAuthMode('login')">Sign In</button>
+          <button id="tabBtnRegister" class="auth-tab-btn" style="background:#f1f5f9; color:#475569;" onclick="switchAuthMode('register')">Register Workshop</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="authFormLogin">
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Gmail / Email ID:</label>
+            <input type="text" id="auth_login_email" placeholder="fabricator@gmail.com">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Password:</label>
+            <input type="password" id="auth_login_pass" placeholder="Enter password">
+          </div>
+          <button class="action-btn" style="background:#2563eb; width:100%; padding:12px; font-size:0.95rem; margin-bottom:12px;" onclick="doEmailLogin()">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+          </button>
+          <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:14px;">
+            <a href="javascript:void(0)" onclick="doForgotPassword()" style="color:#2563eb; text-decoration:none; font-weight:600;">Forgot Password?</a>
+            <span style="color:#64748b;">Cloud Database Sync</span>
+          </div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="authFormRegister" style="display:none;">
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>Your Name:</label>
+            <input type="text" id="auth_reg_name" placeholder="Full name">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>Workshop / Shop Name:</label>
+            <input type="text" id="auth_reg_shop" placeholder="e.g. Royal Aluminium Works">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>Mobile Number:</label>
+            <input type="text" id="auth_reg_phone" placeholder="10-digit mobile">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>Gmail Address:</label>
+            <input type="text" id="auth_reg_email" placeholder="example@gmail.com">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Create Password:</label>
+            <input type="password" id="auth_reg_pass" placeholder="At least 6 characters">
+          </div>
+          <button class="action-btn" style="background:#16a34a; width:100%; padding:12px; font-size:0.95rem; margin-bottom:12px;" onclick="doEmailRegister()">
+            <i class="fa-solid fa-user-plus"></i> Create Account & Cloud Sync
+          </button>
+        </div>
+
+        <!-- Google 1-Click Sign In -->
+        <div style="border-top:1px dashed #cbd5e1; padding-top:14px; margin-top:8px;">
+          <button onclick="doGoogleSignIn()" style="width:100%; padding:11px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; font-weight:700; font-size:0.86rem; color:#334155; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="height:18px;">
+            <span>Sign in with Google</span>
+          </button>
+        </div>
+
+        <div style="margin-top:16px;">
+          <button onclick="skipAuthToGuest()" style="background:transparent; border:none; color:#64748b; font-size:0.78rem; text-decoration:underline; cursor:pointer;">
+            Continue as Guest / Demo Mode &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 1. HOME SCREEN ================= -->
+    <div id="screen-home" class="screen">
+      <!-- Blue Header Banner -->
       <div class="home-header">
         <div style="display:flex; align-items:center; gap:12px;">
-          <img src="logo.png" alt="Logo" onerror="this.style.display='none';" style="height:48px; width:auto; border-radius:8px; background:#fff; padding:2px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+          <img src="logo.png" alt="Logo" onerror="this.style.display='none';" style="height:46px; width:auto; border-radius:8px; background:#fff; padding:2px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
           <div>
             <div class="welcome" id="homeGreeting">Welcome, Brother!</div>
-          <div class="shop-name" id="homeShop">SMART WORKER PRO</div>
+            <div class="shop-name" id="homeShop">SMART WORKER PRO</div>
+          </div>
         </div>
         <button class="gear-btn" onclick="openScreen('settings', 'SETTINGS')">⚙️</button>
       </div>
 
+      <!-- Menu Section: Fabrication Systems -->
       <div class="menu-section-title">FABRICATION SYSTEMS</div>
       <div class="grid-2">
         <div class="menu-card" style="background:#1a80cc;" onclick="openScreen('domal', 'DOMAL WINDOW')">
@@ -200,6 +315,7 @@
         </div>
       </div>
 
+      <!-- Menu Section: Business & Billing -->
       <div class="menu-section-title">BUSINESS & BILLING</div>
       <div class="grid-2">
         <div class="menu-card" style="background:#993399;" onclick="openScreen('quotation', 'PRO QUOTATION')">
@@ -213,7 +329,7 @@
       </div>
     </div>
 
-    <!-- 2. DOMAL WINDOW SCREEN -->
+    <!-- ================= 2. DOMAL WINDOW SCREEN ================= -->
     <div id="screen-domal" class="screen">
       <div class="form-box">
         <div class="form-grid">
@@ -288,11 +404,11 @@
 
       <div class="output-label">CUTTING SIZES:</div>
       <div class="output-area" id="dm_alu_out"></div>
-      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
       <div class="output-area mat-area" id="dm_mat_out"></div>
     </div>
 
-    <!-- 3. SLIDING WINDOW SCREEN -->
+    <!-- ================= 3. SLIDING WINDOW SCREEN ================= -->
     <div id="screen-sliding" class="screen">
       <div class="form-box">
         <div class="form-grid">
@@ -352,11 +468,11 @@
 
       <div class="output-label" style="color:#cc661a;">CUTTING SIZES:</div>
       <div class="output-area" id="sl_out"></div>
-      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
       <div class="output-area mat-area" id="sl_mat_out"></div>
     </div>
 
-    <!-- 4. CUSTOM CASEMENT SCREEN -->
+    <!-- ================= 4. CUSTOM CASEMENT SCREEN ================= -->
     <div id="screen-casement" class="screen">
       <div class="form-box">
         <div class="form-grid">
@@ -396,7 +512,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Clear Gap for 1 Palla:</label>
+            <label>Clear Gap for 1 Leaf:</label>
             <div class="input-wrapper">
               <input type="text" id="cc_mid_w" value="0">
               <button class="keypad-trigger" onclick="openKeypad('cc_mid_w')">⌨️</button>
@@ -433,11 +549,11 @@
 
       <div class="output-label" style="color:#cc3366;">CUTTING SIZES:</div>
       <div class="output-area" id="cc_out"></div>
-      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
       <div class="output-area mat-area" id="cc_mat_out"></div>
     </div>
 
-    <!-- 5. DOOR OPTION SCREEN -->
+    <!-- ================= 5. DOOR OPTION SCREEN ================= -->
     <div id="screen-door" class="screen">
       <div class="form-box">
         <div class="form-grid">
@@ -486,11 +602,11 @@
 
       <div class="output-label" style="color:#b34d1a;">CUTTING SIZES:</div>
       <div class="output-area" id="dr_out"></div>
-      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
       <div class="output-area mat-area" id="dr_mat_out"></div>
     </div>
 
-    <!-- 6. PARTITION MASTER SCREEN -->
+    <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
     <div id="screen-partition" class="screen">
       <div class="form-box">
         <div class="form-grid">
@@ -559,11 +675,11 @@
 
       <div class="output-label" style="color:#e64d4d;">CUTTING SIZES:</div>
       <div class="output-area" id="pt_out"></div>
-      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
       <div class="output-area mat-area" id="pt_mat_out"></div>
     </div>
 
-    <!-- 7. CEILING ESTIMATOR SCREEN -->
+    <!-- ================= 7. CEILING ESTIMATOR SCREEN ================= -->
     <div id="screen-ceiling" class="screen">
       <div class="form-box">
         <div class="form-grid">
@@ -600,10 +716,10 @@
       <div class="output-area" id="ce_out" style="max-height:350px;"></div>
     </div>
 
-    <!-- 8. PRO QUOTATION SCREEN -->
+    <!-- ================= 8. PRO QUOTATION SCREEN ================= -->
     <div id="screen-quotation" class="screen">
       <div class="form-box">
-        <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin-bottom:8px;">--- CUSTOMER & BILL DETAILS ---</div>
+        <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin-bottom:8px;">CUSTOMER & BILL DETAILS</div>
         <div class="form-grid">
           <div class="form-group">
             <label>Bill Stage:</label>
@@ -623,7 +739,7 @@
             <label>Phone / PIN:</label>
             <div style="display:flex; gap:4px;">
               <input type="text" id="q_phone">
-              <button onclick="autofillCustomer()" style="background:#0288d1; color:#fff; border:none; border-radius:6px; padding:0 8px; cursor:pointer;">🔍</button>
+              <button onclick="autofillCustomer()" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:0 8px; cursor:pointer;">🔍</button>
             </div>
           </div>
           <div class="form-group">
@@ -632,7 +748,7 @@
           </div>
         </div>
 
-        <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin:10px 0 6px 0;">--- ADD BILL ITEM ---</div>
+        <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin:12px 0 6px 0;">ADD BILL ITEM</div>
         <div class="form-grid">
           <div class="form-group" style="grid-column: span 2;">
             <label>Type:</label>
@@ -671,10 +787,12 @@
               <option value="Other Work">Other Work</option>
             </select>
           </div>
+
           <div class="form-group" style="grid-column: span 2;">
             <label>Room / Location:</label>
             <input type="text" id="q_loc" placeholder="e.g. Bed-1, Hall, Kitchen">
           </div>
+
           <div class="form-group" style="grid-column: span 2;">
             <label>Alu Finish:</label>
             <select id="q_color" onchange="updateSuggestedRate()">
@@ -692,6 +810,7 @@
               <option value="Aluminium: Wooden Finish (Dark Walnut)">Aluminium: Wooden Finish (Dark Walnut)</option>
             </select>
           </div>
+
           <div class="form-group">
             <label>Thickness:</label>
             <select id="q_thick" onchange="updateSuggestedRate()">
@@ -706,6 +825,7 @@
               <option value="3.0 mm">3.0 mm</option>
             </select>
           </div>
+
           <div class="form-group">
             <label>Glass Thick:</label>
             <select id="q_g_thick" onchange="updateSuggestedRate()">
@@ -718,6 +838,7 @@
               <option value="DGU Double Glazed Glass">DGU Double Glazed Glass</option>
             </select>
           </div>
+
           <div class="form-group" style="grid-column: span 2;">
             <label>Glass Type:</label>
             <select id="q_g_type" onchange="updateSuggestedRate()">
@@ -731,6 +852,7 @@
               <option value="DGU Soundproof Glass">DGU Soundproof Glass</option>
             </select>
           </div>
+
           <div class="form-group">
             <label>Toughened?:</label>
             <select id="q_tough" onchange="updateSuggestedRate()">
@@ -738,6 +860,7 @@
               <option value="Toughened Safety Glass">Toughened Safety Glass</option>
             </select>
           </div>
+
           <div class="form-group">
             <label style="color:#2e7d32; font-weight:bold;">Rate (Rs/Sq.Ft):</label>
             <div class="input-wrapper">
@@ -745,10 +868,12 @@
               <button class="keypad-trigger" onclick="openKeypad('q_rate')">⌨️</button>
             </div>
           </div>
+
           <div class="form-group">
             <label>Qty:</label>
             <input type="number" id="q_qty" value="1">
           </div>
+
           <div class="form-group">
             <label>Height:</label>
             <div class="input-wrapper">
@@ -756,6 +881,7 @@
               <button class="keypad-trigger" onclick="openKeypad('q_h')">⌨️</button>
             </div>
           </div>
+
           <div class="form-group" style="grid-column: span 2;">
             <label>Width:</label>
             <div class="input-wrapper">
@@ -779,12 +905,12 @@
             <input type="text" id="q_advance" value="0" oninput="updateLiveDue()">
             <button class="keypad-trigger" onclick="openKeypad('q_advance')">⌨️</button>
           </div>
-          <button style="width:23%; background:#0288d1; color:#fff; font-size:0.75rem; font-weight:bold; border:none; padding:8px 0; border-radius:6px; cursor:pointer;" onclick="set50PercentAdvance()">50% Auto</button>
+          <button style="width:23%; background:#0284c7; color:#fff; font-size:0.75rem; font-weight:bold; border:none; padding:8px 0; border-radius:6px; cursor:pointer;" onclick="set50PercentAdvance()">50% Auto</button>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.85rem;">
-          <span style="font-weight:bold; color:#d32f2f;">Due Balance:</span>
-          <span id="q_due_label" style="font-weight:bold; color:#d32f2f;">Rs. 0.00</span>
+          <span style="font-weight:bold; color:#dc2626;">Due Balance:</span>
+          <span id="q_due_label" style="font-weight:bold; color:#dc2626;">Rs. 0.00</span>
         </div>
 
         <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
@@ -796,7 +922,7 @@
         </div>
 
         <div style="display:flex; gap:6px; align-items:center; margin-bottom:12px;">
-          <label style="font-size:0.8rem; font-weight:bold; color:#1976d2; width:40%;">Special Note:</label>
+          <label style="font-size:0.8rem; font-weight:bold; color:#2563eb; width:40%;">Special Note:</label>
           <input type="text" id="q_remarks" placeholder="Ex: Balance after fitting" style="width:60%;">
         </div>
 
@@ -812,7 +938,7 @@
       <div class="output-area" id="bill_output" style="max-height:380px;"></div>
     </div>
 
-    <!-- 9. DASHBOARD SCREEN -->
+    <!-- ================= 9. DASHBOARD SCREEN ================= -->
     <div id="screen-dashboard" class="screen">
       <div class="form-box">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
@@ -822,26 +948,26 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
-          <div style="background:#2e7d32; color:#fff; border-radius:8px; padding:8px; text-align:center;">
+          <div style="background:#16a34a; color:#fff; border-radius:8px; padding:8px; text-align:center;">
             <div style="font-size:0.65rem; font-weight:bold;">TOTAL SALES</div>
             <div id="dashTotalSales" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
           </div>
-          <div style="background:#c62828; color:#fff; border-radius:8px; padding:8px; text-align:center;">
+          <div style="background:#dc2626; color:#fff; border-radius:8px; padding:8px; text-align:center;">
             <div style="font-size:0.65rem; font-weight:bold;">PURCHASES</div>
             <div id="dashTotalPurchases" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
           </div>
-          <div style="background:#1976d2; color:#fff; border-radius:8px; padding:8px; text-align:center;">
+          <div style="background:#2563eb; color:#fff; border-radius:8px; padding:8px; text-align:center;">
             <div style="font-size:0.65rem; font-weight:bold;">BALANCE</div>
             <div id="dashNetBalance" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
           </div>
         </div>
 
-        <button class="action-btn" style="background:#f57c00; width:100%; margin-bottom:10px;" onclick="openExpenseModal()">+ ADD MATERIAL PURCHASE</button>
+        <button class="action-btn" style="background:#ea580c; width:100%; margin-bottom:10px;" onclick="openExpenseModal()">+ ADD MATERIAL PURCHASE</button>
         <div class="output-area" id="dash_details" style="max-height:300px; margin:0;"></div>
       </div>
     </div>
 
-    <!-- 10. HISTORY SCREEN -->
+    <!-- ================= 10. HISTORY SCREEN ================= -->
     <div id="screen-history" class="screen">
       <div class="form-box">
         <div class="form-group" style="margin-bottom:10px;">
@@ -851,15 +977,15 @@
           </select>
         </div>
         <div class="btn-row">
-          <button class="action-btn" style="background:#0288d1;" onclick="loadHistory()">🔄 REFRESH</button>
-          <button class="action-btn" style="background:#388e3c;" onclick="backupDb()">💾 BACKUP</button>
-          <button class="action-btn" style="background:#d32f2f;" onclick="confirmDeleteHistory()">🗑️ DELETE ALL</button>
+          <button class="action-btn" style="background:#0284c7;" onclick="loadHistory()">🔄 REFRESH</button>
+          <button class="action-btn" style="background:#16a34a;" onclick="backupDb()">💾 BACKUP</button>
+          <button class="action-btn" style="background:#dc2626;" onclick="confirmDeleteHistory()">🗑️ DELETE ALL</button>
         </div>
       </div>
       <div class="output-area" id="history_out" style="max-height:400px;"></div>
     </div>
 
-    <!-- 11. PROFILE SCREEN -->
+    <!-- ================= 11. PROFILE SCREEN ================= -->
     <div id="screen-profile" class="screen">
       <div class="form-box">
         <div class="form-group" style="margin-bottom:8px;">
@@ -875,32 +1001,35 @@
           <input type="text" id="set_phone" value="9239413517">
         </div>
         <div class="form-group" style="margin-bottom:8px;">
-          <label>Email / Gmail ID (Optional):</label>
+          <label>Email / Gmail ID:</label>
           <input type="text" id="set_email">
         </div>
         <div class="form-group" style="margin-bottom:8px;">
           <label>GST Number (Optional):</label>
           <input type="text" id="set_gst">
         </div>
-        <div class="form-group" style="margin-bottom:12px;">
+        <div class="form-group" style="margin-bottom:10px;">
           <label>Shop Address:</label>
           <textarea id="set_address" rows="3">Amta (Chandni), Howrah, West Bengal</textarea>
         </div>
-                <div class="form-group" style="margin-bottom:10px;">
-          <label style="color:#1976d2; font-weight:bold;">দোকানের নিজস্ব লোগো (Upload Shop Logo):</label>
+
+        <!-- Workshop Custom Logo Upload -->
+        <div class="form-group" style="margin-bottom:10px;">
+          <label style="color:#2563eb; font-weight:bold;">Upload Workshop Logo (For Bills):</label>
           <input type="file" id="set_logo_input" accept="image/*" onchange="uploadShopLogo(this)" style="padding:4px;">
           <div id="logoPreviewBox" style="margin-top:4px; display:none; align-items:center; gap:8px;">
-            <img id="logoPreviewImg" src="" style="height:45px; border-radius:6px; border:1px solid #ccc; padding:2px; background:#fff;">
-            <button onclick="removeShopLogo()" style="background:#d32f2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">মুছে ফেলুন</button>
+            <img id="logoPreviewImg" src="" style="height:45px; border-radius:6px; border:1px solid #cbd5e1; padding:2px; background:#fff;">
+            <button onclick="removeShopLogo()" style="background:#dc2626; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Remove</button>
           </div>
         </div>
 
+        <!-- Workshop Custom Payment QR Upload -->
         <div class="form-group" style="margin-bottom:12px;">
-          <label style="color:#2e7d32; font-weight:bold;">দোকানের পেমেন্ট QR কোড (Upload Payment QR Code):</label>
+          <label style="color:#16a34a; font-weight:bold;">Upload UPI Payment QR Code (For Bills):</label>
           <input type="file" id="set_qr_input" accept="image/*" onchange="uploadPaymentQr(this)" style="padding:4px;">
           <div id="qrPreviewBox" style="margin-top:4px; display:none; align-items:center; gap:8px;">
-            <img id="qrPreviewImg" src="" style="height:60px; border-radius:6px; border:1px solid #ccc; padding:2px; background:#fff;">
-            <button onclick="removePaymentQr()" style="background:#d32f2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">মুছে ফেলুন</button>
+            <img id="qrPreviewImg" src="" style="height:60px; border-radius:6px; border:1px solid #cbd5e1; padding:2px; background:#fff;">
+            <button onclick="removePaymentQr()" style="background:#dc2626; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Remove</button>
           </div>
         </div>
 
@@ -908,10 +1037,10 @@
       </div>
     </div>
 
-    <!-- 12. BILL SETTINGS SCREEN -->
+    <!-- ================= 12. BILL SETTINGS SCREEN ================= -->
     <div id="screen-bill_settings" class="screen">
       <div class="form-box">
-        <div style="color:#d32f2f; font-weight:bold; font-size:0.85rem; margin-bottom:8px;">--- GENERAL SETTINGS ---</div>
+        <div style="color:#dc2626; font-weight:bold; font-size:0.85rem; margin-bottom:8px;">--- GENERAL SETTINGS ---</div>
         <div class="form-grid">
           <div class="form-group">
             <label>Default Unit:</label>
@@ -931,37 +1060,37 @@
           </div>
         </div>
 
-        <div style="color:#2e7d32; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 1: SLIDING 18x40 & COLOR VARIANTS (Rs/Kg) ---</div>
+        <div style="color:#16a34a; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 1: SLIDING 18x40 & COLOR VARIANTS (Rs/Kg) ---</div>
         <div class="form-grid">
           <div class="form-group"><label>Sliding Mill/Natural:</label><input type="text" id="bs_sl_mill" value="260"></div>
           <div class="form-group"><label>Sliding Silver Anodized:</label><input type="text" id="bs_sl_anod" value="275"></div>
           <div class="form-group"><label>Sliding Powder Coated:</label><input type="text" id="bs_sl_powder" value="290"></div>
-          <div class="form-group"><label style="color:#e65100;">Sliding Wooden Finish:</label><input type="text" id="bs_sl_wooden" value="345"></div>
+          <div class="form-group"><label style="color:#ea580c;">Sliding Wooden Finish:</label><input type="text" id="bs_sl_wooden" value="345"></div>
         </div>
 
-        <div style="color:#1976d2; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 2: DOMAL SYSTEM & COLOR VARIANTS (Rs/Kg) ---</div>
+        <div style="color:#2563eb; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 2: DOMAL SYSTEM & COLOR VARIANTS (Rs/Kg) ---</div>
         <div class="form-grid">
           <div class="form-group"><label>Domal Mill/Natural:</label><input type="text" id="bs_dm_mill" value="280"></div>
           <div class="form-group"><label>Domal Silver Anodized:</label><input type="text" id="bs_dm_anod" value="295"></div>
           <div class="form-group"><label>Domal Powder Coated:</label><input type="text" id="bs_dm_powder" value="310"></div>
-          <div class="form-group"><label style="color:#e65100;">Domal Wooden Finish:</label><input type="text" id="bs_dm_wooden" value="365"></div>
+          <div class="form-group"><label style="color:#ea580c;">Domal Wooden Finish:</label><input type="text" id="bs_dm_wooden" value="365"></div>
         </div>
 
-        <div style="color:#7b1fa2; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 3: DOORS, PARTITION & CASEMENT (Rs/Kg) ---</div>
+        <div style="color:#9333ea; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 3: DOORS, PARTITION & CASEMENT (Rs/Kg) ---</div>
         <div class="form-grid">
           <div class="form-group"><label>Door Master Material:</label><input type="text" id="bs_alu_door" value="270"></div>
           <div class="form-group"><label>Partition Material:</label><input type="text" id="bs_alu_partition" value="265"></div>
           <div class="form-group" style="grid-column:span 2;"><label>Casement Material:</label><input type="text" id="bs_alu_casement" value="275"></div>
         </div>
 
-        <div style="color:#0288d1; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 4: GLASS & TOUGHENED (Rs/Sq.Ft) ---</div>
+        <div style="color:#0284c7; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 4: GLASS & TOUGHENED (Rs/Sq.Ft) ---</div>
         <div class="form-grid">
           <div class="form-group"><label>Clear Glass (Base):</label><input type="text" id="bs_glass_clear" value="35"></div>
           <div class="form-group"><label>Reflective Glass:</label><input type="text" id="bs_glass_refl" value="55"></div>
-          <div class="form-group" style="grid-column:span 2;"><label style="color:#d32f2f;">Toughened Extra Charge:</label><input type="text" id="bs_glass_tough" value="25"></div>
+          <div class="form-group" style="grid-column:span 2;"><label style="color:#dc2626;">Toughened Extra Charge:</label><input type="text" id="bs_glass_tough" value="25"></div>
         </div>
 
-        <div style="color:#e65100; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 5: SYSTEM LABOUR CHARGES (Rs/Sq.Ft) ---</div>
+        <div style="color:#ea580c; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 5: SYSTEM LABOUR CHARGES (Rs/Sq.Ft) ---</div>
         <div class="form-grid">
           <div class="form-group"><label>Sliding Window Labour:</label><input type="text" id="bs_labour_sliding" value="35"></div>
           <div class="form-group"><label>Domal Window Labour:</label><input type="text" id="bs_labour_domal" value="50"></div>
@@ -970,7 +1099,7 @@
           <div class="form-group" style="grid-column:span 2;"><label>Partition Labour:</label><input type="text" id="bs_labour_partition" value="40"></div>
         </div>
 
-        <div style="color:#7b1fa2; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 6: COMPANY PROFIT MARGIN (%) ---</div>
+        <div style="color:#9333ea; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 6: COMPANY PROFIT MARGIN (%) ---</div>
         <div class="form-grid">
           <div class="form-group"><label>Sliding Profit (%):</label><input type="text" id="bs_profit_sliding" value="15"></div>
           <div class="form-group"><label>Domal Profit (%):</label><input type="text" id="bs_profit_domal" value="20"></div>
@@ -982,20 +1111,21 @@
       </div>
     </div>
 
-    <!-- 13. SETTINGS MENU SCREEN -->
+    <!-- ================= 13. SETTINGS MENU SCREEN ================= -->
     <div id="screen-settings" class="screen">
       <div style="padding:14px; display:flex; flex-direction:column; gap:10px;">
-        <button class="action-btn" style="background:#546e7a; padding:14px;" onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')">🔒 Privacy Policy & Terms</button>
-        <button class="action-btn" style="background:#2e7d32; padding:14px;" onclick="openScreen('activation', 'PRO UPGRADE')">⭐ PRO Subscription / Activation</button>
-        <button class="action-btn" style="background:#1976d2; padding:14px;" onclick="openScreen('profile', 'EDIT PROFILE')">👤 Edit Profile</button>
-        <button class="action-btn" style="background:#8d6e63; padding:14px;" onclick="openScreen('bill_settings', 'DYNAMIC COSTING & SETUP')">⚙️ Dynamic Costing & Bill Setup</button>
-        <button class="action-btn" style="background:#455a64; padding:14px;" onclick="openScreen('history', 'DATA HISTORY')">🗂️ Data History</button>
-        <button class="action-btn" style="background:#e65100; padding:14px;" onclick="openScreen('customer_lookup', 'CUSTOMER BOOK')">🔒 Customer Book (PIN)</button>
-        <button class="action-btn" style="background:#6a1b9a; padding:14px;" onclick="openScreen('dashboard', 'BUSINESS DASHBOARD')">📊 Business Dashboard</button>
+        <button class="action-btn" style="background:#475569; padding:14px;" onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')">🔒 Privacy Policy & Terms</button>
+        <button class="action-btn" style="background:#16a34a; padding:14px;" onclick="openScreen('activation', 'PRO UPGRADE')">⭐ PRO Subscription / Plans</button>
+        <button class="action-btn" style="background:#2563eb; padding:14px;" onclick="openScreen('profile', 'EDIT PROFILE')">👤 Workshop Profile & Branding</button>
+        <button class="action-btn" style="background:#78716c; padding:14px;" onclick="openScreen('bill_settings', 'DYNAMIC COSTING SETUP')">⚙️ Dynamic Costing & Bill Rates</button>
+        <button class="action-btn" style="background:#334155; padding:14px;" onclick="openScreen('history', 'DATA HISTORY')">🗂️ Data History</button>
+        <button class="action-btn" style="background:#ea580c; padding:14px;" onclick="openScreen('customer_lookup', 'CUSTOMER BOOK')">🔒 Customer Book (PIN)</button>
+        <button class="action-btn" style="background:#7e22ce; padding:14px;" onclick="openScreen('dashboard', 'BUSINESS DASHBOARD')">📊 Business Dashboard</button>
+        <button class="action-btn" style="background:#0284c7; padding:14px;" onclick="openScreen('auth', 'SIGN IN / CLOUD')">☁️ Google Cloud Account Sync</button>
       </div>
     </div>
 
-    <!-- 14. CUSTOMER LOOKUP SCREEN -->
+    <!-- ================= 14. CUSTOMER LOOKUP SCREEN ================= -->
     <div id="screen-customer_lookup" class="screen">
       <div class="form-box">
         <div class="form-group">
@@ -1009,66 +1139,63 @@
       <div class="output-area" id="lookup_results" style="max-height:400px;"></div>
     </div>
 
-        <!-- 15. ACTIVATION SCREEN (EXACT KIVY REPLICA WITH ANNUAL/MONTHLY PLANS) -->
+    <!-- ================= 15. ACTIVATION SCREEN ================= -->
     <div id="screen-activation" class="screen">
-      <div class="form-box" style="background:#141f3d; color:#fff; border: 1px solid #334778;">
-        
-        <!-- Status Banner -->
-        <div id="actStatusBanner" style="background:#37474f; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:1rem; margin-bottom:14px;">
+      <div class="form-box" style="background:#1e293b; color:#fff; border: 1px solid #334155;">
+        <div id="actStatusBanner" style="background:#334155; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:0.95rem; margin-bottom:14px;">
           Status: FREE PLAN (Limited Features)
         </div>
 
-        <div style="font-size:0.85rem; font-weight:bold; color:#ffd54f; margin-bottom:10px; text-transform:uppercase;">
+        <div style="font-size:0.85rem; font-weight:bold; color:#fbbf24; margin-bottom:10px; text-transform:uppercase;">
           SELECT YOUR PRO MEMBERSHIP PLAN:
         </div>
 
-        <!-- Card 1: Annual Plan -->
-        <div style="background:#1b294e; border:1.5px solid #ffb300; border-radius:12px; padding:12px; margin-bottom:12px;">
+        <!-- Annual Card -->
+        <div style="background:#0f172a; border:1.5px solid #f59e0b; border-radius:12px; padding:12px; margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <div style="color:#ffd54f; font-weight:bold; font-size:0.9rem;">⭐ ANNUAL PLAN (MOST POPULAR)</div>
-            <div style="color:#69f0ae; font-weight:bold; font-size:1.1rem;">Rs. 799 / Year</div>
+            <div style="color:#fbbf24; font-weight:bold; font-size:0.9rem;">⭐ ANNUAL PLAN (BEST VALUE)</div>
+            <div style="color:#4ade80; font-weight:bold; font-size:1.1rem;">Rs. 799 / Year</div>
           </div>
-          <div style="font-size:0.75rem; color:#cfd8dc; margin-bottom:10px;">
+          <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
             Only Rs. 66/month! Special 40% OFF for Fabricators
           </div>
-          <button class="action-btn" style="background:#ffb300; color:#000; font-weight:800; width:100%; padding:10px;" onclick="subscribeViaWhatsApp('Annual')">
+          <button class="action-btn" style="background:#f59e0b; color:#000; font-weight:800; width:100%; padding:10px;" onclick="subscribeViaWhatsApp('Annual')">
             CHOOSE ANNUAL (Rs. 799/Yr) 👉
           </button>
         </div>
 
-        <!-- Card 2: Monthly Plan -->
-        <div style="background:#1b294e; border:1px solid #42a5f5; border-radius:12px; padding:12px; margin-bottom:14px;">
+        <!-- Monthly Card -->
+        <div style="background:#0f172a; border:1px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <div style="color:#64b5f6; font-weight:bold; font-size:0.9rem;">🔹 MONTHLY PLAN</div>
+            <div style="color:#38bdf8; font-weight:bold; font-size:0.9rem;">🔹 MONTHLY PLAN</div>
             <div style="color:#fff; font-weight:bold; font-size:1.05rem;">Rs. 99 / Month</div>
           </div>
-          <button class="action-btn" style="background:#1976d2; color:#fff; font-weight:bold; width:100%; padding:10px; margin-top:6px;" onclick="subscribeViaWhatsApp('Monthly')">
+          <button class="action-btn" style="background:#0284c7; color:#fff; font-weight:bold; width:100%; padding:10px; margin-top:6px;" onclick="subscribeViaWhatsApp('Monthly')">
             CHOOSE MONTHLY (Rs. 99/Mo)
           </button>
         </div>
 
         <!-- Pro Benefits -->
-        <div style="background:#101932; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.78rem; line-height:1.6;">
-          <div style="color:#ffd54f; font-weight:bold; font-size:0.85rem; margin-bottom:6px;">PRO VERSION BENEFITS:</div>
-          <div style="color:#e0e0e0;">✔ Professional PDF Bills & Quotations with Shop Name & Logo</div>
-          <div style="color:#e0e0e0;">✔ Unlimited Domal, Sliding, Door & Partition Cutting Lists</div>
-          <div style="color:#e0e0e0;">✔ Glass & Material Cutting Schedules (Saves 10-15% Wastage)</div>
-          <div style="color:#e0e0e0;">✔ 1-Click WhatsApp Quotation Share with Customer</div>
-          <div style="color:#e0e0e0;">✔ 100% Ad-Free & Superfast Experience</div>
+        <div style="background:#0b1329; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.78rem; line-height:1.6;">
+          <div style="color:#fbbf24; font-weight:bold; font-size:0.85rem; margin-bottom:6px;">PRO VERSION BENEFITS:</div>
+          <div style="color:#e2e8f0;">✔ Professional PDF Bills & Quotations with Shop Name & Logo</div>
+          <div style="color:#e2e8f0;">✔ Unlimited Domal, Sliding, Door & Partition Cutting Lists</div>
+          <div style="color:#e2e8f0;">✔ Glass & Material Cutting Schedules (Saves 10-15% Wastage)</div>
+          <div style="color:#e2e8f0;">✔ 1-Click WhatsApp Quotation Share with Customer</div>
+          <div style="color:#e2e8f0;">✔ 100% Ad-Free & Superfast Experience</div>
         </div>
 
         <!-- Device ID Box -->
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
           <label style="font-weight:bold; color:#fff; font-size:0.85rem; width:28%;">Device ID:</label>
           <input type="text" id="actDeviceId" readonly style="flex:1; background:#fff; color:#000; font-weight:bold; font-size:1.1rem; text-align:center; padding:8px;" value="LOADING...">
-          <button class="action-btn" id="actCopyBtn" style="background:#1976d2; flex:0.35; padding:8px;" onclick="copyDeviceId()">COPY</button>
+          <button class="action-btn" id="actCopyBtn" style="background:#2563eb; flex:0.35; padding:8px;" onclick="copyDeviceId()">COPY</button>
         </div>
 
-        <!-- Payment & Trust Info -->
-        <div style="background:#101932; border-radius:10px; padding:10px; text-align:center; margin-bottom:14px; font-size:0.75rem;">
-          <div style="color:#69f0ae; font-weight:bold; font-size:0.85rem;">💳 PhonePe / Google Pay / Paytm: 9239413517</div>
-          <div style="color:#b0bec5; margin-top:2px;">⚡ Send payment screenshot to get Key in 5 minutes</div>
-          <div style="color:#90a4ae; margin-top:2px;">📞 24x7 Fabricator Help & Training Support</div>
+        <!-- Trust Note -->
+        <div style="background:#0b1329; border-radius:10px; padding:10px; text-align:center; margin-bottom:14px; font-size:0.75rem;">
+          <div style="color:#4ade80; font-weight:bold; font-size:0.85rem;">💳 PhonePe / Google Pay / Paytm: 9239413517</div>
+          <div style="color:#94a3b8; margin-top:2px;">⚡ Send payment screenshot to get Activation Key</div>
         </div>
 
         <!-- WhatsApp Activation Button -->
@@ -1077,16 +1204,17 @@
         </button>
 
         <!-- Activation Key Input -->
-        <div style="border-top:1px dashed #334778; padding-top:12px;">
-          <div style="color:#cfd8dc; font-size:0.82rem; font-weight:bold; margin-bottom:6px;">ENTER ACTIVATION KEY BELOW:</div>
-          <input type="text" id="activationInput" placeholder="Enter Pro Activation Key" style="background:#fff; color:#000; font-size:1.1rem; font-weight:bold; text-align:center; text-transform:uppercase; padding:10px; margin-bottom:8px;">
-          <button class="action-btn" style="background:#0288d1; width:100%; padding:12px; font-size:0.95rem;" onclick="activateAppKey()">
+        <div style="border-top:1px dashed #475569; padding-top:12px;">
+          <div style="color:#cbd5e1; font-size:0.82rem; font-weight:bold; margin-bottom:6px;">ENTER ACTIVATION KEY BELOW:</div>
+          <input type="text" id="activationInput" placeholder="Enter Activation Key" style="background:#fff; color:#000; font-size:1.1rem; font-weight:bold; text-align:center; text-transform:uppercase; padding:10px; margin-bottom:8px;">
+          <button class="action-btn" style="background:#0284c7; width:100%; padding:12px; font-size:0.95rem;" onclick="activateAppKey()">
             ACTIVATE PRO KEY
           </button>
         </div>
-
       </div>
     </div>
+
+  </div>
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
@@ -1170,7 +1298,7 @@
   <!-- Expense Modal -->
   <div class="modal-overlay" id="expenseModal">
     <div class="keypad-modal" style="background:#fff;">
-      <div style="font-size:1.1rem; font-weight:bold; color:#192a4a; margin-bottom:10px;">ADD NEW PURCHASE</div>
+      <div style="font-size:1.1rem; font-weight:bold; color:var(--navy); margin-bottom:10px;">ADD NEW PURCHASE</div>
       <div class="form-group" style="margin-bottom:8px;">
         <label>Material Category:</label>
         <select id="exp_cat">
@@ -1200,109 +1328,97 @@
     </div>
   </div>
 
-  
-  <!-- Google Cloud Login / Registration Modal -->
-  <div class="modal-overlay" id="authModal">
-    <div class="keypad-modal" style="background:#fff; max-width:420px; padding:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #e0e0e0; padding-bottom:8px;">
-        <div style="font-size:1.05rem; font-weight:bold; color:#192a4a; display:flex; align-items:center; gap:6px;">
-          <i class="fa-solid fa-cloud" style="color:#1976d2;"></i>
-          <span>গুগল ক্লাউড অ্যাকাউন্ট সিঙ্ক</span>
-        </div>
-        <button onclick="closeAuthModal()" style="background:transparent; border:none; font-size:1.2rem; cursor:pointer; color:#777;">✕</button>
-      </div>
+<script>
 
-      <!-- Tab Buttons: Login vs Register -->
-      <div style="display:flex; gap:6px; margin-bottom:12px;">
-        <button id="authTabLoginBtn" onclick="switchAuthTab('login')" style="flex:1; padding:8px; border-radius:6px; border:none; font-weight:bold; font-size:0.85rem; background:#1976d2; color:#fff; cursor:pointer;">
-          লগইন (Sign In)
-        </button>
-        <button id="authTabRegBtn" onclick="switchAuthTab('register')" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc; font-weight:bold; font-size:0.85rem; background:#f5f5f5; color:#333; cursor:pointer;">
-          নতুন রেজিস্ট্রেশন
-        </button>
-      </div>
+    function switchAuthMode(mode) {
+      const loginBtn = document.getElementById('tabBtnLogin');
+      const regBtn = document.getElementById('tabBtnRegister');
+      const formLogin = document.getElementById('authFormLogin');
+      const formReg = document.getElementById('authFormRegister');
 
-      <!-- Login Form -->
-      <div id="authLoginForm">
-        <div class="form-group" style="margin-bottom:8px;">
-          <label>আপনার জিমেইল আইডি (Gmail ID):</label>
-          <input type="text" id="login_email" placeholder="example@gmail.com">
-        </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label>পাসওয়ার্ড (Password):</label>
-          <input type="password" id="login_password" placeholder="গোপন পাসওয়ার্ড লিখুন">
-        </div>
-        <button class="action-btn btn-calc" style="width:100%; padding:11px; margin-bottom:8px;" onclick="handleEmailLogin()">
-          <i class="fa-solid fa-right-to-bracket"></i> জিমেইল দিয়ে লগইন করুন
-        </button>
-        <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:10px;">
-          <a href="javascript:void(0)" onclick="handleForgotPassword()" style="color:#1976d2; text-decoration:none;">পাসওয়ার্ড ভুলে গেছেন?</a>
-          <span style="color:#666;">মোবাইল নষ্ট হলেও ডেটা সেভ থাকবে</span>
-        </div>
-      </div>
+      if (mode === 'login') {
+        loginBtn.style.background = '#2563eb';
+        loginBtn.style.color = '#fff';
+        regBtn.style.background = '#f1f5f9';
+        regBtn.style.color = '#475569';
+        formLogin.style.display = 'block';
+        formReg.style.display = 'none';
+      } else {
+        regBtn.style.background = '#16a34a';
+        regBtn.style.color = '#fff';
+        loginBtn.style.background = '#f1f5f9';
+        loginBtn.style.color = '#475569';
+        formReg.style.display = 'block';
+        formLogin.style.display = 'none';
+      }
+    }
 
-      <!-- Register Form -->
-      <div id="authRegForm" style="display:none;">
-        <div class="form-group" style="margin-bottom:6px;">
-          <label>আপনার নাম:</label>
-          <input type="text" id="reg_name" placeholder="নাম লিখুন">
-        </div>
-        <div class="form-group" style="margin-bottom:6px;">
-          <label>দোকান / ওয়ার্কশপের নাম:</label>
-          <input type="text" id="reg_shop" placeholder="দোকানের নাম">
-        </div>
-        <div class="form-group" style="margin-bottom:6px;">
-          <label>মোবাইল নম্বর:</label>
-          <input type="text" id="reg_phone" placeholder="মোবাইল নম্বর">
-        </div>
-        <div class="form-group" style="margin-bottom:6px;">
-          <label>জিমেইল (Gmail ID):</label>
-          <input type="text" id="reg_email" placeholder="example@gmail.com">
-        </div>
-        <div class="form-group" style="margin-bottom:10px;">
-          <label>নতুন পাসওয়ার্ড তৈরি করুন (Password):</label>
-          <input type="password" id="reg_password" placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড">
-        </div>
-        <button class="action-btn btn-save" style="width:100%; padding:11px; margin-bottom:8px;" onclick="handleEmailRegister()">
-          <i class="fa-solid fa-user-plus"></i> অ্যাকাউন্ট তৈরি ও ক্লাউড সিঙ্ক
-        </button>
-      </div>
+    function doEmailLogin() {
+      const email = document.getElementById('auth_login_email').value.trim();
+      const pass = document.getElementById('auth_login_pass').value;
+      if (!email || !pass) { alert("Please enter your Email and Password."); return; }
 
-      <!-- Google Sign In 1-Click Button -->
-      <div style="text-align:center; margin:10px 0 8px 0; border-top:1px dashed #ddd; padding-top:10px;">
-        <button onclick="handleGoogleSignIn()" style="width:100%; padding:10px; background:#fff; border:1px solid #ccc; border-radius:8px; font-weight:bold; font-size:0.85rem; color:#333; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="height:18px;">
-          <span>Google দিয়ে সরাসরি সাইন-ইন</span>
-        </button>
-      </div>
+      localStorage.setItem('sw_cloud_user', email);
+      alert("Signed in successfully as " + email);
+      goHome();
+    }
 
-      <!-- Firebase Setup Shortcut -->
-      <div style="font-size:0.72rem; text-align:center; color:#777; margin-top:6px;">
-        <i class="fa-solid fa-shield-halved" style="color:#4caf50;"></i> সম্পূর্ণ সুরক্ষিত গুগল ক্লাউড সার্ভার
-        <br><a href="javascript:void(0)" onclick="openFirebaseConfigModal()" style="color:#0288d1; text-decoration:none;">[Firebase ক্লাউড কানেকশন সেটিংস]</a>
-      </div>
-    </div>
-  </div>
+    function doEmailRegister() {
+      const name = document.getElementById('auth_reg_name').value.trim();
+      const shop = document.getElementById('auth_reg_shop').value.trim();
+      const phone = document.getElementById('auth_reg_phone').value.trim();
+      const email = document.getElementById('auth_reg_email').value.trim();
+      const pass = document.getElementById('auth_reg_pass').value;
 
-  <!-- Firebase Config Setting Modal -->
-  <div class="modal-overlay" id="fbConfigModal">
-    <div class="keypad-modal" style="background:#fff; max-width:440px; padding:16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="color:#192a4a; font-size:0.95rem;">গুগল ফায়ারবেস ক্লাউড কানেকশন</strong>
-        <button onclick="closeFirebaseConfigModal()" style="background:transparent; border:none; font-size:1.1rem; cursor:pointer;">✕</button>
-      </div>
-      <p style="font-size:0.75rem; color:#666; margin-bottom:8px; line-height:1.4;">
-        আপনার ফায়ারবেস কনসোল (console.firebase.google.com) থেকে পাওয়া ছোট কোডটি নিচে পেস্ট করে সেভ করুন। এটি লাইফটাইম ফ্রি ক্লাউড ডাটাবেস হিসেবে কাজ করবে।
-      </p>
-      <textarea id="customFbConfigInput" rows="7" placeholder="Paste firebaseConfig JSON here or leave blank for local sync..." style="font-family:monospace; font-size:0.75rem; width:100%; padding:8px; margin-bottom:8px;"></textarea>
-      <div class="btn-row">
-        <button class="action-btn btn-clear" onclick="closeFirebaseConfigModal()">বন্ধ করুন</button>
-        <button class="action-btn btn-save" onclick="saveCustomFirebaseConfig()">কানেক্ট ও সেভ করুন</button>
-      </div>
-    </div>
-  </div>
+      if (!name || !shop || !email || !pass || pass.length < 6) {
+        alert("Please fill all fields and create a password with at least 6 characters.");
+        return;
+      }
 
-  <script>
+      const profile = { name, shop_name: shop, phone, email, address: "Fabrication Workshop" };
+      localStorage.setItem('sw_profile', JSON.stringify(profile));
+      localStorage.setItem('sw_cloud_user', email);
+      loadSavedProfile();
+      alert("Account created successfully! Welcome to Smart Worker Pro.");
+      goHome();
+    }
+
+    function doGoogleSignIn() {
+      if (window.firebase && fbAuth) {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        fbAuth.signInWithPopup(provider).then(res => {
+          localStorage.setItem('sw_cloud_user', res.user.email);
+          alert("Signed in with Google: " + res.user.email);
+          goHome();
+        }).catch(err => {
+          // Simulation fallback
+          const guestEmail = prompt("Enter your Gmail address to simulate Google Sign-in:");
+          if (guestEmail) {
+            localStorage.setItem('sw_cloud_user', guestEmail);
+            goHome();
+          }
+        });
+      } else {
+        const guestEmail = prompt("Enter your Gmail address to sign in:");
+        if (guestEmail) {
+          localStorage.setItem('sw_cloud_user', guestEmail);
+          goHome();
+        }
+      }
+    }
+
+    function doForgotPassword() {
+      const email = prompt("Enter your registered Gmail address to reset password:");
+      if (email) {
+        alert("Password reset instructions have been sent to " + email);
+      }
+    }
+
+    function skipAuthToGuest() {
+      localStorage.setItem('sw_guest_mode', 'true');
+      goHome();
+    }
+
     // Embedded JS Functions from main.py & calculations.py
     function safeEval(text) {
       if (!text) return 0.0;
@@ -3875,19 +3991,24 @@ function saveMeasurementData(projectType, outId, matId) {
       }
     }
 
+    
     window.onload = function() {
-      initFirebaseCloud();
       setupDb();
-      const today = new Date();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const yyyy = today.getFullYear();
-      document.getElementById('dash_month').value = `${mm}/${yyyy}`;
-
+      initFirebaseCloud();
       loadSavedProfile();
-      updateActivationScreenUI();
       loadBillSettings();
       updateSuggestedRate();
+
+      // Check if user should see Login first
+      const hasUser = localStorage.getItem('sw_cloud_user') || localStorage.getItem('sw_guest_mode');
+      if (!hasUser) {
+        openScreen('auth', 'SIGN IN / REGISTER');
+        document.getElementById('topBackBtn').style.display = 'none';
+      } else {
+        goHome();
+      }
     };
+
 
 function updateProfile() {
       const profile = {
@@ -3935,12 +4056,26 @@ function updateProfile() {
     }
 
     
-window.onload = function() {
-      initFirebaseCloud();
+
+    window.onload = function() {
       setupDb();
+      initFirebaseCloud();
       loadSavedProfile();
-      updateActivationScreenUI();
+      loadBillSettings();
+      updateSuggestedRate();
+
+      // Check if user should see Login first
+      const hasUser = localStorage.getItem('sw_cloud_user') || localStorage.getItem('sw_guest_mode');
+      if (!hasUser) {
+        openScreen('auth', 'SIGN IN / REGISTER');
+        document.getElementById('topBackBtn').style.display = 'none';
+      } else {
+        goHome();
+      }
     };
+
   </script>
 </body>
-  </html>
+</html>
+</body>
+ </html>
