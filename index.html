@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -2987,7 +2987,17 @@
       }
     }
 
-function exportCutPdf(filename, title, outId, matId) {
+
+    // ========================================================
+    // ADVANCED WORKSHOP CUTTING JOB CARD (ALL 6 SPECIFICATIONS)
+    // 1. Window-by-Window Blocks
+    // 2. Cut Angle / Degree (45° Miter vs 90° Straight)
+    // 3. Pencil Tick Checkboxes [ ]
+    // 4. Step-by-Step Stick Cutting Sequences
+    // 5. Highlighted Glass & Hardware Boxes
+    // 6. Quality Check & Master Signatures
+    // ========================================================
+    function exportCutPdf(filename, title, outId, matId) {
       if (!isAppActivated()) {
         alert("PRO activation is required to generate PDF bills.");
         openScreen('activation', 'PRO UPGRADE & PLANS');
@@ -2996,10 +3006,9 @@ function exportCutPdf(filename, title, outId, matId) {
 
       const outText = document.getElementById(outId).textContent.trim();
       const matText = document.getElementById(matId).textContent.trim();
-      const content = outText + "\n\n" + matText;
 
-      if (!outText || outText.includes("এখানে")) {
-        alert("প্রথমে কাটিং হিসাব বের করুন!");
+      if (!outText || outText.includes("here") || outText.includes("এখানে")) {
+        alert("Please calculate at least one window cutting size first!");
         return;
       }
 
@@ -3012,102 +3021,297 @@ function exportCutPdf(filename, title, outId, matId) {
       const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
       const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
-      // 1. Header Banner
-      doc.setFillColor(25, 42, 74);
+      // 1. Main Header Banner
+      doc.setFillColor(25, 42, 74); // Deep Navy
       doc.rect(0, 0, 210, 32, 'F');
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
-      doc.setTextColor(255, 179, 0); // Gold
+      doc.setTextColor(251, 191, 36); // Amber Gold
       doc.text(shop_name, 105, 12, { align: "center" });
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(220, 230, 242);
+      doc.setTextColor(226, 232, 240);
       doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.5);
       doc.setTextColor(255, 255, 255);
-      doc.text(`JOB CARD / MEASUREMENT CUTTING SHEET (${title.toUpperCase()})`, 105, 26, { align: "center" });
+      doc.text(`WORKSHOP CUTTING JOB CARD & FABRICATION SCHEDULE (${title.toUpperCase()})`, 105, 26, { align: "center" });
 
-      // Sub-bar with Date & Ref
-      doc.setFillColor(235, 240, 248);
-      doc.rect(14, 35, 182, 7, 'F');
+      // Sub-bar
+      doc.setFillColor(241, 245, 249);
+      doc.rect(14, 34, 182, 7, 'F');
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(`DATE: ${today}`, 18, 40);
-      doc.text(`SYSTEM: SMART WORKER PRO FABRICATION`, 192, 40, { align: "right" });
+      doc.text(`DATE ISSUED: ${today}`, 18, 39);
+      doc.text(`CUTTING STANDARD: ZERO TOLERANCE PRECISION`, 192, 39, { align: "right" });
 
-      // 2. Parse Lines into Tabular Data
-      const lines = content.split('\n');
-      const tableRows = [];
+      // Parse Window-by-Window Blocks
+      const rawWindows = outText.split(/={10,}/);
+      let currentY = 44;
 
-      lines.forEach(line => {
-        line = line.trim();
-        if (!line || line.startsWith('=')) return;
+      rawWindows.forEach((rw, winIdx) => {
+        const trimmed = rw.trim();
+        if (!trimmed || trimmed.includes("ACCUMULATED MATERIAL PURCHASE")) return;
 
-        if (line.startsWith('[') || line.startsWith('---')) {
-          const cat = line.replace(/\[|\]|---/g, '').trim();
-          tableRows.push([
-            { content: cat, colSpan: 3, styles: { fillColor: [38, 64, 115], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9, halign: 'left' } }
-          ]);
-        } else {
-          const clean = line.replace(/^>/, '').trim();
-          if (clean.includes(':')) {
-            const parts = clean.split(':');
-            const item = parts[0].trim();
-            const val = parts.slice(1).join(':').trim();
-            tableRows.push(['', item, val]);
-          } else {
-            tableRows.push(['', clean, '']);
+        let winTitle = `Window Unit #${winIdx + 1}`;
+        const titleMatch = trimmed.match(/\[(.*?)\]/);
+        if (titleMatch) winTitle = titleMatch[1];
+
+        const lines = trimmed.split('\n');
+        const profiles = [];
+        const hardware = [];
+        const glass = [];
+        let section = "profiles";
+
+        lines.forEach(l => {
+          l = l.trim();
+          if (!l || l.startsWith('[') || l.startsWith('===')) return;
+          if (l.includes("HARDWARE")) { section = "hardware"; return; }
+          if (l.includes("GLASS")) { section = "glass"; return; }
+          if (l.startsWith('---') || l.startsWith('> Height Formula') || l.startsWith('> Width Formula') || l.startsWith('> Glass Deduction')) return;
+
+          const clean = l.replace(/^>\s*/, '');
+          if (section === "profiles") {
+            if (clean.includes(':')) {
+              const parts = clean.split(':');
+              const name = parts[0].trim();
+              const spec = parts.slice(1).join(':').trim();
+
+              // Feature 2: Determine Cut Angle / Degree
+              let angle = "90° Straight";
+              if ((winTitle.includes("Domal") || winTitle.includes("Casement") || winTitle.includes("Door")) && (name.includes("Outer") || name.includes("Frame") || name.includes("Sash") || name.includes("Z-Handle"))) {
+                angle = "45° Miter (কোণাকাটা)";
+              } else if (name.includes("Outer") && winTitle.includes("Domal")) {
+                angle = "45° Miter (কোণাকাটা)";
+              } else {
+                angle = "90° Straight (সোজা)";
+              }
+
+              const tag = `W${winIdx + 1}-P${profiles.length + 1}`;
+              // Feature 3: Checkbox [   ]
+              profiles.push(["[   ]", name, spec, angle, tag]);
+            }
+          } else if (section === "hardware") {
+            hardware.push(clean);
+          } else if (section === "glass") {
+            glass.push(clean);
           }
+        });
+
+        if (profiles.length === 0 && glass.length === 0) return;
+
+        // Check if page break is needed
+        if (currentY > 230) {
+          doc.addPage();
+          currentY = 16;
+        }
+
+        // Feature 1: Window by Window Header Block
+        doc.setFillColor(36, 58, 99);
+        doc.roundedRect(14, currentY, 182, 7.5, 1.5, 1.5, 'F');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`UNIT #${winIdx + 1}: ${winTitle.toUpperCase()}`, 18, currentY + 5);
+
+        currentY += 9;
+
+        // Profiles Table for this Window
+        doc.autoTable({
+          startY: currentY,
+          head: [['Check', 'Section / Profile Name', 'Cutting Size & Qty', 'Cut Angle / Degree', 'Mark Tag']],
+          body: profiles,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [226, 232, 240],
+            textColor: [15, 23, 42],
+            fontStyle: 'bold',
+            fontSize: 8,
+            halign: 'center'
+          },
+          styles: {
+            fontSize: 8,
+            cellPadding: 2,
+            lineColor: [203, 213, 225],
+            lineWidth: 0.2
+          },
+          columnStyles: {
+            0: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
+            1: { cellWidth: 58 },
+            2: { cellWidth: 52, fontStyle: 'bold' },
+            3: { cellWidth: 42, halign: 'center', fontStyle: 'bold' },
+            4: { cellWidth: 16, halign: 'center', fontSize: 7 }
+          }
+        });
+
+        currentY = doc.lastAutoTable.finalY + 3;
+
+        // Feature 5: Glass & Hardware Highlighted Box
+        if (glass.length > 0 || hardware.length > 0) {
+          const glassTxt = glass.length > 0 ? "• " + glass.join("   • ") : "Standard Float Glass";
+          const hwTxt = hardware.length > 0 ? "• " + hardware.join("   • ") : "Standard Accessories";
+
+          doc.autoTable({
+            startY: currentY,
+            head: [['GLASS DEPARTMENT SPECIFICATIONS', 'FITTINGS & HARDWARE CHECKLIST']],
+            body: [[
+              `[ ] ${glassTxt}\n(Note: Verify square corners & edge polishing before fitting)`,
+              `[ ] ${hwTxt}\n(Note: Install woolpile & verify roller alignment)`
+            ]],
+            theme: 'grid',
+            headStyles: {
+              fillColor: [186, 230, 253], // Sky blue
+              textColor: [3, 105, 161],
+              fontStyle: 'bold',
+              fontSize: 7.5,
+              halign: 'center'
+            },
+            styles: {
+              fontSize: 7.5,
+              cellPadding: 2.5,
+              lineColor: [186, 230, 253]
+            },
+            columnStyles: {
+              0: { cellWidth: 91, fillColor: [240, 249, 255] },
+              1: { cellWidth: 91, fillColor: [255, 251, 235] }
+            }
+          });
+          currentY = doc.lastAutoTable.finalY + 8;
+        } else {
+          currentY += 5;
         }
       });
 
+      // Feature 4: Stick-by-Stick Cutting Sequence (Material Optimization)
+      if (matText && !matText.includes("এখানে")) {
+        if (currentY > 210) {
+          doc.addPage();
+          currentY = 16;
+        }
+
+        doc.setFillColor(22, 101, 52); // Green Banner
+        doc.roundedRect(14, currentY, 182, 7.5, 1.5, 1.5, 'F');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text("ALUMINIUM STICK CUTTING OPTIMIZATION PLAN (STEP-BY-STEP SEQUENCES)", 18, currentY + 5);
+
+        currentY += 9;
+
+        const matLines = matText.split('\n');
+        const stickRows = [];
+        let curProfile = "";
+
+        matLines.forEach(ml => {
+          ml = ml.trim();
+          if (!ml || ml.startsWith('===')) return;
+          if (ml.startsWith('[') && ml.endsWith(']')) {
+            curProfile = ml.replace(/\[|\]/g, '');
+            return;
+          }
+          if (ml.startsWith('> Buy:')) {
+            const buyQty = ml.replace('> Buy:', '').trim();
+            stickRows.push([
+              { content: `PROFILE: ${curProfile.toUpperCase()} — Total to Buy: ${buyQty}`, colSpan: 3, styles: { fillColor: [220, 252, 231], fontStyle: 'bold', textColor: [20, 83, 45] } }
+            ]);
+            return;
+          }
+          if (ml.includes("Stick #")) {
+            const clean = ml.replace(/^>\s*/, '');
+            const stickMatch = clean.match(/Stick\s*#(\d+):/);
+            const stickNum = stickMatch ? `Stick #${stickMatch[1]}` : "Stick";
+
+            // Extract cuts sequence
+            const cutMatch = clean.match(/Cut\s*\[(.*?)\]/);
+            let seq = "Cut as per size";
+            if (cutMatch) {
+              const rawParts = cutMatch[1].split('+');
+              const seqParts = rawParts.map(p => p.trim());
+              seq = "Cut " + seqParts.join(" ➔ Cut ");
+            }
+
+            // Extract waste
+            const wasteMatch = clean.match(/Waste:\s*([0-9.]+)"?/);
+            let wasteStr = "0\"";
+            if (wasteMatch) {
+              const wVal = parseFloat(wasteMatch[1]);
+              const tag = wVal >= 24 ? "(Usable Offcut / বাকি টুকরো কাজে লাগবে)" : (wVal >= 10 ? "(Short Offcut)" : "(Scrap / ছাঁট)");
+              wasteStr = `${wVal}\" ${tag}`;
+            }
+
+            stickRows.push([`[   ] ${stickNum}`, seq, wasteStr]);
+          }
+        });
+
+        if (stickRows.length > 0) {
+          doc.autoTable({
+            startY: currentY,
+            head: [['Stick #', 'Step-by-Step Cutting Sequence (কাটার ক্রম)', 'Waste / Remaining Balance']],
+            body: stickRows,
+            theme: 'grid',
+            headStyles: {
+              fillColor: [187, 247, 208],
+              textColor: [20, 83, 45],
+              fontStyle: 'bold',
+              fontSize: 8,
+              halign: 'center'
+            },
+            styles: {
+              fontSize: 7.5,
+              cellPadding: 2,
+              lineColor: [187, 247, 208],
+              lineWidth: 0.2
+            },
+            columnStyles: {
+              0: { cellWidth: 28, fontStyle: 'bold' },
+              1: { cellWidth: 94, fontStyle: 'bold' },
+              2: { cellWidth: 60, fontStyle: 'bold', textColor: [180, 83, 9] }
+            }
+          });
+          currentY = doc.lastAutoTable.finalY + 8;
+        }
+      }
+
+      // Feature 6: Quality Check & Master Signatures
+      if (currentY > 245) {
+        doc.addPage();
+        currentY = 20;
+      }
+
       doc.autoTable({
-        startY: 45,
-        head: [['Section / Category', 'Item Details & Profile', 'Measurement & Quantity']],
-        body: tableRows,
+        startY: currentY,
+        head: [['CUTTING MASTER / OPERATOR', 'ASSEMBLY FITTER / CHECKER', 'AUTHORIZED WORKSHOP SIGN-OFF']],
+        body: [[
+          "Signature: _______________________\n\nName: ___________________________\n\nStatus: [  ] All Cuts Verified",
+          "Signature: _______________________\n\nName: ___________________________\n\nStatus: [  ] Dimensions Checked",
+          `Signature: _______________________\n\nFor: ${shop_name}\n\nDate: ${today.split(' ')[0]}`
+        ]],
         theme: 'grid',
         headStyles: {
-          fillColor: [220, 225, 235],
-          textColor: [15, 23, 42],
+          fillColor: [241, 245, 249],
+          textColor: [51, 65, 85],
           fontStyle: 'bold',
-          fontSize: 8.5,
+          fontSize: 8,
           halign: 'center'
         },
         styles: {
-          fontSize: 8,
-          cellPadding: 2,
-          lineColor: [180, 195, 215],
-          lineWidth: 0.2
-        },
-        columnStyles: {
-          0: { cellWidth: 45, fontStyle: 'bold' },
-          1: { cellWidth: 72 },
-          2: { cellWidth: 65, fontStyle: 'bold', halign: 'left' }
+          fontSize: 7.5,
+          cellPadding: 3,
+          lineColor: [203, 213, 225]
         }
       });
 
-      // 3. Signatures Box
-      const finalY = Math.min(doc.lastAutoTable.finalY + 12, 270);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(80, 80, 80);
-      doc.text("Fitter / Fabricator Signature: _______________________", 16, finalY);
-      doc.text(`Authorized Signatory (${shop_name}): _______________________`, 194, finalY, { align: "right" });
-
       doc.setFontSize(7);
-      doc.text("-- Generated automatically by Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
+      doc.setTextColor(100, 116, 139);
+      doc.text("-- Generated automatically by Smart Worker Pro Fabrication Systems • Zero-Error Precision Standards --", 105, 290, { align: "center" });
 
       doc.save(`${filename}.pdf`);
     }
 
-    // ========================================================
-    // PROFESSIONAL CONSOLIDATED GLASS LIST PDF
-    // ========================================================
     function exportGlassPdf(filename, title, glassDict) {
       if (!isAppActivated()) {
         alert("PRO activation is required to generate PDF bills.");
@@ -4078,4 +4282,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
- </html>
+        </html>
