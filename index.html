@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart Worker Pro - Aluminium & UPVC Fabrication</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #141f3d;
+      --card-bg: #1c2b50;
+      --card-inner: #243563;
+      --accent: #ff9800;
+      --accent-hover: #e68900;
+      --primary-btn: #1976d2;
+      --primary-hover: #1565c0;
+      --success: #2e7d32;
+      --danger: #c62828;
+      --text-main: #f5f5f5;
+      --text-muted: #b0bec5;
+      --border-color: #334778;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 70px;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #101932, #1b294e);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--accent);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title span {
+      color: var(--accent);
+    }
+    .badge-pro {
+      background: #ff9800;
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #0e162b;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      z-index: 1000;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      text-decoration: none;
+      cursor: pointer;
+      gap: 3px;
+      transition: color 0.2s;
+      flex: 1;
+    }
+    .nav-item i {
+      font-size: 1.15rem;
+    }
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    }
+    .card-header {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+    }
+
+    /* Grid Form */
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: var(--card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .btn-calc {
+      background: var(--primary-btn);
+      color: #fff;
+      margin-top: 6px;
+    }
+    .btn-calc:hover { background: var(--primary-hover); }
+    .btn-accent {
+      background: var(--accent);
+      color: #000;
+    }
+    .btn-accent:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: #fff;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    /* Output Boxes */
+    .result-box {
+      background: #0b1120;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #81d4fa;
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid #1a2a4f;
+      margin-top: 12px;
+    }
+
+    .badge-chip {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(255, 152, 0, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      margin-bottom: 8px;
+    }
+
+    /* Quick Action Grid (Home) */
+    .quick-menu {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .menu-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .menu-card:active {
+      transform: scale(0.96);
+    }
+    .menu-card:hover {
+      border-color: var(--accent);
+    }
+    .menu-card i {
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+    .menu-card span {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Quotation List Item */
+    .bill-item {
+      background: var(--card-inner);
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--accent);
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="brand-title">
+      <i class="fa-solid fa-industry" style="color:var(--accent);"></i>
+      <div>
+        <div id="displayShopName">SMART WORKER ALUMINIUM</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: normal;">Fabrication Management System</div>
+      </div>
+    </div>
+    <span class="badge-pro">PRO</span>
+  </header>
+
+  <div class="container">
+
+    <!-- ================= HOME TAB ================= -->
+    <div id="tab-home" class="tab-content active">
+      <div class="card" style="background: linear-gradient(135deg, #18284d, #253966); text-align: center; padding: 20px 14px;">
+        <i class="fa-solid fa-user-gear" style="font-size: 2.2rem; color: var(--accent); margin-bottom: 8px;"></i>
+        <h3 id="welcomeUser" style="color:#fff;">স্বাগতম, সাহেব ঘাঁটি ভাই!</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">অ্যালুমিনিয়াম ও ডমাল কাটিং ও দ্রুত কোটেশন বিলিং</p>
+      </div>
+
+      <div class="card-header"><i class="fa-solid fa-shapes"></i> কাটিং ক্যালকুলেটর মেনু</div>
+      <div class="quick-menu">
+        <div class="menu-card" onclick="switchTab('tab-sliding')">
+          <i class="fa-solid fa-table-columns"></i>
+          <span>স্লাইডিং উইন্ডো</span>
+        </div>
+        <div class="menu-card" onclick="switchTab('tab-domal')">
+          <i class="fa-solid fa-window-maximize"></i>
+          <span>ডমাল সিস্টেম</span>
+        </div>
+        <div class="menu-card" onclick="switchTab('tab-door')">
+          <i class="fa-solid fa-door-open"></i>
+          <span>ডোর মাস্টার</span>
+        </div>
+        <div class="menu-card" onclick="switchTab('tab-casement')">
+          <i class="fa-solid fa-window-restore"></i>
+          <span>কেসমেন্ট উইন্ডো</span>
+        </div>
+        <div class="menu-card" onclick="switchTab('tab-partition')">
+          <i class="fa-solid fa-border-all"></i>
+          <span>পার্টিশন & ডোর</span>
+        </div>
+        <div class="menu-card" onclick="switchTab('tab-quotation')">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span>কোটেশন বিলিং</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <div class="card-header"><i class="fa-solid fa-phone"></i> সরাসরি সাপোর্ট & যোগাযোগ</div>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">আমতা (চাঁদনী), হাওড়া | মোবাইল: 9239413517</p>
+        <button class="btn btn-accent" onclick="window.open('https://wa.me/919239413517?text=Hello%20Saheb%20Da,%20Smart%20Worker%20Help')">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp এ যোগাযোগ করুন
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= SLIDING SCREEN ================= -->
+    <div id="tab-sliding" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-table-columns"></i> স্লাইডিং উইন্ডো কাটিং ক্যালকুলেটর</div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>উচ্চতা (Height):</label>
+            <input type="number" id="sl_h" placeholder="উচ্চতা দিন" step="any">
+          </div>
+          <div class="form-group">
+            <label>প্রস্থ (Width):</label>
+            <input type="number" id="sl_w" placeholder="প্রস্থ দিন" step="any">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>একক (Unit):</label>
+            <select id="sl_unit">
+              <option value="Inch">ইঞ্চি (Inch)</option>
+              <option value="Millimeter">মিলিমিটার (Millimeter)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ট্র্যাকের ধরন:</label>
+            <select id="sl_type">
+              <option value="2-Track">2-Track (2-Sash)</option>
+              <option value="3-Track">3-Track (3-Sash)</option>
+              <option value="4-Track">4-Track (4-Sash)</option>
+              <option value="Center Open">2-Track Center Open (4-Sash)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>সেকশন সিস্টেম:</label>
+          <select id="sl_sys">
+            <option value="18x40">18 x 40 Series</option>
+            <option value="18x50">18 x 50 Series</option>
+            <option value="18x60">18 x 60 Series</option>
+            <option value="25x50">25 x 50 Series</option>
+            <option value="25x65">25 x 65 Series</option>
+            <option value="Door Sliding Master">Door Sliding Master</option>
+          </select>
+        </div>
+
+        <button class="btn btn-calc" onclick="calculateSliding()"><i class="fa-solid fa-calculator"></i> হিসাব বের করুন</button>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="clearSliding()"><i class="fa-solid fa-rotate-left"></i> ক্লিয়ার</button>
+          <button class="btn btn-accent" onclick="shareWhatsApp('sl_out')"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে পাঠান</button>
+        </div>
+
+        <div class="result-box" id="sl_out">কাটিং মাপের বিবরণ এখানে দেখা যাবে...</div>
+      </div>
+    </div>
+
+    <!-- ================= DOMAL SCREEN ================= -->
+    <div id="tab-domal" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-window-maximize"></i> ডমাল সিস্টেম কাটিং ক্যালকুলেটর</div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>উচ্চতা (Height):</label>
+            <input type="number" id="dm_h" placeholder="উচ্চতা দিন" step="any">
+          </div>
+          <div class="form-group">
+            <label>প্রস্থ (Width):</label>
+            <input type="number" id="dm_w" placeholder="প্রস্থ দিন" step="any">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>একক (Unit):</label>
+            <select id="dm_unit">
+              <option value="Inch">ইঞ্চি (Inch)</option>
+              <option value="Millimeter">মিলিমিটার (Millimeter)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ট্র্যাকের ধরন:</label>
+            <select id="dm_type">
+              <option value="2-Track (2-Sash)">2-Track (2-Sash)</option>
+              <option value="3-Track (3-Sash)">3-Track (3-Sash with Net)</option>
+              <option value="4-Track (4-Sash)">4-Track (4-Sash with Net)</option>
+              <option value="Center Open (4-Sash)">2-Track Center Open (4-Sash)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>ট্র্যাক হাইট (Track Height):</label>
+            <select id="dm_track_h">
+              <option value="45">45 mm (Standard)</option>
+              <option value="40">40 mm</option>
+              <option value="42">42 mm</option>
+              <option value="48">48 mm</option>
+              <option value="50">50 mm</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>হ্যান্ডেল সাইজ (H x W):</label>
+            <select id="dm_handle">
+              <option value="27x65">27 x 65 mm (Standard)</option>
+              <option value="27x60">27 x 60 mm</option>
+              <option value="28x65">28 x 65 mm</option>
+              <option value="27x70">27 x 70 mm</option>
+              <option value="32x72">32 x 72 mm</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-calc" onclick="calculateDomal()"><i class="fa-solid fa-calculator"></i> ডমাল কাটিং বের করুন</button>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="clearDomal()"><i class="fa-solid fa-rotate-left"></i> ক্লিয়ার</button>
+          <button class="btn btn-accent" onclick="shareWhatsApp('dm_out')"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে পাঠান</button>
+        </div>
+
+        <div class="result-box" id="dm_out">ডমাল কাটিং মাপের বিবরণ এখানে আসবে...</div>
+      </div>
+    </div>
+
+    <!-- ================= DOOR MASTER ================= -->
+    <div id="tab-door" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-door-open"></i> ডোর মাস্টার ক্যালকুলেটর</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>উচ্চতা (Height):</label>
+            <input type="number" id="dr_h" placeholder="উচ্চতা দিন" step="any">
+          </div>
+          <div class="form-group">
+            <label>প্রস্থ (Width):</label>
+            <input type="number" id="dr_w" placeholder="প্রস্থ দিন" step="any">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>একক:</label>
+            <select id="dr_unit">
+              <option value="Inch">ইঞ্চি (Inch)</option>
+              <option value="Millimeter">মিলিমিটার (Millimeter)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>দরজার ধরন:</label>
+            <select id="dr_type">
+              <option value="Standard Door">Standard Door (Outer সহ)</option>
+              <option value="Top Hung Door">Top Hung Door (উইদাউট আউটার)</option>
+              <option value="Domal System Door">Domal System Door</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-calc" onclick="calculateDoor()"><i class="fa-solid fa-calculator"></i> দরজা কাটিং বের করুন</button>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="clearDoor()"><i class="fa-solid fa-rotate-left"></i> ক্লিয়ার</button>
+          <button class="btn btn-accent" onclick="shareWhatsApp('dr_out')"><i class="fa-brands fa-whatsapp"></i> শেয়ার করুন</button>
+        </div>
+        <div class="result-box" id="dr_out">দরজার কাটিং ও গ্লাসের মাপ এখানে আসবে...</div>
+      </div>
+    </div>
+
+    <!-- ================= CASEMENT ================= -->
+    <div id="tab-casement" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-window-restore"></i> কাস্টম কেসমেন্ট উইন্ডো</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>উচ্চতা (Height):</label>
+            <input type="number" id="cc_h" placeholder="উচ্চতা" step="any">
+          </div>
+          <div class="form-group">
+            <label>প্রস্থ (Width):</label>
+            <input type="number" id="cc_w" placeholder="প্রস্থ" step="any">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>টপ সেকশন সংখ্যা:</label>
+            <input type="number" id="cc_top_cols" value="1">
+          </div>
+          <div class="form-group">
+            <label>ওপেন পাল্লা সংখ্যা:</label>
+            <input type="number" id="cc_top_open" value="1">
+          </div>
+        </div>
+        <button class="btn btn-calc" onclick="calculateCasement()"><i class="fa-solid fa-calculator"></i> কেসমেন্ট মাপ বের করুন</button>
+        <div class="result-box" id="cc_out">কেসমেন্ট কাটিং মাপ...</div>
+      </div>
+    </div>
+
+    <!-- ================= PARTITION ================= -->
+    <div id="tab-partition" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-border-all"></i> অ্যালুমিনিয়াম পার্টিশন & ডোর</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>উচ্চতা:</label>
+            <input type="number" id="pt_h" placeholder="উচ্চতা" step="any">
+          </div>
+          <div class="form-group">
+            <label>প্রস্থ:</label>
+            <input type="number" id="pt_w" placeholder="প্রস্থ" step="any">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>পার্টিশনের ধরন:</label>
+            <select id="pt_type">
+              <option value="Fixed">ফিক্সড পার্টিশন (Fixed Partition)</option>
+              <option value="WithDoor">পার্টিশন সাথে ডোর (Door + Partition)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>গ্রিড কলাম সংখ্যা:</label>
+            <input type="number" id="pt_cols" value="3">
+          </div>
+        </div>
+        <button class="btn btn-calc" onclick="calculatePartition()"><i class="fa-solid fa-calculator"></i> পার্টিশন হিসাব করুন</button>
+        <div class="result-box" id="pt_out">পার্টিশনের ফ্রেম ও গ্লাস মাপ...</div>
+      </div>
+    </div>
+
+    <!-- ================= QUOTATION / BILLING ================= -->
+    <div id="tab-quotation" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-file-invoice-dollar"></i> কোটেশন ও বিল তৈরি (Quotation Invoice)</div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>কাস্টমারের নাম:</label>
+            <input type="text" id="q_name" placeholder="নাম লিখুন">
+          </div>
+          <div class="form-group">
+            <label>ফোন নম্বর:</label>
+            <input type="text" id="q_phone" placeholder="মোবাইল নম্বর">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>ঠিকানা:</label>
+          <input type="text" id="q_addr" placeholder="ঠিকানা">
+        </div>
+
+        <div style="border-top:1px dashed var(--border-color); padding-top:10px; margin-bottom:10px;">
+          <label style="color:var(--accent); font-weight:bold;">আইটেম যোগ করুন:</label>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>কাজের ধরন:</label>
+            <select id="q_item_type" onchange="autoCalculateRate()">
+              <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track)</option>
+              <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track with Mesh)</option>
+              <option value="Sliding Window (2-Track)">Sliding Window (2-Track)</option>
+              <option value="Sliding Window (3-Track)">Sliding Window (3-Track)</option>
+              <option value="Aluminium Door">Aluminium Door</option>
+              <option value="Aluminium Partition">Aluminium Partition</option>
+              <option value="Casement Window">Casement Window</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>কালার / ফিনিশ:</label>
+            <select id="q_color" onchange="autoCalculateRate()">
+              <option value="Powder Coated Jet Black">Powder Coated Jet Black</option>
+              <option value="Anodized Bronze">Anodized Bronze</option>
+              <option value="Wooden Finish">Wooden Finish</option>
+              <option value="Mill/Natural">Mill Finish (Silver)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>উচ্চতা (Feet):</label>
+            <input type="number" id="q_h" placeholder="যেমন 4" step="any">
+          </div>
+          <div class="form-group">
+            <label>প্রস্থ (Feet):</label>
+            <input type="number" id="q_w" placeholder="যেমন 5" step="any">
+          </div>
+          <div class="form-group" style="max-width: 80px;">
+            <label>পরিমাণ:</label>
+            <input type="number" id="q_qty" value="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>রেট (Rs / Sq.Ft):</label>
+            <input type="number" id="q_rate" placeholder="স্বয়ংক্রিয় রেট">
+          </div>
+          <div class="form-group">
+            <label>লোকেশন / রুম:</label>
+            <input type="text" id="q_loc" placeholder="যেমন: বেডরুম">
+          </div>
+        </div>
+
+        <button class="btn btn-success" onclick="addItemToBill()"><i class="fa-solid fa-plus"></i> বিলে আইটেম যোগ করুন</button>
+
+        <div style="margin-top:16px;">
+          <label style="font-weight:bold; color:#fff;">বিলের আইটেম তালিকা:</label>
+          <div id="billItemsList" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="form-row" style="margin-top: 14px;">
+          <div class="form-group">
+            <label>অগ্রিম জমা (Advance):</label>
+            <input type="number" id="q_advance" value="0" oninput="updateBillTotal()">
+          </div>
+          <div class="form-group">
+            <label>ডিসকাউন্ট (Discount):</label>
+            <input type="number" id="q_discount" value="0" oninput="updateBillTotal()">
+          </div>
+        </div>
+
+        <div class="card" style="background:#111b33; border: 1px solid var(--accent); margin-top:12px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
+            <span>মোট স্কয়ার ফিট:</span> <strong id="totalSqftDisplay">0.00 Sq.Ft</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:1rem; color:var(--accent); margin-bottom:4px;">
+            <span>সর্বমোট বিল (Total):</span> <strong id="grandTotalDisplay">Rs 0.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:1rem; color:#ff5252;">
+            <span>বকেয়া (Due Amount):</span> <strong id="dueTotalDisplay">Rs 0.00</strong>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-calc" onclick="generatePdfInvoice()"><i class="fa-solid fa-file-pdf"></i> PDF বিল ডাউনলোড</button>
+          <button class="btn btn-accent" onclick="shareBillWhatsApp()"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে পাঠান</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SETTINGS TAB ================= -->
+    <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-header"><i class="fa-solid fa-gear"></i> শপ প্রোফাইল ও বিলিং সেটিংস</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>দোকানের নাম (Shop Name):</label>
+          <input type="text" id="set_shop" value="SMART WORKER ALUMINIUM">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>প্রোপ্রাইটর / মালিকের নাম:</label>
+          <input type="text" id="set_name" value="Saheb Ghanti">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>মোবাইল নম্বর:</label>
+          <input type="text" id="set_phone" value="9239413517">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>ঠিকানা:</label>
+          <input type="text" id="set_addr" value="Amta (Chandni), Howrah, West Bengal">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>জিএসটি নম্বর (ঐচ্ছিক):</label>
+          <input type="text" id="set_gst" placeholder="GSTIN...">
+        </div>
+
+        <button class="btn btn-calc" onclick="saveProfile()"><i class="fa-solid fa-floppy-disk"></i> প্রোফাইল সেভ করুন</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Menu -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('tab-home')">
+      <i class="fa-solid fa-house"></i>
+      <span>হোম</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-sliding')">
+      <i class="fa-solid fa-table-columns"></i>
+      <span>স্লাইডিং</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-domal')">
+      <i class="fa-solid fa-window-maximize"></i>
+      <span>ডমাল</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-quotation')">
+      <i class="fa-solid fa-file-invoice-dollar"></i>
+      <span>বিলিং</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-settings')">
+      <i class="fa-solid fa-sliders"></i>
+      <span>সেটিংস</span>
+    </div>
+  </nav>
+
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+
+      const navItems = document.querySelectorAll('.nav-item');
+      if (tabId === 'tab-home') navItems[0].classList.add('active');
+      else if (tabId === 'tab-sliding') navItems[1].classList.add('active');
+      else if (tabId === 'tab-domal') navItems[2].classList.add('active');
+      else if (tabId === 'tab-quotation') navItems[3].classList.add('active');
+      else if (tabId === 'tab-settings') navItems[4].classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Helper: Number evaluation
+    function parseVal(id) {
+      return parseFloat(document.getElementById(id).value) || 0;
+    }
+
+    // Helper: Fraction to Inch display
+    function formatInch(val) {
+      const whole = Math.floor(val);
+      const frac = val - whole;
+      const eighths = Math.round(frac * 8);
+      if (eighths === 0) return `${whole}"`;
+      if (eighths === 8) return `${whole + 1}"`;
+      
+      let num = eighths, den = 8;
+      if (num % 4 === 0) { num /= 4; den /= 4; }
+      else if (num % 2 === 0) { num /= 2; den /= 2; }
+      
+      return whole > 0 ? `${whole} [${num}/${den}]"` : `[${num}/${den}]"`;
+    }
+
+    // 1. SLIDING CALCULATION (Exact formulas from Python)
+    function calculateSliding() {
+      const h_raw = parseVal('sl_h');
+      const w_raw = parseVal('sl_w');
+      const is_mm = document.getElementById('sl_unit').value === 'Millimeter';
+      const t_type = document.getElementById('sl_type').value;
+      const sys_type = document.getElementById('sl_sys').value;
+
+      if (h_raw <= 0 || w_raw <= 0) {
+        alert("উচ্চতা এবং প্রস্থ সঠিকভাবে পূরণ করুন!");
+        return;
+      }
+
+      const h_in = is_mm ? h_raw / 25.4 : h_raw;
+      const w_in = is_mm ? w_raw / 25.4 : w_raw;
+
+      let div = 2, g_c = 2, han_qty = 2, int_qty = 2;
+      if (t_type.includes('2-Track')) { div = 2; g_c = 2; han_qty = 2; int_qty = 2; }
+      else if (t_type.includes('3-Track')) { div = 3; g_c = 3; han_qty = 2; int_qty = 4; }
+      else if (t_type.includes('4-Track')) { div = 4; g_c = 4; han_qty = 2; int_qty = 6; }
+      else if (t_type.includes('Center Open')) { div = 4; g_c = 4; han_qty = 4; int_qty = 4; }
+
+      let h_minus = 1.625, g_h_minus = 2.75, g_w_mod = 0.625, w_mod = -6.0;
+
+      if (sys_type === '18x40') {
+        h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
+        w_mod = (div === 2) ? -6.0 : (div === 3 ? -8.0 : -11.0);
+      } else if (sys_type === '18x50') {
+        h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
+        w_mod = (div === 2) ? -7.0 : (div === 3 ? -9.5 : -12.5);
+      } else if (sys_type === '18x60') {
+        h_minus = 1.5; g_h_minus = 4.125; g_w_mod = -4.125;
+        w_mod = (div === 2) ? 0.625 : (div === 3 ? 2.75 : 5.125);
+      } else if (sys_type === '25x50') {
+        h_minus = 1.125; g_h_minus = 4.125; g_w_mod = 0.75;
+        if (t_type.includes('Center')) w_mod = -13.5;
+        else w_mod = (div === 2) ? -7.5 : (div === 3 ? -9.25 : -11.5);
+      } else if (sys_type === '25x65') {
+        h_minus = 1.125; g_h_minus = 5.5; g_w_mod = 0.75;
+        if (t_type.includes('Center')) w_mod = -16.625;
+        else w_mod = (div === 2) ? -8.75 : (div === 3 ? -11.25 : -14.0);
+      } else if (sys_type === 'Door Sliding Master') {
+        h_minus = 43 / 25.4; g_h_minus = 121 / 25.4; g_w_mod = -8 / 25.4;
+        w_mod = (div === 2) ? -169 / 25.4 : (div === 3 ? -204 / 25.4 : -169 / 25.4);
+      }
+
+      const tb_w = (w_in + w_mod) / div;
+      const handle_h = h_in - h_minus;
+      const glass_h = handle_h - g_h_minus;
+      const glass_w = tb_w + g_w_mod;
+
+      const disp = (val) => is_mm ? (val * 25.4).toFixed(1) + ' mm' : formatInch(val);
+
+      let txt = `=== SLIDING CUTTING SIZE (${sys_type}) ===
+`;
+      txt += `উচ্চতা: ${h_raw} | প্রস্থ: ${w_raw} (${is_mm ? 'mm' : 'Inch'}) | ট্র্যাক: ${t_type}
+`;
+      txt += `-------------------------------------------
+`;
+      txt += `> টপ ট্র্যাক (Top Track):       ${disp(w_in)} (1 pc)
+`;
+      txt += `> বটম ট্র্যাক (Bottom Track):    ${disp(w_in)} (1 pc)
+`;
+      txt += `> সাইড ট্র্যাক (Side Vertical):  ${disp(h_in)} (2 pc)
+`;
+      txt += `> পাল্লা টপ/বটম (Sash Top/Bot):  ${disp(tb_w)} (${g_c * 2} pc)
+`;
+      txt += `> পাল্লা হ্যান্ডেল (Handle V.):   ${disp(handle_h)} (${han_qty} pc)
+`;
+      txt += `> ইন্টারলক (Interlock V.):       ${disp(handle_h)} (${int_qty} pc)
+
+`;
+      txt += `--- গ্লাসের সাইজ (Glass Sizes) ---
+`;
+      txt += `> গ্লাস: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)
+
+`;
+      txt += `--- ফিটিংস ও অ্যাকসেসরিজ ---
+`;
+      txt += `> স্লাইডিং চাকা (Rollers):  ${g_c * 2} পিস
+`;
+      txt += `> লক (Star Lock):          ${g_c >= 3 ? 2 : 1} পিস
+`;
+      txt += `> রবার ও উলপাইল (Woolpile): প্রয়োজনমতো`;
+
+      document.getElementById('sl_out').textContent = txt;
+    }
+
+    function clearSliding() {
+      document.getElementById('sl_h').value = '';
+      document.getElementById('sl_w').value = '';
+      document.getElementById('sl_out').textContent = 'কাটিং মাপের বিবরণ এখানে দেখা যাবে...';
+    }
+
+    // 2. DOMAL CALCULATION (Jindal specifications from Python)
+    function calculateDomal() {
+      const h_raw = parseVal('dm_h');
+      const w_raw = parseVal('dm_w');
+      const is_mm = document.getElementById('dm_unit').value === 'Millimeter';
+      const t_text = document.getElementById('dm_type').value;
+      const track_h = parseFloat(document.getElementById('dm_track_h').value) || 45.0;
+
+      if (h_raw <= 0 || w_raw <= 0) {
+        alert("উচ্চতা এবং প্রস্থ সঠিকভাবে পূরণ করুন!");
+        return;
+      }
+
+      const h_mm = is_mm ? h_raw : h_raw * 25.4;
+      const w_mm = is_mm ? w_raw : w_raw * 25.4;
+
+      const handle_h = 27.0;
+      const handle_w = 65.0;
+
+      // 1. Height cut: Total H - (2 * track_h) + 22mm overlap
+      const v_cut_mm = h_mm - (track_h * 2.0) + 22.0;
+      const side_clearance = (track_h * 2.0) - 12.0;
+
+      let net_w_mod = 0, h_cut_mm = 0, s_c = 2, han_qty = 4, int_qty = 2;
+      let has_mesh = false, mesh_w_mm = 0;
+
+      if (t_text.includes('2-Track')) {
+        net_w_mod = handle_w - side_clearance;
+        h_cut_mm = (w_mm + net_w_mod) / 2.0;
+        s_c = 2; han_qty = 4; int_qty = 2;
+      } else if (t_text.includes('3-Track')) {
+        net_w_mod = (handle_w * 2.0) - side_clearance;
+        h_cut_mm = (w_mm + net_w_mod) / 3.0;
+        s_c = 3; han_qty = 6; int_qty = 4;
+        has_mesh = true;
+        mesh_w_mm = (w_mm - side_clearance + handle_w) / 2.0;
+      } else if (t_text.includes('4-Track')) {
+        net_w_mod = (handle_w * 3.0) - side_clearance;
+        h_cut_mm = (w_mm + net_w_mod) / 4.0;
+        s_c = 4; han_qty = 8; int_qty = 6;
+        has_mesh = true;
+        mesh_w_mm = (w_mm + net_w_mod) / 4.0;
+      } else {
+        net_w_mod = (handle_w * 2.0) - side_clearance;
+        h_cut_mm = (w_mm + net_w_mod) / 4.0;
+        s_c = 4; han_qty = 8; int_qty = 4;
+      }
+
+      const g_deduct_mm = (handle_w * 2.0) - 26.0;
+      const gh_mm = v_cut_mm - g_deduct_mm;
+      const gw_mm = h_cut_mm - g_deduct_mm;
+
+      const disp = (mmVal) => is_mm ? mmVal.toFixed(1) + ' mm' : formatInch(mmVal / 25.4);
+
+      let txt = `=== DOMAL 27x65 CUTTING REPORT ===
+`;
+      txt += `উচ্চতা: ${h_raw} | প্রস্থ: ${w_raw} (${is_mm ? 'mm' : 'Inch'}) | ট্র্যাক: ${t_text}
+`;
+      txt += `-------------------------------------------------
+`;
+      txt += `> আউটার ফ্রেম টপ/বটম:    ${disp(w_mm)} (2 pc)
+`;
+      txt += `> আউটার ফ্রেম সাইড:       ${disp(h_mm)} (2 pc)
+`;
+      txt += `> পাল্লা টপ/বটম (Sash):   ${disp(h_cut_mm)} (${s_c * 2} pc)
+`;
+      txt += `> পাল্লা হ্যান্ডেল:        ${disp(v_cut_mm)} (${han_qty} pc)
+`;
+      txt += `> পাল্লা ইন্টারলক:        ${disp(v_cut_mm)} (${int_qty} pc)
+`;
+
+      if (has_mesh) {
+        txt += `
+--- মসকুইটো নেট পাল্লা (Mosquito Net) ---
+`;
+        txt += `> নেট টপ/বটম:            ${disp(mesh_w_mm)} (2 pc)
+`;
+        txt += `> নেট হ্যান্ডেল:           ${disp(v_cut_mm)} (2 pc)
+`;
+      }
+
+      txt += `
+--- গ্লাসের সাইজ (Glass Sizes) ---
+`;
+      txt += `> গ্লাস সাইজ: ${disp(gh_mm)} x ${disp(gw_mm)} (${s_c} pc)
+
+`;
+      txt += `--- অ্যাকসেসরিজ ---
+`;
+      txt += `> ডমাল হেভি বেয়ারিং: ${(s_c + (has_mesh?1:0)) * 2} পিস
+`;
+      txt += `> টাচ লক / স্টার লক: ${s_c >= 3 ? 2 : 1} পিস
+`;
+      txt += `> এল-ক্লিট (Corner Angle): ${(s_c + (has_mesh?1:0)) * 4} পিস`;
+
+      document.getElementById('dm_out').textContent = txt;
+    }
+
+    function clearDomal() {
+      document.getElementById('dm_h').value = '';
+      document.getElementById('dm_w').value = '';
+      document.getElementById('dm_out').textContent = 'ডমাল কাটিং মাপের বিবরণ এখানে আসবে...';
+    }
+
+    // 3. DOOR MASTER
+    function calculateDoor() {
+      const h_raw = parseVal('dr_h');
+      const w_raw = parseVal('dr_w');
+      const is_mm = document.getElementById('dr_unit').value === 'Millimeter';
+      const d_type = document.getElementById('dr_type').value;
+
+      if (h_raw <= 0 || w_raw <= 0) {
+        alert("দরজার মাপ পূরণ করুন!");
+        return;
+      }
+
+      const h = is_mm ? h_raw / 25.4 : h_raw;
+      const w = is_mm ? w_raw / 25.4 : w_raw;
+
+      let outer_v = h, outer_h = w - 3.0, has_outer = true;
+      let door_v = h - 1.75, door_tb = w - 6.75;
+
+      if (d_type === 'Standard Door') {
+        door_v = h - 1.75; door_tb = w - 6.75;
+      } else if (d_type === 'Top Hung Door') {
+        door_v = h; door_tb = w - 6.75; has_outer = false;
+      } else if (d_type === 'Domal System Door') {
+        door_v = h - (25.0 / 25.4); door_tb = (w - (38.0 / 25.4)) - 3.5;
+      }
+
+      const glass_h = door_v - 5.875 - 0.25;
+      const glass_w = door_tb - 0.25;
+
+      const disp = (val) => is_mm ? (val * 25.4).toFixed(1) + ' mm' : formatInch(val);
+
+      let txt = `=== ডোর কাটিং ডিটেইলস (${d_type}) ===
+`;
+      if (has_outer) {
+        txt += `> আউটার সাইড ফ্রেম:  ${disp(outer_v)} (2 pc)
+`;
+        txt += `> আউটার টপ ফ্রেম:    ${disp(outer_h)} (1 pc)
+`;
+      }
+      txt += `> ডোর ভার্টিকাল:      ${disp(door_v)} (2 pc)
+`;
+      txt += `> ডোর টপ & বটম:     ${disp(door_tb)} (2 pc)
+`;
+      txt += `> গ্লাস / বোর্ড সাইজ: ${disp(glass_h)} x ${disp(glass_w)} (1 pc)
+
+`;
+      txt += `--- ডোর হার্ডওয়্যার ---
+> কব্জা (Door Hinges): 3 পিস
+> ডোর লক & হ্যান্ডেল সেট: 1 সেট`;
+
+      document.getElementById('dr_out').textContent = txt;
+    }
+
+    function clearDoor() {
+      document.getElementById('dr_h').value = '';
+      document.getElementById('dr_w').value = '';
+      document.getElementById('dr_out').textContent = 'দরজার কাটিং ও গ্লাসের মাপ এখানে আসবে...';
+    }
+
+    // 4. CASEMENT CALCULATION
+    function calculateCasement() {
+      const h_raw = parseVal('cc_h');
+      const w_raw = parseVal('cc_w');
+      const top_cols = parseInt(document.getElementById('cc_top_cols').value) || 1;
+      const top_open = parseInt(document.getElementById('cc_top_open').value) || 1;
+
+      if (h_raw <= 0 || w_raw <= 0) { alert("মাপ দিন!"); return; }
+
+      const outer_w = w_raw;
+      const outer_h = h_raw;
+      const sash_h = h_raw - 1.75;
+      const sash_w = (w_raw - 3.0) / top_cols;
+
+      let txt = `=== কেসমেন্ট উইন্ডো কাটিং সাইজ ===
+`;
+      txt += `> আউটার ফ্রেম ভার্টিকাল:   ${outer_h}" (2 pc)
+`;
+      txt += `> আউটার ফ্রেম হরাইজন্টাল: ${outer_w}" (2 pc)
+`;
+      if (top_open > 0) {
+        txt += `> Z-হ্যান্ডেল স্যাশ ভার্টিকাল:   ${sash_h.toFixed(2)}" (${top_open * 2} pc)
+`;
+        txt += `> Z-হ্যান্ডেল স্যাশ হরাইজন্টাল: ${sash_w.toFixed(2)}" (${top_open * 2} pc)
+`;
+      }
+      txt += `> ফ্রিকাশন স্টে (Friction Stay): ${top_open * 2} পিস
+> হ্যান্ডেল: ${top_open} পিস`;
+
+      document.getElementById('cc_out').textContent = txt;
+    }
+
+    // 5. PARTITION CALCULATION
+    function calculatePartition() {
+      const h = parseVal('pt_h');
+      const w = parseVal('pt_w');
+      const cols = parseInt(document.getElementById('pt_cols').value) || 3;
+
+      if (h <= 0 || w <= 0) { alert("মাপ দিন!"); return; }
+
+      const inner_w = ((w - ((cols + 1) * 1.5)) / cols).toFixed(2);
+      let txt = `=== অ্যালুমিনিয়াম ফিক্সড পার্টিশন ===
+`;
+      txt += `> আউটার ভার্টিকাল:  ${h}" (2 pc)
+`;
+      txt += `> আউটার হরাইজন্টাল: ${w - 3}" (2 pc)
+`;
+      txt += `> ইন্টার ভার্টিকাল:   ${h - 3}" (${cols - 1} pc)
+`;
+      txt += `> ইনার হরাইজন্টাল:   ${inner_w}" (${cols * 2} pc)
+`;
+      txt += `> স্কয়ার বিডিং (Clip): প্রয়োজনমতো`;
+
+      document.getElementById('pt_out').textContent = txt;
+    }
+
+    // 6. QUOTATION SYSTEM
+    let billItems = [];
+
+    function autoCalculateRate() {
+      const type = document.getElementById('q_item_type').value;
+      const color = document.getElementById('q_color').value;
+
+      let rate = 320;
+      if (type.includes('Domal')) {
+        rate = 420;
+        if (type.includes('3-Track')) rate += 90;
+        if (color.includes('Wooden')) rate += 80;
+        else if (color.includes('Bronze')) rate += 30;
+      } else if (type.includes('Sliding')) {
+        rate = 260;
+        if (type.includes('3-Track')) rate += 60;
+        if (color.includes('Wooden')) rate += 60;
+      } else if (type.includes('Door')) {
+        rate = 340;
+      } else if (type.includes('Partition')) {
+        rate = 230;
+      }
+      document.getElementById('q_rate').value = rate;
+    }
+
+    function addItemToBill() {
+      const type = document.getElementById('q_item_type').value;
+      const color = document.getElementById('q_color').value;
+      const h = parseVal('q_h');
+      const w = parseVal('q_w');
+      const qty = parseInt(document.getElementById('q_qty').value) || 1;
+      const rate = parseVal('q_rate') || 320;
+      const loc = document.getElementById('q_loc').value.trim();
+
+      if (h <= 0 || w <= 0) {
+        alert("উচ্চতা এবং প্রস্থ ফিটে দিন (যেমন 4 x 5)");
+        return;
+      }
+
+      const sqft = h * w * qty;
+      const amount = sqft * rate;
+
+      billItems.push({
+        type, color, h, w, qty, rate, loc, sqft, amount
+      });
+
+      renderBillItems();
+      updateBillTotal();
+
+      document.getElementById('q_h').value = '';
+      document.getElementById('q_w').value = '';
+      document.getElementById('q_loc').value = '';
+    }
+
+    function removeBillItem(idx) {
+      billItems.splice(idx, 1);
+      renderBillItems();
+      updateBillTotal();
+    }
+
+    function renderBillItems() {
+      const container = document.getElementById('billItemsList');
+      if (billItems.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.8rem;">কোনো আইটেম যোগ করা হয়নি।</p>';
+        return;
+      }
+
+      let html = '';
+      billItems.forEach((item, i) => {
+        html += `
+          <div class="bill-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong>${i+1}. ${item.loc ? '['+item.loc+'] ' : ''}${item.type}</strong>
+              <button onclick="removeBillItem(${i})" style="background:transparent; border:none; color:#ff5252; cursor:pointer;">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+            <div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px;">
+              ফিনিশ: ${item.color} | সাইজ: ${item.h}ft x ${item.w}ft | পরিমাণ: ${item.qty} পিস
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:4px; font-weight:bold; color:var(--accent);">
+              <span>${item.sqft.toFixed(1)} Sq.Ft @ Rs ${item.rate}</span>
+              <span>Rs ${item.amount.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function updateBillTotal() {
+      const totalSqft = billItems.reduce((acc, itm) => acc + itm.sqft, 0);
+      const subTotal = billItems.reduce((acc, itm) => acc + itm.amount, 0);
+      const discount = parseVal('q_discount');
+      const advance = parseVal('q_advance');
+
+      const grandTotal = Math.max(0, subTotal - discount);
+      const due = Math.max(0, grandTotal - advance);
+
+      document.getElementById('totalSqftDisplay').textContent = `${totalSqft.toFixed(2)} Sq.Ft`;
+      document.getElementById('grandTotalDisplay').textContent = `Rs ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+      document.getElementById('dueTotalDisplay').textContent = `Rs ${due.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+    }
+
+    // PDF Invoice Generator using jsPDF
+    function generatePdfInvoice() {
+      if (billItems.length === 0) {
+        alert("বিলে অন্তত একটি আইটেম যোগ করুন!");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const shopName = document.getElementById('set_shop').value || "SMART WORKER ALUMINIUM";
+      const shopPhone = document.getElementById('set_phone').value || "9239413517";
+      const shopAddr = document.getElementById('set_addr').value || "Amta, Howrah";
+      const custName = document.getElementById('q_name').value || "Valued Customer";
+      const custPhone = document.getElementById('q_phone').value || "N/A";
+      const custAddr = document.getElementById('q_addr').value || "N/A";
+
+      // Header
+      doc.setFillColor(20, 31, 61);
+      doc.rect(0, 0, 210, 36, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(255, 152, 0);
+      doc.text(shopName, 14, 15);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(240, 240, 240);
+      doc.text(`${shopAddr} | Phone: ${shopPhone}`, 14, 22);
+      doc.text("JOB CARD / ESTIMATION BILL", 14, 28);
+
+      // Customer Info
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Bill To:", 14, 46);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Name: ${custName}`, 14, 52);
+      doc.text(`Phone: ${custPhone}`, 14, 57);
+      doc.text(`Address: ${custAddr}`, 14, 62);
+
+      const today = new Date().toLocaleDateString('en-GB');
+      doc.text(`Date: ${today}`, 150, 46);
+      doc.text(`Estimate No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 52);
+
+      // Table
+      const tableData = billItems.map((itm, idx) => [
+        idx + 1,
+        `${itm.loc ? '['+itm.loc+'] ' : ''}${itm.type}
+Specs: ${itm.color}
+Size: ${itm.h}' x ${itm.w}'`,
+        itm.qty,
+        itm.sqft.toFixed(1),
+        `Rs ${itm.rate}`,
+        `Rs ${itm.amount.toFixed(2)}`
+      ]);
+
+      const subTotal = billItems.reduce((acc, itm) => acc + itm.amount, 0);
+      const discount = parseVal('q_discount');
+      const advance = parseVal('q_advance');
+      const grandTotal = Math.max(0, subTotal - discount);
+      const due = Math.max(0, grandTotal - advance);
+
+      doc.autoTable({
+        startY: 68,
+        head: [['#', 'Item Description', 'Qty', 'Sq.Ft', 'Rate', 'Total']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [20, 31, 61], textColor: [255, 152, 0] },
+        styles: { fontSize: 8.5 }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 8;
+      doc.setFontSize(9);
+      doc.text(`Sub Total: Rs ${subTotal.toFixed(2)}`, 140, finalY);
+      if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 6);
+      doc.setFont("helvetica", "bold");
+      doc.text(`GRAND TOTAL: Rs ${grandTotal.toFixed(2)}`, 140, finalY + 12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Advance Paid: Rs ${advance.toFixed(2)}`, 140, finalY + 18);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(200, 0, 0);
+      doc.text(`DUE AMOUNT: Rs ${due.toFixed(2)}`, 140, finalY + 25);
+
+      // Terms
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("Terms & Conditions: 50% Advance with order. Cut materials cannot be returned.", 14, finalY + 36);
+      doc.text("-- Generated by Smart Worker Pro Application --", 14, finalY + 41);
+
+      doc.save(`Estimate_${custName.replace(/\s+/g, '_')}.pdf`);
+    }
+
+    // WhatsApp Share functions
+    function shareWhatsApp(outputId) {
+      const text = document.getElementById(outputId).textContent;
+      if (!text || text.includes('এখানে দেখা যাবে')) {
+        alert("প্রথমে হিসাব বের করুন!");
+        return;
+      }
+      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    function shareBillWhatsApp() {
+      if (billItems.length === 0) {
+        alert("বিলে অন্তত একটি আইটেম যোগ করুন!");
+        return;
+      }
+      const shopName = document.getElementById('set_shop').value;
+      const custName = document.getElementById('q_name').value || "Customer";
+      let msg = `*${shopName} - ESTIMATION BILL*
+`;
+      msg += `Client: ${custName}
+-------------------------
+`;
+      billItems.forEach((itm, idx) => {
+        msg += `${idx+1}. ${itm.type} (${itm.h}x${itm.w} ft) Qty: ${itm.qty} = Rs ${itm.amount.toFixed(0)}
+`;
+      });
+      msg += `-------------------------
+`;
+      msg += `*Total Bill: ${document.getElementById('grandTotalDisplay').textContent}*
+`;
+      msg += `*Due Amount: ${document.getElementById('dueTotalDisplay').textContent}*
+
+`;
+      msg += `App by Smart Worker Pro`;
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function saveProfile() {
+      const shop = document.getElementById('set_shop').value;
+      const name = document.getElementById('set_name').value;
+      document.getElementById('displayShopName').textContent = shop;
+      document.getElementById('welcomeUser').textContent = `স্বাগতম, ${name}!`;
+      alert("প্রোফাইল সফলভাবে আপডেট করা হয়েছে!");
+      switchTab('tab-home');
+    }
+
+    // Init
+    autoCalculateRate();
+  </script>
+</body>
+  </html>
