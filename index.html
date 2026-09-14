@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1389,33 +1389,82 @@
           Status: FREE PLAN (Limited Features)
         </div>
 
+        <!-- 50-User Team Members Management Section (Unlocked for Corporate Pro) -->
+        <div id="corporateTeamSection" style="display:none; background:#1e1b4b; border:1px solid #8b5cf6; border-radius:12px; padding:12px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="color:#c084fc; font-weight:800; font-size:0.85rem;">👥 WORKSHOP TEAM MANAGEMENT (MAX 50 USERS)</div>
+            <div id="teamCountBadge" style="background:#8b5cf6; color:#fff; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:10px;">0 / 50 Active</div>
+          </div>
+          <div class="form-grid" style="margin-bottom:8px;">
+            <div class="form-group">
+              <input type="text" id="team_member_name" placeholder="Worker / Fitter Name">
+            </div>
+            <div class="form-group">
+              <input type="text" id="team_member_phone" placeholder="Worker Mobile / Gmail">
+            </div>
+          </div>
+          <button class="action-btn" style="background:#8b5cf6; width:100%; padding:8px; font-size:0.8rem; margin-bottom:8px;" onclick="addTeamMember()">
+            + Add Worker to Team (টিম সদস্য যোগ করুন)
+          </button>
+          <div id="teamMemberList" style="max-height:120px; overflow-y:auto; font-size:0.75rem; color:#e0e7ff; background:#0f172a; padding:6px; border-radius:6px;">
+            No team members added yet.
+          </div>
+        </div>
+
+
         <div style="font-size:0.85rem; font-weight:bold; color:#fbbf24; margin-bottom:10px; text-transform:uppercase;">
           SELECT YOUR PRO MEMBERSHIP PLAN:
         </div>
 
-        <!-- Annual Card -->
-        <div style="background:#0f172a; border:1.5px solid #f59e0b; border-radius:12px; padding:12px; margin-bottom:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <div style="color:#fbbf24; font-weight:bold; font-size:0.9rem;">⭐ ANNUAL PLAN (BEST VALUE)</div>
-            <div style="color:#4ade80; font-weight:bold; font-size:1.1rem;">Rs. 799 / Year</div>
+        <!-- TIER 1: KARIGAR PLAN (SOLO FABRICATOR) -->
+        <div style="background:#0f172a; border:1.5px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <div style="color:#38bdf8; font-weight:800; font-size:0.9rem;">🛠️ 1. KARIGAR PLAN (কারিগর প্ল্যান)</div>
+            <div style="background:#0284c7; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">1 User (Single)</div>
           </div>
-          <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
-            Only Rs. 66/month! Special 40% OFF for Fabricators
+          <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For individual solo fabricators & small local workshops</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
+            <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹99 / Mo</span>
+            <span style="color:#4ade80; font-weight:bold; font-size:0.85rem;">Annual: ₹799 / Yr (Save 33%)</span>
           </div>
-          <button class="action-btn" style="background:#f59e0b; color:#000; font-weight:800; width:100%; padding:10px;" onclick="subscribeViaWhatsApp('Annual')">
-            CHOOSE ANNUAL (Rs. 799/Yr) 👉
-          </button>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="background:#0284c7; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Karigar_Monthly')">Choose ₹99 / Month</button>
+            <button class="action-btn" style="background:#f59e0b; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Karigar_Annual')">Choose ₹799 / Year</button>
+          </div>
         </div>
 
-        <!-- Monthly Card -->
-        <div style="background:#0f172a; border:1px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <div style="color:#38bdf8; font-weight:bold; font-size:0.9rem;">🔹 MONTHLY PLAN</div>
-            <div style="color:#fff; font-weight:bold; font-size:1.05rem;">Rs. 99 / Month</div>
+        <!-- TIER 2: WORKSHOP TEAM PLAN (5 TO 10 USERS) -->
+        <div style="background:#0f172a; border:2px solid #22c55e; border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 3px 12px rgba(34, 197, 94, 0.15);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <div style="color:#4ade80; font-weight:800; font-size:0.9rem;">🏭 2. WORKSHOP PLAN (মাঝারি টিম)</div>
+            <div style="background:#16a34a; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">5 to 10 Workers</div>
           </div>
-          <button class="action-btn" style="background:#0284c7; color:#fff; font-weight:bold; width:100%; padding:10px; margin-top:6px;" onclick="subscribeViaWhatsApp('Monthly')">
-            CHOOSE MONTHLY (Rs. 99/Mo)
-          </button>
+          <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For medium workshops handling 2-3 ongoing sites simultaneously</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#14532d; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
+            <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹499 / Mo</span>
+            <span style="color:#fde047; font-weight:bold; font-size:0.85rem;">Annual: ₹3,999 / Yr (Save 33%)</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="background:#16a34a; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Monthly')">Choose ₹499 / Month</button>
+            <button class="action-btn" style="background:#22c55e; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Annual')">Choose ₹3,999 / Year</button>
+          </div>
+        </div>
+
+        <!-- TIER 3: CORPORATE ENTERPRISE (UP TO 50 USERS) -->
+        <div style="background:#0f172a; border:2px solid #8b5cf6; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 4px 14px rgba(139, 92, 246, 0.2);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <div style="color:#c084fc; font-weight:800; font-size:0.9rem;">🏢 3. CORPORATE ENTERPRISE (বড় কারখানা)</div>
+            <div style="background:#7c3aed; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">Up to 50 Workers</div>
+          </div>
+          <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For large contractors, promoters & multi-branch fabrication factories</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#2e1065; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
+            <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹1,499 / Mo</span>
+            <span style="color:#38bdf8; font-weight:bold; font-size:0.85rem;">Annual: ₹14,999 / Yr</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="background:#8b5cf6; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Monthly')">Choose ₹1,499 / Month</button>
+            <button class="action-btn" style="background:#a855f7; color:#fff; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Annual')">Choose ₹14,999 / Year</button>
+          </div>
         </div>
 
         <!-- Pro Benefits -->
@@ -3266,11 +3315,64 @@
 
     const ADMIN_WHATSAPP_NUMBER = "919239413517";
     const SALTS = {
+        "KARIGAR_1M": "SAHEB_1M_PRO",
+        "KARIGAR_1Y": "SAHEB_1Y_PRO",
+        "TEAM_1M": "SAHEB_TEAM_1M_PRO",
+        "TEAM_1Y": "SAHEB_TEAM_1Y_PRO",
+        "CORP_1M": "SAHEB_CORP_1M_PRO",
+        "CORP_1Y": "SAHEB_CORP_1Y_PRO",
         "1M": "SAHEB_1M_PRO",
-        "3M": "SAHEB_3M_PRO",
         "1Y": "SAHEB_1Y_PRO"
     };
     const SPECIAL_PROMO_CODE = "SMARTWORKER_ADMIN_100";
+
+    
+    function addTeamMember() {
+      const name = document.getElementById('team_member_name').value.trim();
+      const phone = document.getElementById('team_member_phone').value.trim();
+      if (!name || !phone) { alert("Please enter member name and phone/gmail."); return; }
+
+      let members = JSON.parse(localStorage.getItem('sw_team_members') || '[]');
+      if (members.length >= 50) { alert("Maximum 50 team members limit reached!"); return; }
+
+      members.push({ name, phone, added_on: new Date().toLocaleDateString('en-GB') });
+      localStorage.setItem('sw_team_members', JSON.stringify(members));
+
+      document.getElementById('team_member_name').value = "";
+      document.getElementById('team_member_phone').value = "";
+      renderTeamMembers();
+      alert(`Team member ${name} added successfully! (${members.length}/50)`);
+    }
+
+    function removeTeamMember(idx) {
+      let members = JSON.parse(localStorage.getItem('sw_team_members') || '[]');
+      members.splice(idx, 1);
+      localStorage.setItem('sw_team_members', JSON.stringify(members));
+      renderTeamMembers();
+    }
+
+    function renderTeamMembers() {
+      const members = JSON.parse(localStorage.getItem('sw_team_members') || '[]');
+      const container = document.getElementById('teamMemberList');
+      const badge = document.getElementById('teamCountBadge');
+
+      if (badge) badge.textContent = `${members.length} / 50 Active`;
+      if (!container) return;
+
+      if (members.length === 0) {
+        container.innerHTML = "No team members added yet.";
+        return;
+      }
+
+      let html = "";
+      members.forEach((m, i) => {
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #1e293b;">
+          <span>${i+1}. <b>${m.name}</b> (${m.phone})</span>
+          <button onclick="removeTeamMember(${i})" style="background:#ef4444; color:#fff; border:none; border-radius:3px; padding:1px 5px; font-size:0.65rem; cursor:pointer;">✕</button>
+        </div>`;
+      });
+      container.innerHTML = html;
+    }
 
     function getDeviceId() {
         let devId = localStorage.getItem('sw_device_id');
@@ -3319,7 +3421,25 @@
                 banner.style.background = "#2e7d32";
                 const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
                 const expStr = lic.key === SPECIAL_PROMO_CODE ? "Lifetime" : lic.expiry_date;
-                banner.textContent = `Status: PRO MEMBER (Active till ${expStr})`;
+                const cat = lic.plan_category || (lic.is_corp ? "CORPORATE" : "KARIGAR");
+                const maxU = lic.max_users || 1;
+                const teamSec = document.getElementById('corporateTeamSection');
+
+                if (cat === "CORPORATE" || cat === "LIFETIME") {
+                  banner.style.background = "#7c3aed";
+                  banner.textContent = `Status: CORPORATE PRO (50 USERS) - Active till ${expStr}`;
+                  if (teamSec) teamSec.style.display = 'block';
+                  renderTeamMembers();
+                } else if (cat === "WORKSHOP_TEAM") {
+                  banner.style.background = "#16a34a";
+                  banner.textContent = `Status: WORKSHOP TEAM PRO (10 USERS) - Active till ${expStr}`;
+                  if (teamSec) teamSec.style.display = 'block';
+                  renderTeamMembers();
+                } else {
+                  banner.style.background = "#0284c7";
+                  banner.textContent = `Status: KARIGAR PRO (Single User) - Active till ${expStr}`;
+                  if (teamSec) teamSec.style.display = 'none';
+                }
             } else {
                 banner.style.background = "#37474f";
                 banner.textContent = "Status: FREE PLAN (Limited Features)";
@@ -3349,10 +3469,16 @@
 
         if (durationType) {
             let daysToAdd = 30;
-            if (durationType === "1M") daysToAdd = 30;
-            else if (durationType === "3M") daysToAdd = 90;
-            else if (durationType === "1Y") daysToAdd = 365;
-            else if (durationType === "LIFETIME") daysToAdd = 36500;
+            let planCategory = "KARIGAR";
+            let maxUsers = 1;
+
+            if (durationType === "KARIGAR_1M" || durationType === "1M") { daysToAdd = 30; maxUsers = 1; planCategory = "KARIGAR"; }
+            else if (durationType === "KARIGAR_1Y" || durationType === "1Y") { daysToAdd = 365; maxUsers = 1; planCategory = "KARIGAR"; }
+            else if (durationType === "TEAM_1M") { daysToAdd = 30; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
+            else if (durationType === "TEAM_1Y") { daysToAdd = 365; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
+            else if (durationType === "CORP_1M") { daysToAdd = 30; maxUsers = 50; planCategory = "CORPORATE"; }
+            else if (durationType === "CORP_1Y") { daysToAdd = 365; maxUsers = 50; planCategory = "CORPORATE"; }
+            else if (durationType === "LIFETIME") { daysToAdd = 36500; maxUsers = 50; planCategory = "LIFETIME"; }
 
             const expiry = new Date();
             expiry.setDate(expiry.getDate() + daysToAdd);
@@ -3360,6 +3486,9 @@
 
             localStorage.setItem('sw_license', JSON.stringify({
                 key: inputKey.toUpperCase(),
+                plan: durationType,
+                plan_category: planCategory,
+                max_users: maxUsers,
                 expiry_date: expiryStr
             }));
 
@@ -3373,9 +3502,13 @@
 
     function subscribeViaWhatsApp(plan) {
         const deviceId = getDeviceId();
-        let planStr = "PRO Membership";
-        if (plan === "Annual") planStr = "Annual Plan (Rs. 799/Year)";
-        else if (plan === "Monthly") planStr = "Monthly Plan (Rs. 99/Month)";
+        let planStr = "Smart Worker PRO";
+        if (plan === "Karigar_Monthly") planStr = "Karigar Plan (Single User - Rs. 99/Month)";
+        else if (plan === "Karigar_Annual") planStr = "Karigar Plan (Single User - Rs. 799/Year)";
+        else if (plan === "Workshop_Monthly") planStr = "Workshop Team Plan (10 Users - Rs. 499/Month)";
+        else if (plan === "Workshop_Annual") planStr = "Workshop Team Plan (10 Users - Rs. 3,999/Year)";
+        else if (plan === "Corporate_Monthly") planStr = "Corporate Enterprise Plan (50 Users - Rs. 1,499/Month)";
+        else if (plan === "Corporate_Annual") planStr = "Corporate Enterprise Plan (50 Users - Rs. 14,999/Year)";
 
         const msg = `Hello Saheb Da, I want to activate Smart Worker PRO (${planStr}). My Device ID: ${deviceId}`;
         const encoded = encodeURIComponent(msg);
@@ -5623,4 +5756,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-          </html>
+            </html>
