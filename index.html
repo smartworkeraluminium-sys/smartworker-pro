@@ -287,6 +287,24 @@
         <button class="gear-btn" onclick="openScreen('settings', 'SETTINGS')">⚙️</button>
       </div>
 
+            <!-- Smart Site Measurement Khata Card (Hero Feature) -->
+      <div style="padding: 14px 16px 4px 16px;">
+        <div class="menu-card" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); padding: 18px 14px; border: 1.5px solid #38bdf8; box-shadow: 0 6px 16px rgba(2, 132, 199, 0.25);" onclick="openScreen('site_khata', 'SITE MEASUREMENT KHATA')">
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+            <div style="display:flex; align-items:center; gap:12px; text-align:left;">
+              <div style="font-size: 2.2rem;">📘</div>
+              <div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #fff;">Site Measurement Khata</div>
+                <div style="font-size: 0.76rem; color: #bae6fd; margin-top:2px;">Digital Khata Book: Room Tracking, Auto Labour & Billing</div>
+              </div>
+            </div>
+            <div style="background:#fbbf24; color:#0f172a; font-weight:800; font-size:0.75rem; padding:4px 8px; border-radius:6px; white-space:nowrap;">
+              OPEN &rarr;
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Menu Section: Fabrication Systems -->
       <div class="menu-section-title">FABRICATION SYSTEMS</div>
       <div class="grid-2">
@@ -1202,6 +1220,146 @@
         </div>
       </div>
       <div class="output-area" id="lookup_results" style="max-height:400px;"></div>
+    </div>
+
+        <!-- ================= 16. SITE MEASUREMENT KHATA SCREEN ================= -->
+    <div id="screen-site_khata" class="screen">
+      <div class="form-box" style="border-top: 4px solid #0284c7;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div>
+            <div style="font-size:1.05rem; font-weight:800; color:#1e3a8a;">📘 SMART SITE KHATA BOOK</div>
+            <div style="font-size:0.75rem; color:#64748b;">Rapid On-Site Measurement & Auto Costing</div>
+          </div>
+          <button class="action-btn" style="background:#ef4444; flex:0.3; padding:5px 8px; font-size:0.72rem;" onclick="clearSiteKhata()">NEW SITE</button>
+        </div>
+
+        <!-- Site & Client Info -->
+        <div class="form-grid" style="margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+          <div class="form-group">
+            <label>Client Name:</label>
+            <input type="text" id="sk_client_name" placeholder="e.g. Amitava Babu">
+          </div>
+          <div class="form-group">
+            <label>Phone / Contact:</label>
+            <input type="text" id="sk_client_phone" placeholder="Mobile Number">
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>Site / Project Location:</label>
+            <input type="text" id="sk_site_loc" placeholder="e.g. Amta Chandni, 2nd Floor Building">
+          </div>
+        </div>
+
+        <!-- Entry Form for New Opening -->
+        <div style="font-size:0.82rem; font-weight:800; color:#0369a1; margin-bottom:6px; text-transform:uppercase;">
+          + RECORD NEW OPENING / MEASUREMENT
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label style="color:#2563eb;">Room / Location:</label>
+            <input type="text" id="sk_room" placeholder="e.g. Bed-1, Hall, Kitchen">
+          </div>
+          <div class="form-group">
+            <label style="color:#b45309;">Opening Tag / Name:</label>
+            <input type="text" id="sk_tag" placeholder="e.g. W-1, W-2, D-1">
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>Work Category / Profile:</label>
+            <select id="sk_category">
+              <option value="Sliding 18x40 (2-Track)" selected>Sliding 18x40 (2-Track Window)</option>
+              <option value="Sliding 18x40 (3-Track)">Sliding 18x40 (3-Track Window)</option>
+              <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track Window)</option>
+              <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track Window)</option>
+              <option value="Casement 34 Series">Casement 34 Series (Openable/Fixed)</option>
+              <option value="Casement 40 Series">Casement 40 Series (Heavy)</option>
+              <option value="Standard Door">Standard Aluminium Door</option>
+              <option value="Floor Spring Door">Floor Spring Heavy Door</option>
+              <option value="Domal Door">Domal System Door</option>
+              <option value="Fixed Partition">Office / Room Partition</option>
+              <option value="Gypsum Ceiling">False Ceiling (Gypsum Board)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Height (Inches):</label>
+            <div class="input-wrapper">
+              <input type="text" id="sk_h" placeholder="Height">
+              <button class="keypad-trigger" onclick="openKeypad('sk_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Width (Inches):</label>
+            <div class="input-wrapper">
+              <input type="text" id="sk_w" placeholder="Width">
+              <button class="keypad-trigger" onclick="openKeypad('sk_w')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Quantity (Pcs):</label>
+            <input type="number" id="sk_qty" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label>Glass / Spec:</label>
+            <select id="sk_glass">
+              <option value="5mm Clear Float" selected>5mm Clear Float</option>
+              <option value="5mm Frosted Pinhead">5mm Frosted Pinhead</option>
+              <option value="5mm Black Tinted">5mm Black Tinted</option>
+              <option value="5mm Royal Blue Reflective">5mm Blue Reflective</option>
+              <option value="6mm Toughened Clear">6mm Toughened Clear</option>
+              <option value="Aluminium Sheet Panel">Aluminium Sheet Panel</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="action-btn" style="background:#0284c7; width:100%; padding:12px; font-size:0.92rem; font-weight:800; margin-bottom:12px;" onclick="addOpeningToKhata()">
+          <i class="fa-solid fa-plus-circle"></i> ADD TO SITE KHATA (+ খাতায় তুলুন)
+        </button>
+
+        <!-- Live Site Summary Dashboard -->
+        <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:10px; margin-bottom:12px;">
+          <div style="font-size:0.78rem; font-weight:800; color:#166534; margin-bottom:6px;">LIVE SITE ESTIMATION SUMMARY:</div>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; text-align:center;">
+            <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #dcfce7;">
+              <div style="font-size:0.65rem; color:#64748b;">Total Units</div>
+              <div id="sk_total_units" style="font-size:0.9rem; font-weight:bold; color:#166534;">0 Pcs</div>
+            </div>
+            <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #dcfce7;">
+              <div style="font-size:0.65rem; color:#64748b;">Total Sq.Ft</div>
+              <div id="sk_total_sqft" style="font-size:0.9rem; font-weight:bold; color:#166534;">0.0</div>
+            </div>
+            <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #dcfce7;">
+              <div style="font-size:0.65rem; color:#64748b;">Total Labour</div>
+              <div id="sk_total_labour" style="font-size:0.9rem; font-weight:bold; color:#ea580c;">Rs 0</div>
+            </div>
+            <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #dcfce7;">
+              <div style="font-size:0.65rem; color:#64748b;">Est. Bill Total</div>
+              <div id="sk_total_amount" style="font-size:0.9rem; font-weight:bold; color:#2563eb;">Rs 0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khata Book Entries Table -->
+        <div class="output-label" style="margin:0 0 6px 0;">SITE MEASUREMENT ENTRIES (ROOM TRACKING):</div>
+        <div id="sk_entries_container" style="max-height:220px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:8px; padding:6px; background:#fff; margin-bottom:12px; font-size:0.75rem;">
+          <div style="text-align:center; color:#94a3b8; padding:20px;">No site openings recorded yet. Add an opening above!</div>
+        </div>
+
+        <!-- Master 1-Click Export Actions -->
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="action-btn" style="background:#1e3a8a; padding:12px; font-size:0.9rem;" onclick="exportSiteKhataMasterPdf()">
+            <i class="fa-solid fa-file-pdf"></i> GENERATE SITE KHATA MASTER PDF (ফুল রিপোর্ট)
+          </button>
+          <div class="btn-row">
+            <button class="action-btn" style="background:#9333ea;" onclick="convertKhataToQuotation()">
+              <i class="fa-solid fa-file-invoice"></i> CLIENT BILL
+            </button>
+            <button class="action-btn" style="background:#0f766e;" onclick="exportKhataMaterialOrderPdf()">
+              <i class="fa-solid fa-truck-ramp-box"></i> ORDER SLIP
+            </button>
+            <button class="action-btn btn-wa" onclick="shareKhataWhatsApp()">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ================= 15. ACTIVATION SCREEN ================= -->
@@ -3286,6 +3444,411 @@
     // 6. Quality Check & Master Signatures
     // ========================================================
     
+    
+    // ========================================================
+    // SMART SITE MEASUREMENT KHATA & ESTIMATION ENGINE
+    // ========================================================
+    let siteKhataItems = [];
+
+    function getLabourRateForCategory(cat) {
+      const cost_data = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
+      if (cat.includes("Domal")) return parseFloat(cost_data['Domal Window Labour']) || 50.0;
+      if (cat.includes("Casement")) return parseFloat(cost_data['Casement Labour']) || 60.0;
+      if (cat.includes("Door")) return parseFloat(cost_data['Door Master Labour']) || 65.0;
+      if (cat.includes("Partition")) return parseFloat(cost_data['Partition Labour']) || 40.0;
+      return parseFloat(cost_data['Sliding Window Labour']) || 35.0;
+    }
+
+    function addOpeningToKhata() {
+      const room = document.getElementById('sk_room').value.trim() || "General Room";
+      const tag = document.getElementById('sk_tag').value.trim() || `Unit-${siteKhataItems.length + 1}`;
+      const cat = document.getElementById('sk_category').value;
+      const h = safeEval(document.getElementById('sk_h').value);
+      const w = safeEval(document.getElementById('sk_w').value);
+      const qty = Math.max(1, parseInt(document.getElementById('sk_qty').value) || 1);
+      const glass = document.getElementById('sk_glass').value;
+
+      if (h === 0 || w === 0) {
+        alert("Please enter valid Height and Width in inches.");
+        return;
+      }
+
+      const sq_ft_per_pc = (h * w) / 144.0;
+      const total_sqft = sq_ft_per_pc * qty;
+      const labour_rate = getLabourRateForCategory(cat);
+      const labour_cost = total_sqft * labour_rate;
+      const est_rate = calculateSuggestedRate(cat, "1.5 mm", "Aluminium: Powder Coated Jet Black", "5.0 mm Glass", glass, false);
+      const est_price = total_sqft * est_rate;
+
+      siteKhataItems.push({
+        id: Date.now(),
+        room: room,
+        tag: tag,
+        category: cat,
+        h: h,
+        w: w,
+        qty: qty,
+        glass: glass,
+        sqft_pc: sq_ft_per_pc,
+        total_sqft: total_sqft,
+        labour_rate: labour_rate,
+        labour_cost: labour_cost,
+        est_rate: est_rate,
+        est_price: est_price
+      });
+
+      renderKhataTable();
+      updateKhataSummary();
+
+      // Clear size inputs for next entry
+      document.getElementById('sk_tag').value = "";
+      document.getElementById('sk_h').value = "";
+      document.getElementById('sk_w').value = "";
+      document.getElementById('sk_qty').value = "1";
+    }
+
+    function deleteKhataItem(idx) {
+      siteKhataItems.splice(idx, 1);
+      renderKhataTable();
+      updateKhataSummary();
+    }
+
+    function clearSiteKhata() {
+      if (confirm("Start a new site? Current entries will be cleared.")) {
+        siteKhataItems = [];
+        document.getElementById('sk_client_name').value = "";
+        document.getElementById('sk_client_phone').value = "";
+        document.getElementById('sk_site_loc').value = "";
+        renderKhataTable();
+        updateKhataSummary();
+      }
+    }
+
+    function renderKhataTable() {
+      const container = document.getElementById('sk_entries_container');
+      if (siteKhataItems.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px;">No site openings recorded yet. Add an opening above!</div>`;
+        return;
+      }
+
+      let html = `<table style="width:100%; border-collapse:collapse; text-align:left;">
+        <thead>
+          <tr style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:0.72rem; color:#475569;">
+            <th style="padding:4px;">#</th>
+            <th style="padding:4px;">Room / Tag</th>
+            <th style="padding:4px;">Type</th>
+            <th style="padding:4px;">Size (HxW)</th>
+            <th style="padding:4px; text-align:center;">Qty</th>
+            <th style="padding:4px; text-align:right;">Sq.Ft</th>
+            <th style="padding:4px; text-align:right;">Labour</th>
+            <th style="padding:4px; text-align:center;">Action</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      siteKhataItems.forEach((itm, idx) => {
+        html += `<tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:4px; color:#64748b;">${idx + 1}</td>
+          <td style="padding:4px; font-weight:bold; color:#1e293b;">${itm.room}<br><span style="color:#0284c7; font-size:0.68rem;">[${itm.tag}]</span></td>
+          <td style="padding:4px; font-size:0.7rem;">${itm.category}</td>
+          <td style="padding:4px; font-weight:600;">${itm.h}" x ${itm.w}"</td>
+          <td style="padding:4px; text-align:center; font-weight:bold;">${itm.qty}</td>
+          <td style="padding:4px; text-align:right;">${itm.total_sqft.toFixed(1)}</td>
+          <td style="padding:4px; text-align:right; color:#ea580c; font-weight:600;">Rs ${Math.round(itm.labour_cost)}</td>
+          <td style="padding:4px; text-align:center;">
+            <button onclick="deleteKhataItem(${idx})" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">✕</button>
+          </td>
+        </tr>`;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function updateKhataSummary() {
+      const totalUnits = siteKhataItems.reduce((a, b) => a + b.qty, 0);
+      const totalSqft = siteKhataItems.reduce((a, b) => a + b.total_sqft, 0);
+      const totalLabour = siteKhataItems.reduce((a, b) => a + b.labour_cost, 0);
+      const totalAmount = siteKhataItems.reduce((a, b) => a + b.est_price, 0);
+
+      document.getElementById('sk_total_units').textContent = `${totalUnits} Pcs`;
+      document.getElementById('sk_total_sqft').textContent = totalSqft.toFixed(1);
+      document.getElementById('sk_total_labour').textContent = `Rs ${Math.round(totalLabour).toLocaleString('en-IN')}`;
+      document.getElementById('sk_total_amount').textContent = `Rs ${Math.round(totalAmount).toLocaleString('en-IN')}`;
+    }
+
+    function convertKhataToQuotation() {
+      if (siteKhataItems.length === 0) {
+        alert("Khata is empty! Please record measurements first.");
+        return;
+      }
+
+      const clientName = document.getElementById('sk_client_name').value.trim();
+      const clientPhone = document.getElementById('sk_client_phone').value.trim();
+      const siteLoc = document.getElementById('sk_site_loc').value.trim();
+
+      if (clientName) document.getElementById('q_name').value = clientName;
+      if (clientPhone) document.getElementById('q_phone').value = clientPhone;
+      if (siteLoc) {
+        document.getElementById('q_addr').value = siteLoc;
+        if (document.getElementById('q_site_addr')) document.getElementById('q_site_addr').value = siteLoc;
+      }
+
+      billItems = [];
+      siteKhataItems.forEach(itm => {
+        billItems.push({
+          type: itm.category,
+          location: `${itm.room} [${itm.tag}]`,
+          color: "Aluminium: Powder Coated Jet Black",
+          thickness: "1.5 mm",
+          glass_thick: "5.0 mm Glass",
+          glass_type: itm.glass,
+          toughened: itm.glass.includes("Toughened"),
+          h: itm.h / 12.0, // convert inches to feet
+          w: itm.w / 12.0,
+          unit: "ft",
+          qty: itm.qty,
+          rate: itm.est_rate,
+          area: itm.total_sqft,
+          price: itm.est_price
+        });
+      });
+
+      refreshQueueText();
+      autoCalcAdvance();
+      openScreen('quotation', 'PRO QUOTATION');
+      alert("All site openings transferred into Client Quotation successfully!");
+    }
+
+    function exportSiteKhataMasterPdf() {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate Site Khata Master PDFs.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      if (siteKhataItems.length === 0) {
+        alert("Khata is empty! Please record measurements first.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const clientName = document.getElementById('sk_client_name').value.trim() || "Valued Client";
+      const clientPhone = document.getElementById('sk_client_phone').value.trim() || "N/A";
+      const siteLoc = document.getElementById('sk_site_loc').value.trim() || "Project Site";
+      const today = new Date().toLocaleDateString('en-GB');
+
+      // Header Banner
+      doc.setFillColor(30, 58, 138); // Royal Blue
+      doc.rect(0, 0, 210, 32, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(251, 191, 36);
+      doc.text(shop_name, 105, 12, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(224, 242, 254);
+      doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text("MASTER SITE MEASUREMENT & INSTALLATION KHATA BOOK", 105, 26, { align: "center" });
+
+      // Client & Site Card
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(203, 213, 225);
+      doc.roundedRect(14, 36, 182, 16, 2, 2, 'FD');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`CLIENT: ${clientName.toUpperCase()} | Phone: ${clientPhone}`, 18, 42);
+      doc.text(`SITE LOCATION: ${siteLoc}`, 18, 47);
+      doc.text(`DATE RECORDED: ${today}`, 192, 42, { align: "right" });
+      doc.text(`STATUS: ACTIVE FABRICATION ORDER`, 192, 47, { align: "right" });
+
+      // Table 1: Room by Room Measurement Khata
+      const khataRows = siteKhataItems.map((itm, i) => [
+        i + 1,
+        itm.room,
+        itm.tag,
+        itm.category,
+        `${itm.h}\" x ${itm.w}\"`,
+        `${itm.qty} Pcs`,
+        `${itm.total_sqft.toFixed(1)}`,
+        `Rs ${Math.round(itm.labour_cost)}`,
+        itm.glass
+      ]);
+
+      const totalUnits = siteKhataItems.reduce((a, b) => a + b.qty, 0);
+      const totalSqft = siteKhataItems.reduce((a, b) => a + b.total_sqft, 0);
+      const totalLabour = siteKhataItems.reduce((a, b) => a + b.labour_cost, 0);
+
+      khataRows.push([
+        { content: "TOTAL SITE SUMMARY", colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [241, 245, 249] } },
+        { content: "-", styles: { halign: 'center' } },
+        { content: `${totalUnits} Pcs`, styles: { halign: 'center', fontStyle: 'bold', fillColor: [224, 242, 254] } },
+        { content: `${totalSqft.toFixed(1)} Sq.Ft`, styles: { halign: 'center', fontStyle: 'bold', fillColor: [224, 242, 254] } },
+        { content: `Rs ${Math.round(totalLabour)}`, styles: { halign: 'center', fontStyle: 'bold', textColor: [234, 88, 12], fillColor: [255, 237, 213] } },
+        { content: "Full Site Handover", styles: { fontSize: 7 } }
+      ]);
+
+      doc.autoTable({
+        startY: 55,
+        head: [['#', 'Room / Floor', 'Tag', 'Profile Category', 'Size (HxW)', 'Qty', 'Sq.Ft', 'Labour', 'Glass / Spec']],
+        body: khataRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [30, 58, 138],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          lineColor: [203, 213, 225],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 26, fontStyle: 'bold' },
+          2: { cellWidth: 16, halign: 'center', fontStyle: 'bold', textColor: [2, 132, 199] },
+          3: { cellWidth: 38 },
+          4: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+          5: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
+          6: { cellWidth: 16, halign: 'center' },
+          7: { cellWidth: 18, halign: 'center', fontStyle: 'bold', textColor: [234, 88, 12] },
+          8: { cellWidth: 24 }
+        }
+      });
+
+      let currentY = doc.lastAutoTable.finalY + 8;
+      if (currentY > 230) { doc.addPage(); currentY = 16; }
+
+      // Labour & Installation Milestones Box
+      doc.autoTable({
+        startY: currentY,
+        head: [['SITE LABOUR CHARGE BREAKDOWN', 'INSTALLATION GUIDELINES & SPECIFICATIONS']],
+        body: [[
+          `• Total Fabricated Area: ${totalSqft.toFixed(1)} Sq.Ft\n• Total Installation Openings: ${totalUnits} Units\n• Net Making & Fitting Labour: Rs. ${Math.round(totalLabour).toLocaleString('en-IN')}/-\n(Note: Includes site measurement, framing, shutter hanging & glass sealing)`,
+          `• All sliding tracks to be plumbed & leveled with water level\n• Apply weather-proof silicone sealant around perimeter\n• Install heavy-duty nylon rollers and align star locks\n• Verify 45-degree corner joints on all casement & domal frames`
+        ]],
+        theme: 'grid',
+        headStyles: {
+          fillColor: [254, 240, 138],
+          textColor: [113, 63, 18],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: { fontSize: 7.5, cellPadding: 2.5, lineColor: [253, 230, 138] },
+        columnStyles: {
+          0: { cellWidth: 91, fillColor: [255, 251, 235] },
+          1: { cellWidth: 91, fillColor: [248, 250, 252] }
+        }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 14;
+      if (currentY > 255) { doc.addPage(); currentY = 20; }
+
+      // Signatures
+      doc.autoTable({
+        startY: currentY,
+        head: [['SITE IN-CHARGE / CLIENT SIGNATURE', 'FITTER / FABRICATION MASTER SIGNATURE']],
+        body: [[
+          `Measurements Accepted By: _______________________\n\nClient Name: ${clientName}\n\nDate: ${today}`,
+          `Recorded & Verified By: _______________________\n\nFor: ${shop_name}\n\nPhone: ${contact}`
+        ]],
+        theme: 'grid',
+        headStyles: {
+          fillColor: [241, 245, 249],
+          textColor: [51, 65, 85],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: { fontSize: 7.5, cellPadding: 3, lineColor: [203, 213, 225] }
+      });
+
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139);
+      doc.text("-- Generated via Smart Worker Pro Master Site Measurement Khata System --", 105, 290, { align: "center" });
+
+      doc.save(`SiteKhata_${clientName.replace(/\s+/g, '_')}_${today.replace(/\//g, '-')}.pdf`);
+    }
+
+    function exportKhataMaterialOrderPdf() {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate Material Order Slips.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      if (siteKhataItems.length === 0) {
+        alert("Khata is empty! Please record measurements first.");
+        return;
+      }
+
+      // Consolidate buckets for all items
+      const siteBuckets = {};
+      const siteGlass = {};
+
+      siteKhataItems.forEach(itm => {
+        const catKey = itm.category.split(' ')[0] + " Profiles";
+        if (!siteBuckets[catKey]) siteBuckets[catKey] = [];
+        // Approximate profile perimeter in feet
+        const runFt = ((itm.h + itm.w) * 2 / 12) * itm.qty;
+        siteBuckets[catKey].push(runFt * 12);
+
+        const gKey = `${itm.h - 4}\" x ${Math.round(itm.w / 2)}\" (${itm.glass})`;
+        siteGlass[gKey] = (siteGlass[gKey] || 0) + (itm.qty * 2);
+      });
+
+      exportMatPurchasePdf("Site_Khata_Material_Order", "Full Site Material Order", siteBuckets, siteGlass);
+    }
+
+    function shareKhataWhatsApp() {
+      if (siteKhataItems.length === 0) {
+        alert("Khata is empty! Please record measurements first.");
+        return;
+      }
+
+      const clientName = document.getElementById('sk_client_name').value.trim() || "Client";
+      const siteLoc = document.getElementById('sk_site_loc').value.trim() || "Site";
+      const totalUnits = siteKhataItems.reduce((a, b) => a + b.qty, 0);
+      const totalSqft = siteKhataItems.reduce((a, b) => a + b.total_sqft, 0);
+      const totalLabour = siteKhataItems.reduce((a, b) => a + b.labour_cost, 0);
+      const totalAmount = siteKhataItems.reduce((a, b) => a + b.est_price, 0);
+
+      let msg = `*SMART WORKER PRO - SITE MEASUREMENT KHATA*\n`;
+      msg += `Client: ${clientName}\nSite: ${siteLoc}\n`;
+      msg += `------------------------------------\n`;
+      msg += `Total Units: ${totalUnits} Pcs\nTotal Area: ${totalSqft.toFixed(1)} Sq.Ft\n`;
+      msg += `Total Labour: Rs ${Math.round(totalLabour).toLocaleString('en-IN')}\n`;
+      msg += `Est. Total: Rs ${Math.round(totalAmount).toLocaleString('en-IN')}\n`;
+      msg += `------------------------------------\n`;
+      msg += `*ROOM-WISE OPENINGS:*\n`;
+
+      siteKhataItems.forEach((itm, i) => {
+        msg += `${i + 1}. [${itm.room} - ${itm.tag}] ${itm.category}\n   Size: ${itm.h}\"x${itm.w}\" | Qty: ${itm.qty} | ${itm.total_sqft.toFixed(1)} Sq.Ft\n`;
+      });
+
+      msg += `\n-- Powered by Smart Worker Pro Fabrication Systems --`;
+      const encoded = encodeURIComponent(msg);
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
     function numberToWordsINR(amount) {
       const num = Math.round(amount);
       if (num === 0) return "Zero Rupees Only";
@@ -4888,4 +5451,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-         </html>
+  </html>
