@@ -3,921 +3,1357 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart Worker Pro - Aluminium & UPVC Fabrication</title>
+  <title>Smart Worker Pro - Fabrication System</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
-    :root {
-      --bg-color: #141f3d;
-      --card-bg: #1c2b50;
-      --card-inner: #243563;
-      --accent: #ff9800;
-      --accent-hover: #e68900;
-      --primary-btn: #1976d2;
-      --primary-hover: #1565c0;
-      --success: #2e7d32;
-      --danger: #c62828;
-      --text-main: #f5f5f5;
-      --text-muted: #b0bec5;
-      --border-color: #334778;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: #f0f4f8; color: #1c2b50; min-height: 100vh; padding-bottom: 75px; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent;
+    /* Top Bar */
+    .top-bar {
+      background: #192a4a; color: #fff; padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
+    .top-bar .title { font-size: 1.05rem; font-weight: 700; color: #ffd54f; display: flex; align-items: center; gap: 8px; }
+    .back-btn { background: #d32f2f; color: #fff; border: none; padding: 6px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding-bottom: 70px;
-      min-height: 100vh;
-    }
+    .screen-container { max-width: 600px; margin: 0 auto; }
+    .screen { display: none; }
+    .screen.active { display: block; animation: fadeIn 0.15s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Header */
-    header {
-      background: linear-gradient(135deg, #101932, #1b294e);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid var(--accent);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    /* Home Header */
+    .home-header {
+      background: #264073; color: #fff; padding: 20px 20px 25px 20px;
+      border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .brand-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .brand-title span {
-      color: var(--accent);
-    }
-    .badge-pro {
-      background: #ff9800;
-      color: #000;
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
+    .home-header .welcome { font-size: 0.85rem; color: #b0bec5; }
+    .home-header .shop-name { font-size: 1.25rem; font-weight: bold; margin-top: 2px; }
+    .gear-btn { background: transparent; border: none; font-size: 1.5rem; color: #fff; cursor: pointer; }
 
-    /* Bottom Navigation */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #0e162b;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top: 1px solid var(--border-color);
-      z-index: 1000;
+    /* Menu Sections */
+    .menu-section-title { font-size: 0.8rem; font-weight: bold; color: #78909c; text-transform: uppercase; padding: 14px 16px 6px 16px; letter-spacing: 0.5px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+    .menu-card {
+      border-radius: 15px; padding: 18px 10px; color: #fff; text-align: center;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); transition: transform 0.1s;
     }
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: var(--text-muted);
-      font-size: 0.72rem;
-      text-decoration: none;
-      cursor: pointer;
-      gap: 3px;
-      transition: color 0.2s;
-      flex: 1;
-    }
-    .nav-item i {
-      font-size: 1.15rem;
-    }
-    .nav-item.active {
-      color: var(--accent);
-      font-weight: bold;
-    }
+    .menu-card:active { transform: scale(0.97); }
+    .menu-card .icon { font-size: 2rem; }
+    .menu-card .label { font-size: 0.88rem; font-weight: bold; }
 
-    /* Main Container */
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 14px;
+    /* Form Elements */
+    .form-box { background: #fff; border-radius: 12px; margin: 12px 14px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 3px; }
+    .form-group label { font-size: 0.78rem; font-weight: bold; color: #37474f; }
+    .input-wrapper { display: flex; align-items: center; position: relative; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; border: 1px solid #cfd8dc; border-radius: 8px; padding: 8px 10px;
+      font-size: 0.9rem; background: #fff; color: #000; outline: none; transition: border-color 0.2s;
     }
-
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.25s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Cards */
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-    }
-    .card-header {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-bottom: 8px;
-    }
-
-    /* Grid Form */
-    .form-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .form-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    label {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    input, select, textarea {
-      width: 100%;
-      background: var(--card-inner);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 9px 10px;
-      color: #fff;
-      font-size: 0.9rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
+    input:focus, select:focus, textarea:focus { border-color: #1976d2; }
+    .keypad-trigger {
+      position: absolute; right: 4px; background: #eceff1; border: none;
+      padding: 4px 6px; border-radius: 6px; cursor: pointer; color: #455a64; font-size: 0.75rem;
     }
 
     /* Buttons */
-    .btn {
-      width: 100%;
-      padding: 11px;
-      border-radius: 6px;
-      border: none;
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: 0.2s;
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .action-btn {
+      flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: bold;
+      color: #fff; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .btn-calc {
-      background: var(--primary-btn);
-      color: #fff;
-      margin-top: 6px;
+    .action-btn:active { transform: scale(0.97); }
+    .btn-clear { background: #d32f2f; }
+    .btn-calc { background: #1976d2; }
+    .btn-save { background: #2e7d32; }
+    .btn-cut-pdf { background: #7b1fa2; }
+    .btn-glass-pdf { background: #0288d1; }
+    .btn-wa { background: #25d366; }
+
+    /* Output Areas */
+    .output-label { font-size: 0.8rem; font-weight: bold; color: #1976d2; margin: 10px 14px 4px 14px; }
+    .output-area {
+      background: #f8fafc; border: 1px solid #cfd8dc; border-radius: 10px;
+      padding: 10px; font-family: monospace; font-size: 0.82rem; color: #1e293b;
+      white-space: pre-wrap; line-height: 1.45; max-height: 240px; overflow-y: auto; margin: 0 14px 10px 14px;
     }
-    .btn-calc:hover { background: var(--primary-hover); }
-    .btn-accent {
-      background: var(--accent);
-      color: #000;
+    .mat-area { background: #f0fdf4; border-color: #86efac; color: #166534; }
+
+    /* Bottom Nav Bar */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: #fff; border-top: 1px solid #e0e0e0; display: flex;
+      justify-content: space-around; align-items: center; z-index: 99;
+      border-top-left-radius: 20px; border-top-right-radius: 20px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
-    .btn-accent:hover { background: var(--accent-hover); }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: #fff;
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #90a4ae; font-size: 0.68rem; font-weight: bold; gap: 2px; cursor: pointer; flex: 1;
     }
-    .btn-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
+    .nav-item.active { color: #1976d2; }
+    .nav-item i { font-size: 1.25rem; }
+
+    /* FAB + Button */
+    .fab {
+      position: fixed; right: 18px; bottom: 75px; width: 60px; height: 60px;
+      background: #e91e63; color: #fff; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.7rem; font-weight: bold;
+      box-shadow: 0 4px 12px rgba(233,30,99,0.4); border: none; cursor: pointer; z-index: 98;
     }
 
-    /* Output Boxes */
-    .result-box {
-      background: #0b1120;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 0.85rem;
-      color: #81d4fa;
-      white-space: pre-wrap;
-      line-height: 1.45;
-      max-height: 380px;
-      overflow-y: auto;
-      border: 1px solid #1a2a4f;
-      margin-top: 12px;
+    /* Keypad Modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;
     }
-
-    .badge-chip {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      background: rgba(255, 152, 0, 0.15);
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      margin-bottom: 8px;
-    }
-
-    /* Quick Action Grid (Home) */
-    .quick-menu {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .menu-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 14px 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      text-align: center;
-      transition: transform 0.15s, border-color 0.15s;
-    }
-    .menu-card:active {
-      transform: scale(0.96);
-    }
-    .menu-card:hover {
-      border-color: var(--accent);
-    }
-    .menu-card i {
-      font-size: 1.6rem;
-      color: var(--accent);
-    }
-    .menu-card span {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #fff;
-    }
-
-    /* Quotation List Item */
-    .bill-item {
-      background: var(--card-inner);
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      border-left: 3px solid var(--accent);
-      font-size: 0.82rem;
-    }
+    .modal-overlay.active { display: flex; }
+    .keypad-modal { background: #e2e8f0; width: 95%; max-width: 460px; border-radius: 12px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .keypad-display-row { display: flex; gap: 8px; margin-bottom: 8px; background: #fff; border-radius: 8px; padding: 8px 12px; align-items: center; }
+    .keypad-display { flex: 1; font-size: 1.5rem; font-weight: bold; color: #0f172a; text-align: right; overflow-x: auto; white-space: nowrap; }
+    .keypad-ok-btn { background: #00b0ff; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .keypad-body { display: flex; gap: 6px; margin-bottom: 8px; }
+    .keypad-left-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 40%; }
+    .keypad-right-box { width: 60%; display: flex; flex-direction: column; gap: 6px; }
+    .keypad-3x3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .keypad-row-2 { display: flex; gap: 4px; }
+    .keypad-bottom-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .k-btn { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 4px; font-size: 1.05rem; font-weight: bold; color: #1e293b; cursor: pointer; text-align: center; }
+    .k-btn:active { background: #cbd5e1; }
+    .k-btn.red { background: #fee2e2; color: #dc2626; }
+    .k-btn.blue { background: #dbeafe; color: #1d4ed8; }
+    .k-btn.orange { background: #ffedd5; color: #ea580c; }
   </style>
 </head>
 <body>
 
-  <!-- App Header -->
-  <header>
-    <div class="brand-title">
-      <i class="fa-solid fa-industry" style="color:var(--accent);"></i>
-      <div>
-        <div id="displayShopName">SMART WORKER ALUMINIUM</div>
-        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: normal;">Fabrication Management System</div>
-      </div>
+  <!-- Top App Bar -->
+  <div class="top-bar">
+    <button class="back-btn" id="topBackBtn" onclick="goHome()" style="display:none;">< BACK</button>
+    <div class="title" id="screenTitle">
+      <i class="fa-solid fa-industry"></i> SMART WORKER PRO
     </div>
-    <span class="badge-pro">PRO</span>
-  </header>
+    <div style="font-size:0.75rem; background:#ff9800; color:#000; font-weight:800; padding:2px 6px; border-radius:4px;">PRO</div>
+  </div>
 
-  <div class="container">
+  <div class="screen-container">
 
-    <!-- ================= HOME TAB ================= -->
-    <div id="tab-home" class="tab-content active">
-      <div class="card" style="background: linear-gradient(135deg, #18284d, #253966); text-align: center; padding: 20px 14px;">
-        <i class="fa-solid fa-user-gear" style="font-size: 2.2rem; color: var(--accent); margin-bottom: 8px;"></i>
-        <h3 id="welcomeUser" style="color:#fff;">স্বাগতম, সাহেব ঘাঁটি ভাই!</h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">অ্যালুমিনিয়াম ও ডমাল কাটিং ও দ্রুত কোটেশন বিলিং</p>
+    <!-- 1. HOME SCREEN -->
+    <div id="screen-home" class="screen active">
+      <div class="home-header">
+        <div>
+          <div class="welcome" id="homeGreeting">Welcome, Brother!</div>
+          <div class="shop-name" id="homeShop">SMART WORKER PRO</div>
+        </div>
+        <button class="gear-btn" onclick="openScreen('settings', 'SETTINGS')">⚙️</button>
       </div>
 
-      <div class="card-header"><i class="fa-solid fa-shapes"></i> কাটিং ক্যালকুলেটর মেনু</div>
-      <div class="quick-menu">
-        <div class="menu-card" onclick="switchTab('tab-sliding')">
-          <i class="fa-solid fa-table-columns"></i>
-          <span>স্লাইডিং উইন্ডো</span>
+      <div class="menu-section-title">FABRICATION SYSTEMS</div>
+      <div class="grid-2">
+        <div class="menu-card" style="background:#1a80cc;" onclick="openScreen('domal', 'DOMAL WINDOW')">
+          <div class="icon">🪟</div>
+          <div class="label">Domal Window</div>
         </div>
-        <div class="menu-card" onclick="switchTab('tab-domal')">
-          <i class="fa-solid fa-window-maximize"></i>
-          <span>ডমাল সিস্টেম</span>
+        <div class="menu-card" style="background:#cc661a;" onclick="openScreen('sliding', 'SLIDING WINDOW')">
+          <div class="icon">🪟</div>
+          <div class="label">Sliding Window</div>
         </div>
-        <div class="menu-card" onclick="switchTab('tab-door')">
-          <i class="fa-solid fa-door-open"></i>
-          <span>ডোর মাস্টার</span>
+        <div class="menu-card" style="background:#cc3366;" onclick="openScreen('casement', 'CUSTOM CASEMENT')">
+          <div class="icon">🪟</div>
+          <div class="label">Custom Casement</div>
         </div>
-        <div class="menu-card" onclick="switchTab('tab-casement')">
-          <i class="fa-solid fa-window-restore"></i>
-          <span>কেসমেন্ট উইন্ডো</span>
-        </div>
-        <div class="menu-card" onclick="switchTab('tab-partition')">
-          <i class="fa-solid fa-border-all"></i>
-          <span>পার্টিশন & ডোর</span>
-        </div>
-        <div class="menu-card" onclick="switchTab('tab-quotation')">
-          <i class="fa-solid fa-file-invoice-dollar"></i>
-          <span>কোটেশন বিলিং</span>
+        <div class="menu-card" style="background:#e64d4d;" onclick="openScreen('partition', 'PARTITION MASTER')">
+          <div class="icon">🚪</div>
+          <div class="label">Partition & Door</div>
         </div>
       </div>
 
-      <div class="card" style="margin-top: 16px;">
-        <div class="card-header"><i class="fa-solid fa-phone"></i> সরাসরি সাপোর্ট & যোগাযোগ</div>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">আমতা (চাঁদনী), হাওড়া | মোবাইল: 9239413517</p>
-        <button class="btn btn-accent" onclick="window.open('https://wa.me/919239413517?text=Hello%20Saheb%20Da,%20Smart%20Worker%20Help')">
-          <i class="fa-brands fa-whatsapp"></i> WhatsApp এ যোগাযোগ করুন
-        </button>
+      <div style="padding: 10px 16px 0 16px;">
+        <div class="menu-card" style="background:#b34d1a; padding:12px;" onclick="openScreen('door', 'DOOR OPTION')">
+          <div class="icon">🚪</div>
+          <div class="label">Simple Door Option</div>
+        </div>
       </div>
-    </div>
 
-    <!-- ================= SLIDING SCREEN ================= -->
-    <div id="tab-sliding" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-table-columns"></i> স্লাইডিং উইন্ডো কাটিং ক্যালকুলেটর</div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label>উচ্চতা (Height):</label>
-            <input type="number" id="sl_h" placeholder="উচ্চতা দিন" step="any">
-          </div>
-          <div class="form-group">
-            <label>প্রস্থ (Width):</label>
-            <input type="number" id="sl_w" placeholder="প্রস্থ দিন" step="any">
-          </div>
+      <div class="menu-section-title">BUSINESS & BILLING</div>
+      <div class="grid-2">
+        <div class="menu-card" style="background:#993399;" onclick="openScreen('quotation', 'PRO QUOTATION')">
+          <div class="icon">🧾</div>
+          <div class="label">Pro Quotation</div>
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>একক (Unit):</label>
-            <select id="sl_unit">
-              <option value="Inch">ইঞ্চি (Inch)</option>
-              <option value="Millimeter">মিলিমিটার (Millimeter)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>ট্র্যাকের ধরন:</label>
-            <select id="sl_type">
-              <option value="2-Track">2-Track (2-Sash)</option>
-              <option value="3-Track">3-Track (3-Sash)</option>
-              <option value="4-Track">4-Track (4-Sash)</option>
-              <option value="Center Open">2-Track Center Open (4-Sash)</option>
-            </select>
-          </div>
+        <div class="menu-card" style="background:#1ab3b3;" onclick="openScreen('ceiling', 'CEILING ESTIMATOR')">
+          <div class="icon">📏</div>
+          <div class="label">Ceiling Estimator</div>
         </div>
-
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>সেকশন সিস্টেম:</label>
-          <select id="sl_sys">
-            <option value="18x40">18 x 40 Series</option>
-            <option value="18x50">18 x 50 Series</option>
-            <option value="18x60">18 x 60 Series</option>
-            <option value="25x50">25 x 50 Series</option>
-            <option value="25x65">25 x 65 Series</option>
-            <option value="Door Sliding Master">Door Sliding Master</option>
-          </select>
-        </div>
-
-        <button class="btn btn-calc" onclick="calculateSliding()"><i class="fa-solid fa-calculator"></i> হিসাব বের করুন</button>
-        <div class="btn-row">
-          <button class="btn btn-outline" onclick="clearSliding()"><i class="fa-solid fa-rotate-left"></i> ক্লিয়ার</button>
-          <button class="btn btn-accent" onclick="shareWhatsApp('sl_out')"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে পাঠান</button>
-        </div>
-
-        <div class="result-box" id="sl_out">কাটিং মাপের বিবরণ এখানে দেখা যাবে...</div>
       </div>
     </div>
 
-    <!-- ================= DOMAL SCREEN ================= -->
-    <div id="tab-domal" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-window-maximize"></i> ডমাল সিস্টেম কাটিং ক্যালকুলেটর</div>
-        
-        <div class="form-row">
+    <!-- 2. DOMAL WINDOW SCREEN -->
+    <div id="screen-domal" class="screen">
+      <div class="form-box">
+        <div class="form-grid">
           <div class="form-group">
-            <label>উচ্চতা (Height):</label>
-            <input type="number" id="dm_h" placeholder="উচ্চতা দিন" step="any">
-          </div>
-          <div class="form-group">
-            <label>প্রস্থ (Width):</label>
-            <input type="number" id="dm_w" placeholder="প্রস্থ দিন" step="any">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>একক (Unit):</label>
-            <select id="dm_unit">
-              <option value="Inch">ইঞ্চি (Inch)</option>
-              <option value="Millimeter">মিলিমিটার (Millimeter)</option>
+            <label style="color:#2e7d32;">Track Height:</label>
+            <select id="dm_track_h">
+              <option value="40 mm">40 mm</option>
+              <option value="42 mm">42 mm</option>
+              <option value="45 mm" selected>45 mm</option>
+              <option value="48 mm">48 mm</option>
+              <option value="50 mm">50 mm</option>
+              <option value="54 mm">54 mm</option>
+              <option value="60 mm">60 mm</option>
             </select>
           </div>
           <div class="form-group">
-            <label>ট্র্যাকের ধরন:</label>
+            <label style="color:#b34d1a;">Handle (HxW):</label>
+            <select id="dm_handle_hw">
+              <option value="27x60 mm">27x60 mm</option>
+              <option value="27x65 mm" selected>27x65 mm</option>
+              <option value="28x65 mm">28x65 mm</option>
+              <option value="26x66 mm">26x66 mm</option>
+              <option value="27x70 mm">27x70 mm</option>
+              <option value="32x72 mm">32x72 mm</option>
+              <option value="35x75 mm">35x75 mm</option>
+              <option value="37x82 mm">37x82 mm</option>
+              <option value="45x85 mm">45x85 mm</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Track & Sash Type:</label>
             <select id="dm_type">
               <option value="2-Track (2-Sash)">2-Track (2-Sash)</option>
-              <option value="3-Track (3-Sash)">3-Track (3-Sash with Net)</option>
-              <option value="4-Track (4-Sash)">4-Track (4-Sash with Net)</option>
-              <option value="Center Open (4-Sash)">2-Track Center Open (4-Sash)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>ট্র্যাক হাইট (Track Height):</label>
-            <select id="dm_track_h">
-              <option value="45">45 mm (Standard)</option>
-              <option value="40">40 mm</option>
-              <option value="42">42 mm</option>
-              <option value="48">48 mm</option>
-              <option value="50">50 mm</option>
+              <option value="3-Track (3-Sash)">3-Track (3-Sash)</option>
+              <option value="4-Track (4-Sash)">4-Track (4-Sash)</option>
+              <option value="2-Track (Center Open)">2-Track (Center Open)</option>
             </select>
           </div>
           <div class="form-group">
-            <label>হ্যান্ডেল সাইজ (H x W):</label>
-            <select id="dm_handle">
-              <option value="27x65">27 x 65 mm (Standard)</option>
-              <option value="27x60">27 x 60 mm</option>
-              <option value="28x65">28 x 65 mm</option>
-              <option value="27x70">27 x 70 mm</option>
-              <option value="32x72">32 x 72 mm</option>
+            <label>Input Unit:</label>
+            <select id="dm_unit">
+              <option value="Inch" selected>Inch</option>
+              <option value="Millimeter">Millimeter</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Height:</label>
+            <div class="input-wrapper">
+              <input type="text" id="dm_h" placeholder="Height">
+              <button class="keypad-trigger" onclick="openKeypad('dm_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Width:</label>
+            <div class="input-wrapper">
+              <input type="text" id="dm_w" placeholder="Width">
+              <button class="keypad-trigger" onclick="openKeypad('dm_w')">⌨️</button>
+            </div>
           </div>
         </div>
 
-        <button class="btn btn-calc" onclick="calculateDomal()"><i class="fa-solid fa-calculator"></i> ডমাল কাটিং বের করুন</button>
         <div class="btn-row">
-          <button class="btn btn-outline" onclick="clearDomal()"><i class="fa-solid fa-rotate-left"></i> ক্লিয়ার</button>
-          <button class="btn btn-accent" onclick="shareWhatsApp('dm_out')"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে পাঠান</button>
+          <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearDomal()">CLEAR</button>
+          <button class="action-btn btn-calc" style="flex:0.65; background:#1a80cc;" onclick="calculateDomal()">+ CALCULATE</button>
         </div>
-
-        <div class="result-box" id="dm_out">ডমাল কাটিং মাপের বিবরণ এখানে আসবে...</div>
+        <div class="btn-row">
+          <button class="action-btn btn-save" onclick="saveMeasurementData('Domal Window', 'dm_alu_out', 'dm_mat_out')">SAVE</button>
+          <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('Domal_Material', 'Domal Window Job Card', 'dm_alu_out', 'dm_mat_out')">CUT PDF</button>
+          <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('Domal_Glass', 'Domal Glass List', dm_glass_dict)">GLASS PDF</button>
+        </div>
       </div>
+
+      <div class="output-label">CUTTING SIZES:</div>
+      <div class="output-area" id="dm_alu_out"></div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-area mat-area" id="dm_mat_out"></div>
     </div>
 
-    <!-- ================= DOOR MASTER ================= -->
-    <div id="tab-door" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-door-open"></i> ডোর মাস্টার ক্যালকুলেটর</div>
-        <div class="form-row">
+    <!-- 3. SLIDING WINDOW SCREEN -->
+    <div id="screen-sliding" class="screen">
+      <div class="form-box">
+        <div class="form-grid">
           <div class="form-group">
-            <label>উচ্চতা (Height):</label>
-            <input type="number" id="dr_h" placeholder="উচ্চতা দিন" step="any">
-          </div>
-          <div class="form-group">
-            <label>প্রস্থ (Width):</label>
-            <input type="number" id="dr_w" placeholder="প্রস্থ দিন" step="any">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>একক:</label>
-            <select id="dr_unit">
-              <option value="Inch">ইঞ্চি (Inch)</option>
-              <option value="Millimeter">মিলিমিটার (Millimeter)</option>
+            <label>System Size:</label>
+            <select id="sl_sys">
+              <option value="18x40 System">18x40 System</option>
+              <option value="18x50 System">18x50 System</option>
+              <option value="18x60 System">18x60 System</option>
+              <option value="25x50 System">25x50 System</option>
+              <option value="25x65 System">25x65 System</option>
+              <option value="Door Sliding Master" selected>Door Sliding Master</option>
             </select>
           </div>
           <div class="form-group">
-            <label>দরজার ধরন:</label>
-            <select id="dr_type">
-              <option value="Standard Door">Standard Door (Outer সহ)</option>
-              <option value="Top Hung Door">Top Hung Door (উইদাউট আউটার)</option>
-              <option value="Domal System Door">Domal System Door</option>
+            <label>Track Type:</label>
+            <select id="sl_type">
+              <option value="2-Track" selected>2-Track</option>
+              <option value="3-Track">3-Track</option>
+              <option value="4-Track">4-Track</option>
+              <option value="Center Open">Center Open</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Input Unit:</label>
+            <select id="sl_unit">
+              <option value="Millimeter" selected>Millimeter</option>
+              <option value="Inch">Inch</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Height:</label>
+            <div class="input-wrapper">
+              <input type="text" id="sl_h" placeholder="Height">
+              <button class="keypad-trigger" onclick="openKeypad('sl_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Width:</label>
+            <div class="input-wrapper">
+              <input type="text" id="sl_w" placeholder="Width">
+              <button class="keypad-trigger" onclick="openKeypad('sl_w')">⌨️</button>
+            </div>
           </div>
         </div>
 
-        <button class="btn btn-calc" onclick="calculateDoor()"><i class="fa-solid fa-calculator"></i> দরজা কাটিং বের করুন</button>
         <div class="btn-row">
-          <button class="btn btn-outline" onclick="clearDoor()"><i class="fa-solid fa-rotate-left"></i> ক্লিয়ার</button>
-          <button class="btn btn-accent" onclick="shareWhatsApp('dr_out')"><i class="fa-brands fa-whatsapp"></i> শেয়ার করুন</button>
+          <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearSliding()">CLEAR</button>
+          <button class="action-btn btn-calc" style="flex:0.65; background:#cc661a;" onclick="calculateSliding()">+ CALCULATE</button>
         </div>
-        <div class="result-box" id="dr_out">দরজার কাটিং ও গ্লাসের মাপ এখানে আসবে...</div>
+        <div class="btn-row">
+          <button class="action-btn btn-save" onclick="saveMeasurementData('Sliding Window', 'sl_out', 'sl_mat_out')">SAVE</button>
+          <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('Sliding_Material', 'Sliding Window Job Card', 'sl_out', 'sl_mat_out')">CUT PDF</button>
+          <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('Sliding_Glass', 'Sliding Glass List', sl_glass_dict)">GLASS PDF</button>
+        </div>
       </div>
+
+      <div class="output-label" style="color:#cc661a;">CUTTING SIZES:</div>
+      <div class="output-area" id="sl_out"></div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-area mat-area" id="sl_mat_out"></div>
     </div>
 
-    <!-- ================= CASEMENT ================= -->
-    <div id="tab-casement" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-window-restore"></i> কাস্টম কেসমেন্ট উইন্ডো</div>
-        <div class="form-row">
+    <!-- 4. CUSTOM CASEMENT SCREEN -->
+    <div id="screen-casement" class="screen">
+      <div class="form-box">
+        <div class="form-grid">
           <div class="form-group">
-            <label>উচ্চতা (Height):</label>
-            <input type="number" id="cc_h" placeholder="উচ্চতা" step="any">
+            <label>Input Unit:</label>
+            <select id="cc_unit">
+              <option value="Millimeter" selected>Millimeter</option>
+              <option value="Inch">Inch</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>প্রস্থ (Width):</label>
-            <input type="number" id="cc_w" placeholder="প্রস্থ" step="any">
+            <label>Series Type:</label>
+            <select id="cc_series">
+              <option value="34 Series">34 Series</option>
+              <option value="40 Series" selected>40 Series</option>
+            </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
-            <label>টপ সেকশন সংখ্যা:</label>
+            <label>Total Height (H):</label>
+            <div class="input-wrapper">
+              <input type="text" id="cc_h">
+              <button class="keypad-trigger" onclick="openKeypad('cc_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Total Width (W):</label>
+            <div class="input-wrapper">
+              <input type="text" id="cc_w">
+              <button class="keypad-trigger" onclick="openKeypad('cc_w')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Bottom Part Height:</label>
+            <div class="input-wrapper">
+              <input type="text" id="cc_bot_h" value="0">
+              <button class="keypad-trigger" onclick="openKeypad('cc_bot_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Clear Gap for 1 Palla:</label>
+            <div class="input-wrapper">
+              <input type="text" id="cc_mid_w" value="0">
+              <button class="keypad-trigger" onclick="openKeypad('cc_mid_w')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Top Total Sections:</label>
             <input type="number" id="cc_top_cols" value="1">
           </div>
           <div class="form-group">
-            <label>ওপেন পাল্লা সংখ্যা:</label>
+            <label>Top Openable (Sash):</label>
             <input type="number" id="cc_top_open" value="1">
           </div>
-        </div>
-        <button class="btn btn-calc" onclick="calculateCasement()"><i class="fa-solid fa-calculator"></i> কেসমেন্ট মাপ বের করুন</button>
-        <div class="result-box" id="cc_out">কেসমেন্ট কাটিং মাপ...</div>
-      </div>
-    </div>
-
-    <!-- ================= PARTITION ================= -->
-    <div id="tab-partition" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-border-all"></i> অ্যালুমিনিয়াম পার্টিশন & ডোর</div>
-        <div class="form-row">
           <div class="form-group">
-            <label>উচ্চতা:</label>
-            <input type="number" id="pt_h" placeholder="উচ্চতা" step="any">
+            <label>Bottom Total Sections:</label>
+            <input type="number" id="cc_bot_cols" value="0">
           </div>
           <div class="form-group">
-            <label>প্রস্থ:</label>
-            <input type="number" id="pt_w" placeholder="প্রস্থ" step="any">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>পার্টিশনের ধরন:</label>
-            <select id="pt_type">
-              <option value="Fixed">ফিক্সড পার্টিশন (Fixed Partition)</option>
-              <option value="WithDoor">পার্টিশন সাথে ডোর (Door + Partition)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>গ্রিড কলাম সংখ্যা:</label>
-            <input type="number" id="pt_cols" value="3">
-          </div>
-        </div>
-        <button class="btn btn-calc" onclick="calculatePartition()"><i class="fa-solid fa-calculator"></i> পার্টিশন হিসাব করুন</button>
-        <div class="result-box" id="pt_out">পার্টিশনের ফ্রেম ও গ্লাস মাপ...</div>
-      </div>
-    </div>
-
-    <!-- ================= QUOTATION / BILLING ================= -->
-    <div id="tab-quotation" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-file-invoice-dollar"></i> কোটেশন ও বিল তৈরি (Quotation Invoice)</div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label>কাস্টমারের নাম:</label>
-            <input type="text" id="q_name" placeholder="নাম লিখুন">
-          </div>
-          <div class="form-group">
-            <label>ফোন নম্বর:</label>
-            <input type="text" id="q_phone" placeholder="মোবাইল নম্বর">
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>ঠিকানা:</label>
-          <input type="text" id="q_addr" placeholder="ঠিকানা">
-        </div>
-
-        <div style="border-top:1px dashed var(--border-color); padding-top:10px; margin-bottom:10px;">
-          <label style="color:var(--accent); font-weight:bold;">আইটেম যোগ করুন:</label>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>কাজের ধরন:</label>
-            <select id="q_item_type" onchange="autoCalculateRate()">
-              <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track)</option>
-              <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track with Mesh)</option>
-              <option value="Sliding Window (2-Track)">Sliding Window (2-Track)</option>
-              <option value="Sliding Window (3-Track)">Sliding Window (3-Track)</option>
-              <option value="Aluminium Door">Aluminium Door</option>
-              <option value="Aluminium Partition">Aluminium Partition</option>
-              <option value="Casement Window">Casement Window</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>কালার / ফিনিশ:</label>
-            <select id="q_color" onchange="autoCalculateRate()">
-              <option value="Powder Coated Jet Black">Powder Coated Jet Black</option>
-              <option value="Anodized Bronze">Anodized Bronze</option>
-              <option value="Wooden Finish">Wooden Finish</option>
-              <option value="Mill/Natural">Mill Finish (Silver)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>উচ্চতা (Feet):</label>
-            <input type="number" id="q_h" placeholder="যেমন 4" step="any">
-          </div>
-          <div class="form-group">
-            <label>প্রস্থ (Feet):</label>
-            <input type="number" id="q_w" placeholder="যেমন 5" step="any">
-          </div>
-          <div class="form-group" style="max-width: 80px;">
-            <label>পরিমাণ:</label>
-            <input type="number" id="q_qty" value="1">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>রেট (Rs / Sq.Ft):</label>
-            <input type="number" id="q_rate" placeholder="স্বয়ংক্রিয় রেট">
-          </div>
-          <div class="form-group">
-            <label>লোকেশন / রুম:</label>
-            <input type="text" id="q_loc" placeholder="যেমন: বেডরুম">
-          </div>
-        </div>
-
-        <button class="btn btn-success" onclick="addItemToBill()"><i class="fa-solid fa-plus"></i> বিলে আইটেম যোগ করুন</button>
-
-        <div style="margin-top:16px;">
-          <label style="font-weight:bold; color:#fff;">বিলের আইটেম তালিকা:</label>
-          <div id="billItemsList" style="margin-top:8px;"></div>
-        </div>
-
-        <div class="form-row" style="margin-top: 14px;">
-          <div class="form-group">
-            <label>অগ্রিম জমা (Advance):</label>
-            <input type="number" id="q_advance" value="0" oninput="updateBillTotal()">
-          </div>
-          <div class="form-group">
-            <label>ডিসকাউন্ট (Discount):</label>
-            <input type="number" id="q_discount" value="0" oninput="updateBillTotal()">
-          </div>
-        </div>
-
-        <div class="card" style="background:#111b33; border: 1px solid var(--accent); margin-top:12px; padding:12px;">
-          <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
-            <span>মোট স্কয়ার ফিট:</span> <strong id="totalSqftDisplay">0.00 Sq.Ft</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:1rem; color:var(--accent); margin-bottom:4px;">
-            <span>সর্বমোট বিল (Total):</span> <strong id="grandTotalDisplay">Rs 0.00</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:1rem; color:#ff5252;">
-            <span>বকেয়া (Due Amount):</span> <strong id="dueTotalDisplay">Rs 0.00</strong>
+            <label>Bottom Openable (Sash):</label>
+            <input type="number" id="cc_bot_open" value="0">
           </div>
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-calc" onclick="generatePdfInvoice()"><i class="fa-solid fa-file-pdf"></i> PDF বিল ডাউনলোড</button>
-          <button class="btn btn-accent" onclick="shareBillWhatsApp()"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে পাঠান</button>
+          <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearCasement()">CLEAR</button>
+          <button class="action-btn btn-calc" style="flex:0.65; background:#cc3366;" onclick="calculateCasement()">+ CALCULATE</button>
         </div>
+        <div class="btn-row">
+          <button class="action-btn btn-save" onclick="saveMeasurementData('Custom Casement', 'cc_out', 'cc_mat_out')">SAVE</button>
+          <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('CustomCasement_Material', 'Custom Casement Job Card', 'cc_out', 'cc_mat_out')">CUT PDF</button>
+          <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('CustomCasement_Glass', 'Custom Casement Glass List', cc_glass_dict)">GLASS PDF</button>
+        </div>
+      </div>
+
+      <div class="output-label" style="color:#cc3366;">CUTTING SIZES:</div>
+      <div class="output-area" id="cc_out"></div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-area mat-area" id="cc_mat_out"></div>
+    </div>
+
+    <!-- 5. DOOR OPTION SCREEN -->
+    <div id="screen-door" class="screen">
+      <div class="form-box">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Door Type:</label>
+            <select id="dr_type">
+              <option value="Standard Door" selected>Standard Door</option>
+              <option value="Floor Spring Door">Floor Spring Door</option>
+              <option value="Top Hung Door">Top Hung Door</option>
+              <option value="Domal System Door">Domal System Door</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Input Unit:</label>
+            <select id="dr_unit">
+              <option value="Inch" selected>Inch</option>
+              <option value="Millimeter">Millimeter</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total Height (H):</label>
+            <div class="input-wrapper">
+              <input type="text" id="dr_h">
+              <button class="keypad-trigger" onclick="openKeypad('dr_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Total Width (W):</label>
+            <div class="input-wrapper">
+              <input type="text" id="dr_w">
+              <button class="keypad-trigger" onclick="openKeypad('dr_w')">⌨️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearDoor()">CLEAR</button>
+          <button class="action-btn btn-calc" style="flex:0.65; background:#b34d1a;" onclick="calculateDoor()">+ CALCULATE</button>
+        </div>
+        <div class="btn-row">
+          <button class="action-btn btn-save" onclick="saveMeasurementData('Door Master', 'dr_out', 'dr_mat_out')">SAVE</button>
+          <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('DoorMaster_Material', 'Door Job Card', 'dr_out', 'dr_mat_out')">CUT PDF</button>
+          <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('DoorMaster_Glass', 'Door Glass List', dr_glass_dict)">GLASS PDF</button>
+        </div>
+      </div>
+
+      <div class="output-label" style="color:#b34d1a;">CUTTING SIZES:</div>
+      <div class="output-area" id="dr_out"></div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-area mat-area" id="dr_mat_out"></div>
+    </div>
+
+    <!-- 6. PARTITION MASTER SCREEN -->
+    <div id="screen-partition" class="screen">
+      <div class="form-box">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Input Unit:</label>
+            <select id="pt_unit">
+              <option value="Inch" selected>Inch</option>
+              <option value="Millimeter">Millimeter</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Partition Type:</label>
+            <select id="pt_type">
+              <option value="Fixed Partition" selected>Fixed Partition</option>
+              <option value="Door + Partition">Door + Partition</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total Wall Height (H):</label>
+            <div class="input-wrapper">
+              <input type="text" id="pt_h">
+              <button class="keypad-trigger" onclick="openKeypad('pt_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Total Wall Width (W):</label>
+            <div class="input-wrapper">
+              <input type="text" id="pt_w">
+              <button class="keypad-trigger" onclick="openKeypad('pt_w')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Door Height (Optional):</label>
+            <div class="input-wrapper">
+              <input type="text" id="pt_dh">
+              <button class="keypad-trigger" onclick="openKeypad('pt_dh')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Door Width (Optional):</label>
+            <div class="input-wrapper">
+              <input type="text" id="pt_dw">
+              <button class="keypad-trigger" onclick="openKeypad('pt_dw')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Horizontal Sections:</label>
+            <input type="number" id="pt_cols" value="3">
+          </div>
+          <div class="form-group">
+            <label>Vertical Sections:</label>
+            <input type="number" id="pt_rows" value="3">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearPartition()">CLEAR</button>
+          <button class="action-btn btn-calc" style="flex:0.65; background:#e64d4d;" onclick="calculatePartition()">+ CALCULATE</button>
+        </div>
+        <div class="btn-row">
+          <button class="action-btn btn-save" onclick="saveMeasurementData('Partition & Door', 'pt_out', 'pt_mat_out')">SAVE</button>
+          <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('Partition_Material', 'Partition Job Card', 'pt_out', 'pt_mat_out')">CUT PDF</button>
+          <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('Partition_Glass', 'Partition Glass List', pt_glass_dict)">GLASS PDF</button>
+        </div>
+      </div>
+
+      <div class="output-label" style="color:#e64d4d;">CUTTING SIZES:</div>
+      <div class="output-area" id="pt_out"></div>
+      <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-UPDATED):</div>
+      <div class="output-area mat-area" id="pt_mat_out"></div>
+    </div>
+
+    <!-- 7. CEILING ESTIMATOR SCREEN -->
+    <div id="screen-ceiling" class="screen">
+      <div class="form-box">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Material Type:</label>
+            <select id="ce_type">
+              <option value="Gypsum Board" selected>Gypsum Board</option>
+              <option value="PVC Panel">PVC Panel</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Room Length (Ft):</label>
+            <div class="input-wrapper">
+              <input type="text" id="ce_l">
+              <button class="keypad-trigger" onclick="openKeypad('ce_l')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Room Width (Ft):</label>
+            <div class="input-wrapper">
+              <input type="text" id="ce_w">
+              <button class="keypad-trigger" onclick="openKeypad('ce_w')">⌨️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearCeiling()">CLEAR</button>
+          <button class="action-btn btn-calc" style="flex:0.65; background:#1ab3b3;" onclick="calculateCeiling()">CALCULATE</button>
+        </div>
+      </div>
+
+      <div class="output-label" style="color:#1ab3b3;">CEILING MATERIAL REPORT:</div>
+      <div class="output-area" id="ce_out" style="max-height:350px;"></div>
+    </div>
+
+    <!-- 8. PRO QUOTATION SCREEN -->
+    <div id="screen-quotation" class="screen">
+      <div class="form-box">
+        <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin-bottom:8px;">--- CUSTOMER & BILL DETAILS ---</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Bill Stage:</label>
+            <select id="q_stage">
+              <option value="Quotation / Estimate" selected>Quotation / Estimate</option>
+              <option value="First Bill">First Bill</option>
+              <option value="Second Bill">Second Bill</option>
+              <option value="Third Bill">Third Bill</option>
+              <option value="Final Bill">Final Bill</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Name:</label>
+            <input type="text" id="q_name">
+          </div>
+          <div class="form-group">
+            <label>Phone / PIN:</label>
+            <div style="display:flex; gap:4px;">
+              <input type="text" id="q_phone">
+              <button onclick="autofillCustomer()" style="background:#0288d1; color:#fff; border:none; border-radius:6px; padding:0 8px; cursor:pointer;">🔍</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address:</label>
+            <input type="text" id="q_addr">
+          </div>
+        </div>
+
+        <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin:10px 0 6px 0;">--- ADD BILL ITEM ---</div>
+        <div class="form-grid">
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Type:</label>
+            <select id="q_type" onchange="updateSuggestedRate()">
+              <option value="Domal 27x65 (2-Track)" selected>Domal 27x65 (2-Track)</option>
+              <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track)</option>
+              <option value="Domal 27x65 (4-Track)">Domal 27x65 (4-Track)</option>
+              <option value="Domal 35x75 (2-Track)">Domal 35x75 (2-Track)</option>
+              <option value="Domal 35x75 (3-Track)">Domal 35x75 (3-Track)</option>
+              <option value="Domal 35x75 (4-Track)">Domal 35x75 (4-Track)</option>
+              <option value="Sliding 18x40 (2-Track)">Sliding 18x40 (2-Track)</option>
+              <option value="Sliding 18x40 (3-Track)">Sliding 18x40 (3-Track)</option>
+              <option value="Sliding 18x40 (4-Track)">Sliding 18x40 (4-Track)</option>
+              <option value="Sliding 18x50 (2-Track)">Sliding 18x50 (2-Track)</option>
+              <option value="Sliding 18x50 (3-Track)">Sliding 18x50 (3-Track)</option>
+              <option value="Sliding 18x50 (4-Track)">Sliding 18x50 (4-Track)</option>
+              <option value="Sliding 18x60 (2-Track)">Sliding 18x60 (2-Track)</option>
+              <option value="Sliding 18x60 (3-Track)">Sliding 18x60 (3-Track)</option>
+              <option value="Sliding 18x60 (4-Track)">Sliding 18x60 (4-Track)</option>
+              <option value="Sliding 25x50 (2-Track)">Sliding 25x50 (2-Track)</option>
+              <option value="Sliding 25x50 (3-Track)">Sliding 25x50 (3-Track)</option>
+              <option value="Sliding 25x50 (4-Track)">Sliding 25x50 (4-Track)</option>
+              <option value="Sliding 25x65 (2-Track)">Sliding 25x65 (2-Track)</option>
+              <option value="Sliding 25x65 (3-Track)">Sliding 25x65 (3-Track)</option>
+              <option value="Sliding 25x65 (4-Track)">Sliding 25x65 (4-Track)</option>
+              <option value="Casement 34 Series">Casement 34 Series</option>
+              <option value="Casement 40 Series">Casement 40 Series</option>
+              <option value="Standard Door">Standard Door</option>
+              <option value="Floor Spring Door">Floor Spring Door</option>
+              <option value="Top Hung Door">Top Hung Door</option>
+              <option value="Domal Door">Domal Door</option>
+              <option value="Fixed Partition">Fixed Partition</option>
+              <option value="Door Partition">Door Partition</option>
+              <option value="Gypsum Ceiling">Gypsum Ceiling</option>
+              <option value="PVC Ceiling">PVC Ceiling</option>
+              <option value="Other Work">Other Work</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Room / Location:</label>
+            <input type="text" id="q_loc" placeholder="e.g. Bed-1, Hall, Kitchen">
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Alu Finish:</label>
+            <select id="q_color" onchange="updateSuggestedRate()">
+              <option value="Aluminium: Silver / Natural (Mill)">Aluminium: Silver / Natural (Mill)</option>
+              <option value="Aluminium: Anodized Silver">Aluminium: Anodized Silver</option>
+              <option value="Aluminium: Stainless Steel (SS Finish)">Aluminium: Stainless Steel (SS Finish)</option>
+              <option value="Aluminium: Anodized Champagne">Aluminium: Anodized Champagne</option>
+              <option value="Aluminium: Gold / Champagne Finish">Aluminium: Gold / Champagne Finish</option>
+              <option value="Aluminium: Powder Coated Pure White">Aluminium: Powder Coated Pure White</option>
+              <option value="Aluminium: Powder Coated Jet Black" selected>Aluminium: Powder Coated Jet Black</option>
+              <option value="Aluminium: Powder Coated Chocolate Brown">Aluminium: Powder Coated Chocolate Brown</option>
+              <option value="Aluminium: Powder Coated Charcoal Grey">Aluminium: Powder Coated Charcoal Grey</option>
+              <option value="Aluminium: Powder Coated Ivory">Aluminium: Powder Coated Ivory</option>
+              <option value="Aluminium: Wooden Finish (Light Teak)">Aluminium: Wooden Finish (Light Teak)</option>
+              <option value="Aluminium: Wooden Finish (Dark Walnut)">Aluminium: Wooden Finish (Dark Walnut)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Thickness:</label>
+            <select id="q_thick" onchange="updateSuggestedRate()">
+              <option value="0.8 mm">0.8 mm</option>
+              <option value="1.0 mm">1.0 mm</option>
+              <option value="1.2 mm">1.2 mm</option>
+              <option value="1.5 mm" selected>1.5 mm</option>
+              <option value="1.6 mm">1.6 mm</option>
+              <option value="1.8 mm">1.8 mm</option>
+              <option value="2.0 mm">2.0 mm</option>
+              <option value="2.5 mm">2.5 mm</option>
+              <option value="3.0 mm">3.0 mm</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Glass Thick:</label>
+            <select id="q_g_thick" onchange="updateSuggestedRate()">
+              <option value="4.0 mm Glass">4.0 mm Glass</option>
+              <option value="5.0 mm Glass" selected>5.0 mm Glass</option>
+              <option value="6.0 mm Glass">6.0 mm Glass</option>
+              <option value="8.0 mm Glass">8.0 mm Glass</option>
+              <option value="10.0 mm Glass">10.0 mm Glass</option>
+              <option value="12.0 mm Glass">12.0 mm Glass</option>
+              <option value="DGU Double Glazed Glass">DGU Double Glazed Glass</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Glass Type:</label>
+            <select id="q_g_type" onchange="updateSuggestedRate()">
+              <option value="Clear Transparent Glass" selected>Clear Transparent Glass</option>
+              <option value="Frosted / Pinhead Privacy Glass">Frosted / Pinhead Privacy Glass</option>
+              <option value="Tinted Black / Charcoal Glass">Tinted Black / Charcoal Glass</option>
+              <option value="Tinted Brown / Bronze Glass">Tinted Brown / Bronze Glass</option>
+              <option value="Royal Blue Reflective Glass">Royal Blue Reflective Glass</option>
+              <option value="Emerald Green Reflective Glass">Emerald Green Reflective Glass</option>
+              <option value="Bronze / Gold Reflective Glass">Bronze / Gold Reflective Glass</option>
+              <option value="DGU Soundproof Glass">DGU Soundproof Glass</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Toughened?:</label>
+            <select id="q_tough" onchange="updateSuggestedRate()">
+              <option value="Ordinary Annealed Glass" selected>Ordinary Annealed Glass</option>
+              <option value="Toughened Safety Glass">Toughened Safety Glass</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="color:#2e7d32; font-weight:bold;">Rate (Rs/Sq.Ft):</label>
+            <div class="input-wrapper">
+              <input type="text" id="q_rate" value="400" style="font-weight:bold;">
+              <button class="keypad-trigger" onclick="openKeypad('q_rate')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Qty:</label>
+            <input type="number" id="q_qty" value="1">
+          </div>
+          <div class="form-group">
+            <label>Height:</label>
+            <div class="input-wrapper">
+              <input type="text" id="q_h">
+              <button class="keypad-trigger" onclick="openKeypad('q_h')">⌨️</button>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Width:</label>
+            <div class="input-wrapper">
+              <input type="text" id="q_w">
+              <button class="keypad-trigger" onclick="openKeypad('q_w')">⌨️</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="action-btn btn-clear" onclick="clearBillItems()">CLEAR ALL</button>
+          <button class="action-btn" style="background:#e65100;" onclick="removeLastBillItem()">DELETE LAST</button>
+          <button class="action-btn btn-save" onclick="addBillItem()">+ ADD ITEM</button>
+        </div>
+
+        <div class="output-area" id="bill_queue_text" style="margin:10px 0; max-height:140px; font-size:0.75rem;"></div>
+
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+          <label style="font-size:0.8rem; font-weight:bold; color:#993399; width:35%;">Advance (Rs):</label>
+          <div class="input-wrapper" style="width:42%;">
+            <input type="text" id="q_advance" value="0" oninput="updateLiveDue()">
+            <button class="keypad-trigger" onclick="openKeypad('q_advance')">⌨️</button>
+          </div>
+          <button style="width:23%; background:#0288d1; color:#fff; font-size:0.75rem; font-weight:bold; border:none; padding:8px 0; border-radius:6px; cursor:pointer;" onclick="set50PercentAdvance()">50% Auto</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.85rem;">
+          <span style="font-weight:bold; color:#d32f2f;">Due Balance:</span>
+          <span id="q_due_label" style="font-weight:bold; color:#d32f2f;">Rs. 0.00</span>
+        </div>
+
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+          <label style="font-size:0.8rem; font-weight:bold; color:#e65100; width:40%;">Transport/Labor (Rs):</label>
+          <div class="input-wrapper" style="width:60%;">
+            <input type="text" id="q_extra_charge" value="0">
+            <button class="keypad-trigger" onclick="openKeypad('q_extra_charge')">⌨️</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:12px;">
+          <label style="font-size:0.8rem; font-weight:bold; color:#1976d2; width:40%;">Special Note:</label>
+          <input type="text" id="q_remarks" placeholder="Ex: Balance after fitting" style="width:60%;">
+        </div>
+
+        <button class="action-btn" style="background:#993399; width:100%; margin-bottom:8px; padding:12px;" onclick="generateBillText()">GENERATE BILL</button>
+
+        <div class="btn-row">
+          <button class="action-btn btn-calc" onclick="saveBillToDb()">SAVE BILL</button>
+          <button class="action-btn btn-clear" onclick="exportBillPdf()">PDF BILL</button>
+          <button class="action-btn btn-wa" onclick="shareToWhatsApp()">🟢 WhatsApp</button>
+        </div>
+      </div>
+
+      <div class="output-area" id="bill_output" style="max-height:380px;"></div>
+    </div>
+
+    <!-- 9. DASHBOARD SCREEN -->
+    <div id="screen-dashboard" class="screen">
+      <div class="form-box">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+          <label style="font-weight:bold;">Select Month:</label>
+          <input type="text" id="dash_month" value="" style="flex:1;">
+          <button class="action-btn btn-calc" style="flex:0.3; padding:6px;" onclick="loadDashboard()">Load</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
+          <div style="background:#2e7d32; color:#fff; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:bold;">TOTAL SALES</div>
+            <div id="dashTotalSales" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
+          </div>
+          <div style="background:#c62828; color:#fff; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:bold;">PURCHASES</div>
+            <div id="dashTotalPurchases" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
+          </div>
+          <div style="background:#1976d2; color:#fff; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:bold;">BALANCE</div>
+            <div id="dashNetBalance" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
+          </div>
+        </div>
+
+        <button class="action-btn" style="background:#f57c00; width:100%; margin-bottom:10px;" onclick="openExpenseModal()">+ ADD MATERIAL PURCHASE</button>
+        <div class="output-area" id="dash_details" style="max-height:300px; margin:0;"></div>
       </div>
     </div>
 
-    <!-- ================= SETTINGS TAB ================= -->
-    <div id="tab-settings" class="tab-content">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-gear"></i> শপ প্রোফাইল ও বিলিং সেটিংস</div>
+    <!-- 10. HISTORY SCREEN -->
+    <div id="screen-history" class="screen">
+      <div class="form-box">
         <div class="form-group" style="margin-bottom:10px;">
-          <label>দোকানের নাম (Shop Name):</label>
-          <input type="text" id="set_shop" value="SMART WORKER ALUMINIUM">
+          <select id="hist_spinner" onchange="loadHistory()">
+            <option value="Saved Measurements">Saved Measurements</option>
+            <option value="Saved Bills">Saved Bills</option>
+          </select>
         </div>
-        <div class="form-group" style="margin-bottom:10px;">
-          <label>প্রোপ্রাইটর / মালিকের নাম:</label>
+        <div class="btn-row">
+          <button class="action-btn" style="background:#0288d1;" onclick="loadHistory()">🔄 REFRESH</button>
+          <button class="action-btn" style="background:#388e3c;" onclick="backupDb()">💾 BACKUP</button>
+          <button class="action-btn" style="background:#d32f2f;" onclick="confirmDeleteHistory()">🗑️ DELETE ALL</button>
+        </div>
+      </div>
+      <div class="output-area" id="history_out" style="max-height:400px;"></div>
+    </div>
+
+    <!-- 11. PROFILE SCREEN -->
+    <div id="screen-profile" class="screen">
+      <div class="form-box">
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Your Name:</label>
           <input type="text" id="set_name" value="Saheb Ghanti">
         </div>
-        <div class="form-group" style="margin-bottom:10px;">
-          <label>মোবাইল নম্বর:</label>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Shop / Company Name:</label>
+          <input type="text" id="set_shop" value="SMART WORKER ALUMINIUM">
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Phone Number:</label>
           <input type="text" id="set_phone" value="9239413517">
         </div>
-        <div class="form-group" style="margin-bottom:10px;">
-          <label>ঠিকানা:</label>
-          <input type="text" id="set_addr" value="Amta (Chandni), Howrah, West Bengal">
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Email / Gmail ID (Optional):</label>
+          <input type="text" id="set_email">
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>GST Number (Optional):</label>
+          <input type="text" id="set_gst">
         </div>
         <div class="form-group" style="margin-bottom:12px;">
-          <label>জিএসটি নম্বর (ঐচ্ছিক):</label>
-          <input type="text" id="set_gst" placeholder="GSTIN...">
+          <label>Shop Address:</label>
+          <textarea id="set_address" rows="3">Amta (Chandni), Howrah, West Bengal</textarea>
+        </div>
+        <button class="action-btn btn-save" style="width:100%; padding:12px;" onclick="updateProfile()">UPDATE PROFILE</button>
+      </div>
+    </div>
+
+    <!-- 12. BILL SETTINGS SCREEN -->
+    <div id="screen-bill_settings" class="screen">
+      <div class="form-box">
+        <div style="color:#d32f2f; font-weight:bold; font-size:0.85rem; margin-bottom:8px;">--- GENERAL SETTINGS ---</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Default Unit:</label>
+            <select id="bs_unit">
+              <option value="Feet" selected>Feet</option>
+              <option value="Inches">Inches</option>
+              <option value="Millimeters">Millimeters</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Default GST (%):</label>
+            <input type="text" id="bs_gst" value="0.0">
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Default Discount (Rs):</label>
+            <input type="text" id="bs_discount" value="0.0">
+          </div>
         </div>
 
-        <button class="btn btn-calc" onclick="saveProfile()"><i class="fa-solid fa-floppy-disk"></i> প্রোফাইল সেভ করুন</button>
+        <div style="color:#2e7d32; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 1: SLIDING 18x40 & COLOR VARIANTS (Rs/Kg) ---</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Sliding Mill/Natural:</label><input type="text" id="bs_sl_mill" value="260"></div>
+          <div class="form-group"><label>Sliding Silver Anodized:</label><input type="text" id="bs_sl_anod" value="275"></div>
+          <div class="form-group"><label>Sliding Powder Coated:</label><input type="text" id="bs_sl_powder" value="290"></div>
+          <div class="form-group"><label style="color:#e65100;">Sliding Wooden Finish:</label><input type="text" id="bs_sl_wooden" value="345"></div>
+        </div>
+
+        <div style="color:#1976d2; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 2: DOMAL SYSTEM & COLOR VARIANTS (Rs/Kg) ---</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Domal Mill/Natural:</label><input type="text" id="bs_dm_mill" value="280"></div>
+          <div class="form-group"><label>Domal Silver Anodized:</label><input type="text" id="bs_dm_anod" value="295"></div>
+          <div class="form-group"><label>Domal Powder Coated:</label><input type="text" id="bs_dm_powder" value="310"></div>
+          <div class="form-group"><label style="color:#e65100;">Domal Wooden Finish:</label><input type="text" id="bs_dm_wooden" value="365"></div>
+        </div>
+
+        <div style="color:#7b1fa2; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 3: DOORS, PARTITION & CASEMENT (Rs/Kg) ---</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Door Master Material:</label><input type="text" id="bs_alu_door" value="270"></div>
+          <div class="form-group"><label>Partition Material:</label><input type="text" id="bs_alu_partition" value="265"></div>
+          <div class="form-group" style="grid-column:span 2;"><label>Casement Material:</label><input type="text" id="bs_alu_casement" value="275"></div>
+        </div>
+
+        <div style="color:#0288d1; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 4: GLASS & TOUGHENED (Rs/Sq.Ft) ---</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Clear Glass (Base):</label><input type="text" id="bs_glass_clear" value="35"></div>
+          <div class="form-group"><label>Reflective Glass:</label><input type="text" id="bs_glass_refl" value="55"></div>
+          <div class="form-group" style="grid-column:span 2;"><label style="color:#d32f2f;">Toughened Extra Charge:</label><input type="text" id="bs_glass_tough" value="25"></div>
+        </div>
+
+        <div style="color:#e65100; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 5: SYSTEM LABOUR CHARGES (Rs/Sq.Ft) ---</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Sliding Window Labour:</label><input type="text" id="bs_labour_sliding" value="35"></div>
+          <div class="form-group"><label>Domal Window Labour:</label><input type="text" id="bs_labour_domal" value="50"></div>
+          <div class="form-group"><label>Casement Shutter Labour:</label><input type="text" id="bs_labour_casement" value="60"></div>
+          <div class="form-group"><label>Door Master Labour:</label><input type="text" id="bs_labour_door" value="65"></div>
+          <div class="form-group" style="grid-column:span 2;"><label>Partition Labour:</label><input type="text" id="bs_labour_partition" value="40"></div>
+        </div>
+
+        <div style="color:#7b1fa2; font-weight:bold; font-size:0.85rem; margin:12px 0 6px 0;">--- STEP 6: COMPANY PROFIT MARGIN (%) ---</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Sliding Profit (%):</label><input type="text" id="bs_profit_sliding" value="15"></div>
+          <div class="form-group"><label>Domal Profit (%):</label><input type="text" id="bs_profit_domal" value="20"></div>
+          <div class="form-group"><label>Casement Profit (%):</label><input type="text" id="bs_profit_casement" value="25"></div>
+          <div class="form-group"><label>Door & Partition Profit (%):</label><input type="text" id="bs_profit_door" value="20"></div>
+        </div>
+
+        <button class="action-btn btn-save" style="width:100%; margin-top:10px; padding:12px;" onclick="saveBillSettings()">SAVE ALL SETTINGS</button>
+      </div>
+    </div>
+
+    <!-- 13. SETTINGS MENU SCREEN -->
+    <div id="screen-settings" class="screen">
+      <div style="padding:14px; display:flex; flex-direction:column; gap:10px;">
+        <button class="action-btn" style="background:#546e7a; padding:14px;" onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')">🔒 Privacy Policy & Terms</button>
+        <button class="action-btn" style="background:#2e7d32; padding:14px;" onclick="openScreen('activation', 'PRO UPGRADE')">⭐ PRO Subscription / Activation</button>
+        <button class="action-btn" style="background:#1976d2; padding:14px;" onclick="openScreen('profile', 'EDIT PROFILE')">👤 Edit Profile</button>
+        <button class="action-btn" style="background:#8d6e63; padding:14px;" onclick="openScreen('bill_settings', 'DYNAMIC COSTING & SETUP')">⚙️ Dynamic Costing & Bill Setup</button>
+        <button class="action-btn" style="background:#455a64; padding:14px;" onclick="openScreen('history', 'DATA HISTORY')">🗂️ Data History</button>
+        <button class="action-btn" style="background:#e65100; padding:14px;" onclick="openScreen('customer_lookup', 'CUSTOMER BOOK')">🔒 Customer Book (PIN)</button>
+        <button class="action-btn" style="background:#6a1b9a; padding:14px;" onclick="openScreen('dashboard', 'BUSINESS DASHBOARD')">📊 Business Dashboard</button>
+      </div>
+    </div>
+
+    <!-- 14. CUSTOMER LOOKUP SCREEN -->
+    <div id="screen-customer_lookup" class="screen">
+      <div class="form-box">
+        <div class="form-group">
+          <label>Enter Customer PIN (Last 4 digits of Phone):</label>
+          <div style="display:flex; gap:6px; margin-top:4px;">
+            <input type="text" id="lookup_pin" placeholder="e.g. 3517">
+            <button class="action-btn btn-calc" style="flex:0.4;" onclick="searchCustomer()">🔍 SEARCH</button>
+          </div>
+        </div>
+      </div>
+      <div class="output-area" id="lookup_results" style="max-height:400px;"></div>
+    </div>
+
+    <!-- 15. ACTIVATION SCREEN -->
+    <div id="screen-activation" class="screen">
+      <div class="form-box">
+        <div style="background:#2e7d32; color:#fff; padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:12px;">
+          Status: PRO MEMBER (Active)
+        </div>
+        <div style="font-size:0.85rem; font-weight:bold; color:#1976d2; margin-bottom:8px;">PRO PLAN ACTIVATED:</div>
+        <p style="font-size:0.8rem; color:#555; line-height:1.5;">আপনার এই ওয়েব ভার্সনটিতে সমস্ত প্রো ফিচার (আনলিমিটেড কাটিং মাপ, পিডিএফ রিপোর্ট, হোয়াটসঅ্যাপ শেয়ার এবং মেটেরিয়াল অপ্টিমাইজার) স্বয়ংক্রিয়ভাবে সক্রিয় রয়েছে।</p>
       </div>
     </div>
 
   </div>
 
-  <!-- Bottom Navigation Menu -->
+  <!-- Bottom Nav -->
   <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('tab-home')">
-      <i class="fa-solid fa-house"></i>
-      <span>হোম</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-sliding')">
-      <i class="fa-solid fa-table-columns"></i>
-      <span>স্লাইডিং</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-domal')">
-      <i class="fa-solid fa-window-maximize"></i>
-      <span>ডমাল</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-quotation')">
-      <i class="fa-solid fa-file-invoice-dollar"></i>
-      <span>বিলিং</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-settings')">
-      <i class="fa-solid fa-sliders"></i>
-      <span>সেটিংস</span>
-    </div>
+    <div class="nav-item active" onclick="goHome()"><i class="fa-solid fa-house"></i><span>Home</span></div>
+    <div class="nav-item" onclick="openScreen('dashboard', 'DASHBOARD')"><i class="fa-solid fa-chart-column"></i><span>Dashboard</span></div>
+    <div class="nav-item" onclick="openScreen('history', 'RECORDS')"><i class="fa-solid fa-box-archive"></i><span>Records</span></div>
+    <div class="nav-item" onclick="openScreen('profile', 'PROFILE')"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
 
+  <!-- Floating Add Button -->
+  <button class="fab" onclick="openScreen('quotation', 'PRO QUOTATION')">➕</button>
+
+  <!-- Keypad Modal -->
+  <div class="modal-overlay" id="keypadModal">
+    <div class="keypad-modal">
+      <div class="keypad-display-row">
+        <div class="keypad-display" id="kDisplay">0</div>
+        <button class="keypad-ok-btn" onclick="keypadEnter()">OK</button>
+      </div>
+      <div class="keypad-body">
+        <div class="keypad-left-grid">
+          <div class="k-btn red" onclick="keypadClear()">C</div>
+          <div class="k-btn blue" onclick="keypadBackspace()"><</div>
+          <div class="k-btn" onclick="keypadAddWhole('1')">1</div>
+          <div class="k-btn" onclick="keypadAddWhole('2')">2</div>
+          <div class="k-btn" onclick="keypadAddWhole('3')">3</div>
+          <div class="k-btn" onclick="keypadAddWhole('4')">4</div>
+          <div class="k-btn" onclick="keypadAddWhole('5')">5</div>
+          <div class="k-btn" onclick="keypadAddWhole('6')">6</div>
+          <div class="k-btn" onclick="keypadAddWhole('7')">7</div>
+          <div class="k-btn" onclick="keypadAddWhole('8')">8</div>
+          <div class="k-btn" onclick="keypadAddWhole('9')">9</div>
+          <div class="k-btn" onclick="keypadAddWhole('0')">0</div>
+          <div class="k-btn" onclick="keypadAddWhole('.')">.</div>
+          <div class="k-btn" onclick="keypadAddWhole('-')">+/-</div>
+        </div>
+        <div class="keypad-right-box">
+          <div class="keypad-3x3">
+            <div class="k-btn" onclick="keypadAddNum('1')">1</div>
+            <div class="k-btn" onclick="keypadAddNum('2')">2</div>
+            <div class="k-btn" onclick="keypadAddNum('3')">3</div>
+            <div class="k-btn" onclick="keypadAddNum('4')">4</div>
+            <div class="k-btn" onclick="keypadAddNum('5')">5</div>
+            <div class="k-btn" onclick="keypadAddNum('6')">6</div>
+            <div class="k-btn" onclick="keypadAddNum('7')">7</div>
+            <div class="k-btn" onclick="keypadAddNum('8')">8</div>
+            <div class="k-btn" onclick="keypadAddNum('9')">9</div>
+          </div>
+          <div class="keypad-row-2">
+            <div class="k-btn" style="flex:2;" onclick="keypadAddNum('0')">0</div>
+            <div class="k-btn blue" style="flex:1;" onclick="keypadBackspace()"><</div>
+          </div>
+          <div style="height:4px;"></div>
+          <div class="keypad-3x3">
+            <div class="k-btn" onclick="keypadAddDenom('1')">1</div>
+            <div class="k-btn" onclick="keypadAddDenom('2')">2</div>
+            <div class="k-btn" onclick="keypadAddDenom('3')">3</div>
+            <div class="k-btn" onclick="keypadAddDenom('4')">4</div>
+            <div class="k-btn" onclick="keypadAddDenom('5')">5</div>
+            <div class="k-btn" onclick="keypadAddDenom('6')">6</div>
+            <div class="k-btn" onclick="keypadAddDenom('7')">7</div>
+            <div class="k-btn" onclick="keypadAddDenom('8')">8</div>
+            <div class="k-btn" onclick="keypadAddDenom('9')">9</div>
+          </div>
+          <div class="keypad-row-2">
+            <div class="k-btn" style="flex:2;" onclick="keypadAddDenom('0')">0</div>
+            <div class="k-btn blue" style="flex:1;" onclick="keypadBackspace()"><</div>
+          </div>
+        </div>
+      </div>
+      <div class="keypad-bottom-5">
+        <div class="k-btn blue" onclick="keypadAddWhole('+')">+</div>
+        <div class="k-btn blue" onclick="keypadAddWhole('-')">-</div>
+        <div class="k-btn blue" onclick="keypadAddWhole('*')">*</div>
+        <div class="k-btn blue" onclick="keypadAddWhole('/')">/</div>
+        <div class="k-btn orange" onclick="keypadCalcResult()">=</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Modal -->
+  <div class="modal-overlay" id="expenseModal">
+    <div class="keypad-modal" style="background:#fff;">
+      <div style="font-size:1.1rem; font-weight:bold; color:#192a4a; margin-bottom:10px;">ADD NEW PURCHASE</div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Material Category:</label>
+        <select id="exp_cat">
+          <option value="Aluminum Profile">Aluminum Profile</option>
+          <option value="Glass / Board">Glass / Board</option>
+          <option value="Hardware & Accessories">Hardware & Accessories</option>
+          <option value="Labor / Transport">Labor / Transport</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Shop / Supplier Name:</label>
+        <input type="text" id="exp_supplier">
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Bill No / Memo Ref:</label>
+        <input type="text" id="exp_memo">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Total Amount (Rs):</label>
+        <input type="number" id="exp_amt">
+      </div>
+      <div class="btn-row">
+        <button class="action-btn btn-clear" onclick="closeExpenseModal()">CANCEL</button>
+        <button class="action-btn btn-save" onclick="saveExpense()">SAVE PURCHASE</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Tab switching
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      
-      const target = document.getElementById(tabId);
+    // Embedded JS Functions from main.py & calculations.py
+    function safeEval(text) {
+      if (!text) return 0.0;
+      let s = String(text).trim();
+      if (!s) return 0.0;
+      s = s.replace(/(\d+)\s+(\d+\/\d+)/g, '$1+$2');
+      s = s.replace(/\b0+(?=\d)/g, '');
+      try {
+        if (!/^[0-9+\-*/. ()]+$/.test(s)) return 0.0;
+        return Function('"use strict";return (' + s + ')')() || 0.0;
+      } catch (e) { return 0.0; }
+    }
+
+    function toFractionInch(inchVal) {
+      const roundedVal = Math.floor(inchVal * 16 + 0.5) / 16;
+      const wholeNumber = Math.floor(roundedVal);
+      const fracPart = roundedVal - wholeNumber;
+      if (fracPart === 0) return `${wholeNumber}"`;
+      const sixteenths = Math.round(fracPart * 16);
+      if (sixteenths === 0) return `${wholeNumber}"`;
+      if (sixteenths === 16) return `${wholeNumber + 1}"`;
+      let num = sixteenths, den = 16;
+      if (num % 8 === 0) { num /= 8; den /= 8; }
+      else if (num % 4 === 0) { num /= 4; den /= 4; }
+      else if (num % 2 === 0) { num /= 2; den /= 2; }
+      if (wholeNumber === 0) return `${num}/${den}"`;
+      return `${wholeNumber} ${num}/${den}"`;
+    }
+
+    function toMmStr(inchVal) {
+      const mmVal = Math.floor((inchVal * 25.4) + 0.5);
+      return `${mmVal} mm`;
+    }
+
+    function optimizeCuttingPlan(pieces) {
+      if (!pieces || pieces.length === 0) return null;
+      const sorted = [...pieces].sort((a, b) => b - a);
+      let bestPlan = null;
+      const stdLens = [180, 192, 144];
+      for (const stdLen of stdLens) {
+        const bins = [];
+        let valid = true;
+        for (const p of sorted) {
+          if (p > stdLen) { valid = false; break; }
+          let placed = false;
+          for (const b of bins) {
+            const sumB = b.reduce((a, c) => a + c, 0);
+            if (sumB + p <= stdLen) { b.push(p); placed = true; break; }
+          }
+          if (!placed) bins.push([p]);
+        }
+        if (valid) {
+          const totalWaste = (bins.length * stdLen) - pieces.reduce((a, c) => a + c, 0);
+          if (!bestPlan || bins.length < bestPlan.bins.length) {
+            bestPlan = { len: stdLen, bins: bins, waste: totalWaste };
+          } else if (bins.length === bestPlan.bins.length && totalWaste < bestPlan.waste) {
+            bestPlan = { len: stdLen, bins: bins, waste: totalWaste };
+          }
+        }
+      }
+      if (!bestPlan) {
+        bestPlan = { len: 0, bins: sorted.map(p => [p]), waste: 0, oversize: true };
+      }
+      return bestPlan;
+    }
+
+    function formatCuts(cuts) {
+      const counts = {};
+      cuts.forEach(c => {
+        const val = Math.round(c * 100) / 100;
+        counts[val] = (counts[val] || 0) + 1;
+      });
+      const sortedKeys = Object.keys(counts).map(Number).sort((a, b) => b - a);
+      const parts = [];
+      sortedKeys.forEach(val => {
+        const qty = counts[val];
+        parts.push(qty > 1 ? `${val}" x ${qty}` : `${val}"`);
+      });
+      return parts.join(' + ');
+    }
+
+    function generateMaterialList(buckets) {
+      let resText = "--- ACCUMULATED MATERIAL PURCHASE ---\\n\\n";
+      let hasItems = false;
+      for (const name in buckets) {
+        const pieces = buckets[name];
+        if (pieces && pieces.length > 0) {
+          hasItems = true;
+          const plan = optimizeCuttingPlan(pieces);
+          resText += `[${name}]\\n`;
+          if (plan.oversize) {
+            resText += "> SPECIAL ORDER (Oversized)\\n";
+            pieces.forEach(p => { resText += `  > Piece: ${(Math.round(p * 100) / 100)}\"\\n`; });
+          } else {
+            const ft = Math.floor(plan.len / 12);
+            resText += `> Buy: ${plan.bins.length} pcs (${ft} ft)\\n`;
+            plan.bins.forEach((b, i) => {
+              const cutsStr = formatCuts(b);
+              const sumB = b.reduce((a, c) => a + c, 0);
+              const waste = Math.round((plan.len - sumB) * 100) / 100;
+              resText += `  > Stick #${i + 1}: Cut [ ${cutsStr} ] -> Waste: ${waste}\"\\n`;
+            });
+          }
+        }
+      }
+      return hasItems ? resText : "";
+    }
+
+    // Keypad Logic
+    let keypadTarget = null;
+    let keypadDisplay = "";
+    let keypadLastPad = "none";
+
+    function openKeypad(targetId) {
+      keypadTarget = document.getElementById(targetId);
+      keypadDisplay = keypadTarget.value || "";
+      keypadLastPad = "none";
+      updateKeypadDisplay();
+      document.getElementById('keypadModal').classList.add('active');
+    }
+
+    function updateKeypadDisplay() {
+      document.getElementById('kDisplay').textContent = keypadDisplay || "0";
+    }
+
+    function keypadAddWhole(val) {
+      keypadDisplay += val;
+      keypadLastPad = "whole";
+      updateKeypadDisplay();
+    }
+
+    function keypadAddNum(val) {
+      if (keypadLastPad === 'whole' && keypadDisplay && /\d$/.test(keypadDisplay)) {
+        keypadDisplay += "+" + val;
+      } else {
+        keypadDisplay += val;
+      }
+      keypadLastPad = "num";
+      updateKeypadDisplay();
+    }
+
+    function keypadAddDenom(val) {
+      if (keypadLastPad !== 'denom' && keypadDisplay && /\d$/.test(keypadDisplay)) {
+        keypadDisplay += "/" + val;
+      } else {
+        keypadDisplay += val;
+      }
+      keypadLastPad = "denom";
+      updateKeypadDisplay();
+    }
+
+    function keypadCalcResult() {
+      try {
+        let ans = String(Math.round(safeEval(keypadDisplay) * 1000) / 1000);
+        if (ans.endsWith('.0')) ans = ans.slice(0, -2);
+        keypadDisplay = ans;
+        keypadLastPad = "whole";
+      } catch (e) {}
+      updateKeypadDisplay();
+    }
+
+    function keypadClear() {
+      keypadDisplay = "";
+      keypadLastPad = "none";
+      updateKeypadDisplay();
+    }
+
+    function keypadBackspace() {
+      keypadDisplay = keypadDisplay.slice(0, -1);
+      updateKeypadDisplay();
+    }
+
+    function keypadEnter() {
+      keypadCalcResult();
+      if (keypadTarget) {
+        keypadTarget.value = keypadDisplay;
+        if (keypadTarget.oninput) keypadTarget.oninput();
+        if (keypadTarget.onchange) keypadTarget.onchange();
+      }
+      document.getElementById('keypadModal').classList.remove('active');
+    }
+
+    // Screen Nav
+    function openScreen(screenName, title) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(`screen-${screenName}`);
       if (target) target.classList.add('active');
-
-      const navItems = document.querySelectorAll('.nav-item');
-      if (tabId === 'tab-home') navItems[0].classList.add('active');
-      else if (tabId === 'tab-sliding') navItems[1].classList.add('active');
-      else if (tabId === 'tab-domal') navItems[2].classList.add('active');
-      else if (tabId === 'tab-quotation') navItems[3].classList.add('active');
-      else if (tabId === 'tab-settings') navItems[4].classList.add('active');
-
+      document.getElementById('screenTitle').innerHTML = `<i class="fa-solid fa-industry"></i> ${title}`;
+      document.getElementById('topBackBtn').style.display = 'block';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (screenName === 'dashboard') document.querySelectorAll('.nav-item')[1].classList.add('active');
+      else if (screenName === 'history') document.querySelectorAll('.nav-item')[2].classList.add('active');
+      else if (screenName === 'profile') document.querySelectorAll('.nav-item')[3].classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Helper: Number evaluation
-    function parseVal(id) {
-      return parseFloat(document.getElementById(id).value) || 0;
+    function goHome() {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-home').classList.add('active');
+      document.getElementById('screenTitle').innerHTML = `<i class="fa-solid fa-industry"></i> SMART WORKER PRO`;
+      document.getElementById('topBackBtn').style.display = 'none';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.nav-item')[0].classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Helper: Fraction to Inch display
-    function formatInch(val) {
-      const whole = Math.floor(val);
-      const frac = val - whole;
-      const eighths = Math.round(frac * 8);
-      if (eighths === 0) return `${whole}"`;
-      if (eighths === 8) return `${whole + 1}"`;
-      
-      let num = eighths, den = 8;
-      if (num % 4 === 0) { num /= 4; den /= 4; }
-      else if (num % 2 === 0) { num /= 2; den /= 2; }
-      
-      return whole > 0 ? `${whole} [${num}/${den}]"` : `[${num}/${den}]"`;
-    }
+    // Save and Load Settings
+    
+    // ========================================================
+    // 3. DOMAL WINDOW MODULE
+    // ========================================================
+    let dm_window_count = 0;
+    let dm_buckets = {};
+    let dm_glass_dict = {};
 
-    // 1. SLIDING CALCULATION (Exact formulas from Python)
-    function calculateSliding() {
-      const h_raw = parseVal('sl_h');
-      const w_raw = parseVal('sl_w');
-      const is_mm = document.getElementById('sl_unit').value === 'Millimeter';
-      const t_type = document.getElementById('sl_type').value;
-      const sys_type = document.getElementById('sl_sys').value;
-
-      if (h_raw <= 0 || w_raw <= 0) {
-        alert("উচ্চতা এবং প্রস্থ সঠিকভাবে পূরণ করুন!");
-        return;
-      }
-
-      const h_in = is_mm ? h_raw / 25.4 : h_raw;
-      const w_in = is_mm ? w_raw / 25.4 : w_raw;
-
-      let div = 2, g_c = 2, han_qty = 2, int_qty = 2;
-      if (t_type.includes('2-Track')) { div = 2; g_c = 2; han_qty = 2; int_qty = 2; }
-      else if (t_type.includes('3-Track')) { div = 3; g_c = 3; han_qty = 2; int_qty = 4; }
-      else if (t_type.includes('4-Track')) { div = 4; g_c = 4; han_qty = 2; int_qty = 6; }
-      else if (t_type.includes('Center Open')) { div = 4; g_c = 4; han_qty = 4; int_qty = 4; }
-
-      let h_minus = 1.625, g_h_minus = 2.75, g_w_mod = 0.625, w_mod = -6.0;
-
-      if (sys_type === '18x40') {
-        h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
-        w_mod = (div === 2) ? -6.0 : (div === 3 ? -8.0 : -11.0);
-      } else if (sys_type === '18x50') {
-        h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
-        w_mod = (div === 2) ? -7.0 : (div === 3 ? -9.5 : -12.5);
-      } else if (sys_type === '18x60') {
-        h_minus = 1.5; g_h_minus = 4.125; g_w_mod = -4.125;
-        w_mod = (div === 2) ? 0.625 : (div === 3 ? 2.75 : 5.125);
-      } else if (sys_type === '25x50') {
-        h_minus = 1.125; g_h_minus = 4.125; g_w_mod = 0.75;
-        if (t_type.includes('Center')) w_mod = -13.5;
-        else w_mod = (div === 2) ? -7.5 : (div === 3 ? -9.25 : -11.5);
-      } else if (sys_type === '25x65') {
-        h_minus = 1.125; g_h_minus = 5.5; g_w_mod = 0.75;
-        if (t_type.includes('Center')) w_mod = -16.625;
-        else w_mod = (div === 2) ? -8.75 : (div === 3 ? -11.25 : -14.0);
-      } else if (sys_type === 'Door Sliding Master') {
-        h_minus = 43 / 25.4; g_h_minus = 121 / 25.4; g_w_mod = -8 / 25.4;
-        w_mod = (div === 2) ? -169 / 25.4 : (div === 3 ? -204 / 25.4 : -169 / 25.4);
-      }
-
-      const tb_w = (w_in + w_mod) / div;
-      const handle_h = h_in - h_minus;
-      const glass_h = handle_h - g_h_minus;
-      const glass_w = tb_w + g_w_mod;
-
-      const disp = (val) => is_mm ? (val * 25.4).toFixed(1) + ' mm' : formatInch(val);
-
-      let txt = `=== SLIDING CUTTING SIZE (${sys_type}) ===
-`;
-      txt += `উচ্চতা: ${h_raw} | প্রস্থ: ${w_raw} (${is_mm ? 'mm' : 'Inch'}) | ট্র্যাক: ${t_type}
-`;
-      txt += `-------------------------------------------
-`;
-      txt += `> টপ ট্র্যাক (Top Track):       ${disp(w_in)} (1 pc)
-`;
-      txt += `> বটম ট্র্যাক (Bottom Track):    ${disp(w_in)} (1 pc)
-`;
-      txt += `> সাইড ট্র্যাক (Side Vertical):  ${disp(h_in)} (2 pc)
-`;
-      txt += `> পাল্লা টপ/বটম (Sash Top/Bot):  ${disp(tb_w)} (${g_c * 2} pc)
-`;
-      txt += `> পাল্লা হ্যান্ডেল (Handle V.):   ${disp(handle_h)} (${han_qty} pc)
-`;
-      txt += `> ইন্টারলক (Interlock V.):       ${disp(handle_h)} (${int_qty} pc)
-
-`;
-      txt += `--- গ্লাসের সাইজ (Glass Sizes) ---
-`;
-      txt += `> গ্লাস: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)
-
-`;
-      txt += `--- ফিটিংস ও অ্যাকসেসরিজ ---
-`;
-      txt += `> স্লাইডিং চাকা (Rollers):  ${g_c * 2} পিস
-`;
-      txt += `> লক (Star Lock):          ${g_c >= 3 ? 2 : 1} পিস
-`;
-      txt += `> রবার ও উলপাইল (Woolpile): প্রয়োজনমতো`;
-
-      document.getElementById('sl_out').textContent = txt;
-    }
-
-    function clearSliding() {
-      document.getElementById('sl_h').value = '';
-      document.getElementById('sl_w').value = '';
-      document.getElementById('sl_out').textContent = 'কাটিং মাপের বিবরণ এখানে দেখা যাবে...';
-    }
-
-    // 2. DOMAL CALCULATION (Jindal specifications from Python)
     function calculateDomal() {
-      const h_raw = parseVal('dm_h');
-      const w_raw = parseVal('dm_w');
-      const is_mm = document.getElementById('dm_unit').value === 'Millimeter';
-      const t_text = document.getElementById('dm_type').value;
-      const track_h = parseFloat(document.getElementById('dm_track_h').value) || 45.0;
+      const raw_h = safeEval(document.getElementById('dm_h').value);
+      const raw_w = safeEval(document.getElementById('dm_w').value);
+      if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
 
-      if (h_raw <= 0 || w_raw <= 0) {
-        alert("উচ্চতা এবং প্রস্থ সঠিকভাবে পূরণ করুন!");
-        return;
+      const is_mm = document.getElementById('dm_unit').value.includes('Millimeter');
+      const h_mm = is_mm ? raw_h : raw_h * 25.4;
+      const w_mm = is_mm ? raw_w : raw_w * 25.4;
+      const t_text = document.getElementById('dm_type').value;
+
+      let track_h = 45.0;
+      const thMatch = document.getElementById('dm_track_h').value.match(/[0-9]+(?:\.[0-9]+)?/);
+      if (thMatch) track_h = parseFloat(thMatch[0]);
+
+      let handle_h = 27.0, handle_w = 65.0;
+      const hwMatch = document.getElementById('dm_handle_hw').value.match(/[0-9]+(?:\.[0-9]+)?/g);
+      if (hwMatch && hwMatch.length >= 2) {
+        handle_h = parseFloat(hwMatch[0]);
+        handle_w = parseFloat(hwMatch[1]);
       }
 
-      const h_mm = is_mm ? h_raw : h_raw * 25.4;
-      const w_mm = is_mm ? w_raw : w_raw * 25.4;
-
-      const handle_h = 27.0;
-      const handle_w = 65.0;
-
-      // 1. Height cut: Total H - (2 * track_h) + 22mm overlap
       const v_cut_mm = h_mm - (track_h * 2.0) + 22.0;
+      const h_deduct_mm = (track_h * 2.0) - 22.0;
       const side_clearance = (track_h * 2.0) - 12.0;
 
       let net_w_mod = 0, h_cut_mm = 0, s_c = 2, han_qty = 4, int_qty = 2;
       let has_mesh = false, mesh_w_mm = 0;
 
-      if (t_text.includes('2-Track')) {
+      if (t_text.includes('2-Track (2-Sash)')) {
         net_w_mod = handle_w - side_clearance;
         h_cut_mm = (w_mm + net_w_mod) / 2.0;
         s_c = 2; han_qty = 4; int_qty = 2;
-      } else if (t_text.includes('3-Track')) {
+      } else if (t_text.includes('3-Track (3-Sash)')) {
         net_w_mod = (handle_w * 2.0) - side_clearance;
         h_cut_mm = (w_mm + net_w_mod) / 3.0;
         s_c = 3; han_qty = 6; int_qty = 4;
         has_mesh = true;
         mesh_w_mm = (w_mm - side_clearance + handle_w) / 2.0;
-      } else if (t_text.includes('4-Track')) {
+      } else if (t_text.includes('4-Track (4-Sash)')) {
         net_w_mod = (handle_w * 3.0) - side_clearance;
         h_cut_mm = (w_mm + net_w_mod) / 4.0;
         s_c = 4; han_qty = 8; int_qty = 6;
@@ -933,422 +1369,1380 @@
       const gh_mm = v_cut_mm - g_deduct_mm;
       const gw_mm = h_cut_mm - g_deduct_mm;
 
-      const disp = (mmVal) => is_mm ? mmVal.toFixed(1) + ' mm' : formatInch(mmVal / 25.4);
+      const h_in = h_mm / 25.4;
+      const w_in = w_mm / 25.4;
+      const v_cut_in = v_cut_mm / 25.4;
+      const h_cut_in = h_cut_mm / 25.4;
+      const mesh_w_in = mesh_w_mm / 25.4;
+      const gh_in = gh_mm / 25.4;
+      const gw_in = gw_mm / 25.4;
 
-      let txt = `=== DOMAL 27x65 CUTTING REPORT ===
-`;
-      txt += `উচ্চতা: ${h_raw} | প্রস্থ: ${w_raw} (${is_mm ? 'mm' : 'Inch'}) | ট্র্যাক: ${t_text}
-`;
-      txt += `-------------------------------------------------
-`;
-      txt += `> আউটার ফ্রেম টপ/বটম:    ${disp(w_mm)} (2 pc)
-`;
-      txt += `> আউটার ফ্রেম সাইড:       ${disp(h_mm)} (2 pc)
-`;
-      txt += `> পাল্লা টপ/বটম (Sash):   ${disp(h_cut_mm)} (${s_c * 2} pc)
-`;
-      txt += `> পাল্লা হ্যান্ডেল:        ${disp(v_cut_mm)} (${han_qty} pc)
-`;
-      txt += `> পাল্লা ইন্টারলক:        ${disp(v_cut_mm)} (${int_qty} pc)
-`;
+      dm_window_count += 1;
+      const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+      const unit_str = is_mm ? "mm" : "Inch";
+
+      const total_sash_for_hw = s_c + (has_mesh ? 1 : 0);
+      let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
+      hw_txt += `> Domal Bearing / Rollers: ${total_sash_for_hw * 2} pc\n`;
+      hw_txt += `> Touch Lock / Star Lock: ${s_c >= 3 ? 2 : 1} pc\n`;
+      hw_txt += `> L-Cleat (Corner Angle): ${total_sash_for_hw * 4} pc\n> EPDM Gasket / Seal: Required\n`;
+
+      const w_sign = net_w_mod >= 0 ? `+${Math.round(net_w_mod)}` : `${Math.round(net_w_mod)}`;
+      let spec_info = `--- JINDAL SPECS (Track H:${Math.round(track_h)}mm | Handle:${Math.round(handle_h)}x${Math.round(handle_w)}mm) ---\n`;
+      spec_info += `> Height Formula: (H - ${Math.round(h_deduct_mm)} mm) [+22mm overlap]\n`;
+      spec_info += `> Width Formula: (W ${w_sign} mm) / ${s_c} [-12mm clearance]\n`;
+      spec_info += `> Glass Deduction: Sash - ${Math.round(g_deduct_mm)} mm [13mm pocket each side]\n`;
+
+      let alu_txt = `[Domal Win #${dm_window_count} - H:${raw_h} x W:${raw_w} ${unit_str}]\n`;
+      alu_txt += spec_info;
+      alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (2 pc)\n`;
+      alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (2 pc)\n`;
+      alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2} pc)\n`;
+      alu_txt += `> Sash Handle: ${disp(v_cut_in)} (${han_qty} pc)\n`;
+      alu_txt += `> Sash Interlock: ${disp(v_cut_in)} (${int_qty} pc)\n`;
 
       if (has_mesh) {
-        txt += `
---- মসকুইটো নেট পাল্লা (Mosquito Net) ---
-`;
-        txt += `> নেট টপ/বটম:            ${disp(mesh_w_mm)} (2 pc)
-`;
-        txt += `> নেট হ্যান্ডেল:           ${disp(v_cut_mm)} (2 pc)
-`;
+        alu_txt += `\n--- MOSQUITO NET ---\n> Mesh Top/Bot: ${disp(mesh_w_in)} (2 pc)\n> Mesh Handle/Interlock: ${disp(v_cut_in)} (2 pc)\n`;
       }
 
-      txt += `
---- গ্লাসের সাইজ (Glass Sizes) ---
-`;
-      txt += `> গ্লাস সাইজ: ${disp(gh_mm)} x ${disp(gw_mm)} (${s_c} pc)
+      const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c} pc)\n`;
+      const glass_key = `${disp(gh_in)} x ${disp(gw_in)}`;
+      dm_glass_dict[glass_key] = (dm_glass_dict[glass_key] || 0) + s_c;
 
-`;
-      txt += `--- অ্যাকসেসরিজ ---
-`;
-      txt += `> ডমাল হেভি বেয়ারিং: ${(s_c + (has_mesh?1:0)) * 2} পিস
-`;
-      txt += `> টাচ লক / স্টার লক: ${s_c >= 3 ? 2 : 1} পিস
-`;
-      txt += `> এল-ক্লিট (Corner Angle): ${(s_c + (has_mesh?1:0)) * 4} পিস`;
+      let track_type = t_text.split(' ')[0];
+      if (t_text.includes("Center")) track_type = "2-Track CO";
 
-      document.getElementById('dm_out').textContent = txt;
+      const outer_key = `Domal Outer Frame (${track_type})`;
+      const sash_handle_key = `Domal Sash Patta & Handle (${track_type})`;
+      const interlock_key = `Domal Interlock (${track_type})`;
+
+      [outer_key, sash_handle_key, interlock_key].forEach(k => {
+        if (!dm_buckets[k]) dm_buckets[k] = [];
+      });
+
+      dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
+      for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_handle_key].push(h_cut_in);
+      if (has_mesh) dm_buckets[sash_handle_key].push(mesh_w_in, mesh_w_in);
+      for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in);
+      if (has_mesh) dm_buckets[sash_handle_key].push(v_cut_in);
+      for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in);
+      if (has_mesh) dm_buckets[interlock_key].push(v_cut_in);
+
+      const prevOut = document.getElementById('dm_alu_out').textContent;
+      document.getElementById('dm_alu_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\n\n" + prevOut;
+      document.getElementById('dm_mat_out').textContent = generateMaterialList(dm_buckets);
     }
 
     function clearDomal() {
-      document.getElementById('dm_h').value = '';
-      document.getElementById('dm_w').value = '';
-      document.getElementById('dm_out').textContent = 'ডমাল কাটিং মাপের বিবরণ এখানে আসবে...';
+      dm_window_count = 0;
+      dm_buckets = {};
+      dm_glass_dict = {};
+      document.getElementById('dm_h').value = "";
+      document.getElementById('dm_w').value = "";
+      document.getElementById('dm_alu_out').textContent = "";
+      document.getElementById('dm_mat_out').textContent = "";
     }
 
-    // 3. DOOR MASTER
-    function calculateDoor() {
-      const h_raw = parseVal('dr_h');
-      const w_raw = parseVal('dr_w');
-      const is_mm = document.getElementById('dr_unit').value === 'Millimeter';
-      const d_type = document.getElementById('dr_type').value;
+    // ========================================================
+    // 4. SLIDING WINDOW MODULE
+    // ========================================================
+    let sl_window_count = 0;
+    let sl_buckets = {};
+    let sl_glass_dict = {};
 
-      if (h_raw <= 0 || w_raw <= 0) {
-        alert("দরজার মাপ পূরণ করুন!");
-        return;
+    function calculateSliding() {
+      const raw_h = safeEval(document.getElementById('sl_h').value);
+      const raw_w = safeEval(document.getElementById('sl_w').value);
+      if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
+
+      const is_mm = document.getElementById('sl_unit').value.includes('Millimeter');
+      const h_in = is_mm ? raw_h / 25.4 : raw_h;
+      const w_in = is_mm ? raw_w / 25.4 : raw_w;
+      const sys_type = document.getElementById('sl_sys').value;
+      const t_type = document.getElementById('sl_type').value;
+
+      let h_minus = 0, w_mod = 0, div = 2, g_h_minus = 0, g_w_mod = 0, g_c = 2;
+      let han_qty = 2, int_qty = 2;
+
+      if (t_type.includes('2-Track')) { div = 2; g_c = 2; han_qty = 2; int_qty = 2; }
+      else if (t_type.includes('3-Track')) { div = 3; g_c = 3; han_qty = 2; int_qty = 4; }
+      else if (t_type.includes('4-Track')) { div = 4; g_c = 4; han_qty = 2; int_qty = 6; }
+      else if (t_type.includes('Center Open')) { div = 4; g_c = 4; han_qty = 4; int_qty = 4; }
+
+      if (sys_type.includes('18x40')) {
+        h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
+        w_mod = (div === 2) ? -6.0 : (div === 3 ? -8.0 : -11.0);
+      } else if (sys_type.includes('18x50')) {
+        h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
+        w_mod = (div === 2) ? -7.0 : (div === 3 ? -9.5 : -12.5);
+      } else if (sys_type.includes('18x60')) {
+        h_minus = 1.5; g_h_minus = 4.125; g_w_mod = -4.125;
+        w_mod = (div === 2) ? 0.625 : (div === 3 ? 2.75 : 5.125);
+      } else if (sys_type.includes('25x50')) {
+        h_minus = 1.125; g_h_minus = 4.125; g_w_mod = 0.75;
+        if (t_type.includes('Center')) w_mod = -13.5;
+        else w_mod = (div === 2) ? -7.5 : (div === 3 ? -9.25 : -11.5);
+      } else if (sys_type.includes('25x65')) {
+        h_minus = 1.125; g_h_minus = 5.5; g_w_mod = 0.75;
+        if (t_type.includes('Center')) w_mod = -16.625;
+        else w_mod = (div === 2) ? -8.75 : (div === 3 ? -11.25 : -14.0);
+      } else if (sys_type.includes('Door Sliding Master')) {
+        h_minus = 43 / 25.4; g_h_minus = 121 / 25.4; g_w_mod = -8 / 25.4;
+        w_mod = (div === 2) ? -169 / 25.4 : (div === 3 ? -204 / 25.4 : -169 / 25.4);
       }
 
-      const h = is_mm ? h_raw / 25.4 : h_raw;
-      const w = is_mm ? w_raw / 25.4 : w_raw;
+      const tb_w = (w_in + w_mod) / div;
+      const handle_h = h_in - h_minus;
+      const glass_h = handle_h - g_h_minus;
+      const glass_w = tb_w + g_w_mod;
+
+      sl_window_count += 1;
+      const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+
+      let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
+      hw_txt += `> Sliding Roller / Bearing: ${g_c * 2} pc\n`;
+      hw_txt += `> Star Lock: ${g_c >= 3 ? 2 : 1} pc\n> Rubber & Woolpile: Required\n`;
+
+      let alu_txt = `[Win #${sl_window_count} - H:${raw_h} x W:${raw_w} (${sys_type.split(' ')[0]})]\n`;
+      alu_txt += `> Track Top: ${disp(w_in)} (1 pc)\n`;
+      alu_txt += `> Track Bottom: ${disp(w_in)} (1 pc)\n`;
+      alu_txt += `> Track Vertical: ${disp(h_in)} (2 pc)\n`;
+      alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${g_c * 2} pc)\n`;
+      alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty} pc)\n`;
+      alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty} pc)\n`;
+
+      const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)\n`;
+      const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
+      sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + g_c;
+
+      const track_type = t_type.split(' ')[0];
+      const top_vert_track_key = `Track Top/Vertical (${track_type})`;
+      const bot_track_key = `Track Bottom (${track_type})`;
+      const sash_tb_key = "Sash Top/Bottom";
+      const sash_handle_key = "Sash Handle";
+      const sash_interlock_key = "Sash Interlock";
+
+      [top_vert_track_key, bot_track_key, sash_tb_key, sash_handle_key, sash_interlock_key].forEach(k => {
+        if (!sl_buckets[k]) sl_buckets[k] = [];
+      });
+
+      sl_buckets[top_vert_track_key].push(w_in, h_in, h_in);
+      sl_buckets[bot_track_key].push(w_in);
+      for (let i = 0; i < g_c * 2; i++) sl_buckets[sash_tb_key].push(tb_w);
+      for (let i = 0; i < han_qty; i++) sl_buckets[sash_handle_key].push(handle_h);
+      for (let i = 0; i < int_qty; i++) sl_buckets[sash_interlock_key].push(handle_h);
+
+      const prevOut = document.getElementById('sl_out').textContent;
+      document.getElementById('sl_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\n\n" + prevOut;
+      document.getElementById('sl_mat_out').textContent = generateMaterialList(sl_buckets);
+    }
+
+    function clearSliding() {
+      sl_window_count = 0;
+      sl_buckets = {};
+      sl_glass_dict = {};
+      document.getElementById('sl_h').value = "";
+      document.getElementById('sl_w').value = "";
+      document.getElementById('sl_out').textContent = "";
+      document.getElementById('sl_mat_out').textContent = "";
+    }
+
+    // ========================================================
+    // 5. CUSTOM CASEMENT MODULE
+    // ========================================================
+    let cc_window_count = 0;
+    let cc_buckets = { "Casement Outer": [], "Casement Mullion": [], "Casement Z Handle": [], "Square Clip (Beading)": [] };
+    let cc_glass_dict = {};
+
+    function calculateCasement() {
+      const raw_h = safeEval(document.getElementById('cc_h').value);
+      const raw_w = safeEval(document.getElementById('cc_w').value);
+      if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
+
+      const bot_h_input = safeEval(document.getElementById('cc_bot_h').value);
+      const mid_w_input = safeEval(document.getElementById('cc_mid_w').value);
+
+      const top_cols = Math.max(1, parseInt(safeEval(document.getElementById('cc_top_cols').value)) || 1);
+      let top_open = parseInt(safeEval(document.getElementById('cc_top_open').value)) || 0;
+      if (top_open > top_cols) top_open = top_cols;
+      const top_fixed = top_cols - top_open;
+
+      const bot_cols_str = document.getElementById('cc_bot_cols').value.trim();
+      let bot_cols = bot_cols_str ? parseInt(safeEval(bot_cols_str)) || 0 : 0;
+      const bot_open_str = document.getElementById('cc_bot_open').value.trim();
+      let bot_open = bot_open_str ? parseInt(safeEval(bot_open_str)) || 0 : 0;
+      if (bot_open > bot_cols) bot_open = bot_cols;
+      const bot_fixed = bot_cols - bot_open;
+
+      const is_mm = document.getElementById('cc_unit').value.includes('Millimeter');
+      const h_mm = is_mm ? raw_h : raw_h * 25.4;
+      const w_mm = is_mm ? raw_w : raw_w * 25.4;
+      const bot_gap_input_mm = is_mm ? bot_h_input : bot_h_input * 25.4;
+      const mid_w_mm = is_mm ? mid_w_input : mid_w_input * 25.4;
+
+      const series = document.getElementById('cc_series').value;
+      const overlap = 11;
+      const glass_m_open = 65;
+      const glass_m_fixed = 7;
+
+      const outer_2 = series.includes("34") ? 56 : 46;
+      const mullion = series.includes("34") ? 25 : 27;
+
+      const rows = bot_gap_input_mm > 0 ? 2 : 1;
+      const h_mullion_qty = rows === 2 ? 1 : 0;
+
+      let bot_gap_h = 0, top_gap_h = 0;
+      if (rows === 2) {
+        bot_gap_h = bot_gap_input_mm;
+        top_gap_h = h_mm - outer_2 - mullion - bot_gap_h;
+      } else {
+        top_gap_h = h_mm - outer_2;
+      }
+
+      const top_v_mullion_qty = top_cols - 1;
+      const bot_v_mullion_qty = Math.max(0, bot_cols - 1);
+
+      const top_gap_w = (w_mm - outer_2 - (top_v_mullion_qty * mullion)) / top_cols;
+      let bot_gap_w = 0;
+      if (bot_cols > 0) {
+        bot_gap_w = (w_mm - outer_2 - (bot_v_mullion_qty * mullion)) / bot_cols;
+      }
+
+      cc_window_count += 1;
+      const disp = (mmVal) => is_mm ? toMmStr(mmVal / 25.4) : toFractionInch(mmVal / 25.4);
+      const unit_str = is_mm ? "mm" : "Inch";
+      const total_sash_qty = top_open + bot_open;
+
+      let out_txt = `[${series} Win #${cc_window_count} | Size: ${raw_h} x ${raw_w} ${unit_str}]\n`;
+      out_txt += "--- 1. OUTER FRAME & MULLIONS ---\n";
+      out_txt += `> Outer Vertical: ${disp(h_mm)} (2 pc)\n> Outer Horizontal: ${disp(w_mm)} (2 pc)\n`;
+      cc_buckets["Casement Outer"].push(h_mm / 25.4, h_mm / 25.4, w_mm / 25.4, w_mm / 25.4);
+
+      if (h_mullion_qty > 0) {
+        out_txt += `> Horizontal Divider: ${disp(w_mm - outer_2)} (${h_mullion_qty} pc)\n`;
+        for (let i = 0; i < h_mullion_qty; i++) cc_buckets["Casement Mullion"].push((w_mm - outer_2) / 25.4);
+      }
+      if (top_v_mullion_qty > 0) {
+        out_txt += `> Top Vert. Mullions: ${disp(top_gap_h)} (${top_v_mullion_qty} pc)\n`;
+        for (let i = 0; i < top_v_mullion_qty; i++) cc_buckets["Casement Mullion"].push(top_gap_h / 25.4);
+      }
+      if (bot_v_mullion_qty > 0) {
+        out_txt += `> Bot Vert. Mullions: ${disp(bot_gap_h)} (${bot_v_mullion_qty} pc)\n`;
+        for (let i = 0; i < bot_v_mullion_qty; i++) cc_buckets["Casement Mullion"].push(bot_gap_h / 25.4);
+      }
+
+      out_txt += `\n--- 2. TOP ROW DETAILS (${top_cols} SECTIONS) ---\n`;
+      let w_gap_open = top_gap_w, w_gap_fixed = top_gap_w;
+      if (mid_w_mm > 0 && top_cols >= 3) {
+        const num_center_gaps = top_cols - 2;
+        const side_w_total = w_mm - outer_2 - (num_center_gaps * mid_w_mm) - (top_v_mullion_qty * mullion);
+        const top_side_w = side_w_total / 2;
+        w_gap_open = mid_w_mm;
+        w_gap_fixed = top_side_w;
+      }
+
+      if (top_open > 0) {
+        out_txt += `[OPENABLE SASH | Qty: ${top_open} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\n`;
+        const s1_h = top_gap_h + overlap, s1_w = w_gap_open + overlap;
+        const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
+        out_txt += `  > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\n  > Glass Size: ${disp(g_h)} x ${disp(g_w)}\n`;
+        const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
+        cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + top_open;
+        for (let i = 0; i < top_open * 2; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
+      }
+
+      if (top_fixed > 0) {
+        out_txt += `[FIXED GLASS | Qty: ${top_fixed} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_fixed)}]\n`;
+        const g_h = top_gap_h - glass_m_fixed, g_w = w_gap_fixed - glass_m_fixed;
+        out_txt += `  > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\n  > Square Clip (Beading): Required\n`;
+        const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
+        cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + top_fixed;
+        const beading_length = (top_gap_h + w_gap_fixed) * 2 / 25.4;
+        for (let i = 0; i < top_fixed; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
+      }
+
+      if (bot_cols > 0 && rows === 2) {
+        out_txt += `\n--- 3. BOTTOM ROW DETAILS (${bot_cols} SECTIONS) ---\n`;
+        if (bot_open > 0) {
+          out_txt += `[OPENABLE SASH | Qty: ${bot_open} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
+          const s1_h = bot_gap_h + overlap, s1_w = bot_gap_w + overlap;
+          const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
+          out_txt += `  > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\n  > Glass Size: ${disp(g_h)} x ${disp(g_w)}\n`;
+          const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
+          cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + bot_open;
+          for (let i = 0; i < bot_open * 2; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
+        }
+        if (bot_fixed > 0) {
+          out_txt += `[FIXED GLASS | Qty: ${bot_fixed} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
+          const g_h = bot_gap_h - glass_m_fixed, g_w = bot_gap_w - glass_m_fixed;
+          out_txt += `  > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\n  > Square Clip (Beading): Required\n`;
+          const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
+          cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + bot_fixed;
+          const beading_length = (bot_gap_h + bot_gap_w) * 2 / 25.4;
+          for (let i = 0; i < bot_fixed; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
+        }
+      }
+
+      let hw_txt = "\n--- HARDWARE & ACCESSORIES ---\n";
+      if (total_sash_qty > 0) {
+        hw_txt += `> Friction Stay / Hinges: ${total_sash_qty * 2} pc\n`;
+        hw_txt += `> Casement Handle: ${total_sash_qty} pc\n`;
+      } else {
+        hw_txt += "> No Sash Hardware Required (Fully Fixed)\n";
+      }
+      out_txt += hw_txt;
+
+      const prevOut = document.getElementById('cc_out').textContent;
+      document.getElementById('cc_out').textContent = out_txt + "===================================\n\n" + prevOut;
+      document.getElementById('cc_mat_out').textContent = generateMaterialList(cc_buckets);
+    }
+
+    function clearCasement() {
+      cc_window_count = 0;
+      cc_buckets = { "Casement Outer": [], "Casement Mullion": [], "Casement Z Handle": [], "Square Clip (Beading)": [] };
+      cc_glass_dict = {};
+      document.getElementById('cc_h').value = "";
+      document.getElementById('cc_w').value = "";
+      document.getElementById('cc_bot_h').value = "0";
+      document.getElementById('cc_mid_w').value = "0";
+      document.getElementById('cc_top_cols').value = "1";
+      document.getElementById('cc_top_open').value = "1";
+      document.getElementById('cc_bot_cols').value = "0";
+      document.getElementById('cc_bot_open').value = "0";
+      document.getElementById('cc_out').textContent = "";
+      document.getElementById('cc_mat_out').textContent = "";
+    }
+
+    // ========================================================
+    // 6. DOOR MASTER MODULE
+    // ========================================================
+    let dr_door_count = 0;
+    let dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
+    let dr_glass_dict = {};
+
+    function calculateDoor() {
+      const raw_h = safeEval(document.getElementById('dr_h').value);
+      const raw_w = safeEval(document.getElementById('dr_w').value);
+      if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
+
+      const is_mm = document.getElementById('dr_unit').value.includes('Millimeter');
+      const h = is_mm ? raw_h / 25.4 : raw_h;
+      const w = is_mm ? raw_w / 25.4 : raw_w;
+      const d_type = document.getElementById('dr_type').value;
 
       let outer_v = h, outer_h = w - 3.0, has_outer = true;
-      let door_v = h - 1.75, door_tb = w - 6.75;
+      let door_v = 0, door_tb = 0, palla_qty = 1;
 
-      if (d_type === 'Standard Door') {
-        door_v = h - 1.75; door_tb = w - 6.75;
-      } else if (d_type === 'Top Hung Door') {
-        door_v = h; door_tb = w - 6.75; has_outer = false;
-      } else if (d_type === 'Domal System Door') {
-        door_v = h - (25.0 / 25.4); door_tb = (w - (38.0 / 25.4)) - 3.5;
+      if (d_type === "Standard Door") {
+        door_v = h - 1.75; door_tb = w - 6.75; palla_qty = 1;
+      } else if (d_type === "Floor Spring Door") {
+        door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
+      } else if (d_type === "Top Hung Door") {
+        door_v = h; door_tb = w - 6.75; palla_qty = 1; has_outer = false;
+      } else if (d_type === "Domal System Door") {
+        door_v = h - (25.0 / 25.4); door_tb = (w - (38.0 / 25.4)) - 3.5; palla_qty = 1;
+      } else {
+        door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
       }
 
       const glass_h = door_v - 5.875 - 0.25;
       const glass_w = door_tb - 0.25;
 
-      const disp = (val) => is_mm ? (val * 25.4).toFixed(1) + ' mm' : formatInch(val);
+      dr_door_count += 1;
+      const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+      const unit_str = is_mm ? "mm" : "Inch";
 
-      let txt = `=== ডোর কাটিং ডিটেইলস (${d_type}) ===
-`;
-      if (has_outer) {
-        txt += `> আউটার সাইড ফ্রেম:  ${disp(outer_v)} (2 pc)
-`;
-        txt += `> আউটার টপ ফ্রেম:    ${disp(outer_h)} (1 pc)
-`;
+      let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
+      hw_txt += `> Door Hinges / Pivot: 3 pc (Per Leaf)\n> Door Handle: 1 Set\n> Door Lock: 1 Set\n`;
+      if (d_type === "Standard Door" || d_type === "Floor Spring Door") {
+        hw_txt += "> Door Closer / Floor Spring: 1 pc\n";
       }
-      txt += `> ডোর ভার্টিকাল:      ${disp(door_v)} (2 pc)
-`;
-      txt += `> ডোর টপ & বটম:     ${disp(door_tb)} (2 pc)
-`;
-      txt += `> গ্লাস / বোর্ড সাইজ: ${disp(glass_h)} x ${disp(glass_w)} (1 pc)
 
-`;
-      txt += `--- ডোর হার্ডওয়্যার ---
-> কব্জা (Door Hinges): 3 পিস
-> ডোর লক & হ্যান্ডেল সেট: 1 সেট`;
+      let out = `[Door #${dr_door_count} - ${d_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
+      if (has_outer) {
+        out += `--- OUTER FRAME ---\n> Outer Vertical: ${disp(outer_v)} (2 pc)\n> Outer Top Horizontal: ${disp(outer_h)} (1 pc)\n`;
+        dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
+      }
+      out += `--- DOOR SASH (${palla_qty} Palla) ---\n> Door Vertical: ${disp(door_v)} (${palla_qty * 2} pc)\n> Door Top/Bottom: ${disp(door_tb)} (${palla_qty * 2} pc)\n`;
+      for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Verticals"].push(door_v);
+      for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Horizontals"].push(door_tb);
 
-      document.getElementById('dr_out').textContent = txt;
+      out += hw_txt;
+      out += `--- GLASS / BOARD ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${palla_qty} pc)\n`;
+      const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
+      dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + palla_qty;
+
+      const prevOut = document.getElementById('dr_out').textContent;
+      document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
+      document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
     }
 
     function clearDoor() {
-      document.getElementById('dr_h').value = '';
-      document.getElementById('dr_w').value = '';
-      document.getElementById('dr_out').textContent = 'দরজার কাটিং ও গ্লাসের মাপ এখানে আসবে...';
+      dr_door_count = 0;
+      dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
+      dr_glass_dict = {};
+      document.getElementById('dr_h').value = "";
+      document.getElementById('dr_w').value = "";
+      document.getElementById('dr_out').textContent = "";
+      document.getElementById('dr_mat_out').textContent = "";
     }
 
-    // 4. CASEMENT CALCULATION
-    function calculateCasement() {
-      const h_raw = parseVal('cc_h');
-      const w_raw = parseVal('cc_w');
-      const top_cols = parseInt(document.getElementById('cc_top_cols').value) || 1;
-      const top_open = parseInt(document.getElementById('cc_top_open').value) || 1;
+    // ========================================================
+    // 7. PARTITION MODULE
+    // ========================================================
+    let pt_part_count = 0;
+    let pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
+    let pt_glass_dict = {};
 
-      if (h_raw <= 0 || w_raw <= 0) { alert("মাপ দিন!"); return; }
-
-      const outer_w = w_raw;
-      const outer_h = h_raw;
-      const sash_h = h_raw - 1.75;
-      const sash_w = (w_raw - 3.0) / top_cols;
-
-      let txt = `=== কেসমেন্ট উইন্ডো কাটিং সাইজ ===
-`;
-      txt += `> আউটার ফ্রেম ভার্টিকাল:   ${outer_h}" (2 pc)
-`;
-      txt += `> আউটার ফ্রেম হরাইজন্টাল: ${outer_w}" (2 pc)
-`;
-      if (top_open > 0) {
-        txt += `> Z-হ্যান্ডেল স্যাশ ভার্টিকাল:   ${sash_h.toFixed(2)}" (${top_open * 2} pc)
-`;
-        txt += `> Z-হ্যান্ডেল স্যাশ হরাইজন্টাল: ${sash_w.toFixed(2)}" (${top_open * 2} pc)
-`;
-      }
-      txt += `> ফ্রিকাশন স্টে (Friction Stay): ${top_open * 2} পিস
-> হ্যান্ডেল: ${top_open} পিস`;
-
-      document.getElementById('cc_out').textContent = txt;
-    }
-
-    // 5. PARTITION CALCULATION
     function calculatePartition() {
-      const h = parseVal('pt_h');
-      const w = parseVal('pt_w');
-      const cols = parseInt(document.getElementById('pt_cols').value) || 3;
+      const raw_h = safeEval(document.getElementById('pt_h').value);
+      const raw_w = safeEval(document.getElementById('pt_w').value);
+      if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
 
-      if (h <= 0 || w <= 0) { alert("মাপ দিন!"); return; }
+      const is_mm = document.getElementById('pt_unit').value.includes('Millimeter');
+      const h = is_mm ? raw_h / 25.4 : raw_h;
+      const w = is_mm ? raw_w / 25.4 : raw_w;
+      const p_type = document.getElementById('pt_type').value;
+      const cols = Math.max(1, parseInt(safeEval(document.getElementById('pt_cols').value)) || 3);
+      const rows = Math.max(1, parseInt(safeEval(document.getElementById('pt_rows').value)) || 3);
 
-      const inner_w = ((w - ((cols + 1) * 1.5)) / cols).toFixed(2);
-      let txt = `=== অ্যালুমিনিয়াম ফিক্সড পার্টিশন ===
-`;
-      txt += `> আউটার ভার্টিকাল:  ${h}" (2 pc)
-`;
-      txt += `> আউটার হরাইজন্টাল: ${w - 3}" (2 pc)
-`;
-      txt += `> ইন্টার ভার্টিকাল:   ${h - 3}" (${cols - 1} pc)
-`;
-      txt += `> ইনার হরাইজন্টাল:   ${inner_w}" (${cols * 2} pc)
-`;
-      txt += `> স্কয়ার বিডিং (Clip): প্রয়োজনমতো`;
+      const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+      pt_part_count += 1;
+      const unit_str = is_mm ? "mm" : "Inch";
 
-      document.getElementById('pt_out').textContent = txt;
+      let hw_txt = "--- HARDWARE & ACCESSORIES ---\n> Square Clip (Beading) Required\n> Rubber/Sealant as per perimeter\n";
+      let out = "";
+
+      if (p_type === "Fixed Partition") {
+        out = `[Partition #${pt_part_count} - ${p_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
+        const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
+        const inner_h = (w - ((cols + 1) * 1.5)) / cols;
+
+        out += "--- SINGLE GLAZING ---\n";
+        out += `> Vertical: ${disp(outer_v)} (2 pc)\n> Horizontal: ${disp(outer_h)} (2 pc)\n`;
+        pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
+
+        out += "--- DOUBLE GLAZING ---\n";
+        if (cols > 1) {
+          out += `> Vertical: ${disp(inter_v)} (${cols - 1} pc)\n`;
+          for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
+        }
+        const h_qty = cols * (rows - 1);
+        if (h_qty > 0) {
+          out += `> Horizontal: ${disp(inner_h)} (${h_qty} pc)\n`;
+          for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
+        }
+
+        const gap_h = (h - ((rows + 1) * 1.5)) / rows;
+        const glass_qty = cols * rows;
+        out += hw_txt;
+        out += `--- GLASS / BOARD ---\n> Size: ${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)} (${glass_qty} pc)\n`;
+        const gKey = `${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)}`;
+        pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
+
+      } else {
+        const raw_dh = safeEval(document.getElementById('pt_dh').value);
+        const raw_dw = safeEval(document.getElementById('pt_dw').value);
+        if (raw_dh === 0 || raw_dw === 0) { alert("Please enter Door Size."); return; }
+
+        const dh = is_mm ? raw_dh / 25.4 : raw_dh;
+        const dw = is_mm ? raw_dw / 25.4 : raw_dw;
+
+        out = `[Partition #${pt_part_count} - Door + Partition (${raw_h} x ${raw_w} ${unit_str})]\n`;
+        const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
+        const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
+        const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
+
+        out += "--- VERTICALS ---\n";
+        out += `> Outer Vertical: ${disp(outer_v)} (2 pc)\n> Door Side Vertical: ${disp(door_side_v)} (1 pc)\n`;
+        pt_buckets["Single Glazing"].push(outer_v, outer_v);
+        pt_buckets["Double Glazing"].push(door_side_v);
+
+        if (cols > 1) {
+          out += `> Intermediate Vertical: ${disp(inter_v)} (${cols - 1} pc)\n`;
+          for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
+        }
+
+        out += "--- HORIZONTALS ---\n";
+        out += `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n> Door Top Transom: ${disp(rem_w)} (1 pc)\n`;
+        pt_buckets["Single Glazing"].push(outer_h_top);
+        pt_buckets["Double Glazing"].push(rem_w);
+
+        const h_qty = cols * (rows - 1);
+        if (h_qty > 0) {
+          out += `> Internal Horizontal: ${disp(inner_h)} (${h_qty} pc)\n`;
+          for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
+        }
+
+        const door_v = dh - 1.75, door_tb = dw - 6.75;
+        const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
+
+        out += `--- DOOR SASH ---\n> Vertical: ${disp(door_v)} (2 pc)\n> Top/Bottom: ${disp(door_tb)} (2 pc)\n> Glass Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
+        pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
+
+        const transom_g_h = (h - dh - 1.5) - 0.25, transom_g_w = dw - 0.25;
+        const part_g_h = ((h - ((rows + 1) * 1.5)) / rows) - 0.25, part_g_w = inner_h - 0.25;
+        const part_g_qty = cols * rows;
+
+        hw_txt += "> Door Lock: 1 Set\n> Door Pivot / Floor Spring: 1 Set\n> Door Handle: 1 Set\n";
+        out += hw_txt;
+        out += `--- FIXED GLASS / BOARD ---\n> Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
+        if (part_g_qty > 0) {
+          out += `> Partition Grid Glass: ${disp(part_g_h)} x ${disp(part_g_w)} (${part_g_qty} pc)\n`;
+        }
+
+        pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
+        pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)}`] || 0) + 1;
+        if (part_g_qty > 0) {
+          pt_glass_dict[`${disp(part_g_h)} x ${disp(part_g_w)}`] = (pt_glass_dict[`${disp(part_g_h)} x ${disp(part_g_w)}`] || 0) + part_g_qty;
+        }
+      }
+
+      const prevOut = document.getElementById('pt_out').textContent;
+      document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
+      document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
     }
 
-    // 6. QUOTATION SYSTEM
+    function clearPartition() {
+      pt_part_count = 0;
+      pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
+      pt_glass_dict = {};
+      document.getElementById('pt_h').value = "";
+      document.getElementById('pt_w').value = "";
+      document.getElementById('pt_dh').value = "";
+      document.getElementById('pt_dw').value = "";
+      document.getElementById('pt_out').textContent = "";
+      document.getElementById('pt_mat_out').textContent = "";
+    }
+
+    // ========================================================
+    // 8. CEILING ESTIMATOR MODULE
+    // ========================================================
+    function calculateCeiling() {
+      const l = safeEval(document.getElementById('ce_l').value);
+      const w = safeEval(document.getElementById('ce_w').value);
+      if (l === 0 || w === 0) { alert("Please enter Length and Width."); return; }
+
+      const area = l * w;
+      const perimeter = 2 * (l + w);
+      let mat_txt = "";
+
+      if (document.getElementById('ce_type').value === "Gypsum Board") {
+        const area_sqm = area / 10.764;
+        const safe_area = area * 1.05;
+        const pcs_6x4 = Math.ceil(safe_area / 24);
+        const waste_6x4 = (pcs_6x4 * 24) - safe_area;
+        const pcs_8x4 = Math.ceil(safe_area / 32);
+        const waste_8x4 = (pcs_8x4 * 32) - safe_area;
+
+        let chosen_board = "Gypsum Board (6ft x 4ft)", final_boards = pcs_6x4;
+        if (waste_8x4 < waste_6x4) {
+          chosen_board = "Gypsum Board (8ft x 4ft)";
+          final_boards = pcs_8x4;
+        }
+
+        const main_channel = Math.ceil((area_sqm * 0.83 * 3.28) / 12);
+        const cross_section = Math.ceil((area_sqm * 3.23 * 3.28) / 12);
+        const l_patti = Math.ceil(perimeter / 12);
+        const cleats_plugs = Math.ceil(area_sqm * 0.77);
+        const screws = Math.ceil(area_sqm * 14);
+        const compound = Math.round(area_sqm * 0.35 * 10) / 10;
+        const tape = Math.round(area_sqm * 1.2 * 10) / 10;
+
+        mat_txt += `> ${chosen_board} -> ${final_boards} Pcs\n`;
+        mat_txt += `> Main Channel (12ft): ${main_channel} Pcs\n`;
+        mat_txt += `> Cross Section (12ft): ${cross_section} Pcs\n`;
+        mat_txt += `> Perimeter L-Patti (12ft): ${l_patti} Pcs\n`;
+        mat_txt += "--- Professional Accessories ---\n";
+        mat_txt += `> Soffit Cleat & Rawl Plug: ${cleats_plugs} Sets\n`;
+        mat_txt += `> Drywall Screws: ${screws} Pcs\n`;
+        mat_txt += `> Jointing Compound: ${compound} Kg\n`;
+        mat_txt += `> Fiber Tape: ${tape} Meter\n`;
+      } else {
+        const panels = Math.ceil((area / 8.33) * 1.05);
+        const tube_ft = (area / 2) + perimeter;
+        const pvc_channels = Math.ceil(tube_ft / 12);
+        const l_patti = Math.ceil(perimeter / 12);
+        const screws = Math.ceil(area * 1.5);
+
+        mat_txt += `> PVC Panels (10ft x 10in): ${panels} Pcs\n`;
+        mat_txt += `> Support Channel/Tube (12ft): ${pvc_channels} Pcs\n`;
+        mat_txt += `> Perimeter U-Patti/L-Patti: ${l_patti} Pcs\n`;
+        mat_txt += `> Screws (Half Inch): ${screws} Pcs\n`;
+      }
+
+      const res = `--- ROOM DETAILS ---\nRoom Size: ${l} ft x ${w} ft\nTotal Area: ${area.toFixed(2)} Sq.Ft\n-------------------------\n--- MATERIAL REQUIRED ---\n` + mat_txt;
+      document.getElementById('ce_out').textContent = res;
+    }
+
+    function clearCeiling() {
+      document.getElementById('ce_l').value = "";
+      document.getElementById('ce_w').value = "";
+      document.getElementById('ce_out').textContent = "";
+    }
+
+    // ========================================================
+    // 9. PRO QUOTATION & DYNAMIC COSTING ENGINE
+    // ========================================================
     let billItems = [];
 
-    function autoCalculateRate() {
-      const type = document.getElementById('q_item_type').value;
-      const color = document.getElementById('q_color').value;
+    function calculateSuggestedRate(w_type, thickness, color, glass_thick, glass_type, toughened) {
+      const cost_data = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
+      let thick_val = 1.5;
+      try { thick_val = parseFloat(thickness.replace('mm', '').trim()) || 1.5; } catch(e){}
 
-      let rate = 320;
-      if (type.includes('Domal')) {
-        rate = 420;
-        if (type.includes('3-Track')) rate += 90;
-        if (color.includes('Wooden')) rate += 80;
-        else if (color.includes('Bronze')) rate += 30;
-      } else if (type.includes('Sliding')) {
-        rate = 260;
-        if (type.includes('3-Track')) rate += 60;
-        if (color.includes('Wooden')) rate += 60;
-      } else if (type.includes('Door')) {
-        rate = 340;
-      } else if (type.includes('Partition')) {
-        rate = 230;
+      const is_domal = w_type.includes('Domal');
+      let base_wt = 0.90;
+
+      if (w_type.includes('4-Track') || w_type.includes('Center Open')) base_wt = (is_domal ? 1.80 : 1.40) * (thick_val / 1.5);
+      else if (w_type.includes('3-Track')) base_wt = (is_domal ? 1.45 : 1.10) * (thick_val / 1.5);
+      else if (w_type.includes('2-Track')) base_wt = (is_domal ? 1.05 : 0.80) * (thick_val / 1.5);
+      else if (w_type.includes('Casement')) base_wt = 1.15 * (thick_val / 1.5);
+      else if (w_type.includes('Door')) base_wt = 1.35 * (thick_val / 1.5);
+      else if (w_type.includes('Partition')) base_wt = 0.90 * (thick_val / 1.5);
+      else if (w_type.includes('Ceiling')) return w_type.includes('Gypsum') ? 110.0 : 95.0;
+
+      let alu_kg_rate = 260.0;
+      if (is_domal) {
+        if (color.includes('Wooden')) alu_kg_rate = parseFloat(cost_data['Domal Wooden Finish (Rs/Kg)']) || 365.0;
+        else if (['Powder Coated', 'Black', 'White', 'Brown', 'Grey', 'Ivory', 'Charcoal'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Domal Powder Coated (Rs/Kg)']) || 310.0;
+        else if (['Stainless Steel', 'SS', 'Gold'].some(c => color.includes(c))) alu_kg_rate = (parseFloat(cost_data['Domal Anodized (Rs/Kg)']) || 295.0) + 20.0;
+        else if (['Anodized', 'Bronze', 'Champagne'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Domal Anodized (Rs/Kg)']) || 295.0;
+        else alu_kg_rate = parseFloat(cost_data['Domal Mill/Natural (Rs/Kg)']) || 280.0;
+      } else if (w_type.includes('Door')) {
+        alu_kg_rate = parseFloat(cost_data['Door Master Material (Rs/Kg)']) || 270.0;
+        if (color.includes('Wooden')) alu_kg_rate += 75.0;
+        else if (color.includes('Powder')) alu_kg_rate += 25.0;
+      } else if (w_type.includes('Partition')) {
+        alu_kg_rate = parseFloat(cost_data['Partition Material (Rs/Kg)']) || 265.0;
+        if (color.includes('Wooden')) alu_kg_rate += 75.0;
+        else if (color.includes('Powder')) alu_kg_rate += 25.0;
+      } else if (w_type.includes('Casement')) {
+        alu_kg_rate = parseFloat(cost_data['Casement Material (Rs/Kg)']) || 275.0;
+        if (color.includes('Wooden')) alu_kg_rate += 75.0;
+        else if (color.includes('Powder')) alu_kg_rate += 25.0;
+      } else {
+        if (color.includes('Wooden')) alu_kg_rate = parseFloat(cost_data['Sliding Wooden Finish (Rs/Kg)']) || 345.0;
+        else if (['Powder Coated', 'Black', 'White', 'Brown', 'Grey', 'Ivory', 'Charcoal'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Sliding Powder Coated (Rs/Kg)']) || 290.0;
+        else if (['Stainless Steel', 'SS', 'Gold'].some(c => color.includes(c))) alu_kg_rate = (parseFloat(cost_data['Sliding Anodized (Rs/Kg)']) || 275.0) + 15.0;
+        else if (['Anodized', 'Bronze', 'Champagne'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Sliding Anodized (Rs/Kg)']) || 275.0;
+        else alu_kg_rate = parseFloat(cost_data['Sliding Mill/Natural (Rs/Kg)']) || 260.0;
       }
+
+      const alu_cost = base_wt * alu_kg_rate;
+      const clean_g_thick = String(glass_thick).replace('Glass', '').replace('mm', '').trim();
+      const glass_multipliers = { '3.5': 0.80, '4.0': 0.88, '5.0': 1.00, '6.0': 1.25, '8.0': 1.80, '10.0': 2.35, '12.0': 3.00 };
+      const g_mult = glass_multipliers[clean_g_thick] || 1.0;
+      const base_clear_sqft = parseFloat(cost_data['Clear Glass (Rs/Sq.Ft)']) || 35.0;
+
+      let glass_cost = base_clear_sqft * g_mult;
+      if (String(glass_thick).includes('DGU') || String(glass_type).includes('DGU') || String(glass_type).includes('Double')) {
+        glass_cost = 195.0;
+      } else {
+        if (String(glass_type).includes('Reflective')) {
+          const refl_base = parseFloat(cost_data['Reflective Glass (Rs/Sq.Ft)']) || 55.0;
+          glass_cost += Math.max(15.0, refl_base - base_clear_sqft);
+        } else if (String(glass_type).includes('Tinted')) {
+          glass_cost += 12.0;
+        } else if (String(glass_type).includes('Frosted') || String(glass_type).includes('Pinhead')) {
+          glass_cost += 10.0;
+        }
+      }
+
+      const is_toughened = typeof toughened === 'boolean' ? toughened : ['Toughened', 'Yes', 'True', '1'].some(w => String(toughened).includes(w));
+      const tough_extra = parseFloat(cost_data['Toughened Extra (Rs/Sq.Ft)']) || 25.0;
+      if (is_toughened) {
+        if (['8.0', '10.0', '12.0'].some(g => clean_g_thick.includes(g))) glass_cost += tough_extra * 1.4;
+        else glass_cost += tough_extra;
+      }
+
+      const hw_cost = is_domal ? 55.0 : 35.0;
+      let labour_cost = 35.0, margin = 0.15;
+      if (is_domal) {
+        labour_cost = parseFloat(cost_data['Domal Window Labour']) || 50.0;
+        margin = (parseFloat(cost_data['Domal Profit (%)']) || 20.0) / 100.0;
+      } else if (w_type.includes('Casement')) {
+        labour_cost = parseFloat(cost_data['Casement Labour']) || 60.0;
+        margin = (parseFloat(cost_data['Casement Profit (%)']) || 25.0) / 100.0;
+      } else if (w_type.includes('Door')) {
+        labour_cost = parseFloat(cost_data['Door Master Labour']) || 65.0;
+        margin = (parseFloat(cost_data['Door Profit (%)']) || 20.0) / 100.0;
+      } else if (w_type.includes('Partition')) {
+        labour_cost = parseFloat(cost_data['Partition Labour']) || 40.0;
+        margin = (parseFloat(cost_data['Door Profit (%)']) || 18.0) / 100.0;
+      } else {
+        labour_cost = parseFloat(cost_data['Sliding Window Labour']) || 35.0;
+        margin = (parseFloat(cost_data['Sliding Profit (%)']) || 15.0) / 100.0;
+      }
+
+      const sub_cost = alu_cost + glass_cost + hw_cost + labour_cost;
+      const final_rate = Math.round((sub_cost * (1.0 + margin)) / 10) * 10;
+      return Math.max(150.0, final_rate);
+    }
+
+    function updateSuggestedRate() {
+      const w_type = document.getElementById('q_type').value;
+      const color = document.getElementById('q_color').value;
+      const thick = document.getElementById('q_thick').value;
+      const g_thick = document.getElementById('q_g_thick').value;
+      const g_type = document.getElementById('q_g_type').value;
+      const tough = document.getElementById('q_tough').value.includes("Toughened");
+
+      const rate = calculateSuggestedRate(w_type, thick, color, g_thick, g_type, tough);
       document.getElementById('q_rate').value = rate;
     }
 
-    function addItemToBill() {
-      const type = document.getElementById('q_item_type').value;
-      const color = document.getElementById('q_color').value;
-      const h = parseVal('q_h');
-      const w = parseVal('q_w');
-      const qty = parseInt(document.getElementById('q_qty').value) || 1;
-      const rate = parseVal('q_rate') || 320;
-      const loc = document.getElementById('q_loc').value.trim();
-
-      if (h <= 0 || w <= 0) {
-        alert("উচ্চতা এবং প্রস্থ ফিটে দিন (যেমন 4 x 5)");
-        return;
+    function autofillCustomer() {
+      const phoneInput = document.getElementById('q_phone').value.trim();
+      if (!phoneInput) { alert("Please enter Phone or PIN (last 4 digits) first."); return; }
+      const customers = JSON.parse(localStorage.getItem('sw_customers') || '{}');
+      for (const p in customers) {
+        if (p.endsWith(phoneInput)) {
+          document.getElementById('q_name').value = customers[p].name || "";
+          document.getElementById('q_phone').value = p;
+          document.getElementById('q_addr').value = customers[p].address || "";
+          return;
+        }
       }
+      alert("No customer found with this number.");
+    }
 
-      const sqft = h * w * qty;
-      const amount = sqft * rate;
+    function addBillItem() {
+      const h = safeEval(document.getElementById('q_h').value);
+      const w = safeEval(document.getElementById('q_w').value);
+      const qty = Math.max(1, parseInt(safeEval(document.getElementById('q_qty').value)) || 1);
+      const w_type = document.getElementById('q_type').value;
+      const color = document.getElementById('q_color').value;
+      const thick = document.getElementById('q_thick').value;
+      const g_thick = document.getElementById('q_g_thick').value;
+      const g_type = document.getElementById('q_g_type').value;
+      const toughened = document.getElementById('q_tough').value.includes("Toughened");
+      const loc = document.getElementById('q_loc').value.trim();
+      let rate = safeEval(document.getElementById('q_rate').value);
+      if (rate <= 0) rate = calculateSuggestedRate(w_type, thick, color, g_thick, g_type, toughened);
+
+      if (h === 0 || w === 0) { alert("Please enter valid Height and Width."); return; }
+
+      const cost_data = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
+      const unit = cost_data['Default Unit'] || "Feet";
+      let sq_ft = 0;
+      if (unit === "Feet") sq_ft = h * w;
+      else if (unit === "Millimeters") sq_ft = (h * w) / 92903.04;
+      else sq_ft = (h * w) / 144;
+
+      const total_sq_ft = sq_ft * qty;
+      const total_price = total_sq_ft * rate;
+      const unit_str = unit === "Feet" ? "ft" : (unit === "Millimeters" ? "mm" : "in");
 
       billItems.push({
-        type, color, h, w, qty, rate, loc, sqft, amount
+        type: w_type, location: loc, color: color, thickness: thick, glass_thick: g_thick,
+        glass_type: g_type, toughened: toughened, h: h, w: w, unit: unit_str, qty: qty,
+        rate: rate, area: total_sq_ft, price: total_price
       });
 
-      renderBillItems();
-      updateBillTotal();
-
-      document.getElementById('q_h').value = '';
-      document.getElementById('q_w').value = '';
-      document.getElementById('q_loc').value = '';
+      refreshQueueText();
+      autoCalcAdvance();
+      document.getElementById('q_h').value = "";
+      document.getElementById('q_w').value = "";
+      document.getElementById('q_qty').value = "1";
+      document.getElementById('q_loc').value = "";
     }
 
-    function removeBillItem(idx) {
-      billItems.splice(idx, 1);
-      renderBillItems();
-      updateBillTotal();
+    function removeLastBillItem() {
+      if (billItems.length === 0) { alert("No items in bill to remove."); return; }
+      billItems.pop();
+      refreshQueueText();
+      autoCalcAdvance();
+      updateLiveDue();
     }
 
-    function renderBillItems() {
-      const container = document.getElementById('billItemsList');
-      if (billItems.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.8rem;">কোনো আইটেম যোগ করা হয়নি।</p>';
-        return;
-      }
+    function clearBillItems() {
+      billItems = [];
+      document.getElementById('bill_queue_text').textContent = "";
+      document.getElementById('bill_output').textContent = "";
+      document.getElementById('q_advance').value = "0";
+      document.getElementById('q_due_label').textContent = "Rs. 0.00";
+    }
 
-      let html = '';
+    function refreshQueueText() {
+      const lines = [];
+      billItems.forEach((itm, i) => {
+        const loc_lbl = itm.location ? `[${itm.location}] ` : "";
+        lines.push(`[${i + 1}] ${loc_lbl}${itm.type} | ${itm.h}x${itm.w} ${itm.unit} | Qty:${itm.qty} @ Rs.${itm.rate.toFixed(0)} | Rs:${itm.price.toFixed(2)}`);
+      });
+      document.getElementById('bill_queue_text').textContent = lines.join('\n');
+    }
+
+    function getDiscountAndGst() {
+      const cost_data = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
+      const gst = parseFloat(cost_data['GST']) || 0.0;
+      const disc = parseFloat(cost_data['Discount']) || 0.0;
+      return [disc, gst];
+    }
+
+    function autoCalcAdvance() {
+      const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+      const [discount, gst_pct] = getDiscountAndGst();
+      const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+      const net_total = grand_total - discount;
+      const final_total = net_total + (net_total * (gst_pct / 100)) + extra_charge;
+      const adv_50 = Math.round(final_total * 0.5);
+      document.getElementById('q_advance').value = adv_50;
+      updateLiveDue();
+    }
+
+    function set50PercentAdvance() {
+      autoCalcAdvance();
+    }
+
+    function updateLiveDue() {
+      const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+      const [discount, gst_pct] = getDiscountAndGst();
+      const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+      const net_total = grand_total - discount;
+      const final_total = net_total + (net_total * (gst_pct / 100)) + extra_charge;
+      const adv = safeEval(document.getElementById('q_advance').value);
+      const due = final_total - adv;
+      document.getElementById('q_due_label').textContent = `Rs. ${due.toFixed(2)}  (Total: Rs. ${final_total.toFixed(2)})`;
+    }
+
+    function generateBillText() {
+      if (billItems.length === 0) { alert("Please add items to generate bill."); return; }
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact_info = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const email_info = profile.email ? `\n           Email: ${profile.email}` : "";
+      const gst_info = profile.gst ? `\n           GST No: ${profile.gst}` : "";
+
+      const bill_stage = document.getElementById('q_stage').value;
+      const c_name = document.getElementById('q_name').value || 'Customer';
+      const c_phone = document.getElementById('q_phone').value || 'N/A';
+      const c_addr = document.getElementById('q_addr').value || 'N/A';
+      const today = new Date().toLocaleDateString('en-GB');
+
+      const [discount, gst_pct] = getDiscountAndGst();
+      const advance_paid = safeEval(document.getElementById('q_advance').value);
+      const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+
+      let bill = "=================================================\n";
+      bill += `           ${shop_name}\n`;
+      bill += `           ${addr}\n`;
+      bill += `           Mob: ${contact_info}${email_info}${gst_info}\n`;
+      bill += "=================================================\n";
+      bill += `Invoice Type: ${bill_stage}\nDate: ${today}\n\n`;
+      bill += `Bill To:\nName: ${c_name}\nPhone: ${c_phone}\nAddress: ${c_addr}\n`;
+      bill += "-------------------------------------------------\n";
+      bill += "SN. Description             Qty  Sq.Ft   Amount\n";
+      bill += "-------------------------------------------------\n";
+
+      let grand_total = 0.0;
       billItems.forEach((item, i) => {
-        html += `
-          <div class="bill-item">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong>${i+1}. ${item.loc ? '['+item.loc+'] ' : ''}${item.type}</strong>
-              <button onclick="removeBillItem(${i})" style="background:transparent; border:none; color:#ff5252; cursor:pointer;">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-            <div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px;">
-              ফিনিশ: ${item.color} | সাইজ: ${item.h}ft x ${item.w}ft | পরিমাণ: ${item.qty} পিস
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-top:4px; font-weight:bold; color:var(--accent);">
-              <span>${item.sqft.toFixed(1)} Sq.Ft @ Rs ${item.rate}</span>
-              <span>Rs ${item.amount.toFixed(2)}</span>
-            </div>
-          </div>
-        `;
+        const color = item.color || 'Jet Black';
+        const thick = item.thickness || '1.5 mm';
+        const g_thick = item.glass_thick || '5.0 mm';
+        const g_type = item.glass_type || 'Clear Float';
+        const tough_txt = item.toughened ? " [TOUGHENED: YES]" : "";
+        const loc_txt = item.location ? `[${item.location}] ` : "";
+        const desc = `${loc_txt}${item.type}\n    Specs: ${color} (${thick}) | ${g_thick} ${g_type}${tough_txt}\n    Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}`;
+        bill += `${i + 1}. ${desc}\n                            ${item.qty}    ${item.area.toFixed(1)}   ${item.price.toFixed(2)}\n`;
+        grand_total += item.price;
       });
-      container.innerHTML = html;
+
+      const net_total = grand_total - discount;
+      const gst_amount = net_total * (gst_pct / 100);
+      const final_total = net_total + gst_amount + extra_charge;
+      const due_amount = final_total - advance_paid;
+
+      bill += "-------------------------------------------------\n";
+      bill += `                               Sub Total: Rs ${grand_total.toFixed(2)}\n`;
+      if (discount > 0) bill += `                                Discount: -Rs ${discount.toFixed(2)}\n`;
+      if (gst_pct > 0) bill += `                               GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}\n`;
+      if (extra_charge > 0) bill += `                         Transport/Labor: +Rs ${extra_charge.toFixed(2)}\n`;
+
+      bill += `                             GRAND TOTAL: Rs ${final_total.toFixed(2)}\n`;
+      bill += `                        Advance Received: -Rs ${advance_paid.toFixed(2)}\n`;
+      bill += `                              DUE AMOUNT: Rs ${due_amount.toFixed(2)}\n`;
+      bill += "-------------------------------------------------\n";
+      bill += "TERMS & CONDITIONS:\n";
+      bill += "1. 50% Advance with official work order.\n";
+      bill += "2. Balance payment must be cleared on delivery / fitting.\n";
+      bill += "3. Quotation is valid for 15 days from issue date.\n";
+      bill += "4. Glass & cut sections cannot be returned once processed.\n";
+      bill += "-------------------------------------------------\n\n";
+      bill += "Customer Signature:            Authorized Signature:\n";
+      bill += "___________________            _____________________\n";
+      bill += `                               (${shop_name})\n`;
+      bill += "=================================================\n";
+      bill += "Thank you for your business!\n           -- App by Smart worker --\n";
+
+      document.getElementById('bill_output').textContent = bill;
     }
 
-    function updateBillTotal() {
-      const totalSqft = billItems.reduce((acc, itm) => acc + itm.sqft, 0);
-      const subTotal = billItems.reduce((acc, itm) => acc + itm.amount, 0);
-      const discount = parseVal('q_discount');
-      const advance = parseVal('q_advance');
+    function saveBillToDb() {
+      const bill_text = document.getElementById('bill_output').textContent;
+      if (!bill_text.trim()) { alert("Please generate a bill first!"); return; }
 
-      const grandTotal = Math.max(0, subTotal - discount);
-      const due = Math.max(0, grandTotal - advance);
+      const c_name = document.getElementById('q_name').value || 'Customer';
+      const c_phone = document.getElementById('q_phone').value.trim();
+      const c_addr = document.getElementById('q_addr').value.trim();
+      const today = new Date().toLocaleDateString('en-GB');
 
-      document.getElementById('totalSqftDisplay').textContent = `${totalSqft.toFixed(2)} Sq.Ft`;
-      document.getElementById('grandTotalDisplay').textContent = `Rs ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
-      document.getElementById('dueTotalDisplay').textContent = `Rs ${due.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
-    }
+      const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+      const [discount, gst_pct] = getDiscountAndGst();
+      const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+      const net_total = grand_total - discount;
+      const final_total = net_total + (net_total * (gst_pct / 100)) + extra_charge;
 
-    // PDF Invoice Generator using jsPDF
-    function generatePdfInvoice() {
-      if (billItems.length === 0) {
-        alert("বিলে অন্তত একটি আইটেম যোগ করুন!");
-        return;
+      if (c_phone && c_phone !== 'N/A') {
+        const customers = JSON.parse(localStorage.getItem('sw_customers') || '{}');
+        customers[c_phone] = { name: c_name, address: c_addr };
+        localStorage.setItem('sw_customers', JSON.stringify(customers));
       }
 
+      const invoices = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
+      invoices.unshift({
+        id: Date.now(),
+        date: today,
+        client: c_name,
+        phone: c_phone || 'N/A',
+        amount: final_total,
+        bill_text: bill_text
+      });
+      localStorage.setItem('sw_invoices', JSON.stringify(invoices));
+      alert("Bill Saved to Database Successfully!");
+    }
+
+    function shareToWhatsApp() {
+      const bill_text = document.getElementById('bill_output').textContent;
+      if (!bill_text.trim()) { alert("Please generate a bill first to share."); return; }
+      const encoded = encodeURIComponent(bill_text);
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    function exportBillPdf() {
+      if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      const shopName = document.getElementById('set_shop').value || "SMART WORKER ALUMINIUM";
-      const shopPhone = document.getElementById('set_phone').value || "9239413517";
-      const shopAddr = document.getElementById('set_addr').value || "Amta, Howrah";
-      const custName = document.getElementById('q_name').value || "Valued Customer";
-      const custPhone = document.getElementById('q_phone').value || "N/A";
-      const custAddr = document.getElementById('q_addr').value || "N/A";
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact_info = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
 
-      // Header
-      doc.setFillColor(20, 31, 61);
+      const c_name = document.getElementById('q_name').value || 'Customer';
+      const c_phone = document.getElementById('q_phone').value || 'N/A';
+      const c_addr = document.getElementById('q_addr').value || 'N/A';
+      const bill_stage = document.getElementById('q_stage').value;
+      const today = new Date().toLocaleDateString('en-GB');
+
+      doc.setFillColor(74, 20, 140);
       doc.rect(0, 0, 210, 36, 'F');
-
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(255, 152, 0);
-      doc.text(shopName, 14, 15);
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text(shop_name, 14, 15);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.setTextColor(240, 240, 240);
-      doc.text(`${shopAddr} | Phone: ${shopPhone}`, 14, 22);
+      doc.setTextColor(220, 220, 220);
+      doc.text(`${addr} | Contact: ${contact_info}`, 14, 22);
       doc.text("JOB CARD / ESTIMATION BILL", 14, 28);
 
-      // Customer Info
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
       doc.text("Bill To:", 14, 46);
       doc.setFont("helvetica", "normal");
-      doc.text(`Name: ${custName}`, 14, 52);
-      doc.text(`Phone: ${custPhone}`, 14, 57);
-      doc.text(`Address: ${custAddr}`, 14, 62);
+      doc.text(`Name: ${c_name}`, 14, 52);
+      doc.text(`Phone: ${c_phone}`, 14, 57);
+      doc.text(`Address: ${c_addr}`, 14, 62);
 
-      const today = new Date().toLocaleDateString('en-GB');
       doc.text(`Date: ${today}`, 150, 46);
-      doc.text(`Estimate No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 52);
+      doc.text(`Stage: ${bill_stage}`, 150, 52);
+      doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
 
-      // Table
-      const tableData = billItems.map((itm, idx) => [
-        idx + 1,
-        `${itm.loc ? '['+itm.loc+'] ' : ''}${itm.type}
-Specs: ${itm.color}
-Size: ${itm.h}' x ${itm.w}'`,
+      const tableData = billItems.map((itm, i) => [
+        i + 1,
+        `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
         itm.qty,
-        itm.sqft.toFixed(1),
+        itm.area.toFixed(1),
         `Rs ${itm.rate}`,
-        `Rs ${itm.amount.toFixed(2)}`
+        `Rs ${itm.price.toFixed(2)}`
       ]);
 
-      const subTotal = billItems.reduce((acc, itm) => acc + itm.amount, 0);
-      const discount = parseVal('q_discount');
-      const advance = parseVal('q_advance');
-      const grandTotal = Math.max(0, subTotal - discount);
-      const due = Math.max(0, grandTotal - advance);
+      const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+      const [discount, gst_pct] = getDiscountAndGst();
+      const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+      const net_total = grand_total - discount;
+      const gst_amount = net_total * (gst_pct / 100);
+      const final_total = net_total + gst_amount + extra_charge;
+      const advance_paid = safeEval(document.getElementById('q_advance').value);
+      const due_amount = final_total - advance_paid;
 
       doc.autoTable({
         startY: 68,
-        head: [['#', 'Item Description', 'Qty', 'Sq.Ft', 'Rate', 'Total']],
+        head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [20, 31, 61], textColor: [255, 152, 0] },
+        headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
         styles: { fontSize: 8.5 }
       });
 
       const finalY = doc.lastAutoTable.finalY + 8;
       doc.setFontSize(9);
-      doc.text(`Sub Total: Rs ${subTotal.toFixed(2)}`, 140, finalY);
-      if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 6);
+      doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
+      if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
+      if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
+      if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
+
       doc.setFont("helvetica", "bold");
-      doc.text(`GRAND TOTAL: Rs ${grandTotal.toFixed(2)}`, 140, finalY + 12);
+      doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
       doc.setFont("helvetica", "normal");
-      doc.text(`Advance Paid: Rs ${advance.toFixed(2)}`, 140, finalY + 18);
+      doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(200, 0, 0);
-      doc.text(`DUE AMOUNT: Rs ${due.toFixed(2)}`, 140, finalY + 25);
+      doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
 
-      // Terms
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(7.5);
+      doc.setTextColor(120, 120, 120);
       doc.setFont("helvetica", "normal");
-      doc.text("Terms & Conditions: 50% Advance with order. Cut materials cannot be returned.", 14, finalY + 36);
-      doc.text("-- Generated by Smart Worker Pro Application --", 14, finalY + 41);
+      doc.setFontSize(7.5);
+      doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 44);
+      doc.text(`Customer Signature: ___________________        Authorized Signature (${shop_name}): ___________________`, 14, finalY + 52);
 
-      doc.save(`Estimate_${custName.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
     }
 
-    // WhatsApp Share functions
-    function shareWhatsApp(outputId) {
-      const text = document.getElementById(outputId).textContent;
-      if (!text || text.includes('এখানে দেখা যাবে')) {
-        alert("প্রথমে হিসাব বের করুন!");
-        return;
-      }
-      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
+    // ========================================================
+    // 10. PDF EXPORTS FOR CUT SIZES & GLASS LIST
+    // ========================================================
+    function exportCutPdf(filename, title, outId, matId) {
+      const content = "=== CUTTING SIZES ===\n" + document.getElementById(outId).textContent + "\n\n" + document.getElementById(matId).textContent;
+      if (!content.trim()) { alert("Please calculate sizes first!"); return; }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(title, 14, 15);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      const splitText = doc.splitTextToSize(content, 180);
+      doc.text(splitText, 14, 25);
+      doc.save(`${filename}.pdf`);
     }
 
-    function shareBillWhatsApp() {
-      if (billItems.length === 0) {
-        alert("বিলে অন্তত একটি আইটেম যোগ করুন!");
-        return;
-      }
-      const shopName = document.getElementById('set_shop').value;
-      const custName = document.getElementById('q_name').value || "Customer";
-      let msg = `*${shopName} - ESTIMATION BILL*
-`;
-      msg += `Client: ${custName}
--------------------------
-`;
-      billItems.forEach((itm, idx) => {
-        msg += `${idx+1}. ${itm.type} (${itm.h}x${itm.w} ft) Qty: ${itm.qty} = Rs ${itm.amount.toFixed(0)}
-`;
+    function exportGlassPdf(filename, title, glassDict) {
+      const keys = Object.keys(glassDict);
+      if (keys.length === 0) { alert("No glass sizes calculated!"); return; }
+
+      let content = `[ CONSOLIDATED ${title.toUpperCase()} ]\n\n`;
+      keys.forEach((size, i) => {
+        content += `> ${i + 1}. Glass Size: ${size} (${glassDict[size]} Pcs)\n`;
       });
-      msg += `-------------------------
-`;
-      msg += `*Total Bill: ${document.getElementById('grandTotalDisplay').textContent}*
-`;
-      msg += `*Due Amount: ${document.getElementById('dueTotalDisplay').textContent}*
 
-`;
-      msg += `App by Smart Worker Pro`;
-
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(title, 14, 15);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(10);
+      const splitText = doc.splitTextToSize(content, 180);
+      doc.text(splitText, 14, 25);
+      doc.save(`${filename}.pdf`);
     }
 
-    function saveProfile() {
-      const shop = document.getElementById('set_shop').value;
-      const name = document.getElementById('set_name').value;
-      document.getElementById('displayShopName').textContent = shop;
-      document.getElementById('welcomeUser').textContent = `স্বাগতম, ${name}!`;
-      alert("প্রোফাইল সফলভাবে আপডেট করা হয়েছে!");
-      switchTab('tab-home');
+    function saveMeasurementData(projectType, outId, matId) {
+      const text = document.getElementById(outId).textContent + "\n" + document.getElementById(matId).textContent;
+      if (!text.trim()) return;
+      const measurements = JSON.parse(localStorage.getItem('sw_measurements') || '[]');
+      const today = new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+      measurements.unshift({
+        id: Date.now(),
+        date: today,
+        project_type: projectType,
+        details: text
+      });
+      localStorage.setItem('sw_measurements', JSON.stringify(measurements));
+      alert("Measurement data saved successfully!");
     }
 
-    // Init
-    autoCalculateRate();
+    // ========================================================
+    // 11. DASHBOARD, HISTORY & PROFILE MANAGEMENT
+    // ========================================================
+    function loadDashboard() {
+      const targetMonth = document.getElementById('dash_month').value;
+      const invoices = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
+      const expenses = JSON.parse(localStorage.getItem('sw_expenses') || '[]');
+
+      let sales_sum = 0.0, exp_sum = 0.0;
+      let details_txt = `--- DETAILS FOR ${targetMonth} ---\n\n>> CUSTOMER BILLS (INCOME):\n`;
+
+      invoices.forEach(inv => {
+        details_txt += `- ${inv.date} | ${inv.client} | Rs ${parseFloat(inv.amount).toFixed(2)}\n`;
+        sales_sum += parseFloat(inv.amount) || 0;
+      });
+
+      details_txt += `\n>> MATERIAL PURCHASES (EXPENSE):\n`;
+      expenses.forEach(exp => {
+        details_txt += `- ${exp.date} | ${exp.category} | ${exp.supplier} (Memo:${exp.memo_no}) | Rs ${parseFloat(exp.amount).toFixed(2)}\n`;
+        exp_sum += parseFloat(exp.amount) || 0;
+      });
+
+      document.getElementById('dashTotalSales').textContent = `Rs ${sales_sum.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+      document.getElementById('dashTotalPurchases').textContent = `Rs ${exp_sum.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+      document.getElementById('dashNetBalance').textContent = `Rs ${(sales_sum - exp_sum).toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+      document.getElementById('dash_details').textContent = details_txt;
+    }
+
+    function openExpenseModal() {
+      document.getElementById('exp_supplier').value = "";
+      document.getElementById('exp_memo').value = "";
+      document.getElementById('exp_amt').value = "";
+      document.getElementById('expenseModal').classList.add('active');
+    }
+
+    function closeExpenseModal() {
+      document.getElementById('expenseModal').classList.remove('active');
+    }
+
+    function saveExpense() {
+      const cat = document.getElementById('exp_cat').value;
+      const supplier = document.getElementById('exp_supplier').value.trim() || "Unknown";
+      const memo = document.getElementById('exp_memo').value.trim() || "N/A";
+      const amt = safeEval(document.getElementById('exp_amt').value);
+      if (amt === 0) { alert("Please enter a valid amount."); return; }
+
+      const today = new Date().toLocaleDateString('en-GB');
+      const expenses = JSON.parse(localStorage.getItem('sw_expenses') || '[]');
+      expenses.unshift({ date: today, category: cat, supplier: supplier, memo_no: memo, amount: amt });
+      localStorage.setItem('sw_expenses', JSON.stringify(expenses));
+
+      closeExpenseModal();
+      alert("Purchase saved successfully!");
+      loadDashboard();
+    }
+
+    function loadHistory() {
+      const h_type = document.getElementById('hist_spinner').value;
+      let out_text = "";
+      if (h_type === "Saved Measurements") {
+        const rows = JSON.parse(localStorage.getItem('sw_measurements') || '[]');
+        if (rows.length === 0) out_text = "No saved measurements found.";
+        rows.forEach(row => {
+          out_text += `Project ID #${row.id} | Date: ${row.date} | Type: ${row.project_type}\n---------------------------------------------\n${row.details}\n=============================================\n\n`;
+        });
+      } else {
+        const rows = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
+        if (rows.length === 0) out_text = "No saved bills found.";
+        rows.forEach(row => {
+          out_text += `Invoice #${row.id} | Date: ${row.date} | Client: ${row.client} | Total: Rs ${parseFloat(row.amount).toFixed(2)}\n---------------------------------------------\n${row.bill_text}\n=============================================\n\n`;
+        });
+      }
+      document.getElementById('history_out').textContent = out_text;
+    }
+
+    function backupDb() {
+      const data = {
+        profile: JSON.parse(localStorage.getItem('sw_profile') || '{}'),
+        bill_settings: JSON.parse(localStorage.getItem('sw_bill_settings') || '{}'),
+        measurements: JSON.parse(localStorage.getItem('sw_measurements') || '[]'),
+        invoices: JSON.parse(localStorage.getItem('sw_invoices') || '[]'),
+        customers: JSON.parse(localStorage.getItem('sw_customers') || '{}'),
+        expenses: JSON.parse(localStorage.getItem('sw_expenses') || '[]')
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `smartworker_backup_${Date.now()}.json`;
+      a.click();
+    }
+
+    function confirmDeleteHistory() {
+      const h_type = document.getElementById('hist_spinner').value;
+      if (confirm(`Are you sure you want to delete all ${h_type}?`)) {
+        if (h_type === "Saved Measurements") localStorage.removeItem('sw_measurements');
+        else localStorage.removeItem('sw_invoices');
+        loadHistory();
+      }
+    }
+
+    function searchCustomer() {
+      const pin = document.getElementById('lookup_pin').value.trim();
+      if (!pin || pin.length < 4) { alert("Please enter at least a 4-digit PIN."); return; }
+      const customers = JSON.parse(localStorage.getItem('sw_customers') || '{}');
+      const invoices = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
+
+      let out_text = "";
+      let found = false;
+      for (const phone in customers) {
+        if (phone.endsWith(pin)) {
+          found = true;
+          const cust = customers[phone];
+          out_text += `--- CUSTOMER DETAILS ---\nName: ${cust.name}\nPhone: ${phone}\nAddress: ${cust.address}\n\n--- PREVIOUS BILLS ---\n`;
+          const custBills = invoices.filter(inv => inv.phone === phone);
+          if (custBills.length > 0) {
+            custBills.forEach(b => {
+              out_text += `Date: ${b.date} | Total: Rs ${parseFloat(b.amount).toFixed(2)}\n${b.bill_text}\n========================================\n\n`;
+            });
+          } else {
+            out_text += "No saved bills found for this customer.\n\n";
+          }
+        }
+      }
+      if (!found) out_text = "No customer found with this PIN.";
+      document.getElementById('lookup_results').textContent = out_text;
+    }
+
+    function updateProfile() {
+      const profile = {
+        name: document.getElementById('set_name').value.trim(),
+        shop_name: document.getElementById('set_shop').value.trim(),
+        phone: document.getElementById('set_phone').value.trim(),
+        email: document.getElementById('set_email').value.trim(),
+        gst: document.getElementById('set_gst').value.trim(),
+        address: document.getElementById('set_address').value.trim()
+      };
+      if (!profile.name || !profile.shop_name || !profile.phone || !profile.address) {
+        alert("Please fill Name, Shop Name, Phone and Address.");
+        return;
+      }
+      localStorage.setItem('sw_profile', JSON.stringify(profile));
+      loadSavedProfile();
+      alert("Profile updated successfully!");
+      goHome();
+    }
+
+    function loadSavedProfile() {
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      if (profile.name) {
+        document.getElementById('homeGreeting').textContent = `Welcome, ${profile.name}!`;
+        document.getElementById('set_name').value = profile.name;
+      }
+      if (profile.shop_name) {
+        document.getElementById('homeShop').textContent = profile.shop_name.toUpperCase();
+        document.getElementById('set_shop').value = profile.shop_name;
+      }
+      if (profile.phone) document.getElementById('set_phone').value = profile.phone;
+      if (profile.email) document.getElementById('set_email').value = profile.email;
+      if (profile.gst) document.getElementById('set_gst').value = profile.gst;
+      if (profile.address) document.getElementById('set_address').value = profile.address;
+    }
+
+    function saveBillSettings() {
+      const settings = {
+        'Default Unit': document.getElementById('bs_unit').value,
+        'GST': document.getElementById('bs_gst').value,
+        'Discount': document.getElementById('bs_discount').value,
+        'Sliding Mill/Natural (Rs/Kg)': document.getElementById('bs_sl_mill').value,
+        'Sliding Anodized (Rs/Kg)': document.getElementById('bs_sl_anod').value,
+        'Sliding Powder Coated (Rs/Kg)': document.getElementById('bs_sl_powder').value,
+        'Sliding Wooden Finish (Rs/Kg)': document.getElementById('bs_sl_wooden').value,
+        'Domal Mill/Natural (Rs/Kg)': document.getElementById('bs_dm_mill').value,
+        'Domal Anodized (Rs/Kg)': document.getElementById('bs_dm_anod').value,
+        'Domal Powder Coated (Rs/Kg)': document.getElementById('bs_dm_powder').value,
+        'Domal Wooden Finish (Rs/Kg)': document.getElementById('bs_dm_wooden').value,
+        'Door Master Material (Rs/Kg)': document.getElementById('bs_alu_door').value,
+        'Partition Material (Rs/Kg)': document.getElementById('bs_alu_partition').value,
+        'Casement Material (Rs/Kg)': document.getElementById('bs_alu_casement').value,
+        'Clear Glass (Rs/Sq.Ft)': document.getElementById('bs_glass_clear').value,
+        'Reflective Glass (Rs/Sq.Ft)': document.getElementById('bs_glass_refl').value,
+        'Toughened Extra (Rs/Sq.Ft)': document.getElementById('bs_glass_tough').value,
+        'Sliding Window Labour': document.getElementById('bs_labour_sliding').value,
+        'Domal Window Labour': document.getElementById('bs_labour_domal').value,
+        'Casement Labour': document.getElementById('bs_labour_casement').value,
+        'Door Master Labour': document.getElementById('bs_labour_door').value,
+        'Partition Labour': document.getElementById('bs_labour_partition').value,
+        'Sliding Profit (%)': document.getElementById('bs_profit_sliding').value,
+        'Domal Profit (%)': document.getElementById('bs_profit_domal').value,
+        'Casement Profit (%)': document.getElementById('bs_profit_casement').value,
+        'Door Profit (%)': document.getElementById('bs_profit_door').value
+      };
+      localStorage.setItem('sw_bill_settings', JSON.stringify(settings));
+      alert("All Settings Saved Successfully!");
+    }
+
+    function loadBillSettings() {
+      const s = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
+      if (s['Default Unit']) document.getElementById('bs_unit').value = s['Default Unit'];
+      if (s['GST']) document.getElementById('bs_gst').value = s['GST'];
+      if (s['Discount']) document.getElementById('bs_discount').value = s['Discount'];
+      if (s['Sliding Mill/Natural (Rs/Kg)']) document.getElementById('bs_sl_mill').value = s['Sliding Mill/Natural (Rs/Kg)'];
+      if (s['Sliding Anodized (Rs/Kg)']) document.getElementById('bs_sl_anod').value = s['Sliding Anodized (Rs/Kg)'];
+      if (s['Sliding Powder Coated (Rs/Kg)']) document.getElementById('bs_sl_powder').value = s['Sliding Powder Coated (Rs/Kg)'];
+      if (s['Sliding Wooden Finish (Rs/Kg)']) document.getElementById('bs_sl_wooden').value = s['Sliding Wooden Finish (Rs/Kg)'];
+      if (s['Domal Mill/Natural (Rs/Kg)']) document.getElementById('bs_dm_mill').value = s['Domal Mill/Natural (Rs/Kg)'];
+      if (s['Domal Anodized (Rs/Kg)']) document.getElementById('bs_dm_anod').value = s['Domal Anodized (Rs/Kg)'];
+      if (s['Domal Powder Coated (Rs/Kg)']) document.getElementById('bs_dm_powder').value = s['Domal Powder Coated (Rs/Kg)'];
+      if (s['Domal Wooden Finish (Rs/Kg)']) document.getElementById('bs_dm_wooden').value = s['Domal Wooden Finish (Rs/Kg)'];
+      if (s['Door Master Material (Rs/Kg)']) document.getElementById('bs_alu_door').value = s['Door Master Material (Rs/Kg)'];
+      if (s['Partition Material (Rs/Kg)']) document.getElementById('bs_alu_partition').value = s['Partition Material (Rs/Kg)'];
+      if (s['Casement Material (Rs/Kg)']) document.getElementById('bs_alu_casement').value = s['Casement Material (Rs/Kg)'];
+      if (s['Clear Glass (Rs/Sq.Ft)']) document.getElementById('bs_glass_clear').value = s['Clear Glass (Rs/Sq.Ft)'];
+      if (s['Reflective Glass (Rs/Sq.Ft)']) document.getElementById('bs_glass_refl').value = s['Reflective Glass (Rs/Sq.Ft)'];
+      if (s['Toughened Extra (Rs/Sq.Ft)']) document.getElementById('bs_glass_tough').value = s['Toughened Extra (Rs/Sq.Ft)'];
+      if (s['Sliding Window Labour']) document.getElementById('bs_labour_sliding').value = s['Sliding Window Labour'];
+      if (s['Domal Window Labour']) document.getElementById('bs_labour_domal').value = s['Domal Window Labour'];
+      if (s['Casement Labour']) document.getElementById('bs_labour_casement').value = s['Casement Labour'];
+      if (s['Door Master Labour']) document.getElementById('bs_labour_door').value = s['Door Master Labour'];
+      if (s['Partition Labour']) document.getElementById('bs_labour_partition').value = s['Partition Labour'];
+      if (s['Sliding Profit (%)']) document.getElementById('bs_profit_sliding').value = s['Sliding Profit (%)'];
+      if (s['Domal Profit (%)']) document.getElementById('bs_profit_domal').value = s['Domal Profit (%)'];
+      if (s['Casement Profit (%)']) document.getElementById('bs_profit_casement').value = s['Casement Profit (%)'];
+      if (s['Door Profit (%)']) document.getElementById('bs_profit_door').value = s['Door Profit (%)'];
+    }
+
+    window.onload = function() {
+      const today = new Date();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      document.getElementById('dash_month').value = `${mm}/${yyyy}`;
+
+      loadSavedProfile();
+      loadBillSettings();
+      updateSuggestedRate();
+    };
+
+function updateProfile() {
+      const profile = {
+        name: document.getElementById('set_name').value.trim(),
+        shop_name: document.getElementById('set_shop').value.trim(),
+        phone: document.getElementById('set_phone').value.trim(),
+        email: document.getElementById('set_email').value.trim(),
+        gst: document.getElementById('set_gst').value.trim(),
+        address: document.getElementById('set_address').value.trim()
+      };
+      if (!profile.name || !profile.shop_name || !profile.phone || !profile.address) {
+        alert("Please fill Name, Shop Name, Phone and Address.");
+        return;
+      }
+      localStorage.setItem('sw_profile', JSON.stringify(profile));
+      loadSavedProfile();
+      alert("Profile updated successfully!");
+      goHome();
+    }
+
+    function loadSavedProfile() {
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      if (profile.name) {
+        document.getElementById('homeGreeting').textContent = `Welcome, ${profile.name}!`;
+        document.getElementById('set_name').value = profile.name;
+      }
+      if (profile.shop_name) {
+        document.getElementById('homeShop').textContent = profile.shop_name.toUpperCase();
+        document.getElementById('set_shop').value = profile.shop_name;
+      }
+      if (profile.phone) document.getElementById('set_phone').value = profile.phone;
+      if (profile.email) document.getElementById('set_email').value = profile.email;
+      if (profile.gst) document.getElementById('set_gst').value = profile.gst;
+      if (profile.address) document.getElementById('set_address').value = profile.address;
+    }
+
+    window.onload = function() {
+      loadSavedProfile();
+    };
   </script>
 </body>
-  </html>
+          </html>
