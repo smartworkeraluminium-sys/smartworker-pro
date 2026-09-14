@@ -974,18 +974,84 @@
       <div class="output-area" id="lookup_results" style="max-height:400px;"></div>
     </div>
 
-    <!-- 15. ACTIVATION SCREEN -->
+        <!-- 15. ACTIVATION SCREEN (EXACT KIVY REPLICA WITH ANNUAL/MONTHLY PLANS) -->
     <div id="screen-activation" class="screen">
-      <div class="form-box">
-        <div style="background:#2e7d32; color:#fff; padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:12px;">
-          Status: PRO MEMBER (Active)
+      <div class="form-box" style="background:#141f3d; color:#fff; border: 1px solid #334778;">
+        
+        <!-- Status Banner -->
+        <div id="actStatusBanner" style="background:#37474f; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:1rem; margin-bottom:14px;">
+          Status: FREE PLAN (Limited Features)
         </div>
-        <div style="font-size:0.85rem; font-weight:bold; color:#1976d2; margin-bottom:8px;">PRO PLAN ACTIVATED:</div>
-        <p style="font-size:0.8rem; color:#555; line-height:1.5;">আপনার এই ওয়েব ভার্সনটিতে সমস্ত প্রো ফিচার (আনলিমিটেড কাটিং মাপ, পিডিএফ রিপোর্ট, হোয়াটসঅ্যাপ শেয়ার এবং মেটেরিয়াল অপ্টিমাইজার) স্বয়ংক্রিয়ভাবে সক্রিয় রয়েছে।</p>
+
+        <div style="font-size:0.85rem; font-weight:bold; color:#ffd54f; margin-bottom:10px; text-transform:uppercase;">
+          SELECT YOUR PRO MEMBERSHIP PLAN:
+        </div>
+
+        <!-- Card 1: Annual Plan -->
+        <div style="background:#1b294e; border:1.5px solid #ffb300; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <div style="color:#ffd54f; font-weight:bold; font-size:0.9rem;">⭐ ANNUAL PLAN (MOST POPULAR)</div>
+            <div style="color:#69f0ae; font-weight:bold; font-size:1.1rem;">Rs. 799 / Year</div>
+          </div>
+          <div style="font-size:0.75rem; color:#cfd8dc; margin-bottom:10px;">
+            Only Rs. 66/month! Special 40% OFF for Fabricators
+          </div>
+          <button class="action-btn" style="background:#ffb300; color:#000; font-weight:800; width:100%; padding:10px;" onclick="subscribeViaWhatsApp('Annual')">
+            CHOOSE ANNUAL (Rs. 799/Yr) 👉
+          </button>
+        </div>
+
+        <!-- Card 2: Monthly Plan -->
+        <div style="background:#1b294e; border:1px solid #42a5f5; border-radius:12px; padding:12px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <div style="color:#64b5f6; font-weight:bold; font-size:0.9rem;">🔹 MONTHLY PLAN</div>
+            <div style="color:#fff; font-weight:bold; font-size:1.05rem;">Rs. 99 / Month</div>
+          </div>
+          <button class="action-btn" style="background:#1976d2; color:#fff; font-weight:bold; width:100%; padding:10px; margin-top:6px;" onclick="subscribeViaWhatsApp('Monthly')">
+            CHOOSE MONTHLY (Rs. 99/Mo)
+          </button>
+        </div>
+
+        <!-- Pro Benefits -->
+        <div style="background:#101932; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.78rem; line-height:1.6;">
+          <div style="color:#ffd54f; font-weight:bold; font-size:0.85rem; margin-bottom:6px;">PRO VERSION BENEFITS:</div>
+          <div style="color:#e0e0e0;">✔ Professional PDF Bills & Quotations with Shop Name & Logo</div>
+          <div style="color:#e0e0e0;">✔ Unlimited Domal, Sliding, Door & Partition Cutting Lists</div>
+          <div style="color:#e0e0e0;">✔ Glass & Material Cutting Schedules (Saves 10-15% Wastage)</div>
+          <div style="color:#e0e0e0;">✔ 1-Click WhatsApp Quotation Share with Customer</div>
+          <div style="color:#e0e0e0;">✔ 100% Ad-Free & Superfast Experience</div>
+        </div>
+
+        <!-- Device ID Box -->
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <label style="font-weight:bold; color:#fff; font-size:0.85rem; width:28%;">Device ID:</label>
+          <input type="text" id="actDeviceId" readonly style="flex:1; background:#fff; color:#000; font-weight:bold; font-size:1.1rem; text-align:center; padding:8px;" value="LOADING...">
+          <button class="action-btn" id="actCopyBtn" style="background:#1976d2; flex:0.35; padding:8px;" onclick="copyDeviceId()">COPY</button>
+        </div>
+
+        <!-- Payment & Trust Info -->
+        <div style="background:#101932; border-radius:10px; padding:10px; text-align:center; margin-bottom:14px; font-size:0.75rem;">
+          <div style="color:#69f0ae; font-weight:bold; font-size:0.85rem;">💳 PhonePe / Google Pay / Paytm: 9239413517</div>
+          <div style="color:#b0bec5; margin-top:2px;">⚡ Send payment screenshot to get Key in 5 minutes</div>
+          <div style="color:#90a4ae; margin-top:2px;">📞 24x7 Fabricator Help & Training Support</div>
+        </div>
+
+        <!-- WhatsApp Activation Button -->
+        <button class="action-btn btn-wa" style="width:100%; padding:12px; font-size:0.95rem; margin-bottom:16px;" onclick="subscribeViaWhatsApp('General')">
+          <i class="fa-brands fa-whatsapp"></i> WHATSAPP ACTIVATION (9239413517)
+        </button>
+
+        <!-- Activation Key Input -->
+        <div style="border-top:1px dashed #334778; padding-top:12px;">
+          <div style="color:#cfd8dc; font-size:0.82rem; font-weight:bold; margin-bottom:6px;">ENTER ACTIVATION KEY BELOW:</div>
+          <input type="text" id="activationInput" placeholder="Enter Pro Activation Key" style="background:#fff; color:#000; font-size:1.1rem; font-weight:bold; text-align:center; text-transform:uppercase; padding:10px; margin-bottom:8px;">
+          <button class="action-btn" style="background:#0288d1; width:100%; padding:12px; font-size:0.95rem;" onclick="activateAppKey()">
+            ACTIVATE PRO KEY
+          </button>
+        </div>
+
       </div>
     </div>
-
-  </div>
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
@@ -2321,7 +2387,14 @@
       window.open(`https://wa.me/?text=${encoded}`, '_blank');
     }
 
+    
     function exportBillPdf() {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate PDF bills.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
       if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -2417,44 +2490,609 @@
     // ========================================================
     // 10. PDF EXPORTS FOR CUT SIZES & GLASS LIST
     // ========================================================
-    function exportCutPdf(filename, title, outId, matId) {
-      const content = "=== CUTTING SIZES ===\n" + document.getElementById(outId).textContent + "\n\n" + document.getElementById(matId).textContent;
-      if (!content.trim()) { alert("Please calculate sizes first!"); return; }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(title, 14, 15);
-      doc.setFont("courier", "normal");
-      doc.setFontSize(8);
-      const splitText = doc.splitTextToSize(content, 180);
-      doc.text(splitText, 14, 25);
-      doc.save(`${filename}.pdf`);
+    
+    // ========================================================
+    // PURE JS SHA256 & ACTIVATION LICENSING CORE (100% PYTHON EQUIVALENT)
+    // ========================================================
+    function sha256(ascii) {
+        function rightRotate(value, amount) { return (value>>>amount) | (value<<(32 - amount)); }
+        var mathPow = Math.pow, maxWord = mathPow(2, 32), lengthProperty = 'length', i, j, result = '', words = [];
+        var asciiBitLength = ascii[lengthProperty]*8, hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [];
+        var primeCounter = k[lengthProperty], isComposite = {};
+        for (var candidate = 2; primeCounter < 64; candidate++) {
+            if (!isComposite[candidate]) {
+                for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+                hash[primeCounter] = (mathPow(candidate, .5)*maxWord)|0;
+                k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
+            }
+        }
+        ascii += '\x80';
+        while (ascii[lengthProperty]%64 - 56) ascii += '\x00';
+        for (i = 0; i < ascii[lengthProperty]; i++) {
+            j = ascii.charCodeAt(i);
+            if (j>>8) return;
+            words[i>>2] |= j << ((3 - i)%4)*8;
+        }
+        words[words[lengthProperty]] = ((asciiBitLength/maxWord)|0);
+        words[words[lengthProperty]] = (asciiBitLength);
+        for (j = 0; j < words[lengthProperty];) {
+            var w = words.slice(j, j += 16), oldHash = hash;
+            hash = hash.slice(0, 8);
+            for (i = 0; i < 64; i++) {
+                var i2 = i + j;
+                var w15 = w[i - 15], w2 = w[i - 2];
+                var a = hash[0], e = hash[4];
+                var temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e&hash[5])^((~e)&hash[6])) + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15>>>3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2>>>10)))|0);
+                var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+                hash = [(temp1 + temp2)|0].concat(hash);
+                hash[4] = (hash[4] + temp1)|0;
+            }
+            for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i])|0;
+        }
+        for (i = 0; i < 8; i++) {
+            for (j = 3; j + 1; j--) {
+                var b = (hash[i]>>(j*8))&255;
+                result += ((b < 16) ? 0 : '') + b.toString(16);
+            }
+        }
+        return result;
     }
 
-    function exportGlassPdf(filename, title, glassDict) {
-      const keys = Object.keys(glassDict);
-      if (keys.length === 0) { alert("No glass sizes calculated!"); return; }
+    const ADMIN_WHATSAPP_NUMBER = "919239413517";
+    const SALTS = {
+        "1M": "SAHEB_1M_PRO",
+        "3M": "SAHEB_3M_PRO",
+        "1Y": "SAHEB_1Y_PRO"
+    };
+    const SPECIAL_PROMO_CODE = "SMARTWORKER_ADMIN_100";
 
-      let content = `[ CONSOLIDATED ${title.toUpperCase()} ]\n\n`;
-      keys.forEach((size, i) => {
-        content += `> ${i + 1}. Glass Size: ${size} (${glassDict[size]} Pcs)\n`;
+    function getDeviceId() {
+        let devId = localStorage.getItem('sw_device_id');
+        if (!devId) {
+            const raw = navigator.userAgent + Date.now() + Math.random().toString();
+            devId = sha256(raw).substring(0, 8).toUpperCase();
+            localStorage.setItem('sw_device_id', devId);
+        }
+        return devId;
+    }
+
+    function checkActivationType(deviceId, inputKey) {
+        inputKey = inputKey.trim().toUpperCase();
+        if (inputKey === SPECIAL_PROMO_CODE) return "LIFETIME";
+        for (const duration in SALTS) {
+            const expectedKey = sha256(deviceId + SALTS[duration]).substring(0, 8).toUpperCase();
+            if (inputKey === expectedKey) return duration;
+        }
+        return null;
+    }
+
+    function isAppActivated() {
+        try {
+            const lic = JSON.parse(localStorage.getItem('sw_license') || 'null');
+            if (lic && lic.key) {
+                if (lic.key === SPECIAL_PROMO_CODE) return true;
+                const today = new Date().toISOString().split('T')[0];
+                if (today <= lic.expiry_date) {
+                    return true;
+                } else {
+                    localStorage.removeItem('sw_license');
+                }
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    function updateActivationScreenUI() {
+        const devId = getDeviceId();
+        const dIdElem = document.getElementById('actDeviceId');
+        if (dIdElem) dIdElem.value = devId;
+
+        const banner = document.getElementById('actStatusBanner');
+        if (banner) {
+            if (isAppActivated()) {
+                banner.style.background = "#2e7d32";
+                const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
+                const expStr = lic.key === SPECIAL_PROMO_CODE ? "Lifetime" : lic.expiry_date;
+                banner.textContent = `Status: PRO MEMBER (Active till ${expStr})`;
+            } else {
+                banner.style.background = "#37474f";
+                banner.textContent = "Status: FREE PLAN (Limited Features)";
+            }
+        }
+    }
+
+    function copyDeviceId() {
+        const dId = getDeviceId();
+        navigator.clipboard.writeText(dId).then(() => {
+            const btn = document.getElementById('actCopyBtn');
+            btn.textContent = "COPIED!";
+            btn.style.background = "#2e7d32";
+            setTimeout(() => {
+                btn.textContent = "COPY";
+                btn.style.background = "#1976d2";
+            }, 2000);
+        }).catch(() => {
+            alert(`Your Device ID: ${dId}`);
+        });
+    }
+
+    function activateAppKey() {
+        const inputKey = document.getElementById('activationInput').value.trim();
+        const deviceId = getDeviceId();
+        const durationType = checkActivationType(deviceId, inputKey);
+
+        if (durationType) {
+            let daysToAdd = 30;
+            if (durationType === "1M") daysToAdd = 30;
+            else if (durationType === "3M") daysToAdd = 90;
+            else if (durationType === "1Y") daysToAdd = 365;
+            else if (durationType === "LIFETIME") daysToAdd = 36500;
+
+            const expiry = new Date();
+            expiry.setDate(expiry.getDate() + daysToAdd);
+            const expiryStr = expiry.toISOString().split('T')[0];
+
+            localStorage.setItem('sw_license', JSON.stringify({
+                key: inputKey.toUpperCase(),
+                expiry_date: expiryStr
+            }));
+
+            alert(`PRO Activated Successfully! Valid till: ${durationType === 'LIFETIME' ? 'Lifetime' : expiryStr}`);
+            updateActivationScreenUI();
+            goHome();
+        } else {
+            alert("Invalid Activation Key! Please contact Smart Worker Aluminium.");
+        }
+    }
+
+    function subscribeViaWhatsApp(plan) {
+        const deviceId = getDeviceId();
+        let planStr = "PRO Membership";
+        if (plan === "Annual") planStr = "Annual Plan (Rs. 799/Year)";
+        else if (plan === "Monthly") planStr = "Monthly Plan (Rs. 99/Month)";
+
+        const msg = `Hello Saheb Da, I want to activate Smart Worker PRO (${planStr}). My Device ID: ${deviceId}`;
+        const encoded = encodeURIComponent(msg);
+        window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
+    }
+
+
+    
+    // ========================================================
+    // PROFESSIONAL REPORTLAB-STYLE TABULAR PDF GENERATOR
+    // ========================================================
+    function exportCutPdf(filename, title, outId, matId) {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate PDF bills.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      const outText = document.getElementById(outId).textContent.trim();
+      const matText = document.getElementById(matId).textContent.trim();
+      const content = outText + "\n\n" + matText;
+
+      if (!outText || outText.includes("এখানে")) {
+        alert("প্রথমে কাটিং হিসাব বের করুন!");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+      // 1. Header Banner
+      doc.setFillColor(25, 42, 74);
+      doc.rect(0, 0, 210, 32, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(255, 179, 0); // Gold
+      doc.text(shop_name, 105, 12, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(220, 230, 242);
+      doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`JOB CARD / MEASUREMENT CUTTING SHEET (${title.toUpperCase()})`, 105, 26, { align: "center" });
+
+      // Sub-bar with Date & Ref
+      doc.setFillColor(235, 240, 248);
+      doc.rect(14, 35, 182, 7, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`DATE: ${today}`, 18, 40);
+      doc.text(`SYSTEM: SMART WORKER PRO FABRICATION`, 192, 40, { align: "right" });
+
+      // 2. Parse Lines into Tabular Data
+      const lines = content.split('\n');
+      const tableRows = [];
+
+      lines.forEach(line => {
+        line = line.trim();
+        if (!line || line.startsWith('=')) return;
+
+        if (line.startsWith('[') || line.startsWith('---')) {
+          const cat = line.replace(/\[|\]|---/g, '').trim();
+          tableRows.push([
+            { content: cat, colSpan: 3, styles: { fillColor: [38, 64, 115], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9, halign: 'left' } }
+          ]);
+        } else {
+          const clean = line.replace(/^>/, '').trim();
+          if (clean.includes(':')) {
+            const parts = clean.split(':');
+            const item = parts[0].trim();
+            const val = parts.slice(1).join(':').trim();
+            tableRows.push(['', item, val]);
+          } else {
+            tableRows.push(['', clean, '']);
+          }
+        }
       });
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(title, 14, 15);
-      doc.setFont("courier", "normal");
-      doc.setFontSize(10);
-      const splitText = doc.splitTextToSize(content, 180);
-      doc.text(splitText, 14, 25);
+      doc.autoTable({
+        startY: 45,
+        head: [['Section / Category', 'Item Details & Profile', 'Measurement & Quantity']],
+        body: tableRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [220, 225, 235],
+          textColor: [15, 23, 42],
+          fontStyle: 'bold',
+          fontSize: 8.5,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 2,
+          lineColor: [180, 195, 215],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 45, fontStyle: 'bold' },
+          1: { cellWidth: 72 },
+          2: { cellWidth: 65, fontStyle: 'bold', halign: 'left' }
+        }
+      });
+
+      // 3. Signatures Box
+      const finalY = Math.min(doc.lastAutoTable.finalY + 12, 270);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      doc.text("Fitter / Fabricator Signature: _______________________", 16, finalY);
+      doc.text(`Authorized Signatory (${shop_name}): _______________________`, 194, finalY, { align: "right" });
+
+      doc.setFontSize(7);
+      doc.text("-- Generated automatically by Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
+
       doc.save(`${filename}.pdf`);
     }
 
-    function saveMeasurementData(projectType, outId, matId) {
+    // ========================================================
+    // PROFESSIONAL CONSOLIDATED GLASS LIST PDF
+    // ========================================================
+    function exportGlassPdf(filename, title, glassDict) {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate PDF bills.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      const keys = Object.keys(glassDict);
+      if (keys.length === 0) {
+        alert("কোনো গ্লাসের মাপ পাওয়া যায়নি!");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+      // Banner
+      doc.setFillColor(2, 119, 189);
+      doc.rect(0, 0, 210, 32, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text(shop_name, 105, 12, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(225, 245, 254);
+      doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(255, 235, 59);
+      doc.text(`CONSOLIDATED GLASS CUTTING SCHEDULE (${title.toUpperCase()})`, 105, 26, { align: "center" });
+
+      // Sub-bar
+      doc.setFillColor(235, 245, 251);
+      doc.rect(14, 35, 182, 7, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`ISSUE DATE: ${today}`, 18, 40);
+      doc.text(`STATUS: READY FOR GLASS FACTORY / CUTTING`, 192, 40, { align: "right" });
+
+      // Rows
+      let totalPcs = 0;
+      const tableRows = keys.map((size, idx) => {
+        const qty = glassDict[size];
+        totalPcs += qty;
+        return [
+          idx + 1,
+          "Standard Float / Tinted Glass",
+          size,
+          `${qty} Pcs`
+        ];
+      });
+
+      // Total Row
+      tableRows.push([
+        { content: "TOTAL GLASS REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: `${totalPcs} Pcs`, styles: { fontStyle: 'bold', fillColor: [255, 236, 179] } }
+      ]);
+
+      doc.autoTable({
+        startY: 45,
+        head: [['#', 'Glass Description / Specification', 'Exact Cutting Size (Height x Width)', 'Total Qty']],
+        body: tableRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [2, 119, 189],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 8.5,
+          cellPadding: 3,
+          lineColor: [180, 210, 230],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 15, halign: 'center' },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 65, fontStyle: 'bold', halign: 'center' },
+          3: { cellWidth: 32, fontStyle: 'bold', halign: 'center' }
+        }
+      });
+
+      const finalY = Math.min(doc.lastAutoTable.finalY + 15, 265);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      doc.text("Glass Supplier / Factory Signature: _______________________", 16, finalY);
+      doc.text(`Authorized Signatory (${shop_name}): _______________________`, 194, finalY, { align: "right" });
+
+      doc.setFontSize(7);
+      doc.text("-- Generated automatically by Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
+
+      doc.save(`${filename}.pdf`);
+    }
+
+    // ========================================================
+    // PROFESSIONAL GST INVOICE & QUOTATION BILL PDF
+    // ========================================================
+    function exportBillPdf() {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate PDF bills.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      if (billItems.length === 0) {
+        alert("Please add items to generate a bill first.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact_info = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const gst_no = profile.gst ? ` | GSTIN: ${profile.gst}` : "";
+      const email_id = profile.email ? ` | Email: ${profile.email}` : "";
+
+      const c_name = document.getElementById('q_name').value || 'Valued Customer';
+      const c_phone = document.getElementById('q_phone').value || 'N/A';
+      const c_addr = document.getElementById('q_addr').value || 'N/A';
+      const bill_stage = document.getElementById('q_stage').value;
+      const today = new Date().toLocaleDateString('en-GB');
+      const inv_no = `SW-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // 1. Royal Purple Header Banner
+      doc.setFillColor(74, 20, 140);
+      doc.rect(0, 0, 210, 36, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(17);
+      doc.setTextColor(255, 215, 0); // Gold
+      doc.text(shop_name, 105, 14, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(240, 240, 240);
+      doc.text(`${addr} | Contact: ${contact_info}${email_id}${gst_no}`, 105, 21, { align: "center" });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`TAX INVOICE / ESTIMATION BILL (${bill_stage.toUpperCase()})`, 105, 29, { align: "center" });
+
+      // 2. Customer & Invoice Details Cards
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(203, 213, 225);
+      doc.roundedRect(14, 40, 105, 24, 3, 3, 'FD');
+      doc.roundedRect(123, 40, 73, 24, 3, 3, 'FD');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(74, 20, 140);
+      doc.text("BILLED TO / CUSTOMER DETAILS:", 18, 46);
+      doc.text("INVOICE SUMMARY:", 127, 46);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`Name: ${c_name}`, 18, 52);
+      doc.text(`Contact: ${c_phone}`, 18, 57);
+      doc.text(`Address: ${c_addr}`, 18, 62);
+
+      doc.text(`Invoice No: ${inv_no}`, 127, 52);
+      doc.text(`Date of Issue: ${today}`, 127, 57);
+      doc.text(`Stage: ${bill_stage}`, 127, 62);
+
+      // 3. Items Table
+      const tableData = billItems.map((itm, i) => [
+        i + 1,
+        `${itm.location ? '[' + itm.location + '] ' : ''}${itm.type}\n• Finish: ${itm.color} (${itm.thickness})\n• Glass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\n• Dimensions: ${itm.h}' x ${itm.w}' ${itm.unit}`,
+        itm.qty,
+        `${itm.area.toFixed(1)} Sq.Ft`,
+        `Rs. ${itm.rate.toFixed(0)}`,
+        `Rs. ${itm.price.toFixed(2)}`
+      ]);
+
+      const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+      const [discount, gst_pct] = getDiscountAndGst();
+      const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+      const net_total = grand_total - discount;
+      const gst_amount = net_total * (gst_pct / 100);
+      const final_total = net_total + gst_amount + extra_charge;
+      const advance_paid = safeEval(document.getElementById('q_advance').value);
+      const due_amount = final_total - advance_paid;
+
+      doc.autoTable({
+        startY: 68,
+        head: [['SN', 'Item Description & Technical Specs', 'Qty', 'Sq.Ft', 'Rate / Sq.Ft', 'Total Amount']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [225, 190, 231],
+          textColor: [49, 13, 90],
+          fontStyle: 'bold',
+          fontSize: 8.5,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 2.5,
+          lineColor: [216, 180, 254],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 15, halign: 'center' },
+          3: { cellWidth: 22, halign: 'center' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 30, halign: 'right', fontStyle: 'bold' }
+        }
+      });
+
+      // 4. Financial Calculations Box
+      const finalY = doc.lastAutoTable.finalY + 6;
+      doc.setFillColor(250, 245, 255);
+      doc.setDrawColor(225, 190, 231);
+      doc.roundedRect(115, finalY, 81, 38, 2, 2, 'FD');
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(50, 50, 50);
+
+      let calcY = finalY + 5;
+      doc.text("Items Sub Total:", 118, calcY);
+      doc.text(`Rs. ${grand_total.toFixed(2)}`, 192, calcY, { align: "right" });
+
+      if (discount > 0) {
+        calcY += 5;
+        doc.text("Special Discount:", 118, calcY);
+        doc.text(`- Rs. ${discount.toFixed(2)}`, 192, calcY, { align: "right" });
+      }
+      if (gst_pct > 0) {
+        calcY += 5;
+        doc.text(`GST (${gst_pct}%):`, 118, calcY);
+        doc.text(`+ Rs. ${gst_amount.toFixed(2)}`, 192, calcY, { align: "right" });
+      }
+      if (extra_charge > 0) {
+        calcY += 5;
+        doc.text("Transport / Labor:", 118, calcY);
+        doc.text(`+ Rs. ${extra_charge.toFixed(2)}`, 192, calcY, { align: "right" });
+      }
+
+      calcY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(74, 20, 140);
+      doc.text("NET GRAND TOTAL:", 118, calcY);
+      doc.text(`Rs. ${final_total.toFixed(2)}`, 192, calcY, { align: "right" });
+
+      calcY += 5;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(40, 40, 40);
+      doc.text("Advance Received:", 118, calcY);
+      doc.text(`- Rs. ${advance_paid.toFixed(2)}`, 192, calcY, { align: "right" });
+
+      calcY += 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(198, 40, 40); // Red
+      doc.text("BALANCE DUE:", 118, calcY);
+      doc.text(`Rs. ${due_amount.toFixed(2)}`, 192, calcY, { align: "right" });
+
+      // 5. Terms & Conditions Box
+      const termsY = finalY + 42;
+      doc.setFillColor(245, 245, 245);
+      doc.setDrawColor(220, 220, 220);
+      doc.roundedRect(14, termsY, 182, 18, 2, 2, 'FD');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(70, 70, 70);
+      doc.text("TERMS & CONDITIONS:", 17, termsY + 4);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text("1. 50% Advance payment required along with formal order confirmation.", 17, termsY + 8);
+      doc.text("2. Remaining balance must be cleared upon delivery / site fitting.", 17, termsY + 12);
+      doc.text("3. Customized cut aluminum sections and glass cannot be returned or cancelled once processed.", 17, termsY + 16);
+
+      // 6. Signature Block
+      const sigY = termsY + 26;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      doc.text("Customer Signature: _______________________", 16, sigY);
+      doc.text(`Authorized Signatory (${shop_name}): _______________________`, 194, sigY, { align: "right" });
+
+      doc.setFontSize(7);
+      doc.text("-- Generated professionally by Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
+
+      doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
+    }
+
+function saveMeasurementData(projectType, outId, matId) {
       const text = document.getElementById(outId).textContent + "\n" + document.getElementById(matId).textContent;
       if (!text.trim()) return;
       const measurements = JSON.parse(localStorage.getItem('sw_measurements') || '[]');
@@ -2611,6 +3249,7 @@
       }
       localStorage.setItem('sw_profile', JSON.stringify(profile));
       loadSavedProfile();
+      updateActivationScreenUI();
       alert("Profile updated successfully!");
       goHome();
     }
@@ -2664,6 +3303,49 @@
       alert("All Settings Saved Successfully!");
     }
 
+    
+    function setupDb() {
+      const defaultSettings = {
+        'Default Unit': 'Feet',
+        'GST': '0.0',
+        'Discount': '0.0',
+        'Sliding Mill/Natural (Rs/Kg)': '260.0',
+        'Sliding Anodized (Rs/Kg)': '275.0',
+        'Sliding Powder Coated (Rs/Kg)': '290.0',
+        'Sliding Wooden Finish (Rs/Kg)': '345.0',
+        'Domal Mill/Natural (Rs/Kg)': '280.0',
+        'Domal Anodized (Rs/Kg)': '295.0',
+        'Domal Powder Coated (Rs/Kg)': '310.0',
+        'Domal Wooden Finish (Rs/Kg)': '365.0',
+        'Door Master Material (Rs/Kg)': '270.0',
+        'Partition Material (Rs/Kg)': '265.0',
+        'Casement Material (Rs/Kg)': '275.0',
+        'Clear Glass (Rs/Sq.Ft)': '35.0',
+        'Reflective Glass (Rs/Sq.Ft)': '55.0',
+        'Toughened Extra (Rs/Sq.Ft)': '25.0',
+        'Sliding Window Labour': '35.0',
+        'Domal Window Labour': '50.0',
+        'Casement Labour': '60.0',
+        'Door Master Labour': '65.0',
+        'Partition Labour': '40.0',
+        'Sliding Profit (%)': '15.0',
+        'Domal Profit (%)': '20.0',
+        'Casement Profit (%)': '25.0',
+        'Door Profit (%)': '20.0'
+      };
+      let currentSettings = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
+      let changed = false;
+      for (const k in defaultSettings) {
+        if (currentSettings[k] === undefined) {
+          currentSettings[k] = defaultSettings[k];
+          changed = true;
+        }
+      }
+      if (changed || !localStorage.getItem('sw_bill_settings')) {
+        localStorage.setItem('sw_bill_settings', JSON.stringify(currentSettings));
+      }
+    }
+
     function loadBillSettings() {
       const s = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
       if (s['Default Unit']) document.getElementById('bs_unit').value = s['Default Unit'];
@@ -2695,12 +3377,14 @@
     }
 
     window.onload = function() {
+      setupDb();
       const today = new Date();
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yyyy = today.getFullYear();
       document.getElementById('dash_month').value = `${mm}/${yyyy}`;
 
       loadSavedProfile();
+      updateActivationScreenUI();
       loadBillSettings();
       updateSuggestedRate();
     };
@@ -2720,6 +3404,7 @@ function updateProfile() {
       }
       localStorage.setItem('sw_profile', JSON.stringify(profile));
       loadSavedProfile();
+      updateActivationScreenUI();
       alert("Profile updated successfully!");
       goHome();
     }
@@ -2741,8 +3426,10 @@ function updateProfile() {
     }
 
     window.onload = function() {
+      setupDb();
       loadSavedProfile();
+      updateActivationScreenUI();
     };
   </script>
 </body>
-          </html>
+            </html>
