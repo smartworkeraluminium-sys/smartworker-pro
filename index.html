@@ -1265,17 +1265,34 @@
           <div class="form-group" style="grid-column:span 2;">
             <label>Work Category / Profile:</label>
             <select id="sk_category">
-              <option value="Sliding 18x40 (2-Track)" selected>Sliding 18x40 (2-Track Window)</option>
-              <option value="Sliding 18x40 (3-Track)">Sliding 18x40 (3-Track Window)</option>
-              <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track Window)</option>
-              <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track Window)</option>
-              <option value="Casement 34 Series">Casement 34 Series (Openable/Fixed)</option>
-              <option value="Casement 40 Series">Casement 40 Series (Heavy)</option>
-              <option value="Standard Door">Standard Aluminium Door</option>
-              <option value="Floor Spring Door">Floor Spring Heavy Door</option>
-              <option value="Domal Door">Domal System Door</option>
-              <option value="Fixed Partition">Office / Room Partition</option>
-              <option value="Gypsum Ceiling">False Ceiling (Gypsum Board)</option>
+              <optgroup label="CASEMENT WINDOWS (40mm & 34mm)">
+                <option value="Casement 40mm Series" selected>Casement 40mm Heavy Series (Openable/Fixed)</option>
+                <option value="Casement 34mm Series">Casement 34mm Series (Openable/Fixed)</option>
+              </optgroup>
+              <optgroup label="PARTITION SYSTEMS">
+                <option value="Fixed Partition">Aluminium Partition (Fixed Glazing Grid)</option>
+                <option value="Door + Partition">Aluminium Partition (Door + Glazing Integrated)</option>
+              </optgroup>
+              <optgroup label="DOMAL SYSTEM WINDOWS">
+                <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track Window)</option>
+                <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track with Mesh)</option>
+                <option value="Domal 27x65 (4-Track)">Domal 27x65 (4-Track with Mesh)</option>
+                <option value="Domal 35x75 System">Domal 35x75 Heavy System</option>
+              </optgroup>
+              <optgroup label="SLIDING WINDOWS">
+                <option value="Sliding 18x40 (2-Track)">Sliding 18x40 (2-Track Window)</option>
+                <option value="Sliding 18x40 (3-Track)">Sliding 18x40 (3-Track Window)</option>
+                <option value="Sliding 18x40 (4-Track)">Sliding 18x40 (4-Track Window)</option>
+                <option value="Sliding 25x50 Series">Sliding 25x50 Heavy Window</option>
+                <option value="Sliding 25x65 Series">Sliding 25x65 Super Heavy Window</option>
+              </optgroup>
+              <optgroup label="DOORS & CEILING">
+                <option value="Standard Door">Standard Aluminium Door (Outer + Leaf)</option>
+                <option value="Floor Spring Door">Floor Spring Glass/Alu Door</option>
+                <option value="Domal Door">Domal System Heavy Door</option>
+                <option value="Gypsum Ceiling">Gypsum Board False Ceiling</option>
+                <option value="PVC Ceiling">PVC Panel False Ceiling</option>
+              </optgroup>
             </select>
           </div>
           <div class="form-group">
@@ -1344,7 +1361,10 @@
 
         <!-- Master 1-Click Export Actions -->
         <div style="display:flex; flex-direction:column; gap:8px;">
-          <button class="action-btn" style="background:#1e3a8a; padding:12px; font-size:0.9rem;" onclick="exportSiteKhataMasterPdf()">
+          <button class="action-btn" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); padding:13px; font-size:0.95rem; font-weight:800; border:1px solid #38bdf8;" onclick="processAllKhataCutsAtOnce()">
+            <i class="fa-solid fa-bolt"></i> ⚡ PROCESS ALL MULTI-PRODUCT CUTS (সব প্রোডাক্ট একসাথে কাটিং প্রসেস)
+          </button>
+          <button class="action-btn" style="background:#334155; padding:11px; font-size:0.88rem;" onclick="exportSiteKhataMasterPdf()">
             <i class="fa-solid fa-file-pdf"></i> GENERATE SITE KHATA MASTER PDF (ফুল রিপোর্ট)
           </button>
           <div class="btn-row">
@@ -3450,6 +3470,157 @@
     // ========================================================
     let siteKhataItems = [];
 
+    
+    // ========================================================
+    // MULTI-PRODUCT AUTOMATED ROUTING & BATCH CUTTING ENGINE
+    // Handles 40mm, 34mm, Partitions, Domal, Sliding, Doors simultaneously!
+    // ========================================================
+    function loadKhataItemToModule(idx) {
+      const itm = siteKhataItems[idx];
+      if (!itm) return;
+
+      const cat = itm.category;
+
+      if (cat.includes("Casement")) {
+        // Route to Casement 34mm / 40mm Screen
+        openScreen('casement', 'CUSTOM CASEMENT');
+        document.getElementById('cc_unit').value = "Inch";
+        document.getElementById('cc_series').value = cat.includes("34") ? "34 Series" : "40 Series";
+        document.getElementById('cc_h').value = itm.h;
+        document.getElementById('cc_w').value = itm.w;
+        if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = `${itm.room} [${itm.tag}]`;
+        if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = itm.qty;
+        calculateCasement();
+        alert(`Loaded ${itm.room} (${cat}) into Casement Calculator!`);
+      } else if (cat.includes("Partition")) {
+        // Route to Partition Screen
+        openScreen('partition', 'PARTITION MASTER');
+        document.getElementById('pt_unit').value = "Inch";
+        document.getElementById('pt_type').value = cat.includes("Door") ? "Door + Partition" : "Fixed Partition";
+        document.getElementById('pt_h').value = itm.h;
+        document.getElementById('pt_w').value = itm.w;
+        if (cat.includes("Door")) {
+          document.getElementById('pt_dh').value = "80";
+          document.getElementById('pt_dw').value = "32";
+        }
+        calculatePartition();
+        alert(`Loaded ${itm.room} into Partition Calculator!`);
+      } else if (cat.includes("Domal")) {
+        // Route to Domal Screen
+        openScreen('domal', 'DOMAL WINDOW');
+        document.getElementById('dm_unit').value = "Inch";
+        document.getElementById('dm_type').value = cat.includes("3-Track") ? "3-Track (3-Sash)" : (cat.includes("4-Track") ? "4-Track (4-Sash)" : "2-Track (2-Sash)");
+        document.getElementById('dm_h').value = itm.h;
+        document.getElementById('dm_w').value = itm.w;
+        if (document.getElementById('dm_loc')) document.getElementById('dm_loc').value = `${itm.room} [${itm.tag}]`;
+        if (document.getElementById('dm_qty')) document.getElementById('dm_qty').value = itm.qty;
+        calculateDomal();
+        alert(`Loaded ${itm.room} into Domal Calculator!`);
+      } else if (cat.includes("Sliding")) {
+        // Route to Sliding Screen
+        openScreen('sliding', 'SLIDING WINDOW');
+        document.getElementById('sl_unit').value = "Inch";
+        document.getElementById('sl_type').value = cat.includes("3-Track") ? "3-Track" : (cat.includes("4-Track") ? "4-Track" : "2-Track");
+        document.getElementById('sl_sys').value = cat.includes("25x65") ? "25x65 System" : (cat.includes("25x50") ? "25x50 System" : "18x40 System");
+        document.getElementById('sl_h').value = itm.h;
+        document.getElementById('sl_w').value = itm.w;
+        if (document.getElementById('sl_loc')) document.getElementById('sl_loc').value = `${itm.room} [${itm.tag}]`;
+        if (document.getElementById('sl_qty')) document.getElementById('sl_qty').value = itm.qty;
+        calculateSliding();
+        alert(`Loaded ${itm.room} into Sliding Calculator!`);
+      } else if (cat.includes("Door")) {
+        // Route to Door Screen
+        openScreen('door', 'DOOR OPTION');
+        document.getElementById('dr_unit').value = "Inch";
+        document.getElementById('dr_type').value = cat.includes("Floor Spring") ? "Floor Spring Door" : (cat.includes("Domal") ? "Domal System Door" : "Standard Door");
+        document.getElementById('dr_h').value = itm.h;
+        document.getElementById('dr_w').value = itm.w;
+        calculateDoor();
+        alert(`Loaded ${itm.room} into Door Calculator!`);
+      } else if (cat.includes("Ceiling")) {
+        openScreen('ceiling', 'CEILING ESTIMATOR');
+        document.getElementById('ce_type').value = cat.includes("PVC") ? "PVC Panel" : "Gypsum Board";
+        document.getElementById('ce_l').value = Math.round(itm.h / 12);
+        document.getElementById('ce_w').value = Math.round(itm.w / 12);
+        calculateCeiling();
+        alert(`Loaded ${itm.room} into Ceiling Calculator!`);
+      }
+    }
+
+    function processAllKhataCutsAtOnce() {
+      if (siteKhataItems.length === 0) {
+        alert("Khata is empty! Please add site measurements first.");
+        return;
+      }
+
+      let casementCount = 0, partitionCount = 0, domalCount = 0, slidingCount = 0, doorCount = 0;
+
+      // Clear existing modules to receive fresh site data
+      clearCasement();
+      clearPartition();
+      clearDomal();
+      clearSliding();
+      clearDoor();
+
+      siteKhataItems.forEach(itm => {
+        const cat = itm.category;
+
+        if (cat.includes("Casement")) {
+          casementCount += itm.qty;
+          document.getElementById('cc_unit').value = "Inch";
+          document.getElementById('cc_series').value = cat.includes("34") ? "34 Series" : "40 Series";
+          document.getElementById('cc_h').value = itm.h;
+          document.getElementById('cc_w').value = itm.w;
+          if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = `${itm.room} [${itm.tag}]`;
+          if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = itm.qty;
+          calculateCasement();
+        } else if (cat.includes("Partition")) {
+          partitionCount += itm.qty;
+          document.getElementById('pt_unit').value = "Inch";
+          document.getElementById('pt_type').value = cat.includes("Door") ? "Door + Partition" : "Fixed Partition";
+          document.getElementById('pt_h').value = itm.h;
+          document.getElementById('pt_w').value = itm.w;
+          if (cat.includes("Door")) {
+            document.getElementById('pt_dh').value = "80";
+            document.getElementById('pt_dw').value = "32";
+          }
+          calculatePartition();
+        } else if (cat.includes("Domal")) {
+          domalCount += itm.qty;
+          document.getElementById('dm_unit').value = "Inch";
+          document.getElementById('dm_type').value = cat.includes("3-Track") ? "3-Track (3-Sash)" : (cat.includes("4-Track") ? "4-Track (4-Sash)" : "2-Track (2-Sash)");
+          document.getElementById('dm_h').value = itm.h;
+          document.getElementById('dm_w').value = itm.w;
+          if (document.getElementById('dm_loc')) document.getElementById('dm_loc').value = `${itm.room} [${itm.tag}]`;
+          if (document.getElementById('dm_qty')) document.getElementById('dm_qty').value = itm.qty;
+          calculateDomal();
+        } else if (cat.includes("Sliding")) {
+          slidingCount += itm.qty;
+          document.getElementById('sl_unit').value = "Inch";
+          document.getElementById('sl_type').value = cat.includes("3-Track") ? "3-Track" : (cat.includes("4-Track") ? "4-Track" : "2-Track");
+          document.getElementById('sl_sys').value = cat.includes("25x65") ? "25x65 System" : (cat.includes("25x50") ? "25x50 System" : "18x40 System");
+          document.getElementById('sl_h').value = itm.h;
+          document.getElementById('sl_w').value = itm.w;
+          if (document.getElementById('sl_loc')) document.getElementById('sl_loc').value = `${itm.room} [${itm.tag}]`;
+          if (document.getElementById('sl_qty')) document.getElementById('sl_qty').value = itm.qty;
+          calculateSliding();
+        } else if (cat.includes("Door")) {
+          doorCount += itm.qty;
+          document.getElementById('dr_unit').value = "Inch";
+          document.getElementById('dr_type').value = cat.includes("Floor Spring") ? "Floor Spring Door" : (cat.includes("Domal") ? "Domal System Door" : "Standard Door");
+          document.getElementById('dr_h').value = itm.h;
+          document.getElementById('dr_w').value = itm.w;
+          calculateDoor();
+        }
+      });
+
+      // Transfer into Quotation
+      convertKhataToQuotation();
+
+      const summary = `SUCCESSFULLY PROCESSED ALL SITE PRODUCTS!\n----------------------------------------\n• Casement 40mm/34mm: ${casementCount} Windows\n• Partitions (Fixed/Door): ${partitionCount} Grids\n• Domal Windows: ${domalCount} Windows\n• Sliding Windows: ${slidingCount} Windows\n• Doors: ${doorCount} Doors\n\nAll cutting sizes, profile purchase sticks, glass lists, and client billing have been generated!`;
+      alert(summary);
+    }
+
     function getLabourRateForCategory(cat) {
       const cost_data = JSON.parse(localStorage.getItem('sw_bill_settings') || '{}');
       if (cat.includes("Domal")) return parseFloat(cost_data['Domal Window Labour']) || 50.0;
@@ -3555,7 +3726,8 @@
           <td style="padding:4px; text-align:center; font-weight:bold;">${itm.qty}</td>
           <td style="padding:4px; text-align:right;">${itm.total_sqft.toFixed(1)}</td>
           <td style="padding:4px; text-align:right; color:#ea580c; font-weight:600;">Rs ${Math.round(itm.labour_cost)}</td>
-          <td style="padding:4px; text-align:center;">
+          <td style="padding:4px; text-align:center; white-space:nowrap;">
+            <button onclick="loadKhataItemToModule(${idx})" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; border-radius:4px; padding:2px 6px; font-size:0.68rem; font-weight:bold; cursor:pointer; margin-right:3px;" title="Open in Calculator">Load &rarr;</button>
             <button onclick="deleteKhataItem(${idx})" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">✕</button>
           </td>
         </tr>`;
