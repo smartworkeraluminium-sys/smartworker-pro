@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -389,6 +389,14 @@
               <button class="keypad-trigger" onclick="openKeypad('dm_w')">⌨️</button>
             </div>
           </div>
+          <div class="form-group">
+            <label style="color:#2563eb;">Room / Location Tag:</label>
+            <input type="text" id="dm_loc" placeholder="e.g. Bed-1, Hall, Master Bed">
+          </div>
+          <div class="form-group">
+            <label style="color:#16a34a;">Window Quantity (Pcs):</label>
+            <input type="number" id="dm_qty" value="1" min="1">
+          </div>
         </div>
 
         <div class="btn-row">
@@ -399,6 +407,7 @@
           <button class="action-btn btn-save" onclick="saveMeasurementData('Domal Window', 'dm_alu_out', 'dm_mat_out')">SAVE</button>
           <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('Domal_Material', 'Domal Window Job Card', 'dm_alu_out', 'dm_mat_out')">CUT PDF</button>
           <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('Domal_Glass', 'Domal Glass List', dm_glass_dict)">GLASS PDF</button>
+          <button class="action-btn" style="background:#0f766e;" onclick="exportMatPurchasePdf('Domal_Purchase_Order', 'Domal Material Order', dm_buckets, dm_glass_dict)">ORDER SLIP</button>
         </div>
       </div>
 
@@ -446,12 +455,20 @@
               <button class="keypad-trigger" onclick="openKeypad('sl_h')">⌨️</button>
             </div>
           </div>
-          <div class="form-group" style="grid-column: span 2;">
+          <div class="form-group">
             <label>Width:</label>
             <div class="input-wrapper">
               <input type="text" id="sl_w" placeholder="Width">
               <button class="keypad-trigger" onclick="openKeypad('sl_w')">⌨️</button>
             </div>
+          </div>
+          <div class="form-group">
+            <label style="color:#2563eb;">Room / Location Tag:</label>
+            <input type="text" id="sl_loc" placeholder="e.g. Living Room, Bed-2">
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label style="color:#16a34a;">Window Quantity (Pcs):</label>
+            <input type="number" id="sl_qty" value="1" min="1">
           </div>
         </div>
 
@@ -463,6 +480,7 @@
           <button class="action-btn btn-save" onclick="saveMeasurementData('Sliding Window', 'sl_out', 'sl_mat_out')">SAVE</button>
           <button class="action-btn btn-cut-pdf" onclick="exportCutPdf('Sliding_Material', 'Sliding Window Job Card', 'sl_out', 'sl_mat_out')">CUT PDF</button>
           <button class="action-btn btn-glass-pdf" onclick="exportGlassPdf('Sliding_Glass', 'Sliding Glass List', sl_glass_dict)">GLASS PDF</button>
+          <button class="action-btn" style="background:#0f766e;" onclick="exportMatPurchasePdf('Sliding_Purchase_Order', 'Sliding Material Order', sl_buckets, sl_glass_dict)">ORDER SLIP</button>
         </div>
       </div>
 
@@ -743,8 +761,25 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Address:</label>
-            <input type="text" id="q_addr">
+            <label>Billing Address:</label>
+            <input type="text" id="q_addr" placeholder="Client Office / Residence">
+          </div>
+          <div class="form-group">
+            <label style="color:#2563eb;">Client GSTIN (B2B):</label>
+            <input type="text" id="q_client_gst" placeholder="GSTIN (Optional)">
+          </div>
+          <div class="form-group">
+            <label style="color:#16a34a;">Site / Delivery Location:</label>
+            <input type="text" id="q_site_addr" placeholder="Site / Project Location">
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label style="color:#9333ea;">Payment Terms (Milestones):</label>
+            <select id="q_payment_terms">
+              <option value="Corporate: 40% Advance, 40% on Material Delivery at Site, 20% on Handover">Corporate: 40% Advance, 40% on Delivery at Site, 20% on Handover</option>
+              <option value="Retail Standard: 50% Advance with official work order, 50% on Delivery/Fitting">Retail Standard: 50% Advance with order, 50% on Delivery</option>
+              <option value="Full Advance: 100% Payment with Purchase Order">Full Advance: 100% Payment with Purchase Order</option>
+              <option value="Commercial Credit: 15 Days Net Payment after Handover">Commercial Credit: 15 Days Net Payment after Handover</option>
+            </select>
           </div>
         </div>
 
@@ -1010,7 +1045,37 @@
         </div>
         <div class="form-group" style="margin-bottom:10px;">
           <label>Shop Address:</label>
-          <textarea id="set_address" rows="3">Amta (Chandni), Howrah, West Bengal</textarea>
+          <textarea id="set_address" rows="2">Amta (Chandni), Howrah, West Bengal</textarea>
+        </div>
+
+        <div style="font-size:0.82rem; font-weight:800; color:#2563eb; margin:12px 0 6px 0; border-top:1px dashed #cbd5e1; padding-top:8px;">
+          BANK & NEFT/RTGS DETAILS (FOR CORPORATE INVOICES)
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Bank Name:</label>
+            <input type="text" id="set_bank_name" placeholder="e.g. State Bank of India">
+          </div>
+          <div class="form-group">
+            <label>A/C Holder Name:</label>
+            <input type="text" id="set_bank_holder" placeholder="Account Name">
+          </div>
+          <div class="form-group">
+            <label>Account Number:</label>
+            <input type="text" id="set_bank_acc" placeholder="Account No">
+          </div>
+          <div class="form-group">
+            <label>IFSC Code:</label>
+            <input type="text" id="set_bank_ifsc" placeholder="e.g. SBIN0001234">
+          </div>
+          <div class="form-group">
+            <label>Branch Name:</label>
+            <input type="text" id="set_bank_branch" placeholder="e.g. Amta Branch">
+          </div>
+          <div class="form-group">
+            <label>UPI ID (VPA):</label>
+            <input type="text" id="set_upi_id" placeholder="e.g. 9239413517@upi">
+          </div>
         </div>
 
         <!-- Workshop Custom Logo Upload -->
@@ -1697,6 +1762,11 @@
       const gw_in = gw_mm / 25.4;
 
       dm_window_count += 1;
+      const win_loc = document.getElementById('dm_loc') ? document.getElementById('dm_loc').value.trim() : "";
+      const win_qty = document.getElementById('dm_qty') ? Math.max(1, parseInt(document.getElementById('dm_qty').value) || 1) : 1;
+      const loc_str = win_loc ? ` [${win_loc}]` : "";
+      const qty_str = win_qty > 1 ? ` (Qty: ${win_qty} Windows)` : "";
+
       const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
       const unit_str = is_mm ? "mm" : "Inch";
 
@@ -1712,7 +1782,7 @@
       spec_info += `> Width Formula: (W ${w_sign} mm) / ${s_c} [-12mm clearance]\n`;
       spec_info += `> Glass Deduction: Sash - ${Math.round(g_deduct_mm)} mm [13mm pocket each side]\n`;
 
-      let alu_txt = `[Domal Win #${dm_window_count} - H:${raw_h} x W:${raw_w} ${unit_str}]\n`;
+      let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
       alu_txt += spec_info;
       alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (2 pc)\n`;
       alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (2 pc)\n`;
@@ -1726,7 +1796,7 @@
 
       const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c} pc)\n`;
       const glass_key = `${disp(gh_in)} x ${disp(gw_in)}`;
-      dm_glass_dict[glass_key] = (dm_glass_dict[glass_key] || 0) + s_c;
+      dm_glass_dict[glass_key] = (dm_glass_dict[glass_key] || 0) + (s_c * win_qty);
 
       let track_type = t_text.split(' ')[0];
       if (t_text.includes("Center")) track_type = "2-Track CO";
@@ -1739,12 +1809,12 @@
         if (!dm_buckets[k]) dm_buckets[k] = [];
       });
 
-      dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
-      for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_handle_key].push(h_cut_in);
+      for(let q=0; q<win_qty; q++) dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
+      for (let q=0; q<win_qty; q++) { for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_handle_key].push(h_cut_in); }
       if (has_mesh) dm_buckets[sash_handle_key].push(mesh_w_in, mesh_w_in);
-      for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in);
+      for (let q=0; q<win_qty; q++) { for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in); }
       if (has_mesh) dm_buckets[sash_handle_key].push(v_cut_in);
-      for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in);
+      for (let q=0; q<win_qty; q++) { for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in); }
       if (has_mesh) dm_buckets[interlock_key].push(v_cut_in);
 
       const prevOut = document.getElementById('dm_alu_out').textContent;
@@ -1816,13 +1886,18 @@
       const glass_w = tb_w + g_w_mod;
 
       sl_window_count += 1;
+      const win_loc = document.getElementById('sl_loc') ? document.getElementById('sl_loc').value.trim() : "";
+      const win_qty = document.getElementById('sl_qty') ? Math.max(1, parseInt(document.getElementById('sl_qty').value) || 1) : 1;
+      const loc_str = win_loc ? ` [${win_loc}]` : "";
+      const qty_str = win_qty > 1 ? ` (Qty: ${win_qty} Windows)` : "";
+
       const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
 
       let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
       hw_txt += `> Sliding Roller / Bearing: ${g_c * 2} pc\n`;
       hw_txt += `> Star Lock: ${g_c >= 3 ? 2 : 1} pc\n> Rubber & Woolpile: Required\n`;
 
-      let alu_txt = `[Win #${sl_window_count} - H:${raw_h} x W:${raw_w} (${sys_type.split(' ')[0]})]\n`;
+      let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${raw_h} x W:${raw_w} (${sys_type.split(' ')[0]})${qty_str}]\n`;
       alu_txt += `> Track Top: ${disp(w_in)} (1 pc)\n`;
       alu_txt += `> Track Bottom: ${disp(w_in)} (1 pc)\n`;
       alu_txt += `> Track Vertical: ${disp(h_in)} (2 pc)\n`;
@@ -1832,7 +1907,7 @@
 
       const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)\n`;
       const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
-      sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + g_c;
+      sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + (g_c * win_qty);
 
       const track_type = t_type.split(' ')[0];
       const top_vert_track_key = `Track Top/Vertical (${track_type})`;
@@ -1845,11 +1920,11 @@
         if (!sl_buckets[k]) sl_buckets[k] = [];
       });
 
-      sl_buckets[top_vert_track_key].push(w_in, h_in, h_in);
-      sl_buckets[bot_track_key].push(w_in);
-      for (let i = 0; i < g_c * 2; i++) sl_buckets[sash_tb_key].push(tb_w);
-      for (let i = 0; i < han_qty; i++) sl_buckets[sash_handle_key].push(handle_h);
-      for (let i = 0; i < int_qty; i++) sl_buckets[sash_interlock_key].push(handle_h);
+      for(let q=0; q<win_qty; q++) sl_buckets[top_vert_track_key].push(w_in, h_in, h_in);
+      for(let q=0; q<win_qty; q++) sl_buckets[bot_track_key].push(w_in);
+      for (let q=0; q<win_qty; q++) { for (let i = 0; i < g_c * 2; i++) sl_buckets[sash_tb_key].push(tb_w); }
+      for (let q=0; q<win_qty; q++) { for (let i = 0; i < han_qty; i++) sl_buckets[sash_handle_key].push(handle_h); }
+      for (let q=0; q<win_qty; q++) { for (let i = 0; i < int_qty; i++) sl_buckets[sash_interlock_key].push(handle_h); }
 
       const prevOut = document.getElementById('sl_out').textContent;
       document.getElementById('sl_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\n\n" + prevOut;
@@ -2642,6 +2717,219 @@
     }
 
     
+    
+    // ========================================================
+    // SEPARATE SUPPLIER MATERIAL REQUISITION / PURCHASE ORDER SLIP
+    // ========================================================
+    function exportMatPurchasePdf(filename, title, buckets, glassDict) {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate material purchase orders.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      const keys = Object.keys(buckets);
+      if (keys.length === 0) {
+        alert("No material calculated yet! Please calculate windows first.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+      const po_no = "PO-" + Math.floor(1000 + Math.random() * 9000);
+
+      // Header Banner (Teal / Forest Theme)
+      doc.setFillColor(15, 118, 110);
+      doc.rect(0, 0, 210, 32, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text(shop_name, 105, 12, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(204, 251, 241);
+      doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(254, 240, 138); // Yellow
+      doc.text(`MATERIAL PURCHASE ORDER & REQUISITION SLIP (${title.toUpperCase()})`, 105, 26, { align: "center" });
+
+      // Sub-bar
+      doc.setFillColor(240, 253, 250);
+      doc.rect(14, 34, 182, 7, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(19, 78, 74);
+      doc.text(`ORDER REF NO: ${po_no}`, 18, 39);
+      doc.text(`DATE OF REQUISITION: ${today}`, 192, 39, { align: "right" });
+
+      let currentY = 44;
+
+      // Table 1: Aluminium Profile Sticks To Buy
+      const profileRows = [];
+      let totalSticks = 0;
+      let totalRunningFt = 0;
+
+      keys.forEach((pName, idx) => {
+        const pieces = buckets[pName];
+        if (!pieces || pieces.length === 0) return;
+        const plan = optimizeCuttingPlan(pieces);
+        totalSticks += plan.sticks_needed;
+        const runFt = Math.round((pieces.reduce((a, b) => a + b, 0) / 12) * 10) / 10;
+        totalRunningFt += runFt;
+        const estWeight = Math.round((runFt * 0.45) * 10) / 10; // Approx 0.45 kg per ft
+
+        profileRows.push([
+          idx + 1,
+          pName,
+          "Powder Coated / Anodized",
+          `${plan.sticks_needed} Pcs (${plan.standard_length_ft} Ft / stick)`,
+          `${runFt} Ft`,
+          `~${estWeight} Kg`
+        ]);
+      });
+
+      profileRows.push([
+        { content: "TOTAL PROFILE REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
+        { content: `${totalSticks} Sticks`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
+        { content: `${Math.round(totalRunningFt)} Ft`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
+        { content: `~${Math.round(totalRunningFt * 0.45)} Kg`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [254, 240, 138] } }
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['#', 'Aluminium Section / Profile Name', 'Color / Finish', 'Sticks To Buy', 'Total Running Ft', 'Est. Weight']],
+        body: profileRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [15, 118, 110],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          lineColor: [153, 246, 228],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 55, fontStyle: 'bold' },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 35, fontStyle: 'bold', halign: 'center' },
+          4: { cellWidth: 22, halign: 'center' },
+          5: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }
+        }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 8;
+
+      // Table 2: Glass Requirement Breakdown (if available)
+      const gKeys = Object.keys(glassDict || {});
+      if (gKeys.length > 0) {
+        if (currentY > 220) { doc.addPage(); currentY = 16; }
+
+        const glassRows = gKeys.map((sz, i) => {
+          const qty = glassDict[sz];
+          return [i + 1, "Float / Clear / Tinted Glass", sz, `${qty} Pcs`];
+        });
+
+        doc.autoTable({
+          startY: currentY,
+          head: [['#', 'Glass Order Specifications', 'Glass Size (H x W)', 'Quantity Needed']],
+          body: glassRows,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [2, 132, 199],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8,
+            halign: 'center'
+          },
+          styles: { fontSize: 7.5, cellPadding: 2, lineColor: [186, 230, 253] },
+          columnStyles: {
+            0: { cellWidth: 12, halign: 'center' },
+            1: { cellWidth: 70 },
+            2: { cellWidth: 65, fontStyle: 'bold', halign: 'center' },
+            3: { cellWidth: 35, fontStyle: 'bold', halign: 'center' }
+          }
+        });
+
+        currentY = doc.lastAutoTable.finalY + 8;
+      }
+
+      // Hardware Requisition Checklist
+      if (currentY > 230) { doc.addPage(); currentY = 16; }
+
+      const hwItems = [
+        ["1", "Heavy Bearing Rollers / Nylon Wheels", "As per shutter count (2 per sash)", "Verified [   ]"],
+        ["2", "Star Lock / Concealed Touch Lock", "1 per window / 2 for center open", "Verified [   ]"],
+        ["3", "EPDM Gasket / Rubber Beading", "Perimeter coverage as per glass size", "Verified [   ]"],
+        ["4", "Silicon Sealant Tubes (Clear / Black)", "Weather sealing as required", "Verified [   ]"],
+        ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2\" & 1\" Screws)", "Verified [   ]"]
+      ];
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['#', 'Hardware & Accessories Item', 'Estimated Requirement', 'Warehouse Check']],
+        body: hwItems,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [217, 119, 6], // Amber
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: { fontSize: 7.5, cellPadding: 2, lineColor: [253, 230, 138] },
+        columnStyles: {
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 75, fontStyle: 'bold' },
+          2: { cellWidth: 65 },
+          3: { cellWidth: 30, halign: 'center', fontStyle: 'bold' }
+        }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 12;
+      if (currentY > 255) { doc.addPage(); currentY = 20; }
+
+      // Signatures
+      doc.autoTable({
+        startY: currentY,
+        head: [['STORE IN-CHARGE / REQUISITION BY', 'WHOLESALE SUPPLIER / DISPATCH STAMP']],
+        body: [[
+          `Prepared By: _______________________\n\nFor: ${shop_name}\n\nPhone: ${contact}`,
+          "Received & Dispatched By: _______________________\n\nSupplier Stamp / Memo No: _______________________\n\nDate: _______________________"
+        ]],
+        theme: 'grid',
+        headStyles: {
+          fillColor: [241, 245, 249],
+          textColor: [51, 65, 85],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: { fontSize: 7.5, cellPadding: 3, lineColor: [203, 213, 225] }
+      });
+
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139);
+      doc.text("-- Generated via Smart Worker Pro Material Requisition Management System --", 105, 290, { align: "center" });
+
+      doc.save(`${filename}.pdf`);
+    }
+
     function exportBillPdf() {
       if (!isAppActivated()) {
         alert("PRO activation is required to generate PDF bills.");
@@ -2997,6 +3285,45 @@
     // 5. Highlighted Glass & Hardware Boxes
     // 6. Quality Check & Master Signatures
     // ========================================================
+    
+    function numberToWordsINR(amount) {
+      const num = Math.round(amount);
+      if (num === 0) return "Zero Rupees Only";
+      const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+      function convertTwoDigits(n) {
+        if (n < 20) return a[n];
+        return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+      }
+
+      function convertThreeDigits(n) {
+        let str = '';
+        if (Math.floor(n / 100) > 0) {
+          str += a[Math.floor(n / 100)] + ' Hundred ';
+          n %= 100;
+        }
+        if (n > 0) str += convertTwoDigits(n);
+        return str.trim();
+      }
+
+      let crore = Math.floor(num / 10000000);
+      let remainder = num % 10000000;
+      let lakh = Math.floor(remainder / 100000);
+      remainder = remainder % 100000;
+      let thousand = Math.floor(remainder / 1000);
+      remainder = remainder % 1000;
+      let hundred = remainder;
+
+      let res = '';
+      if (crore > 0) res += convertTwoDigits(crore) + ' Crore ';
+      if (lakh > 0) res += convertTwoDigits(lakh) + ' Lakh ';
+      if (thousand > 0) res += convertTwoDigits(thousand) + ' Thousand ';
+      if (hundred > 0) res += convertThreeDigits(hundred) + ' ';
+
+      return 'INR ' + res.trim() + ' Only';
+    }
+
     function exportCutPdf(filename, title, outId, matId) {
       if (!isAppActivated()) {
         alert("PRO activation is required to generate PDF bills.");
@@ -3423,6 +3750,219 @@
     // ========================================================
     // PROFESSIONAL GST INVOICE & QUOTATION BILL PDF
     // ========================================================
+    
+    // ========================================================
+    // SEPARATE SUPPLIER MATERIAL REQUISITION / PURCHASE ORDER SLIP
+    // ========================================================
+    function exportMatPurchasePdf(filename, title, buckets, glassDict) {
+      if (!isAppActivated()) {
+        alert("PRO activation is required to generate material purchase orders.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+      }
+
+      const keys = Object.keys(buckets);
+      if (keys.length === 0) {
+        alert("No material calculated yet! Please calculate windows first.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+      const contact = profile.phone || "9239413517 / 9641405426";
+      const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+      const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+      const po_no = "PO-" + Math.floor(1000 + Math.random() * 9000);
+
+      // Header Banner (Teal / Forest Theme)
+      doc.setFillColor(15, 118, 110);
+      doc.rect(0, 0, 210, 32, 'F');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text(shop_name, 105, 12, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(204, 251, 241);
+      doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(254, 240, 138); // Yellow
+      doc.text(`MATERIAL PURCHASE ORDER & REQUISITION SLIP (${title.toUpperCase()})`, 105, 26, { align: "center" });
+
+      // Sub-bar
+      doc.setFillColor(240, 253, 250);
+      doc.rect(14, 34, 182, 7, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(19, 78, 74);
+      doc.text(`ORDER REF NO: ${po_no}`, 18, 39);
+      doc.text(`DATE OF REQUISITION: ${today}`, 192, 39, { align: "right" });
+
+      let currentY = 44;
+
+      // Table 1: Aluminium Profile Sticks To Buy
+      const profileRows = [];
+      let totalSticks = 0;
+      let totalRunningFt = 0;
+
+      keys.forEach((pName, idx) => {
+        const pieces = buckets[pName];
+        if (!pieces || pieces.length === 0) return;
+        const plan = optimizeCuttingPlan(pieces);
+        totalSticks += plan.sticks_needed;
+        const runFt = Math.round((pieces.reduce((a, b) => a + b, 0) / 12) * 10) / 10;
+        totalRunningFt += runFt;
+        const estWeight = Math.round((runFt * 0.45) * 10) / 10; // Approx 0.45 kg per ft
+
+        profileRows.push([
+          idx + 1,
+          pName,
+          "Powder Coated / Anodized",
+          `${plan.sticks_needed} Pcs (${plan.standard_length_ft} Ft / stick)`,
+          `${runFt} Ft`,
+          `~${estWeight} Kg`
+        ]);
+      });
+
+      profileRows.push([
+        { content: "TOTAL PROFILE REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
+        { content: `${totalSticks} Sticks`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
+        { content: `${Math.round(totalRunningFt)} Ft`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
+        { content: `~${Math.round(totalRunningFt * 0.45)} Kg`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [254, 240, 138] } }
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['#', 'Aluminium Section / Profile Name', 'Color / Finish', 'Sticks To Buy', 'Total Running Ft', 'Est. Weight']],
+        body: profileRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [15, 118, 110],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          lineColor: [153, 246, 228],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 55, fontStyle: 'bold' },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 35, fontStyle: 'bold', halign: 'center' },
+          4: { cellWidth: 22, halign: 'center' },
+          5: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }
+        }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 8;
+
+      // Table 2: Glass Requirement Breakdown (if available)
+      const gKeys = Object.keys(glassDict || {});
+      if (gKeys.length > 0) {
+        if (currentY > 220) { doc.addPage(); currentY = 16; }
+
+        const glassRows = gKeys.map((sz, i) => {
+          const qty = glassDict[sz];
+          return [i + 1, "Float / Clear / Tinted Glass", sz, `${qty} Pcs`];
+        });
+
+        doc.autoTable({
+          startY: currentY,
+          head: [['#', 'Glass Order Specifications', 'Glass Size (H x W)', 'Quantity Needed']],
+          body: glassRows,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [2, 132, 199],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8,
+            halign: 'center'
+          },
+          styles: { fontSize: 7.5, cellPadding: 2, lineColor: [186, 230, 253] },
+          columnStyles: {
+            0: { cellWidth: 12, halign: 'center' },
+            1: { cellWidth: 70 },
+            2: { cellWidth: 65, fontStyle: 'bold', halign: 'center' },
+            3: { cellWidth: 35, fontStyle: 'bold', halign: 'center' }
+          }
+        });
+
+        currentY = doc.lastAutoTable.finalY + 8;
+      }
+
+      // Hardware Requisition Checklist
+      if (currentY > 230) { doc.addPage(); currentY = 16; }
+
+      const hwItems = [
+        ["1", "Heavy Bearing Rollers / Nylon Wheels", "As per shutter count (2 per sash)", "Verified [   ]"],
+        ["2", "Star Lock / Concealed Touch Lock", "1 per window / 2 for center open", "Verified [   ]"],
+        ["3", "EPDM Gasket / Rubber Beading", "Perimeter coverage as per glass size", "Verified [   ]"],
+        ["4", "Silicon Sealant Tubes (Clear / Black)", "Weather sealing as required", "Verified [   ]"],
+        ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2\" & 1\" Screws)", "Verified [   ]"]
+      ];
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['#', 'Hardware & Accessories Item', 'Estimated Requirement', 'Warehouse Check']],
+        body: hwItems,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [217, 119, 6], // Amber
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: { fontSize: 7.5, cellPadding: 2, lineColor: [253, 230, 138] },
+        columnStyles: {
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 75, fontStyle: 'bold' },
+          2: { cellWidth: 65 },
+          3: { cellWidth: 30, halign: 'center', fontStyle: 'bold' }
+        }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 12;
+      if (currentY > 255) { doc.addPage(); currentY = 20; }
+
+      // Signatures
+      doc.autoTable({
+        startY: currentY,
+        head: [['STORE IN-CHARGE / REQUISITION BY', 'WHOLESALE SUPPLIER / DISPATCH STAMP']],
+        body: [[
+          `Prepared By: _______________________\n\nFor: ${shop_name}\n\nPhone: ${contact}`,
+          "Received & Dispatched By: _______________________\n\nSupplier Stamp / Memo No: _______________________\n\nDate: _______________________"
+        ]],
+        theme: 'grid',
+        headStyles: {
+          fillColor: [241, 245, 249],
+          textColor: [51, 65, 85],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: { fontSize: 7.5, cellPadding: 3, lineColor: [203, 213, 225] }
+      });
+
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139);
+      doc.text("-- Generated via Smart Worker Pro Material Requisition Management System --", 105, 290, { align: "center" });
+
+      doc.save(`${filename}.pdf`);
+    }
+
     function exportBillPdf() {
       if (!isAppActivated()) {
         alert("PRO activation is required to generate PDF bills.");
@@ -3448,6 +3988,9 @@
       const c_name = document.getElementById('q_name').value || 'Valued Customer';
       const c_phone = document.getElementById('q_phone').value || 'N/A';
       const c_addr = document.getElementById('q_addr').value || 'N/A';
+      const client_gst = document.getElementById('q_client_gst') ? document.getElementById('q_client_gst').value.trim() : "";
+      const site_addr = document.getElementById('q_site_addr') ? document.getElementById('q_site_addr').value.trim() : "";
+      const pay_terms = document.getElementById('q_payment_terms') ? document.getElementById('q_payment_terms').value : "Standard Retail: 50% Advance with order, Balance on delivery";
       const bill_stage = document.getElementById('q_stage').value;
       const today = new Date().toLocaleDateString('en-GB');
       const inv_no = `SW-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -3486,23 +4029,32 @@
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(30, 41, 59);
-      doc.text(`Name: ${c_name}`, 18, 52);
-      doc.text(`Contact: ${c_phone}`, 18, 57);
-      doc.text(`Address: ${c_addr}`, 18, 62);
+      doc.text(`Client: ${c_name}`, 18, 51);
+      doc.text(`Contact: ${c_phone}${client_gst ? ' | GSTIN: ' + client_gst : ''}`, 18, 55.5);
+      doc.text(`Billing: ${c_addr}`, 18, 60);
+      if (site_addr) doc.text(`Site: ${site_addr}`, 18, 64.5);
 
-      doc.text(`Invoice No: ${inv_no}`, 127, 52);
-      doc.text(`Date of Issue: ${today}`, 127, 57);
-      doc.text(`Stage: ${bill_stage}`, 127, 62);
+      doc.text(`Invoice No: ${inv_no}`, 127, 51);
+      doc.text(`Date of Issue: ${today}`, 127, 55.5);
+      doc.text(`Type: ${bill_stage.toUpperCase()}`, 127, 60);
+      doc.text(`State Code: 19 (WB)`, 127, 64.5);
 
       // 3. Items Table
-      const tableData = billItems.map((itm, i) => [
-        i + 1,
-        `${itm.location ? '[' + itm.location + '] ' : ''}${itm.type}\n• Finish: ${itm.color} (${itm.thickness})\n• Glass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\n• Dimensions: ${itm.h}' x ${itm.w}' ${itm.unit}`,
-        itm.qty,
-        `${itm.area.toFixed(1)} Sq.Ft`,
-        `Rs. ${itm.rate.toFixed(0)}`,
-        `Rs. ${itm.price.toFixed(2)}`
-      ]);
+      const tableData = billItems.map((itm, i) => {
+        let hsn = "HSN 7610";
+        if (itm.type.includes("Ceiling")) hsn = "HSN 6809";
+        else if (itm.type.includes("Glass")) hsn = "HSN 7005";
+
+        return [
+          i + 1,
+          `${itm.location ? '[' + itm.location + '] ' : ''}${itm.type}\n• Technical: ${itm.color} (${itm.thickness})\n• Glass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\n• Size: ${itm.h}' x ${itm.w}' ${itm.unit}`,
+          hsn,
+          itm.qty,
+          `${itm.area.toFixed(1)} Sq.Ft`,
+          `Rs. ${itm.rate.toFixed(0)}`,
+          `Rs. ${itm.price.toFixed(2)}`
+        ];
+      });
 
       const grand_total = billItems.reduce((a, b) => a + b.price, 0);
       const [discount, gst_pct] = getDiscountAndGst();
@@ -3515,29 +4067,30 @@
 
       doc.autoTable({
         startY: 68,
-        head: [['SN', 'Item Description & Technical Specs', 'Qty', 'Sq.Ft', 'Rate / Sq.Ft', 'Total Amount']],
+        head: [['SN', 'Item Description & Technical Specifications', 'HSN/SAC', 'Qty', 'Sq.Ft', 'Rate / Sq.Ft', 'Total Amount']],
         body: tableData,
         theme: 'grid',
         headStyles: {
           fillColor: [225, 190, 231],
           textColor: [49, 13, 90],
           fontStyle: 'bold',
-          fontSize: 8.5,
+          fontSize: 8,
           halign: 'center'
         },
         styles: {
-          fontSize: 8,
-          cellPadding: 2.5,
+          fontSize: 7.5,
+          cellPadding: 2,
           lineColor: [216, 180, 254],
           lineWidth: 0.2
         },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center' },
-          1: { cellWidth: 80 },
-          2: { cellWidth: 15, halign: 'center' },
-          3: { cellWidth: 22, halign: 'center' },
-          4: { cellWidth: 25, halign: 'right' },
-          5: { cellWidth: 30, halign: 'right', fontStyle: 'bold' }
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 18, halign: 'center', fontSize: 7 },
+          3: { cellWidth: 12, halign: 'center' },
+          4: { cellWidth: 20, halign: 'center' },
+          5: { cellWidth: 24, halign: 'right' },
+          6: { cellWidth: 30, halign: 'right', fontStyle: 'bold' }
         }
       });
 
@@ -3606,33 +4159,66 @@
       doc.text(`Rs. ${due_amount.toFixed(2)}`, 192, calcY, { align: "right" });
 
       // 5. Terms & Conditions Box
-      const termsY = finalY + 42;
-      doc.setFillColor(245, 245, 245);
-      doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(14, termsY, 182, 18, 2, 2, 'FD');
-
+            // Amount in Words
+      const wordsTxt = numberToWordsINR(final_total);
+      doc.setFillColor(245, 243, 255);
+      doc.rect(14, finalY + 40, 182, 6, 'F');
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7.5);
-      doc.setTextColor(70, 70, 70);
-      doc.text("TERMS & CONDITIONS:", 17, termsY + 4);
+      doc.setTextColor(74, 20, 140);
+      doc.text(`Amount in Words: ${wordsTxt}`, 16, finalY + 44.5);
+
+      // Bank Details Card (Left side under Amount in words)
+      const bankY = finalY + 48;
+      const bName = profile.bank_name || "State Bank of India";
+      const bHolder = profile.bank_holder || shop_name;
+      const bAcc = profile.bank_acc || "Not Configured";
+      const bIfsc = profile.bank_ifsc || "SBIN0001234";
+      const bBranch = profile.bank_branch || "Amta Branch";
+      const upiVpa = profile.upi_id || contact.split(' ')[0] + "@upi";
+
+      doc.setFillColor(250, 250, 250);
+      doc.setDrawColor(203, 213, 225);
+      doc.roundedRect(14, bankY, 95, 26, 2, 2, 'FD');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text("BANK DETAILS FOR NEFT / RTGS / CHEQUE:", 17, bankY + 4.5);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
-      doc.text("1. 50% Advance payment required along with formal order confirmation.", 17, termsY + 8);
-      doc.text("2. Remaining balance must be cleared upon delivery / site fitting.", 17, termsY + 12);
-      doc.text("3. Customized cut aluminum sections and glass cannot be returned or cancelled once processed.", 17, termsY + 16);
+      doc.text(`Bank: ${bName} | Branch: ${bBranch}`, 17, bankY + 9);
+      doc.text(`Account Name: ${bHolder}`, 17, bankY + 13.5);
+      doc.text(`Account No: ${bAcc}`, 17, bankY + 18);
+      doc.text(`IFSC Code: ${bIfsc} | UPI: ${upiVpa}`, 17, bankY + 22.5);
 
-      // 6. Signature Block
-      const sigY = termsY + 26;
+      // Payment Terms Box (Right side)
+      doc.roundedRect(112, bankY, 84, 26, 2, 2, 'FD');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text("PAYMENT MILESTONES & TERMS:", 115, bankY + 4.5);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(80, 80, 80);
-      doc.text("Customer Signature: _______________________", 16, sigY);
+      doc.setFontSize(6.8);
+      const splitTerms = doc.splitTextToSize(pay_terms, 78);
+      doc.text(splitTerms, 115, bankY + 9);
+      doc.text("• Quotation validity: 15 Days from issue date.", 115, bankY + 20);
+      doc.text("• Goods once cut/processed cannot be returned.", 115, bankY + 23.5);
+
+      // Signatures
+      const sigY = bankY + 33;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(70, 70, 70);
+      doc.text("Customer / Architect Signature: _______________________", 16, sigY);
       doc.text(`Authorized Signatory (${shop_name}): _______________________`, 194, sigY, { align: "right" });
 
-      doc.setFontSize(7);
-      doc.text("-- Generated professionally by Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text("-- Computer Generated Commercial Tax Invoice • Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
 
       doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
+      return;
+
     }
 
 function saveMeasurementData(projectType, outId, matId) {
@@ -3785,7 +4371,13 @@ function saveMeasurementData(projectType, outId, matId) {
         phone: document.getElementById('set_phone').value.trim(),
         email: document.getElementById('set_email').value.trim(),
         gst: document.getElementById('set_gst').value.trim(),
-        address: document.getElementById('set_address').value.trim()
+        address: document.getElementById('set_address').value.trim(),
+        bank_name: document.getElementById('set_bank_name') ? document.getElementById('set_bank_name').value.trim() : "",
+        bank_holder: document.getElementById('set_bank_holder') ? document.getElementById('set_bank_holder').value.trim() : "",
+        bank_acc: document.getElementById('set_bank_acc') ? document.getElementById('set_bank_acc').value.trim() : "",
+        bank_ifsc: document.getElementById('set_bank_ifsc') ? document.getElementById('set_bank_ifsc').value.trim() : "",
+        bank_branch: document.getElementById('set_bank_branch') ? document.getElementById('set_bank_branch').value.trim() : "",
+        upi_id: document.getElementById('set_upi_id') ? document.getElementById('set_upi_id').value.trim() : ""
       };
       if (!profile.name || !profile.shop_name || !profile.phone || !profile.address) {
         alert("Please fill Name, Shop Name, Phone and Address.");
@@ -3821,6 +4413,13 @@ function saveMeasurementData(projectType, outId, matId) {
       if (profile.email) document.getElementById('set_email').value = profile.email;
       if (profile.gst) document.getElementById('set_gst').value = profile.gst;
       if (profile.address) document.getElementById('set_address').value = profile.address;
+      if (profile.bank_name && document.getElementById('set_bank_name')) document.getElementById('set_bank_name').value = profile.bank_name;
+      if (profile.bank_holder && document.getElementById('set_bank_holder')) document.getElementById('set_bank_holder').value = profile.bank_holder;
+      if (profile.bank_acc && document.getElementById('set_bank_acc')) document.getElementById('set_bank_acc').value = profile.bank_acc;
+      if (profile.bank_ifsc && document.getElementById('set_bank_ifsc')) document.getElementById('set_bank_ifsc').value = profile.bank_ifsc;
+      if (profile.bank_branch && document.getElementById('set_bank_branch')) document.getElementById('set_bank_branch').value = profile.bank_branch;
+      if (profile.upi_id && document.getElementById('set_upi_id')) document.getElementById('set_upi_id').value = profile.upi_id;
+
     }
 
     function saveBillSettings() {
@@ -4257,6 +4856,13 @@ function updateProfile() {
       if (profile.email) document.getElementById('set_email').value = profile.email;
       if (profile.gst) document.getElementById('set_gst').value = profile.gst;
       if (profile.address) document.getElementById('set_address').value = profile.address;
+      if (profile.bank_name && document.getElementById('set_bank_name')) document.getElementById('set_bank_name').value = profile.bank_name;
+      if (profile.bank_holder && document.getElementById('set_bank_holder')) document.getElementById('set_bank_holder').value = profile.bank_holder;
+      if (profile.bank_acc && document.getElementById('set_bank_acc')) document.getElementById('set_bank_acc').value = profile.bank_acc;
+      if (profile.bank_ifsc && document.getElementById('set_bank_ifsc')) document.getElementById('set_bank_ifsc').value = profile.bank_ifsc;
+      if (profile.bank_branch && document.getElementById('set_bank_branch')) document.getElementById('set_bank_branch').value = profile.bank_branch;
+      if (profile.upi_id && document.getElementById('set_upi_id')) document.getElementById('set_upi_id').value = profile.upi_id;
+
     }
 
     
@@ -4282,4 +4888,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-        </html>
+         </html>
