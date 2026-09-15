@@ -26,6 +26,70 @@
     body, button, input, select, textarea {
       font-family: 'Plus Jakarta Sans', 'Hind Siliguri', 'Noto Sans Devanagari', -apple-system, sans-serif !important;
     }
+  
+    /* Google Gemini Minimalist Settings & Dashboard Styling */
+    .gemini-card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .gemini-pill-btn {
+      background: #ffffff;
+      border-radius: 18px;
+      border: 1px solid #e2e8f0;
+      padding: 13px 18px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      transition: all 0.15s ease;
+    }
+    .gemini-pill-btn:active {
+      background: #f8fafc;
+      transform: scale(0.99);
+    }
+    .gemini-menu-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .gemini-menu-row:last-child {
+      border-bottom: none;
+    }
+    .gemini-menu-row:active {
+      background: #f8fafc;
+    }
+    .gemini-row-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .gemini-icon {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      font-size: 1.1rem;
+    }
+    .gemini-chevron {
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -195,6 +259,70 @@
     .k-btn.red { background: #fee2e2; color: #dc2626; }
     .k-btn.blue { background: #e0f2fe; color: #0284c7; }
     .k-btn.orange { background: #ffedd5; color: #ea580c; }
+  
+    /* Google Gemini Minimalist Settings & Dashboard Styling */
+    .gemini-card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .gemini-pill-btn {
+      background: #ffffff;
+      border-radius: 18px;
+      border: 1px solid #e2e8f0;
+      padding: 13px 18px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      transition: all 0.15s ease;
+    }
+    .gemini-pill-btn:active {
+      background: #f8fafc;
+      transform: scale(0.99);
+    }
+    .gemini-menu-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .gemini-menu-row:last-child {
+      border-bottom: none;
+    }
+    .gemini-menu-row:active {
+      background: #f8fafc;
+    }
+    .gemini-row-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .gemini-icon {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      font-size: 1.1rem;
+    }
+    .gemini-chevron {
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+
   </style>
 </head>
 <body>
@@ -1034,18 +1162,19 @@
           <button class="action-btn btn-calc" style="flex:0.3; padding:6px;" onclick="loadDashboard()">Load</button>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
-          <div style="background:#16a34a; color:#fff; border-radius:8px; padding:8px; text-align:center;">
-            <div style="font-size:0.65rem; font-weight:bold;">TOTAL SALES</div>
-            <div id="dashTotalSales" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
+        <!-- Minimalist Material Stat Cards (Gemini Clean Look) -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:10px 6px; text-align:center; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size:0.68rem; font-weight:700; color:#166534; letter-spacing:0.3px;">TOTAL SALES</div>
+            <div id="dashTotalSales" style="font-size:0.92rem; font-weight:800; color:#15803d; margin-top:4px;">Rs 0.00</div>
           </div>
-          <div style="background:#dc2626; color:#fff; border-radius:8px; padding:8px; text-align:center;">
-            <div style="font-size:0.65rem; font-weight:bold;">PURCHASES</div>
-            <div id="dashTotalPurchases" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
+          <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:12px; padding:10px 6px; text-align:center; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size:0.68rem; font-weight:700; color:#9f1239; letter-spacing:0.3px;">PURCHASES</div>
+            <div id="dashTotalPurchases" style="font-size:0.92rem; font-weight:800; color:#b91c1c; margin-top:4px;">Rs 0.00</div>
           </div>
-          <div style="background:#2563eb; color:#fff; border-radius:8px; padding:8px; text-align:center;">
-            <div style="font-size:0.65rem; font-weight:bold;">BALANCE</div>
-            <div id="dashNetBalance" style="font-size:0.85rem; font-weight:bold; margin-top:3px;">Rs 0.00</div>
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:10px 6px; text-align:center; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            <div style="font-size:0.68rem; font-weight:700; color:#1e40af; letter-spacing:0.3px;">BALANCE</div>
+            <div id="dashNetBalance" style="font-size:0.92rem; font-weight:800; color:#1d4ed8; margin-top:4px;">Rs 0.00</div>
           </div>
         </div>
 
@@ -6103,4 +6232,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-              </html>
+          </html>
