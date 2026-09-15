@@ -2329,10 +2329,10 @@
  if (!text) return 0.0;
  let s = String(text).trim();
  if (!s) return 0.0;
- s = s.replace(/(\d+)\s+(\d+/\d+)/g, '$1+$2');
+ s = s.replace(/(\d+)\s+(\d+\/\d+)/g, '$1+$2');
  s = s.replace(/\b0+(?=\d)/g, '');
  try {
- if (!/^[0-9+\\-*/. ()]+$/.test(s)) return 0.0;
+ if (!/^[0-9+*/. ()-]+$/.test(s)) return 0.0;
  return Function('"use strict";return (' + s + ')')() || 0.0;
  } catch (e) { return 0.0; }
  }
@@ -2361,7 +2361,6 @@
  function optimizeCuttingPlan(pieces) {
  if (!pieces || pieces.length === 0) return null;
  const sorted = [...pieces].sort((a, b) => b - a);
- const BLADE_KERF = 0.125; // 1/8 inch saw kerf
  let bestPlan = null;
  const stdLens = [180, 192, 144];
  for (const stdLen of stdLens) {
@@ -2371,7 +2370,7 @@
  if (p > stdLen) { valid = false; break; }
  let placed = false;
  for (const b of bins) {
- const sumB = b.reduce((a, c) => a + c, 0) + (b.length * BLADE_KERF);
+ const sumB = b.reduce((a, c) => a + c, 0);
  if (sumB + p <= stdLen) { b.push(p); placed = true; break; }
  }
  if (!placed) bins.push([p]);
@@ -2407,25 +2406,25 @@
  }
 
  function generateMaterialList(buckets) {
- let resText = "--- ACCUMULATED MATERIAL PURCHASE ---\\\\n\\\\n";
+ let resText = "--- ACCUMULATED MATERIAL PURCHASE ---\\\n\\\n";
  let hasItems = false;
  for (const name in buckets) {
  const pieces = buckets[name];
  if (pieces && pieces.length > 0) {
  hasItems = true;
  const plan = optimizeCuttingPlan(pieces);
- resText += `[${name}]\\\\n`;
+ resText += `[${name}]\\\n`;
  if (plan.oversize) {
- resText += "> SPECIAL ORDER (Oversized)\\\\n";
- pieces.forEach(p => { resText += ` > Piece: ${(Math.round(p * 100) / 100)}\\"\\\\n`; });
+ resText += "> SPECIAL ORDER (Oversized)\\\n";
+ pieces.forEach(p => { resText += ` > Piece: ${(Math.round(p * 100) / 100)}\"\\\n`; });
  } else {
  const ft = Math.floor(plan.len / 12);
- resText += `> Buy: ${plan.bins.length} pcs (${ft} ft)\\\\n`;
+ resText += `> Buy: ${plan.bins.length} pcs (${ft} ft)\\\n`;
  plan.bins.forEach((b, i) => {
  const cutsStr = formatCuts(b);
  const sumB = b.reduce((a, c) => a + c, 0);
  const waste = Math.round((plan.len - sumB) * 100) / 100;
- resText += ` > Stick #${i + 1}: Cut [ ${cutsStr} ] -> Waste: ${waste}\\"\\\\n`;
+ resText += ` > Stick #${i + 1}: Cut [ ${cutsStr} ] -> Waste: ${waste}\"\\\n`;
  });
  }
  }
@@ -2620,30 +2619,30 @@
  const unit_str = is_mm ? "mm" : "Inch";
 
  const total_sash_for_hw = s_c + (has_mesh ? 1 : 0);
- let hw_txt = "--- HARDWARE & ACCESSORIES ---\\n";
- hw_txt += `> Domal Bearing / Rollers: ${total_sash_for_hw * 2} pc\\n`;
- hw_txt += `> Touch Lock / Star Lock: ${s_c >= 3 ? 2 : 1} pc\\n`;
- hw_txt += `> L-Cleat (Corner Angle): ${total_sash_for_hw * 4} pc\\n> EPDM Gasket / Seal: Required\\n`;
+ let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
+ hw_txt += `> Domal Bearing / Rollers: ${total_sash_for_hw * 2} pc\n`;
+ hw_txt += `> Touch Lock / Star Lock: ${s_c >= 3 ? 2 : 1} pc\n`;
+ hw_txt += `> L-Cleat (Corner Angle): ${total_sash_for_hw * 4} pc\n> EPDM Gasket / Seal: Required\n`;
 
  const w_sign = net_w_mod >= 0 ? `+${Math.round(net_w_mod)}` : `${Math.round(net_w_mod)}`;
- let spec_info = `--- JINDAL SPECS (Track H:${Math.round(track_h)}mm | Handle:${Math.round(handle_h)}x${Math.round(handle_w)}mm) ---\\n`;
- spec_info += `> Height Formula: (H - ${Math.round(h_deduct_mm)} mm) [+22mm overlap]\\n`;
- spec_info += `> Width Formula: (W ${w_sign} mm) / ${s_c} [-12mm clearance]\\n`;
- spec_info += `> Glass Deduction: Sash - ${Math.round(g_deduct_mm)} mm [13mm pocket each side]\\n`;
+ let spec_info = `--- JINDAL SPECS (Track H:${Math.round(track_h)}mm | Handle:${Math.round(handle_h)}x${Math.round(handle_w)}mm) ---\n`;
+ spec_info += `> Height Formula: (H - ${Math.round(h_deduct_mm)} mm) [+22mm overlap]\n`;
+ spec_info += `> Width Formula: (W ${w_sign} mm) / ${s_c} [-12mm clearance]\n`;
+ spec_info += `> Glass Deduction: Sash - ${Math.round(g_deduct_mm)} mm [13mm pocket each side]\n`;
 
- let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\\n`;
+ let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
  alu_txt += spec_info;
- alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (2 pc)\\n`;
- alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (2 pc)\\n`;
- alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2} pc)\\n`;
- alu_txt += `> Sash Handle: ${disp(v_cut_in)} (${han_qty} pc)\\n`;
- alu_txt += `> Sash Interlock: ${disp(v_cut_in)} (${int_qty} pc)\\n`;
+ alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (2 pc)\n`;
+ alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (2 pc)\n`;
+ alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2} pc)\n`;
+ alu_txt += `> Sash Handle: ${disp(v_cut_in)} (${han_qty} pc)\n`;
+ alu_txt += `> Sash Interlock: ${disp(v_cut_in)} (${int_qty} pc)\n`;
 
  if (has_mesh) {
- alu_txt += `\\n--- MOSQUITO NET ---\\n> Mesh Top/Bot: ${disp(mesh_w_in)} (2 pc)\\n> Mesh Handle/Interlock: ${disp(v_cut_in)} (2 pc)\\n`;
+ alu_txt += `\n--- MOSQUITO NET ---\n> Mesh Top/Bot: ${disp(mesh_w_in)} (2 pc)\n> Mesh Handle/Interlock: ${disp(v_cut_in)} (2 pc)\n`;
  }
 
- const glass_txt = `\\n--- GLASS SIZES ---\\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c} pc)\\n`;
+ const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c} pc)\n`;
  const glass_key = `${disp(gh_in)} x ${disp(gw_in)}`;
  dm_glass_dict[glass_key] = (dm_glass_dict[glass_key] || 0) + (s_c * win_qty);
 
@@ -2667,7 +2666,7 @@
  if (has_mesh) dm_buckets[interlock_key].push(v_cut_in);
 
  const prevOut = document.getElementById('dm_alu_out').textContent;
- document.getElementById('dm_alu_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\\n\\n" + prevOut;
+ document.getElementById('dm_alu_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\n\n" + prevOut;
  document.getElementById('dm_mat_out').textContent = generateMaterialList(dm_buckets);
  }
 
@@ -2742,19 +2741,19 @@
 
  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
 
- let hw_txt = "--- HARDWARE & ACCESSORIES ---\\n";
- hw_txt += `> Sliding Roller / Bearing: ${g_c * 2} pc\\n`;
- hw_txt += `> Star Lock: ${g_c >= 3 ? 2 : 1} pc\\n> Rubber & Woolpile: Required\\n`;
+ let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
+ hw_txt += `> Sliding Roller / Bearing: ${g_c * 2} pc\n`;
+ hw_txt += `> Star Lock: ${g_c >= 3 ? 2 : 1} pc\n> Rubber & Woolpile: Required\n`;
 
- let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${raw_h} x W:${raw_w} (${sys_type.split(' ')[0]})${qty_str}]\\n`;
- alu_txt += `> Track Top: ${disp(w_in)} (1 pc)\\n`;
- alu_txt += `> Track Bottom: ${disp(w_in)} (1 pc)\\n`;
- alu_txt += `> Track Vertical: ${disp(h_in)} (2 pc)\\n`;
- alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${g_c * 2} pc)\\n`;
- alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty} pc)\\n`;
- alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty} pc)\\n`;
+ let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${raw_h} x W:${raw_w} (${sys_type.split(' ')[0]})${qty_str}]\n`;
+ alu_txt += `> Track Top: ${disp(w_in)} (1 pc)\n`;
+ alu_txt += `> Track Bottom: ${disp(w_in)} (1 pc)\n`;
+ alu_txt += `> Track Vertical: ${disp(h_in)} (2 pc)\n`;
+ alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${g_c * 2} pc)\n`;
+ alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty} pc)\n`;
+ alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty} pc)\n`;
 
- const glass_txt = `\\n--- GLASS SIZES ---\\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)\\n`;
+ const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)\n`;
  const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
  sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + (g_c * win_qty);
 
@@ -2776,7 +2775,7 @@
  for (let q=0; q<win_qty; q++) { for (let i = 0; i < int_qty; i++) sl_buckets[sash_interlock_key].push(handle_h); }
 
  const prevOut = document.getElementById('sl_out').textContent;
- document.getElementById('sl_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\\n\\n" + prevOut;
+ document.getElementById('sl_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\n\n" + prevOut;
  document.getElementById('sl_mat_out').textContent = generateMaterialList(sl_buckets);
  }
 
@@ -2856,25 +2855,25 @@
  const unit_str = is_mm ? "mm" : "Inch";
  const total_sash_qty = top_open + bot_open;
 
- let out_txt = `[${series} Win #${cc_window_count} | Size: ${raw_h} x ${raw_w} ${unit_str}]\\n`;
- out_txt += "--- 1. OUTER FRAME & MULLIONS ---\\n";
- out_txt += `> Outer Vertical: ${disp(h_mm)} (2 pc)\\n> Outer Horizontal: ${disp(w_mm)} (2 pc)\\n`;
+ let out_txt = `[${series} Win #${cc_window_count} | Size: ${raw_h} x ${raw_w} ${unit_str}]\n`;
+ out_txt += "--- 1. OUTER FRAME & MULLIONS ---\n";
+ out_txt += `> Outer Vertical: ${disp(h_mm)} (2 pc)\n> Outer Horizontal: ${disp(w_mm)} (2 pc)\n`;
  cc_buckets["Casement Outer"].push(h_mm / 25.4, h_mm / 25.4, w_mm / 25.4, w_mm / 25.4);
 
  if (h_mullion_qty > 0) {
- out_txt += `> Horizontal Divider: ${disp(w_mm - outer_2)} (${h_mullion_qty} pc)\\n`;
+ out_txt += `> Horizontal Divider: ${disp(w_mm - outer_2)} (${h_mullion_qty} pc)\n`;
  for (let i = 0; i < h_mullion_qty; i++) cc_buckets["Casement Mullion"].push((w_mm - outer_2) / 25.4);
  }
  if (top_v_mullion_qty > 0) {
- out_txt += `> Top Vert. Mullions: ${disp(top_gap_h)} (${top_v_mullion_qty} pc)\\n`;
+ out_txt += `> Top Vert. Mullions: ${disp(top_gap_h)} (${top_v_mullion_qty} pc)\n`;
  for (let i = 0; i < top_v_mullion_qty; i++) cc_buckets["Casement Mullion"].push(top_gap_h / 25.4);
  }
  if (bot_v_mullion_qty > 0) {
- out_txt += `> Bot Vert. Mullions: ${disp(bot_gap_h)} (${bot_v_mullion_qty} pc)\\n`;
+ out_txt += `> Bot Vert. Mullions: ${disp(bot_gap_h)} (${bot_v_mullion_qty} pc)\n`;
  for (let i = 0; i < bot_v_mullion_qty; i++) cc_buckets["Casement Mullion"].push(bot_gap_h / 25.4);
  }
 
- out_txt += `\\n--- 2. TOP ROW DETAILS (${top_cols} SECTIONS) ---\\n`;
+ out_txt += `\n--- 2. TOP ROW DETAILS (${top_cols} SECTIONS) ---\n`;
  let w_gap_open = top_gap_w, w_gap_fixed = top_gap_w;
  if (mid_w_mm > 0 && top_cols >= 3) {
  const num_center_gaps = top_cols - 2;
@@ -2885,19 +2884,19 @@
  }
 
  if (top_open > 0) {
- out_txt += `[OPENABLE SASH | Qty: ${top_open} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\\n`;
+ out_txt += `[OPENABLE SASH | Qty: ${top_open} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\n`;
  const s1_h = top_gap_h + overlap, s1_w = w_gap_open + overlap;
  const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
- out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\\n > Glass Size: ${disp(g_h)} x ${disp(g_w)}\\n`;
+ out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\n > Glass Size: ${disp(g_h)} x ${disp(g_w)}\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + top_open;
  for (let i = 0; i < top_open * 2; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
  }
 
  if (top_fixed > 0) {
- out_txt += `[FIXED GLASS | Qty: ${top_fixed} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_fixed)}]\\n`;
+ out_txt += `[FIXED GLASS | Qty: ${top_fixed} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_fixed)}]\n`;
  const g_h = top_gap_h - glass_m_fixed, g_w = w_gap_fixed - glass_m_fixed;
- out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\\n > Square Clip (Beading): Required\\n`;
+ out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\n > Square Clip (Beading): Required\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + top_fixed;
  const beading_length = (top_gap_h + w_gap_fixed) * 2 / 25.4;
@@ -2905,20 +2904,20 @@
  }
 
  if (bot_cols > 0 && rows === 2) {
- out_txt += `\\n--- 3. BOTTOM ROW DETAILS (${bot_cols} SECTIONS) ---\\n`;
+ out_txt += `\n--- 3. BOTTOM ROW DETAILS (${bot_cols} SECTIONS) ---\n`;
  if (bot_open > 0) {
- out_txt += `[OPENABLE SASH | Qty: ${bot_open} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\\n`;
+ out_txt += `[OPENABLE SASH | Qty: ${bot_open} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
  const s1_h = bot_gap_h + overlap, s1_w = bot_gap_w + overlap;
  const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
- out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\\n > Glass Size: ${disp(g_h)} x ${disp(g_w)}\\n`;
+ out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\n > Glass Size: ${disp(g_h)} x ${disp(g_w)}\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + bot_open;
  for (let i = 0; i < bot_open * 2; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
  }
  if (bot_fixed > 0) {
- out_txt += `[FIXED GLASS | Qty: ${bot_fixed} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\\n`;
+ out_txt += `[FIXED GLASS | Qty: ${bot_fixed} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
  const g_h = bot_gap_h - glass_m_fixed, g_w = bot_gap_w - glass_m_fixed;
- out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\\n > Square Clip (Beading): Required\\n`;
+ out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\n > Square Clip (Beading): Required\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + bot_fixed;
  const beading_length = (bot_gap_h + bot_gap_w) * 2 / 25.4;
@@ -2926,17 +2925,17 @@
  }
  }
 
- let hw_txt = "\\n--- HARDWARE & ACCESSORIES ---\\n";
+ let hw_txt = "\n--- HARDWARE & ACCESSORIES ---\n";
  if (total_sash_qty > 0) {
- hw_txt += `> Friction Stay / Hinges: ${total_sash_qty * 2} pc\\n`;
- hw_txt += `> Casement Handle: ${total_sash_qty} pc\\n`;
+ hw_txt += `> Friction Stay / Hinges: ${total_sash_qty * 2} pc\n`;
+ hw_txt += `> Casement Handle: ${total_sash_qty} pc\n`;
  } else {
- hw_txt += "> No Sash Hardware Required (Fully Fixed)\\n";
+ hw_txt += "> No Sash Hardware Required (Fully Fixed)\n";
  }
  out_txt += hw_txt;
 
  const prevOut = document.getElementById('cc_out').textContent;
- document.getElementById('cc_out').textContent = out_txt + "===================================\\n\\n" + prevOut;
+ document.getElementById('cc_out').textContent = out_txt + "===================================\n\n" + prevOut;
  document.getElementById('cc_mat_out').textContent = generateMaterialList(cc_buckets);
  }
 
@@ -2995,28 +2994,28 @@
  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
  const unit_str = is_mm ? "mm" : "Inch";
 
- let hw_txt = "--- HARDWARE & ACCESSORIES ---\\n";
- hw_txt += `> Door Hinges / Pivot: 3 pc (Per Leaf)\\n> Door Handle: 1 Set\\n> Door Lock: 1 Set\\n`;
+ let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
+ hw_txt += `> Door Hinges / Pivot: 3 pc (Per Leaf)\n> Door Handle: 1 Set\n> Door Lock: 1 Set\n`;
  if (d_type === "Standard Door" || d_type === "Floor Spring Door") {
- hw_txt += "> Door Closer / Floor Spring: 1 pc\\n";
+ hw_txt += "> Door Closer / Floor Spring: 1 pc\n";
  }
 
- let out = `[Door #${dr_door_count} - ${d_type} (${raw_h} x ${raw_w} ${unit_str})]\\n`;
+ let out = `[Door #${dr_door_count} - ${d_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
  if (has_outer) {
- out += `--- OUTER FRAME ---\\n> Outer Vertical: ${disp(outer_v)} (2 pc)\\n> Outer Top Horizontal: ${disp(outer_h)} (1 pc)\\n`;
+ out += `--- OUTER FRAME ---\n> Outer Vertical: ${disp(outer_v)} (2 pc)\n> Outer Top Horizontal: ${disp(outer_h)} (1 pc)\n`;
  dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
  }
- out += `--- DOOR SASH (${palla_qty} Palla) ---\\n> Door Vertical: ${disp(door_v)} (${palla_qty * 2} pc)\\n> Door Top/Bottom: ${disp(door_tb)} (${palla_qty * 2} pc)\\n`;
+ out += `--- DOOR SASH (${palla_qty} Palla) ---\n> Door Vertical: ${disp(door_v)} (${palla_qty * 2} pc)\n> Door Top/Bottom: ${disp(door_tb)} (${palla_qty * 2} pc)\n`;
  for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Verticals"].push(door_v);
  for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Horizontals"].push(door_tb);
 
  out += hw_txt;
- out += `--- GLASS / BOARD ---\\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${palla_qty} pc)\\n`;
+ out += `--- GLASS / BOARD ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${palla_qty} pc)\n`;
  const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
  dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + palla_qty;
 
  const prevOut = document.getElementById('dr_out').textContent;
- document.getElementById('dr_out').textContent = out + "===================================\\n\\n" + prevOut;
+ document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
  document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
  }
 
@@ -3053,33 +3052,33 @@
  pt_part_count += 1;
  const unit_str = is_mm ? "mm" : "Inch";
 
- let hw_txt = "--- HARDWARE & ACCESSORIES ---\\n> Square Clip (Beading) Required\\n> Rubber/Sealant as per perimeter\\n";
+ let hw_txt = "--- HARDWARE & ACCESSORIES ---\n> Square Clip (Beading) Required\n> Rubber/Sealant as per perimeter\n";
  let out = "";
 
  if (p_type === "Fixed Partition") {
- out = `[Partition #${pt_part_count} - ${p_type} (${raw_h} x ${raw_w} ${unit_str})]\\n`;
+ out = `[Partition #${pt_part_count} - ${p_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
  const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
  const inner_h = (w - ((cols + 1) * 1.5)) / cols;
 
- out += "--- SINGLE GLAZING ---\\n";
- out += `> Vertical: ${disp(outer_v)} (2 pc)\\n> Horizontal: ${disp(outer_h)} (2 pc)\\n`;
+ out += "--- SINGLE GLAZING ---\n";
+ out += `> Vertical: ${disp(outer_v)} (2 pc)\n> Horizontal: ${disp(outer_h)} (2 pc)\n`;
  pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
 
- out += "--- DOUBLE GLAZING ---\\n";
+ out += "--- DOUBLE GLAZING ---\n";
  if (cols > 1) {
- out += `> Vertical: ${disp(inter_v)} (${cols - 1} pc)\\n`;
+ out += `> Vertical: ${disp(inter_v)} (${cols - 1} pc)\n`;
  for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
  }
  const h_qty = cols * (rows - 1);
  if (h_qty > 0) {
- out += `> Horizontal: ${disp(inner_h)} (${h_qty} pc)\\n`;
+ out += `> Horizontal: ${disp(inner_h)} (${h_qty} pc)\n`;
  for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
  }
 
  const gap_h = (h - ((rows + 1) * 1.5)) / rows;
  const glass_qty = cols * rows;
  out += hw_txt;
- out += `--- GLASS / BOARD ---\\n> Size: ${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)} (${glass_qty} pc)\\n`;
+ out += `--- GLASS / BOARD ---\n> Size: ${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)} (${glass_qty} pc)\n`;
  const gKey = `${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)}`;
  pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
 
@@ -3091,47 +3090,47 @@
  const dh = is_mm ? raw_dh / 25.4 : raw_dh;
  const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
- out = `[Partition #${pt_part_count} - Door + Partition (${raw_h} x ${raw_w} ${unit_str})]\\n`;
+ out = `[Partition #${pt_part_count} - Door + Partition (${raw_h} x ${raw_w} ${unit_str})]\n`;
  const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
  const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
  const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
 
- out += "--- VERTICALS ---\\n";
- out += `> Outer Vertical: ${disp(outer_v)} (2 pc)\\n> Door Side Vertical: ${disp(door_side_v)} (1 pc)\\n`;
+ out += "--- VERTICALS ---\n";
+ out += `> Outer Vertical: ${disp(outer_v)} (2 pc)\n> Door Side Vertical: ${disp(door_side_v)} (1 pc)\n`;
  pt_buckets["Single Glazing"].push(outer_v, outer_v);
  pt_buckets["Double Glazing"].push(door_side_v);
 
  if (cols > 1) {
- out += `> Intermediate Vertical: ${disp(inter_v)} (${cols - 1} pc)\\n`;
+ out += `> Intermediate Vertical: ${disp(inter_v)} (${cols - 1} pc)\n`;
  for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
  }
 
- out += "--- HORIZONTALS ---\\n";
- out += `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\\n> Door Top Transom: ${disp(rem_w)} (1 pc)\\n`;
+ out += "--- HORIZONTALS ---\n";
+ out += `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n> Door Top Transom: ${disp(rem_w)} (1 pc)\n`;
  pt_buckets["Single Glazing"].push(outer_h_top);
  pt_buckets["Double Glazing"].push(rem_w);
 
  const h_qty = cols * (rows - 1);
  if (h_qty > 0) {
- out += `> Internal Horizontal: ${disp(inner_h)} (${h_qty} pc)\\n`;
+ out += `> Internal Horizontal: ${disp(inner_h)} (${h_qty} pc)\n`;
  for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
  }
 
  const door_v = dh - 1.75, door_tb = dw - 6.75;
  const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
 
- out += `--- DOOR SASH ---\\n> Vertical: ${disp(door_v)} (2 pc)\\n> Top/Bottom: ${disp(door_tb)} (2 pc)\\n> Glass Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\\n`;
+ out += `--- DOOR SASH ---\n> Vertical: ${disp(door_v)} (2 pc)\n> Top/Bottom: ${disp(door_tb)} (2 pc)\n> Glass Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
  pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
 
  const transom_g_h = (h - dh - 1.5) - 0.25, transom_g_w = dw - 0.25;
  const part_g_h = ((h - ((rows + 1) * 1.5)) / rows) - 0.25, part_g_w = inner_h - 0.25;
  const part_g_qty = cols * rows;
 
- hw_txt += "> Door Lock: 1 Set\\n> Door Pivot / Floor Spring: 1 Set\\n> Door Handle: 1 Set\\n";
+ hw_txt += "> Door Lock: 1 Set\n> Door Pivot / Floor Spring: 1 Set\n> Door Handle: 1 Set\n";
  out += hw_txt;
- out += `--- FIXED GLASS / BOARD ---\\n> Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\\n`;
+ out += `--- FIXED GLASS / BOARD ---\n> Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
  if (part_g_qty > 0) {
- out += `> Partition Grid Glass: ${disp(part_g_h)} x ${disp(part_g_w)} (${part_g_qty} pc)\\n`;
+ out += `> Partition Grid Glass: ${disp(part_g_h)} x ${disp(part_g_w)} (${part_g_qty} pc)\n`;
  }
 
  pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
@@ -3142,7 +3141,7 @@
  }
 
  const prevOut = document.getElementById('pt_out').textContent;
- document.getElementById('pt_out').textContent = out + "===================================\\n\\n" + prevOut;
+ document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
  document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
  }
 
@@ -3192,15 +3191,15 @@
  const compound = Math.round(area_sqm * 0.35 * 10) / 10;
  const tape = Math.round(area_sqm * 1.2 * 10) / 10;
 
- mat_txt += `> ${chosen_board} -> ${final_boards} Pcs\\n`;
- mat_txt += `> Main Channel (12ft): ${main_channel} Pcs\\n`;
- mat_txt += `> Cross Section (12ft): ${cross_section} Pcs\\n`;
- mat_txt += `> Perimeter L-Patti (12ft): ${l_patti} Pcs\\n`;
- mat_txt += "--- Professional Accessories ---\\n";
- mat_txt += `> Soffit Cleat & Rawl Plug: ${cleats_plugs} Sets\\n`;
- mat_txt += `> Drywall Screws: ${screws} Pcs\\n`;
- mat_txt += `> Jointing Compound: ${compound} Kg\\n`;
- mat_txt += `> Fiber Tape: ${tape} Meter\\n`;
+ mat_txt += `> ${chosen_board} -> ${final_boards} Pcs\n`;
+ mat_txt += `> Main Channel (12ft): ${main_channel} Pcs\n`;
+ mat_txt += `> Cross Section (12ft): ${cross_section} Pcs\n`;
+ mat_txt += `> Perimeter L-Patti (12ft): ${l_patti} Pcs\n`;
+ mat_txt += "--- Professional Accessories ---\n";
+ mat_txt += `> Soffit Cleat & Rawl Plug: ${cleats_plugs} Sets\n`;
+ mat_txt += `> Drywall Screws: ${screws} Pcs\n`;
+ mat_txt += `> Jointing Compound: ${compound} Kg\n`;
+ mat_txt += `> Fiber Tape: ${tape} Meter\n`;
  } else {
  const panels = Math.ceil((area / 8.33) * 1.05);
  const tube_ft = (area / 2) + perimeter;
@@ -3208,13 +3207,13 @@
  const l_patti = Math.ceil(perimeter / 12);
  const screws = Math.ceil(area * 1.5);
 
- mat_txt += `> PVC Panels (10ft x 10in): ${panels} Pcs\\n`;
- mat_txt += `> Support Channel/Tube (12ft): ${pvc_channels} Pcs\\n`;
- mat_txt += `> Perimeter U-Patti/L-Patti: ${l_patti} Pcs\\n`;
- mat_txt += `> Screws (Half Inch): ${screws} Pcs\\n`;
+ mat_txt += `> PVC Panels (10ft x 10in): ${panels} Pcs\n`;
+ mat_txt += `> Support Channel/Tube (12ft): ${pvc_channels} Pcs\n`;
+ mat_txt += `> Perimeter U-Patti/L-Patti: ${l_patti} Pcs\n`;
+ mat_txt += `> Screws (Half Inch): ${screws} Pcs\n`;
  }
 
- const res = `--- ROOM DETAILS ---\\nRoom Size: ${l} ft x ${w} ft\\nTotal Area: ${area.toFixed(2)} Sq.Ft\\n-------------------------\\n--- MATERIAL REQUIRED ---\\n` + mat_txt;
+ const res = `--- ROOM DETAILS ---\nRoom Size: ${l} ft x ${w} ft\nTotal Area: ${area.toFixed(2)} Sq.Ft\n-------------------------\n--- MATERIAL REQUIRED ---\n` + mat_txt;
  document.getElementById('ce_out').textContent = res;
  }
 
@@ -3413,7 +3412,7 @@
  const loc_lbl = itm.location ? `[${itm.location}] ` : "";
  lines.push(`[${i + 1}] ${loc_lbl}${itm.type} | ${itm.h}x${itm.w} ${itm.unit} | Qty:${itm.qty} @ Rs.${itm.rate.toFixed(0)} | Rs:${itm.price.toFixed(2)}`);
  });
- document.getElementById('bill_queue_text').textContent = lines.join('\\n');
+ document.getElementById('bill_queue_text').textContent = lines.join('\n');
  }
 
  function getDiscountAndGst() {
@@ -3456,8 +3455,8 @@
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
  const contact_info = profile.phone || "9239413517 / 9641405426";
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const email_info = profile.email ? `\\n Email: ${profile.email}` : "";
- const gst_info = profile.gst ? `\\n GST No: ${profile.gst}` : "";
+ const email_info = profile.email ? `\n Email: ${profile.email}` : "";
+ const gst_info = profile.gst ? `\n GST No: ${profile.gst}` : "";
 
  const bill_stage = document.getElementById('q_stage').value;
  const c_name = document.getElementById('q_name').value || 'Customer';
@@ -3469,16 +3468,16 @@
  const advance_paid = safeEval(document.getElementById('q_advance').value);
  const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
 
- let bill = "=================================================\\n";
- bill += ` ${shop_name}\\n`;
- bill += ` ${addr}\\n`;
- bill += ` Mob: ${contact_info}${email_info}${gst_info}\\n`;
- bill += "=================================================\\n";
- bill += `Invoice Type: ${bill_stage}\\nDate: ${today}\\n\\n`;
- bill += `Bill To:\\nName: ${c_name}\\nPhone: ${c_phone}\\nAddress: ${c_addr}\\n`;
- bill += "-------------------------------------------------\\n";
- bill += "SN. Description Qty Sq.Ft Amount\\n";
- bill += "-------------------------------------------------\\n";
+ let bill = "=================================================\n";
+ bill += ` ${shop_name}\n`;
+ bill += ` ${addr}\n`;
+ bill += ` Mob: ${contact_info}${email_info}${gst_info}\n`;
+ bill += "=================================================\n";
+ bill += `Invoice Type: ${bill_stage}\nDate: ${today}\n\n`;
+ bill += `Bill To:\nName: ${c_name}\nPhone: ${c_phone}\nAddress: ${c_addr}\n`;
+ bill += "-------------------------------------------------\n";
+ bill += "SN. Description Qty Sq.Ft Amount\n";
+ bill += "-------------------------------------------------\n";
 
  let grand_total = 0.0;
  billItems.forEach((item, i) => {
@@ -3488,8 +3487,8 @@
  const g_type = item.glass_type || 'Clear Float';
  const tough_txt = item.toughened ? " [TOUGHENED: YES]" : "";
  const loc_txt = item.location ? `[${item.location}] ` : "";
- const desc = `${loc_txt}${item.type}\\n Specs: ${color} (${thick}) | ${g_thick} ${g_type}${tough_txt}\\n Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}`;
- bill += `${i + 1}. ${desc}\\n ${item.qty} ${item.area.toFixed(1)} ${item.price.toFixed(2)}\\n`;
+ const desc = `${loc_txt}${item.type}\n Specs: ${color} (${thick}) | ${g_thick} ${g_type}${tough_txt}\n Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}`;
+ bill += `${i + 1}. ${desc}\n ${item.qty} ${item.area.toFixed(1)} ${item.price.toFixed(2)}\n`;
  grand_total += item.price;
  });
 
@@ -3498,27 +3497,27 @@
  const final_total = net_total + gst_amount + extra_charge;
  const due_amount = final_total - advance_paid;
 
- bill += "-------------------------------------------------\\n";
- bill += ` Sub Total: Rs ${grand_total.toFixed(2)}\\n`;
- if (discount > 0) bill += ` Discount: -Rs ${discount.toFixed(2)}\\n`;
- if (gst_pct > 0) bill += ` GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}\\n`;
- if (extra_charge > 0) bill += ` Transport/Labor: +Rs ${extra_charge.toFixed(2)}\\n`;
+ bill += "-------------------------------------------------\n";
+ bill += ` Sub Total: Rs ${grand_total.toFixed(2)}\n`;
+ if (discount > 0) bill += ` Discount: -Rs ${discount.toFixed(2)}\n`;
+ if (gst_pct > 0) bill += ` GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}\n`;
+ if (extra_charge > 0) bill += ` Transport/Labor: +Rs ${extra_charge.toFixed(2)}\n`;
 
- bill += ` GRAND TOTAL: Rs ${final_total.toFixed(2)}\\n`;
- bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\\n`;
- bill += ` DUE AMOUNT: Rs ${due_amount.toFixed(2)}\\n`;
- bill += "-------------------------------------------------\\n";
- bill += "TERMS & CONDITIONS:\\n";
- bill += "1. 50% Advance with official work order.\\n";
- bill += "2. Balance payment must be cleared on delivery / fitting.\\n";
- bill += "3. Quotation is valid for 15 days from issue date.\\n";
- bill += "4. Glass & cut sections cannot be returned once processed.\\n";
- bill += "-------------------------------------------------\\n\\n";
- bill += "Customer Signature: Authorized Signature:\\n";
- bill += "___________________ _____________________\\n";
- bill += ` (${shop_name})\\n`;
- bill += "=================================================\\n";
- bill += "Thank you for your business!\\n -- App by Smart worker --\\n";
+ bill += ` GRAND TOTAL: Rs ${final_total.toFixed(2)}\n`;
+ bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\n`;
+ bill += ` DUE AMOUNT: Rs ${due_amount.toFixed(2)}\n`;
+ bill += "-------------------------------------------------\n";
+ bill += "TERMS & CONDITIONS:\n";
+ bill += "1. 50% Advance with official work order.\n";
+ bill += "2. Balance payment must be cleared on delivery / fitting.\n";
+ bill += "3. Quotation is valid for 15 days from issue date.\n";
+ bill += "4. Glass & cut sections cannot be returned once processed.\n";
+ bill += "-------------------------------------------------\n\n";
+ bill += "Customer Signature: Authorized Signature:\n";
+ bill += "___________________ _____________________\n";
+ bill += ` (${shop_name})\n`;
+ bill += "=================================================\n";
+ bill += "Thank you for your business!\n -- App by Smart worker --\n";
 
  document.getElementById('bill_output').textContent = bill;
  }
@@ -3726,7 +3725,7 @@
  ["2", "Star Lock / Concealed Touch Lock", "1 per window / 2 for center open", "Verified [ ]"],
  ["3", "EPDM Gasket / Rubber Beading", "Perimeter coverage as per glass size", "Verified [ ]"],
  ["4", "Silicon Sealant Tubes (Clear / Black)", "Weather sealing as required", "Verified [ ]"],
- ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2\\" & 1\\" Screws)", "Verified [ ]"]
+ ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2\" & 1\" Screws)", "Verified [ ]"]
  ];
 
  doc.autoTable({
@@ -3758,8 +3757,8 @@
  startY: currentY,
  head: [['STORE IN-CHARGE / REQUISITION BY', 'WHOLESALE SUPPLIER / DISPATCH STAMP']],
  body: [[
- `Prepared By: _______________________\\n\\nFor: ${shop_name}\\n\\nPhone: ${contact}`,
- "Received & Dispatched By: _______________________\\n\\nSupplier Stamp / Memo No: _______________________\\n\\nDate: _______________________"
+ `Prepared By: _______________________\n\nFor: ${shop_name}\n\nPhone: ${contact}`,
+ "Received & Dispatched By: _______________________\n\nSupplier Stamp / Memo No: _______________________\n\nDate: _______________________"
  ]],
  theme: 'grid',
  headStyles: {
@@ -3835,7 +3834,7 @@
 
  const tableData = billItems.map((itm, i) => [
  i + 1,
- `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\\nSpecs: ${itm.color} (${itm.thickness})\\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
+ `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
  itm.qty,
  itm.area.toFixed(1),
  `Rs ${itm.rate}`,
@@ -4372,7 +4371,7 @@ function addTeamMember() {
  // Transfer into Quotation
  convertKhataToQuotation();
 
- const summary = `SUCCESSFULLY PROCESSED ALL SITE PRODUCTS!\\n----------------------------------------\\n• Casement 40mm/34mm: ${casementCount} Windows\\n• Partitions (Fixed/Door): ${partitionCount} Grids\\n• Domal Windows: ${domalCount} Windows\\n• Sliding Windows: ${slidingCount} Windows\\n• Doors: ${doorCount} Doors\\n\\nAll cutting sizes, profile purchase sticks, glass lists, and client billing have been generated!`;
+ const summary = `SUCCESSFULLY PROCESSED ALL SITE PRODUCTS!\n----------------------------------------\n• Casement 40mm/34mm: ${casementCount} Windows\n• Partitions (Fixed/Door): ${partitionCount} Grids\n• Domal Windows: ${domalCount} Windows\n• Sliding Windows: ${slidingCount} Windows\n• Doors: ${doorCount} Doors\n\nAll cutting sizes, profile purchase sticks, glass lists, and client billing have been generated!`;
  alert(summary);
  }
 
@@ -4609,7 +4608,7 @@ function addTeamMember() {
  itm.room,
  itm.tag,
  itm.category,
- `${itm.h}\\" x ${itm.w}\\"`,
+ `${itm.h}\" x ${itm.w}\"`,
  `${itm.qty} Pcs`,
  `${itm.total_sqft.toFixed(1)}`,
  `Rs ${Math.round(itm.labour_cost)}`,
@@ -4668,8 +4667,8 @@ function addTeamMember() {
  startY: currentY,
  head: [['SITE LABOUR CHARGE BREAKDOWN', 'INSTALLATION GUIDELINES & SPECIFICATIONS']],
  body: [[
- `• Total Fabricated Area: ${totalSqft.toFixed(1)} Sq.Ft\\n• Total Installation Openings: ${totalUnits} Units\\n• Net Making & Fitting Labour: Rs. ${Math.round(totalLabour).toLocaleString('en-IN')}/-\\n(Note: Includes site measurement, framing, shutter hanging & glass sealing)`,
- `• All sliding tracks to be plumbed & leveled with water level\\n• Apply weather-proof silicone sealant around perimeter\\n• Install heavy-duty nylon rollers and align star locks\\n• Verify 45-degree corner joints on all casement & domal frames`
+ `• Total Fabricated Area: ${totalSqft.toFixed(1)} Sq.Ft\n• Total Installation Openings: ${totalUnits} Units\n• Net Making & Fitting Labour: Rs. ${Math.round(totalLabour).toLocaleString('en-IN')}/-\n(Note: Includes site measurement, framing, shutter hanging & glass sealing)`,
+ `• All sliding tracks to be plumbed & leveled with water level\n• Apply weather-proof silicone sealant around perimeter\n• Install heavy-duty nylon rollers and align star locks\n• Verify 45-degree corner joints on all casement & domal frames`
  ]],
  theme: 'grid',
  headStyles: {
@@ -4694,8 +4693,8 @@ function addTeamMember() {
  startY: currentY,
  head: [['SITE IN-CHARGE / CLIENT SIGNATURE', 'FITTER / FABRICATION MASTER SIGNATURE']],
  body: [[
- `Measurements Accepted By: _______________________\\n\\nClient Name: ${clientName}\\n\\nDate: ${today}`,
- `Recorded & Verified By: _______________________\\n\\nFor: ${shop_name}\\n\\nPhone: ${contact}`
+ `Measurements Accepted By: _______________________\n\nClient Name: ${clientName}\n\nDate: ${today}`,
+ `Recorded & Verified By: _______________________\n\nFor: ${shop_name}\n\nPhone: ${contact}`
  ]],
  theme: 'grid',
  headStyles: {
@@ -4712,7 +4711,7 @@ function addTeamMember() {
  doc.setTextColor(100, 116, 139);
  doc.text("-- Generated via Smart Worker Pro Master Site Measurement Khata System --", 105, 290, { align: "center" });
 
- doc.save(`SiteKhata_${clientName.replace(/\s+/g, '_')}_${today.replace(///g, '-')}.pdf`);
+ doc.save(`SiteKhata_${clientName.replace(/\s+/g, '_')}_${today.replace(/\//g, '-')}.pdf`);
  }
 
  function exportKhataMaterialOrderPdf() {
@@ -4738,7 +4737,7 @@ function addTeamMember() {
  const runFt = ((itm.h + itm.w) * 2 / 12) * itm.qty;
  siteBuckets[catKey].push(runFt * 12);
 
- const gKey = `${itm.h - 4}\\" x ${Math.round(itm.w / 2)}\\" (${itm.glass})`;
+ const gKey = `${itm.h - 4}\" x ${Math.round(itm.w / 2)}\" (${itm.glass})`;
  siteGlass[gKey] = (siteGlass[gKey] || 0) + (itm.qty * 2);
  });
 
@@ -4758,20 +4757,20 @@ function addTeamMember() {
  const totalLabour = siteKhataItems.reduce((a, b) => a + b.labour_cost, 0);
  const totalAmount = siteKhataItems.reduce((a, b) => a + b.est_price, 0);
 
- let msg = `*SMART WORKER PRO - SITE MEASUREMENT KHATA*\\n`;
- msg += `Client: ${clientName}\\nSite: ${siteLoc}\\n`;
- msg += `------------------------------------\\n`;
- msg += `Total Units: ${totalUnits} Pcs\\nTotal Area: ${totalSqft.toFixed(1)} Sq.Ft\\n`;
- msg += `Total Labour: Rs ${Math.round(totalLabour).toLocaleString('en-IN')}\\n`;
- msg += `Est. Total: Rs ${Math.round(totalAmount).toLocaleString('en-IN')}\\n`;
- msg += `------------------------------------\\n`;
- msg += `*ROOM-WISE OPENINGS:*\\n`;
+ let msg = `*SMART WORKER PRO - SITE MEASUREMENT KHATA*\n`;
+ msg += `Client: ${clientName}\nSite: ${siteLoc}\n`;
+ msg += `------------------------------------\n`;
+ msg += `Total Units: ${totalUnits} Pcs\nTotal Area: ${totalSqft.toFixed(1)} Sq.Ft\n`;
+ msg += `Total Labour: Rs ${Math.round(totalLabour).toLocaleString('en-IN')}\n`;
+ msg += `Est. Total: Rs ${Math.round(totalAmount).toLocaleString('en-IN')}\n`;
+ msg += `------------------------------------\n`;
+ msg += `*ROOM-WISE OPENINGS:*\n`;
 
  siteKhataItems.forEach((itm, i) => {
- msg += `${i + 1}. [${itm.room} - ${itm.tag}] ${itm.category}\\n Size: ${itm.h}\\"x${itm.w}\\" | Qty: ${itm.qty} | ${itm.total_sqft.toFixed(1)} Sq.Ft\\n`;
+ msg += `${i + 1}. [${itm.room} - ${itm.tag}] ${itm.category}\n Size: ${itm.h}\"x${itm.w}\" | Qty: ${itm.qty} | ${itm.total_sqft.toFixed(1)} Sq.Ft\n`;
  });
 
- msg += `\\n-- Powered by Smart Worker Pro Fabrication Systems --`;
+ msg += `\n-- Powered by Smart Worker Pro Fabrication Systems --`;
  const encoded = encodeURIComponent(msg);
  window.open(`https://wa.me/?text=${encoded}`, '_blank');
  }
@@ -4822,7 +4821,7 @@ function addTeamMember() {
  // Helper: Parse hardware items from output text
  function extractHardwareList(text) {
  const hwTotals = {};
- const lines = text.split('\\n');
+ const lines = text.split('\n');
  let inHw = false;
  lines.forEach(l => {
  l = l.trim();
@@ -4913,7 +4912,7 @@ function addTeamMember() {
  const titleMatch = trimmed.match(/\\[(.*?)\\]/);
  if (titleMatch) winTitle = titleMatch[1];
 
- const lines = trimmed.split('\\n');
+ const lines = trimmed.split('\n');
  const profiles = [];
  let section = "profiles";
 
@@ -5067,7 +5066,7 @@ function addTeamMember() {
 
  // Calculate SqFt
  let sqftPerPc = 0;
- const dimMatch = sz.match(/([0-9]+(?:\\.[0-9]+)?|[0-9]+\s+[0-9]+/[0-9]+)\s*x\s*([0-9]+(?:\\.[0-9]+)?|[0-9]+\s+[0-9]+/[0-9]+)/);
+ const dimMatch = sz.match(/([0-9]+(?:\\.[0-9]+)?|[0-9]+\s+[0-9]+\/[0-9]+)\s*x\s*([0-9]+(?:\\.[0-9]+)?|[0-9]+\s+[0-9]+\/[0-9]+)/);
  if (dimMatch) {
  const hVal = safeEval(dimMatch[1].trim());
  const wVal = safeEval(dimMatch[2].trim());
@@ -5447,7 +5446,7 @@ function addTeamMember() {
 
  const tableData = billItems.map((itm, i) => [
  i + 1,
- `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\\nSpecs: ${itm.color} (${itm.thickness})\\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
+ `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
  itm.qty,
  itm.area.toFixed(1),
  `Rs ${itm.rate}`,
@@ -5611,7 +5610,7 @@ function addTeamMember() {
  const titleMatch = trimmed.match(/\\[(.*?)\\]/);
  if (titleMatch) winTitle = titleMatch[1];
 
- const lines = trimmed.split('\\n');
+ const lines = trimmed.split('\n');
  const profiles = [];
  const hardware = [];
  const glass = [];
@@ -5709,8 +5708,8 @@ function addTeamMember() {
  startY: currentY,
  head: [['GLASS DEPARTMENT SPECIFICATIONS', 'FITTINGS & HARDWARE CHECKLIST']],
  body: [[
- `[ ] ${glassTxt}\\n(Note: Verify square corners & edge polishing before fitting)`,
- `[ ] ${hwTxt}\\n(Note: Install woolpile & verify roller alignment)`
+ `[ ] ${glassTxt}\n(Note: Verify square corners & edge polishing before fitting)`,
+ `[ ] ${hwTxt}\n(Note: Install woolpile & verify roller alignment)`
  ]],
  theme: 'grid',
  headStyles: {
@@ -5752,7 +5751,7 @@ function addTeamMember() {
 
  currentY += 9;
 
- const matLines = matText.split('\\n');
+ const matLines = matText.split('\n');
  const stickRows = [];
  let curProfile = "";
 
@@ -5786,11 +5785,11 @@ function addTeamMember() {
 
  // Extract waste
  const wasteMatch = clean.match(/Waste:\s*([0-9.]+)"?/);
- let wasteStr = "0\\"";
+ let wasteStr = "0\"";
  if (wasteMatch) {
  const wVal = parseFloat(wasteMatch[1]);
  const tag = wVal >= 24 ? "(Usable Offcut / Usable Offcut)" : (wVal >= 10 ? "(Short Offcut)" : "(Scrap)");
- wasteStr = `${wVal}\\" ${tag}`;
+ wasteStr = `${wVal}\" ${tag}`;
  }
 
  stickRows.push([`[ ] ${stickNum}`, seq, wasteStr]);
@@ -5836,9 +5835,9 @@ function addTeamMember() {
  startY: currentY,
  head: [['CUTTING MASTER / OPERATOR', 'ASSEMBLY FITTER / CHECKER', 'AUTHORIZED WORKSHOP SIGN-OFF']],
  body: [[
- "Signature: _______________________\\n\\nName: ___________________________\\n\\nStatus: [ ] All Cuts Verified",
- "Signature: _______________________\\n\\nName: ___________________________\\n\\nStatus: [ ] Dimensions Checked",
- `Signature: _______________________\\n\\nFor: ${shop_name}\\n\\nDate: ${today.split(' ')[0]}`
+ "Signature: _______________________\n\nName: ___________________________\n\nStatus: [ ] All Cuts Verified",
+ "Signature: _______________________\n\nName: ___________________________\n\nStatus: [ ] Dimensions Checked",
+ `Signature: _______________________\n\nFor: ${shop_name}\n\nDate: ${today.split(' ')[0]}`
  ]],
  theme: 'grid',
  headStyles: {
@@ -6133,7 +6132,7 @@ function addTeamMember() {
  ["2", "Star Lock / Concealed Touch Lock", "1 per window / 2 for center open", "Verified [ ]"],
  ["3", "EPDM Gasket / Rubber Beading", "Perimeter coverage as per glass size", "Verified [ ]"],
  ["4", "Silicon Sealant Tubes (Clear / Black)", "Weather sealing as required", "Verified [ ]"],
- ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2\\" & 1\\" Screws)", "Verified [ ]"]
+ ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2\" & 1\" Screws)", "Verified [ ]"]
  ];
 
  doc.autoTable({
@@ -6165,8 +6164,8 @@ function addTeamMember() {
  startY: currentY,
  head: [['STORE IN-CHARGE / REQUISITION BY', 'WHOLESALE SUPPLIER / DISPATCH STAMP']],
  body: [[
- `Prepared By: _______________________\\n\\nFor: ${shop_name}\\n\\nPhone: ${contact}`,
- "Received & Dispatched By: _______________________\\n\\nSupplier Stamp / Memo No: _______________________\\n\\nDate: _______________________"
+ `Prepared By: _______________________\n\nFor: ${shop_name}\n\nPhone: ${contact}`,
+ "Received & Dispatched By: _______________________\n\nSupplier Stamp / Memo No: _______________________\n\nDate: _______________________"
  ]],
  theme: 'grid',
  headStyles: {
@@ -6270,7 +6269,7 @@ function addTeamMember() {
 
  return [
  i + 1,
- `${itm.location ? '[' + itm.location + '] ' : ''}${itm.type}\\n• Technical: ${itm.color} (${itm.thickness})\\n• Glass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\\n• Size: ${itm.h}' x ${itm.w}' ${itm.unit}`,
+ `${itm.location ? '[' + itm.location + '] ' : ''}${itm.type}\n• Technical: ${itm.color} (${itm.thickness})\n• Glass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\n• Size: ${itm.h}' x ${itm.w}' ${itm.unit}`,
  hsn,
  itm.qty,
  `${itm.area.toFixed(1)} Sq.Ft`,
@@ -6445,7 +6444,7 @@ function addTeamMember() {
  }
 
 function saveMeasurementData(projectType, outId, matId) {
- const text = document.getElementById(outId).textContent + "\\n" + document.getElementById(matId).textContent;
+ const text = document.getElementById(outId).textContent + "\n" + document.getElementById(matId).textContent;
  if (!text.trim()) return;
  const measurements = JSON.parse(localStorage.getItem('sw_measurements') || '[]');
  const today = new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
@@ -6469,16 +6468,16 @@ function saveMeasurementData(projectType, outId, matId) {
  const expenses = JSON.parse(localStorage.getItem('sw_expenses') || '[]');
 
  let sales_sum = 0.0, exp_sum = 0.0;
- let details_txt = `--- DETAILS FOR ${targetMonth} ---\\n\\n>> CUSTOMER BILLS (INCOME):\\n`;
+ let details_txt = `--- DETAILS FOR ${targetMonth} ---\n\n>> CUSTOMER BILLS (INCOME):\n`;
 
  invoices.forEach(inv => {
- details_txt += `- ${inv.date} | ${inv.client} | Rs ${parseFloat(inv.amount).toFixed(2)}\\n`;
+ details_txt += `- ${inv.date} | ${inv.client} | Rs ${parseFloat(inv.amount).toFixed(2)}\n`;
  sales_sum += parseFloat(inv.amount) || 0;
  });
 
- details_txt += `\\n>> MATERIAL PURCHASES (EXPENSE):\\n`;
+ details_txt += `\n>> MATERIAL PURCHASES (EXPENSE):\n`;
  expenses.forEach(exp => {
- details_txt += `- ${exp.date} | ${exp.category} | ${exp.supplier} (Memo:${exp.memo_no}) | Rs ${parseFloat(exp.amount).toFixed(2)}\\n`;
+ details_txt += `- ${exp.date} | ${exp.category} | ${exp.supplier} (Memo:${exp.memo_no}) | Rs ${parseFloat(exp.amount).toFixed(2)}\n`;
  exp_sum += parseFloat(exp.amount) || 0;
  });
 
@@ -6523,13 +6522,13 @@ function saveMeasurementData(projectType, outId, matId) {
  const rows = JSON.parse(localStorage.getItem('sw_measurements') || '[]');
  if (rows.length === 0) out_text = "No saved measurements found.";
  rows.forEach(row => {
- out_text += `Project ID #${row.id} | Date: ${row.date} | Type: ${row.project_type}\\n---------------------------------------------\\n${row.details}\\n=============================================\\n\\n`;
+ out_text += `Project ID #${row.id} | Date: ${row.date} | Type: ${row.project_type}\n---------------------------------------------\n${row.details}\n=============================================\n\n`;
  });
  } else {
  const rows = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
  if (rows.length === 0) out_text = "No saved bills found.";
  rows.forEach(row => {
- out_text += `Invoice #${row.id} | Date: ${row.date} | Client: ${row.client} | Total: Rs ${parseFloat(row.amount).toFixed(2)}\\n---------------------------------------------\\n${row.bill_text}\\n=============================================\\n\\n`;
+ out_text += `Invoice #${row.id} | Date: ${row.date} | Client: ${row.client} | Total: Rs ${parseFloat(row.amount).toFixed(2)}\n---------------------------------------------\n${row.bill_text}\n=============================================\n\n`;
  });
  }
  document.getElementById('history_out').textContent = out_text;
@@ -6572,14 +6571,14 @@ function saveMeasurementData(projectType, outId, matId) {
  if (phone.endsWith(pin)) {
  found = true;
  const cust = customers[phone];
- out_text += `--- CUSTOMER DETAILS ---\\nName: ${cust.name}\\nPhone: ${phone}\\nAddress: ${cust.address}\\n\\n--- PREVIOUS BILLS ---\\n`;
+ out_text += `--- CUSTOMER DETAILS ---\nName: ${cust.name}\nPhone: ${phone}\nAddress: ${cust.address}\n\n--- PREVIOUS BILLS ---\n`;
  const custBills = invoices.filter(inv => inv.phone === phone);
  if (custBills.length > 0) {
  custBills.forEach(b => {
- out_text += `Date: ${b.date} | Total: Rs ${parseFloat(b.amount).toFixed(2)}\\n${b.bill_text}\\n========================================\\n\\n`;
+ out_text += `Date: ${b.date} | Total: Rs ${parseFloat(b.amount).toFixed(2)}\n${b.bill_text}\n========================================\n\n`;
  });
  } else {
- out_text += "No saved bills found for this customer.\\n\\n";
+ out_text += "No saved bills found for this customer.\n\n";
  }
  }
  }
@@ -7296,7 +7295,7 @@ function setupDb() {
  alert("Firebase Config সফলভাবে সেভ হয়েছে! পেজটি রিলোড করে কানেক্ট করুন।");
  location.reload();
  } catch (e) {
- alert("সঠিক JSON ফরম্যাটে কোডটি পেস্ট করুন (যেমন: {\\"apiKey\\": \\"...\\", \\"projectId\\": \\"...\\"})");
+ alert("সঠিক JSON ফরম্যাটে কোডটি পেস্ট করুন (যেমন: {\"apiKey\": \"...\", \"projectId\": \"...\"})");
  }
  } else {
  localStorage.removeItem('sw_firebase_config');
@@ -7372,7 +7371,7 @@ function updateProfile() {
  if (installBox) installBox.style.display = 'none';
  });
  } else {
- alert("মোবাইলে অ্যাপ হিসেবে সেভ করতে:\\n১. ব্রাউজারের ওপরে ৩টি ডটে (⋮) চাপ দিন।\\n২. 'Install app' অথবা 'Add to Home screen' (হোম স্ক্রিনে যোগ করুন) চাপুন!");
+ alert("মোবাইলে অ্যাপ হিসেবে সেভ করতে:\n১. ব্রাউজারের ওপরে ৩টি ডটে (⋮) চাপ দিন।\n২. 'Install app' অথবা 'Add to Home screen' (হোম স্ক্রিনে যোগ করুন) চাপুন!");
  }
  }
 
@@ -7404,4 +7403,4 @@ function updateProfile() {
 
  </script>
 </body>
-   </html>
+  </html>
