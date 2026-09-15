@@ -121,6 +121,71 @@
       font-weight: 800;
     }
 
+  
+    /* Modern Professional Home Cards (Google Material 3 Theme) */
+    .pro-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+    .pro-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px 14px 12px 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .pro-card:active {
+      transform: scale(0.97);
+      background: #f8fafc;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .pro-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .pro-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+    }
+    .pro-card-arrow {
+      color: #cbd5e1;
+      font-size: 0.75rem;
+      transition: color 0.2s;
+    }
+    .pro-card:hover .pro-card-arrow {
+      color: #0284c7;
+    }
+    .pro-card-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 10px;
+      line-height: 1.25;
+    }
+    .pro-card-sub {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 3px;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -385,6 +450,71 @@
       font-weight: 800;
     }
 
+  
+    /* Modern Professional Home Cards (Google Material 3 Theme) */
+    .pro-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+    .pro-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px 14px 12px 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .pro-card:active {
+      transform: scale(0.97);
+      background: #f8fafc;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .pro-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .pro-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+    }
+    .pro-card-arrow {
+      color: #cbd5e1;
+      font-size: 0.75rem;
+      transition: color 0.2s;
+    }
+    .pro-card:hover .pro-card-arrow {
+      color: #0284c7;
+    }
+    .pro-card-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 10px;
+      line-height: 1.25;
+    }
+    .pro-card-sub {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 3px;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+
   </style>
 </head>
 <body>
@@ -493,16 +623,21 @@
 
     <!-- ================= 1. HOME SCREEN ================= -->
     <div id="screen-home" class="screen">
-      <!-- Blue Header Banner -->
-      <div class="home-header">
+      <!-- Workshop Digital Identity Card (User's Factory) -->
+      <div class="home-header" style="background:linear-gradient(135deg, #0b132b, #1e3a8a); padding:16px; border-radius:0 0 20px 20px; box-shadow:0 4px 14px rgba(11,19,43,0.25); display:flex; align-items:center; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:12px;">
-          <img src="logo.png?v=2" alt="Logo" onerror="this.style.display='none';" style="height:46px; width:auto; border-radius:8px; background:#fff; padding:2px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+          <img src="logo.png?v=2" alt="Logo" onerror="this.style.display='none';" style="height:48px; width:auto; border-radius:10px; background:#fff; padding:2px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
           <div>
-            <div class="welcome" id="homeGreeting">Welcome, Brother!</div>
-            <div class="shop-name" id="homeShop">SMART WORKER PRO</div>
+            <div class="welcome" id="homeGreeting" style="font-size:0.75rem; color:#93c5fd; font-weight:600;">Welcome, Saheb Ghati!</div>
+            <div class="shop-name" id="homeShop" style="font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:0.3px;">SMART WORKER ALUMINIUM</div>
+            <div style="font-size:0.68rem; color:#cbd5e1; margin-top:2px; display:flex; align-items:center; gap:4px;">
+              <i class="fa-solid fa-location-dot" style="color:#38bdf8;"></i> <span>Amta, Howrah • Fabrication Workshop</span>
+            </div>
           </div>
         </div>
-        <button class="gear-btn" onclick="openScreen('settings', 'SETTINGS')">⚙️</button>
+        <button onclick="openScreen('profile', 'WORKSHOP PROFILE')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:6px 10px; border-radius:16px; font-size:0.72rem; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Edit Workshop Profile">
+          <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="btn_edit">Edit</span>
+        </button>
       </div>
 
             <!-- Smart Site Measurement Khata Card (Hero Feature) -->
@@ -523,44 +658,107 @@
         </div>
       </div>
 
-      <!-- Menu Section: Fabrication Systems -->
-      <div class="menu-section-title">FABRICATION SYSTEMS</div>
-      <div class="grid-2">
-        <div class="menu-card" style="background:#1a80cc;" onclick="openScreen('domal', 'DOMAL WINDOW')">
-          <div class="icon">🪟</div>
-          <div class="label" data-i18n="mod_domal">Domal Window</div>
+      <!-- Section 1: Window & Door Fabrication (Balanced 2x3 Grid) -->
+      <div class="menu-section-title" style="margin-top:16px;"><span data-i18n="sec_fab_systems">WINDOW & DOOR SYSTEMS</span></div>
+      <div class="pro-card-grid">
+        <!-- 1. Domal Window -->
+        <div class="pro-card" onclick="openScreen('domal', 'DOMAL WINDOW')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#eff6ff; color:#2563eb;">
+              <i class="fa-solid fa-table-cells-large"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_domal">Domal Window</div>
+          <div class="pro-card-sub" data-i18n="sub_domal">27×65 / 45mm Section Cuts</div>
         </div>
-        <div class="menu-card" style="background:#cc661a;" onclick="openScreen('sliding', 'SLIDING WINDOW')">
-          <div class="icon">🪟</div>
-          <div class="label" data-i18n="mod_sliding">Sliding Window</div>
+
+        <!-- 2. Sliding Window -->
+        <div class="pro-card" onclick="openScreen('sliding', 'SLIDING WINDOW')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#fffbeb; color:#d97706;">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_sliding">Sliding Window</div>
+          <div class="pro-card-sub" data-i18n="sub_sliding">2, 3, 4 Track & Interlock</div>
         </div>
-        <div class="menu-card" style="background:#cc3366;" onclick="openScreen('casement', 'CUSTOM CASEMENT')">
-          <div class="icon">🪟</div>
-          <div class="label" data-i18n="mod_casement">Custom Casement</div>
+
+        <!-- 3. Custom Casement -->
+        <div class="pro-card" onclick="openScreen('casement', 'CUSTOM CASEMENT')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#faf5ff; color:#7c3aed;">
+              <i class="fa-solid fa-window-maximize"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_casement">Custom Casement</div>
+          <div class="pro-card-sub" data-i18n="sub_casement">Z-Section & Openable Window</div>
         </div>
-        <div class="menu-card" style="background:#e64d4d;" onclick="openScreen('partition', 'PARTITION MASTER')">
-          <div class="icon">🚪</div>
-          <div class="label" data-i18n="mod_partition">Partition & Door</div>
+
+        <!-- 4. Partition & Door -->
+        <div class="pro-card" onclick="openScreen('partition', 'PARTITION MASTER')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#f0fdf4; color:#059669;">
+              <i class="fa-solid fa-door-closed"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_partition">Partition & Door</div>
+          <div class="pro-card-sub" data-i18n="sub_partition">Office Partition & Sheet Cuts</div>
+        </div>
+
+        <!-- 5. Simple Door Option -->
+        <div class="pro-card" onclick="openScreen('door', 'DOOR OPTION')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#fff1f2; color:#e11d48;">
+              <i class="fa-solid fa-door-open"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_door">Simple Door Option</div>
+          <div class="pro-card-sub" data-i18n="sub_door">Hinged & Bathroom Door</div>
+        </div>
+
+        <!-- 6. Ceiling Estimator -->
+        <div class="pro-card" onclick="openScreen('ceiling', 'CEILING ESTIMATOR')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#ecfeff; color:#0891b2;">
+              <i class="fa-solid fa-ruler-combined"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_ceiling">Ceiling Estimator</div>
+          <div class="pro-card-sub" data-i18n="sub_ceiling">False Ceiling Grid & Perimeter</div>
         </div>
       </div>
 
-      <div style="padding: 10px 16px 0 16px;">
-        <div class="menu-card" style="background:#b34d1a; padding:12px;" onclick="openScreen('door', 'DOOR OPTION')">
-          <div class="icon">🚪</div>
-          <div class="label" data-i18n="mod_door">Simple Door Option</div>
+      <!-- Section 2: Business & Billing (Balanced 2-Card Grid) -->
+      <div class="menu-section-title"><span data-i18n="sec_business_billing">BUSINESS & BILLING</span></div>
+      <div class="pro-card-grid">
+        <!-- 1. Pro Quotation -->
+        <div class="pro-card" onclick="openScreen('quotation', 'PRO QUOTATION')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#f5f3ff; color:#6d28d9;">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_quotation">Pro Quotation</div>
+          <div class="pro-card-sub" data-i18n="sub_quotation">Client GST Invoice & PDF Bill</div>
         </div>
-      </div>
 
-      <!-- Menu Section: Business & Billing -->
-      <div class="menu-section-title">BUSINESS & BILLING</div>
-      <div class="grid-2">
-        <div class="menu-card" style="background:#993399;" onclick="openScreen('quotation', 'PRO QUOTATION')">
-          <div class="icon">🧾</div>
-          <div class="label" data-i18n="mod_quotation">Pro Quotation</div>
-        </div>
-        <div class="menu-card" style="background:#1ab3b3;" onclick="openScreen('ceiling', 'CEILING ESTIMATOR')">
-          <div class="icon">📏</div>
-          <div class="label" data-i18n="mod_ceiling">Ceiling Estimator</div>
+        <!-- 2. Customer Khata Book -->
+        <div class="pro-card" onclick="openScreen('customer_lookup', 'CUSTOMER BOOK')">
+          <div class="pro-card-header">
+            <div class="pro-card-icon" style="background:#eef2ff; color:#4338ca;">
+              <i class="fa-solid fa-address-book"></i>
+            </div>
+            <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+          </div>
+          <div class="pro-card-title" data-i18n="mod_customer_khata">Customer Khata</div>
+          <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
         </div>
       </div>
     </div>
@@ -5770,7 +5968,17 @@ function saveMeasurementData(projectType, outId, matId) {
         mod_door: "Simple Door Option",
         mod_quotation: "Pro Quotation",
         mod_ceiling: "Ceiling Estimator",
-        btn_open: "OPEN", btn_clear: "CLEAR",
+        btn_open: "OPEN", btn_edit: "Edit",
+        sub_domal: "27×65 / 45mm Section Cuts",
+        sub_sliding: "2, 3, 4 Track & Interlock",
+        sub_casement: "Z-Section & Openable Window",
+        sub_partition: "Office Partition & Sheet Cuts",
+        sub_door: "Hinged & Bathroom Door",
+        sub_ceiling: "False Ceiling Grid & Perimeter",
+        sub_quotation: "Client GST Invoice & PDF Bill",
+        sub_customer_khata: "Client Balance & Records",
+        mod_customer_khata: "Customer Khata",
+        btn_clear: "CLEAR",
         btn_calculate: "+ CALCULATE",
         btn_save: "SAVE",
         btn_cut_pdf: "CUT PDF",
@@ -5828,7 +6036,17 @@ function saveMeasurementData(projectType, outId, matId) {
         mod_door: "সিম্পল ডোর অপশন",
         mod_quotation: "প্রো কোটেশন",
         mod_ceiling: "সিলিং এস্টিমেটর",
-        btn_open: "খুলুন", btn_clear: "ক্লিয়ার",
+        btn_open: "খুলুন", btn_edit: "এডিট",
+        sub_domal: "২৭×৬৫ / ৪৫ মিমি সেকশন কাটিং",
+        sub_sliding: "২, ৩, ৪ ট্র্যাক ও ইন্টারলক মাপ",
+        sub_casement: "জেড-সেকশন ও খোলা পাল্লার জানালা",
+        sub_partition: "অফিস পার্টিশন ও শিট কাটিং",
+        sub_door: "হিঞ্জ ডোর ও বাথরুম পাল্লা",
+        sub_ceiling: "ফলস সিলিং গ্রিড ও পেরিমিটার",
+        sub_quotation: "গ্রাহক জিএসটি ইনভয়েস ও বিল",
+        sub_customer_khata: "গ্রাহক বকেয়া হিসাব ও খাতা",
+        mod_customer_khata: "গ্রাহক খাতা বুক",
+        btn_clear: "ক্লিয়ার",
         btn_calculate: "+ হিসাব করুন",
         btn_save: "সেভ করুন",
         btn_cut_pdf: "কাটিং PDF",
@@ -5886,7 +6104,17 @@ function saveMeasurementData(projectType, outId, matId) {
         mod_door: "सिंपल डोर विकल्प",
         mod_quotation: "प्रो कोटेशन",
         mod_ceiling: "सीलिंग एस्टीमेटर",
-        btn_open: "खोलें", btn_clear: "साफ करें",
+        btn_open: "खोलें", btn_edit: "एडिट",
+        sub_domal: "27×65 / 45mm सेक्शन कटिंग",
+        sub_sliding: "2, 3, 4 ट्रैक और इंटरलॉक कटिंग",
+        sub_casement: "Z-सेक्शन और खुली खिड़की",
+        sub_partition: "ऑफिस पार्टीशन और शीट कटिंग",
+        sub_door: "कब्जा दरवाजा और बाथरूम डोर",
+        sub_ceiling: "फॉल्स सीलिंग ग्रिड और परिमाप",
+        sub_quotation: "ग्राहक जीएसटी बिल और चालान",
+        sub_customer_khata: "ग्राहक बकाया खाता और बही",
+        mod_customer_khata: "ग्राहक खाता बुक",
+        btn_clear: "साफ करें",
         btn_calculate: "+ गणना करें",
         btn_save: "सेव करें",
         btn_cut_pdf: "कटिंग PDF",
@@ -6410,4 +6638,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-        </html>
+            </html>
