@@ -1,8 +1,9 @@
-{
+ {
   "name": "Smart Worker Pro",
   "short_name": "SmartWorker",
   "description": "Aluminium, UPVC & Fabrication Management System",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b132b",
@@ -33,4 +34,4 @@
       "purpose": "maskable"
     }
   ]
-}
+ }
