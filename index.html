@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Smart Worker Pro - Fabrication Management System</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body, button, input, select, textarea {
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', 'Noto Sans Devanagari', -apple-system, sans-serif !important;
+    }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <!-- Google Cloud Firebase SDK -->
@@ -190,11 +198,11 @@
         <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
         <button onclick="handleCloudLogout()" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-weight:bold; margin-left:2px;" title="Logout"><i class="fa-solid fa-power-off"></i></button>
       </div>
-      <!-- Language Selector -->
-      <select id="langSelector" onchange="changeLanguage(this.value)" style="background:#0f172a; color:#fbbf24; border:1px solid #475569; border-radius:6px; padding:3px 6px; font-size:0.72rem; font-weight:bold; cursor:pointer; outline:none;">
-        <option value="en" selected>🌐 English</option>
-        <option value="bn">বাংলা (Bengali)</option>
-        <option value="hi">हिन्दी (Hindi)</option>
+      <!-- Compact Language Selector -->
+      <select id="langSelector" onchange="changeLanguage(this.value)" style="background:#0f172a; color:#fbbf24; border:1px solid #475569; border-radius:6px; padding:3px 4px; font-size:0.75rem; font-weight:bold; cursor:pointer; outline:none; max-width:82px;">
+        <option value="en" selected>🌐 EN</option>
+        <option value="bn">🌐 বাংলা</option>
+        <option value="hi">🌐 हिन्दी</option>
       </select>
       <button id="cloudLoginTriggerBtn" onclick="openScreen('auth', 'SIGN IN / REGISTER')" style="background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
         <i class="fa-solid fa-user-lock"></i> <span data-i18n="nav_login">LOGIN</span>
@@ -300,12 +308,12 @@
             <div style="display:flex; align-items:center; gap:12px; text-align:left;">
               <div style="font-size: 2.2rem;">📘</div>
               <div>
-                <div style="font-size: 1.05rem; font-weight: 800; color: #fff;">Site Measurement Khata</div>
-                <div style="font-size: 0.76rem; color: #bae6fd; margin-top:2px;">Digital Khata Book: Room Tracking, Auto Labour & Billing</div>
+                <div data-i18n="mod_khata_title" style="font-size: 1.05rem; font-weight: 800; color: #fff;">Site Measurement Khata</div>
+                <div data-i18n="mod_khata_sub" style="font-size: 0.76rem; color: #bae6fd; margin-top:2px;">Digital Khata Book: Room Tracking, Auto Labour & Billing</div>
               </div>
             </div>
             <div style="background:#fbbf24; color:#0f172a; font-weight:800; font-size:0.75rem; padding:4px 8px; border-radius:6px; white-space:nowrap;">
-              OPEN &rarr;
+              <span data-i18n="btn_open">OPEN</span> &rarr;
             </div>
           </div>
         </div>
@@ -316,26 +324,26 @@
       <div class="grid-2">
         <div class="menu-card" style="background:#1a80cc;" onclick="openScreen('domal', 'DOMAL WINDOW')">
           <div class="icon">🪟</div>
-          <div class="label">Domal Window</div>
+          <div class="label" data-i18n="mod_domal">Domal Window</div>
         </div>
         <div class="menu-card" style="background:#cc661a;" onclick="openScreen('sliding', 'SLIDING WINDOW')">
           <div class="icon">🪟</div>
-          <div class="label">Sliding Window</div>
+          <div class="label" data-i18n="mod_sliding">Sliding Window</div>
         </div>
         <div class="menu-card" style="background:#cc3366;" onclick="openScreen('casement', 'CUSTOM CASEMENT')">
           <div class="icon">🪟</div>
-          <div class="label">Custom Casement</div>
+          <div class="label" data-i18n="mod_casement">Custom Casement</div>
         </div>
         <div class="menu-card" style="background:#e64d4d;" onclick="openScreen('partition', 'PARTITION MASTER')">
           <div class="icon">🚪</div>
-          <div class="label">Partition & Door</div>
+          <div class="label" data-i18n="mod_partition">Partition & Door</div>
         </div>
       </div>
 
       <div style="padding: 10px 16px 0 16px;">
         <div class="menu-card" style="background:#b34d1a; padding:12px;" onclick="openScreen('door', 'DOOR OPTION')">
           <div class="icon">🚪</div>
-          <div class="label">Simple Door Option</div>
+          <div class="label" data-i18n="mod_door">Simple Door Option</div>
         </div>
       </div>
 
@@ -344,11 +352,11 @@
       <div class="grid-2">
         <div class="menu-card" style="background:#993399;" onclick="openScreen('quotation', 'PRO QUOTATION')">
           <div class="icon">🧾</div>
-          <div class="label">Pro Quotation</div>
+          <div class="label" data-i18n="mod_quotation">Pro Quotation</div>
         </div>
         <div class="menu-card" style="background:#1ab3b3;" onclick="openScreen('ceiling', 'CEILING ESTIMATOR')">
           <div class="icon">📏</div>
-          <div class="label">Ceiling Estimator</div>
+          <div class="label" data-i18n="mod_ceiling">Ceiling Estimator</div>
         </div>
       </div>
     </div>
@@ -1049,7 +1057,7 @@
       <div class="form-box">
         <div class="form-group" style="margin-bottom:8px;">
           <label>Your Name:</label>
-          <input type="text" id="set_name" value="Saheb Ghanti">
+          <input type="text" id="set_name" value="Saheb Ghati">
         </div>
         <div class="form-group" style="margin-bottom:8px;">
           <label>Shop / Company Name:</label>
@@ -5446,7 +5454,7 @@ function saveMeasurementData(projectType, outId, matId) {
         mod_door: "Simple Door Option",
         mod_quotation: "Pro Quotation",
         mod_ceiling: "Ceiling Estimator",
-        btn_clear: "CLEAR",
+        btn_open: "OPEN", btn_clear: "CLEAR",
         btn_calculate: "+ CALCULATE",
         btn_save: "SAVE",
         btn_cut_pdf: "CUT PDF",
@@ -5504,7 +5512,7 @@ function saveMeasurementData(projectType, outId, matId) {
         mod_door: "সিম্পল ডোর অপশন",
         mod_quotation: "প্রো কোটেশন",
         mod_ceiling: "সিলিং এস্টিমেটর",
-        btn_clear: "ক্লিয়ার",
+        btn_open: "খুলুন", btn_clear: "ক্লিয়ার",
         btn_calculate: "+ হিসাব করুন",
         btn_save: "সেভ করুন",
         btn_cut_pdf: "কাটিং PDF",
@@ -5562,7 +5570,7 @@ function saveMeasurementData(projectType, outId, matId) {
         mod_door: "सिंपल डोर विकल्प",
         mod_quotation: "प्रो कोटेशन",
         mod_ceiling: "सीलिंग एस्टीमेटर",
-        btn_clear: "साफ करें",
+        btn_open: "खोलें", btn_clear: "साफ करें",
         btn_calculate: "+ गणना करें",
         btn_save: "सेव करें",
         btn_cut_pdf: "कटिंग PDF",
@@ -5643,17 +5651,21 @@ function saveMeasurementData(projectType, outId, matId) {
       const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
       const greetingElem = document.getElementById('homeGreeting');
       if (greetingElem) {
-        const pName = profile.name || "Brother";
+        let pName = profile.name || (lang === 'bn' ? "ভাই" : (lang === 'hi' ? "भाई" : "Brother"));
         greetingElem.textContent = `${d.welcome_prefix} ${pName}!`;
       }
 
-      // Elements with data-i18n
+      // Translate all data-i18n elements
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (d[key]) {
           el.textContent = d[key];
         }
       });
+
+      // Update selector value cleanly
+      const selector = document.getElementById('langSelector');
+      if (selector) selector.value = lang;
     }
 
     function initFirebaseCloud() {
@@ -5999,4 +6011,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
- </html>
+        </html>
