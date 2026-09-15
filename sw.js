@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smartworker-v1';
+const CACHE_NAME = 'smartworker-v2';
 const ASSETS = [
   './index.html',
   './manifest.json',
