@@ -27,7 +27,10 @@
       font-family: 'Plus Jakarta Sans', 'Hind Siliguri', 'Noto Sans Devanagari', -apple-system, sans-serif !important;
     }
   
-    /* Google Gemini Minimalist Settings & Dashboard Styling */
+    
+
+  
+    /* Google Gemini Minimalist Settings & UI Styling */
     .gemini-card {
       background: #ffffff;
       border-radius: 20px;
@@ -40,7 +43,7 @@
       background: #ffffff;
       border-radius: 18px;
       border: 1px solid #e2e8f0;
-      padding: 13px 18px;
+      padding: 14px 18px;
       margin-bottom: 10px;
       display: flex;
       align-items: center;
@@ -88,6 +91,34 @@
     .gemini-chevron {
       color: #94a3b8;
       font-size: 0.8rem;
+    }
+    .gemini-lang-toggle {
+      display: flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 12px;
+      gap: 4px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .gemini-lang-btn {
+      flex: 1;
+      padding: 7px 0;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .gemini-lang-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      font-weight: 800;
     }
 
   </style>
@@ -260,7 +291,10 @@
     .k-btn.blue { background: #e0f2fe; color: #0284c7; }
     .k-btn.orange { background: #ffedd5; color: #ea580c; }
   
-    /* Google Gemini Minimalist Settings & Dashboard Styling */
+    
+
+  
+    /* Google Gemini Minimalist Settings & UI Styling */
     .gemini-card {
       background: #ffffff;
       border-radius: 20px;
@@ -273,7 +307,7 @@
       background: #ffffff;
       border-radius: 18px;
       border: 1px solid #e2e8f0;
-      padding: 13px 18px;
+      padding: 14px 18px;
       margin-bottom: 10px;
       display: flex;
       align-items: center;
@@ -322,12 +356,41 @@
       color: #94a3b8;
       font-size: 0.8rem;
     }
+    .gemini-lang-toggle {
+      display: flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 12px;
+      gap: 4px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .gemini-lang-btn {
+      flex: 1;
+      padding: 7px 0;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .gemini-lang-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      font-weight: 800;
+    }
 
   </style>
 </head>
 <body>
 
   <!-- Top App Bar -->
+    <!-- Top App Bar (Clean Minimalist Google Style) -->
   <div class="top-bar">
     <div class="top-bar-left">
       <button class="back-btn" id="topBackBtn" onclick="goHome()" style="display:none;" title="Back" aria-label="Back">
@@ -340,21 +403,14 @@
     </div>
     <div class="top-bar-right">
       <div id="topBarRightActions" style="display:flex; align-items:center; gap:6px;">
-      <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">
-        <i class="fa-solid fa-cloud"></i>
-        <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
-        <button onclick="handleCloudLogout()" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-weight:bold; margin-left:2px;" title="Logout"><i class="fa-solid fa-power-off"></i></button>
-      </div>
-      <!-- Sleek Native App Language Switcher -->
-      <div class="lang-switch-pill" style="display:flex; align-items:center; background:#0f172a; border:1px solid #334155; border-radius:18px; padding:2px; gap:2px;">
-        <button type="button" id="btnLangEn" onclick="changeLanguage('en')" style="background:transparent; border:none; color:#94a3b8; font-size:0.72rem; font-weight:700; padding:3px 6px; border-radius:12px; cursor:pointer;">EN</button>
-        <button type="button" id="btnLangBn" onclick="changeLanguage('bn')" style="background:#f59e0b; border:none; color:#0f172a; font-size:0.72rem; font-weight:800; padding:3px 6px; border-radius:12px; cursor:pointer;">বাং</button>
-        <button type="button" id="btnLangHi" onclick="changeLanguage('hi')" style="background:transparent; border:none; color:#94a3b8; font-size:0.72rem; font-weight:700; padding:3px 6px; border-radius:12px; cursor:pointer;">हिं</button>
-      </div>
-      <button id="cloudLoginTriggerBtn" onclick="openScreen('auth', 'SIGN IN / REGISTER')" style="background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
-        <i class="fa-solid fa-user-lock"></i> <span data-i18n="nav_login">LOGIN</span>
-      </button>
-      <div style="font-size:0.72rem; background:var(--accent); color:#000; font-weight:800; padding:2px 6px; border-radius:4px;">PRO</div>
+        <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">
+          <i class="fa-solid fa-cloud"></i>
+          <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
+        </div>
+        <!-- Gemini Style Account / Settings Avatar Icon -->
+        <button onclick="openScreen('settings', 'SETTINGS')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.22); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fbbf24; font-size:1.15rem;" title="Settings & Account">
+          <i class="fa-solid fa-gear"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -1358,21 +1414,124 @@
     </div>
 
     <!-- ================= 13. SETTINGS MENU SCREEN ================= -->
+        <!-- ================= 13. SETTINGS / GEMINI STYLE ACCOUNT DRAWER ================= -->
     <div id="screen-settings" class="screen">
-      <div style="padding:14px; display:flex; flex-direction:column; gap:10px;">
-        <button class="action-btn" style="background:#475569; padding:14px;" onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')">🔒 Privacy Policy & Terms</button>
-        <button class="action-btn" style="background:#16a34a; padding:14px;" onclick="openScreen('activation', 'PRO UPGRADE')">⭐ PRO Subscription / Plans</button>
-        <button class="action-btn" style="background:#2563eb; padding:14px;" onclick="openScreen('profile', 'EDIT PROFILE')">👤 Workshop Profile & Branding</button>
-        <button class="action-btn" style="background:#78716c; padding:14px;" onclick="openScreen('bill_settings', 'DYNAMIC COSTING SETUP')">⚙️ Dynamic Costing & Bill Rates</button>
-        <button class="action-btn" style="background:#334155; padding:14px;" onclick="openScreen('history', 'DATA HISTORY')">🗂️ Data History</button>
-        <button class="action-btn" style="background:#ea580c; padding:14px;" onclick="openScreen('customer_lookup', 'CUSTOMER BOOK')">🔒 Customer Book (PIN)</button>
-        <button class="action-btn" style="background:#7e22ce; padding:14px;" onclick="openScreen('dashboard', 'BUSINESS DASHBOARD')">📊 Business Dashboard</button>
-        <button class="action-btn" style="background:#0284c7; padding:14px;" onclick="openScreen('auth', 'SIGN IN / CLOUD')">☁️ Google Cloud Account Sync</button>
+      <div style="padding:14px 16px;">
+        
+        <!-- Gemini User Profile Header Card -->
+        <div class="gemini-card" style="padding:16px 18px; margin-bottom:12px; display:flex; align-items:center; gap:14px;">
+          <div style="position:relative;">
+            <img src="logo.png?v=2" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=Saheb+Ghati&background=0284c7&color=fff';" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8; padding:2px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+            <span style="position:absolute; bottom:0; right:0; background:#0284c7; color:#fff; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; border:2px solid #fff;"><i class="fa-solid fa-pen"></i></span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:1.05rem; font-weight:800; color:#0f172a;" id="settingsUserName">Saheb Ghati</div>
+            <div style="font-size:0.78rem; color:#64748b; margin-top:1px;" id="settingsUserEmail">sahebghanti669@gmail.com</div>
+            <div style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#2563eb; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px; margin-top:5px; border:1px solid #bfdbfe;">
+              <i class="fa-solid fa-circle-check" style="font-size:0.68rem;"></i> <span>Pro Member</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Cloud Account Card (Gemini Style Standalone Pill) -->
+        <div onclick="openScreen('auth', 'SIGN IN / CLOUD')" class="gemini-pill-btn">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="gemini-icon" style="color:#2563eb;"><i class="fa-brands fa-google"></i></span>
+            <span style="font-size:0.92rem; font-weight:600; color:#1e293b;">Manage Google Cloud Sync</span>
+          </div>
+          <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+        </div>
+
+        <!-- Manage Subscription Card (Gemini Style Standalone Pill) -->
+        <div onclick="openScreen('activation', 'PRO UPGRADE')" class="gemini-pill-btn">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="gemini-icon" style="color:#f59e0b;"><i class="fa-solid fa-crown"></i></span>
+            <span style="font-size:0.92rem; font-weight:600; color:#1e293b;">Manage Subscription</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.72rem; font-weight:800; color:#f59e0b; background:#fef3c7; padding:2px 7px; border-radius:6px;">PRO</span>
+            <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+          </div>
+        </div>
+
+        <!-- Grouped Menu Card (Clean Gemini List with Hairline Dividers) -->
+        <div class="gemini-card">
+          
+          <!-- App Language Selector Row (Built directly inside Settings!) -->
+          <div class="gemini-menu-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+              <div class="gemini-row-left">
+                <span class="gemini-icon" style="color:#0284c7;"><i class="fa-solid fa-language"></i></span>
+                <span style="font-weight:700;">App Language / ভাষা</span>
+              </div>
+              <span id="currentLangBadge" style="font-size:0.75rem; color:#0284c7; font-weight:800; background:#e0f2fe; padding:2px 8px; border-radius:6px;">English</span>
+            </div>
+            <div class="gemini-lang-toggle">
+              <button type="button" id="setLangEn" onclick="changeLanguage('en')" class="gemini-lang-btn active">English</button>
+              <button type="button" id="setLangBn" onclick="changeLanguage('bn')" class="gemini-lang-btn">বাংলা</button>
+              <button type="button" id="setLangHi" onclick="changeLanguage('hi')" class="gemini-lang-btn">हिन्दी</button>
+            </div>
+          </div>
+
+          <!-- Workshop Profile & Branding -->
+          <div onclick="openScreen('profile', 'WORKSHOP PROFILE')" class="gemini-menu-row">
+            <div class="gemini-row-left">
+              <span class="gemini-icon" style="color:#0284c7;"><i class="fa-solid fa-id-badge"></i></span>
+              <span>Workshop Profile & Branding</span>
+            </div>
+            <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+          </div>
+
+          <!-- Dynamic Costing & Bill Rates -->
+          <div onclick="openScreen('bill_settings', 'DYNAMIC COSTING SETUP')" class="gemini-menu-row">
+            <div class="gemini-row-left">
+              <span class="gemini-icon" style="color:#475569;"><i class="fa-solid fa-sliders"></i></span>
+              <span>Dynamic Costing & Bill Rates</span>
+            </div>
+            <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+          </div>
+
+          <!-- Customer Book (PIN Protected) -->
+          <div onclick="openScreen('customer_lookup', 'CUSTOMER BOOK')" class="gemini-menu-row">
+            <div class="gemini-row-left">
+              <span class="gemini-icon" style="color:#ea580c;"><i class="fa-solid fa-lock"></i></span>
+              <span>Customer Khata Book (PIN)</span>
+            </div>
+            <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+          </div>
+
+          <!-- Business Performance Dashboard -->
+          <div onclick="openScreen('dashboard', 'BUSINESS DASHBOARD')" class="gemini-menu-row">
+            <div class="gemini-row-left">
+              <span class="gemini-icon" style="color:#16a34a;"><i class="fa-solid fa-chart-pie"></i></span>
+              <span>Business Analytics Dashboard</span>
+            </div>
+            <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+          </div>
+
+          <!-- Data History & Records -->
+          <div onclick="openScreen('history', 'DATA HISTORY')" class="gemini-menu-row">
+            <div class="gemini-row-left">
+              <span class="gemini-icon" style="color:#64748b;"><i class="fa-solid fa-clock-rotate-left"></i></span>
+              <span>Data History & Saved Bills</span>
+            </div>
+            <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+          </div>
+
+          <!-- Privacy Policy & Legal Terms -->
+          <div onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')" class="gemini-menu-row">
+            <div class="gemini-row-left">
+              <span class="gemini-icon" style="color:#64748b;"><i class="fa-solid fa-shield-halved"></i></span>
+              <span>Privacy Policy & Legal Terms</span>
+            </div>
+            <i class="fa-solid fa-arrow-up-right-from-square gemini-chevron"></i>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- ================= 14. CUSTOMER LOOKUP SCREEN ================= -->
-    <div id="screen-customer_lookup" class="screen">
+<div id="screen-customer_lookup" class="screen">
       <div class="form-box">
         <div class="form-group">
           <label>Enter Customer PIN (Last 4 digits of Phone):</label>
@@ -5782,6 +5941,25 @@ function saveMeasurementData(projectType, outId, matId) {
     }
 
     function applyLanguageTranslations(lang) {
+      // Update Gemini Settings Language Switcher
+      const sEn = document.getElementById('setLangEn');
+      const sBn = document.getElementById('setLangBn');
+      const sHi = document.getElementById('setLangHi');
+      const badge = document.getElementById('currentLangBadge');
+      if (sEn && sBn && sHi) {
+        [sEn, sBn, sHi].forEach(b => b.classList.remove('active'));
+        if (lang === 'en') {
+          sEn.classList.add('active');
+          if (badge) badge.textContent = 'English';
+        } else if (lang === 'bn') {
+          sBn.classList.add('active');
+          if (badge) badge.textContent = 'বাংলা';
+        } else if (lang === 'hi') {
+          sHi.classList.add('active');
+          if (badge) badge.textContent = 'हिन्दी';
+        }
+      }
+
       // Update Language Switcher Pill Active State
       const btnEn = document.getElementById('btnLangEn');
       const btnBn = document.getElementById('btnLangBn');
@@ -6232,4 +6410,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-          </html>
+        </html>
