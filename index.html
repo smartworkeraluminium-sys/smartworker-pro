@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -190,8 +190,14 @@
         <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
         <button onclick="handleCloudLogout()" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-weight:bold; margin-left:2px;" title="Logout"><i class="fa-solid fa-power-off"></i></button>
       </div>
-      <button id="cloudLoginTriggerBtn" onclick="openScreen('auth', 'SIGN IN / REGISTER')" style="background:#2563eb; color:#fff; border:none; padding:5px 9px; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
-        <i class="fa-solid fa-user-lock"></i> <span>LOGIN</span>
+      <!-- Language Selector -->
+      <select id="langSelector" onchange="changeLanguage(this.value)" style="background:#0f172a; color:#fbbf24; border:1px solid #475569; border-radius:6px; padding:3px 6px; font-size:0.72rem; font-weight:bold; cursor:pointer; outline:none;">
+        <option value="en" selected>🌐 English</option>
+        <option value="bn">বাংলা (Bengali)</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+      </select>
+      <button id="cloudLoginTriggerBtn" onclick="openScreen('auth', 'SIGN IN / REGISTER')" style="background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
+        <i class="fa-solid fa-user-lock"></i> <span data-i18n="nav_login">LOGIN</span>
       </button>
       <div style="font-size:0.72rem; background:var(--accent); color:#000; font-weight:800; padding:2px 6px; border-radius:4px;">PRO</div>
     </div>
@@ -1327,7 +1333,7 @@
         </div>
 
         <button class="action-btn" style="background:#0284c7; width:100%; padding:12px; font-size:0.92rem; font-weight:800; margin-bottom:12px;" onclick="addOpeningToKhata()">
-          <i class="fa-solid fa-plus-circle"></i> ADD TO SITE KHATA (+ খাতায় তুলুন)
+          <i class="fa-solid fa-plus-circle"></i> ADD TO SITE KHATA 
         </button>
 
         <!-- Live Site Summary Dashboard -->
@@ -1362,10 +1368,10 @@
         <!-- Master 1-Click Export Actions -->
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="action-btn" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); padding:13px; font-size:0.95rem; font-weight:800; border:1px solid #38bdf8;" onclick="processAllKhataCutsAtOnce()">
-            <i class="fa-solid fa-bolt"></i> ⚡ PROCESS ALL MULTI-PRODUCT CUTS (সব প্রোডাক্ট একসাথে কাটিং প্রসেস)
+            <i class="fa-solid fa-bolt"></i> ⚡ PROCESS ALL MULTI-PRODUCT CUTS 
           </button>
           <button class="action-btn" style="background:#334155; padding:11px; font-size:0.88rem;" onclick="exportSiteKhataMasterPdf()">
-            <i class="fa-solid fa-file-pdf"></i> GENERATE SITE KHATA MASTER PDF (ফুল রিপোর্ট)
+            <i class="fa-solid fa-file-pdf"></i> GENERATE SITE KHATA MASTER PDF 
           </button>
           <div class="btn-row">
             <button class="action-btn" style="background:#9333ea;" onclick="convertKhataToQuotation()">
@@ -1404,7 +1410,7 @@
             </div>
           </div>
           <button class="action-btn" style="background:#8b5cf6; width:100%; padding:8px; font-size:0.8rem; margin-bottom:8px;" onclick="addTeamMember()">
-            + Add Worker to Team (টিম সদস্য যোগ করুন)
+            + Add Worker to Team (Add Worker to Team)
           </button>
           <div id="teamMemberList" style="max-height:120px; overflow-y:auto; font-size:0.75rem; color:#e0e7ff; background:#0f172a; padding:6px; border-radius:6px;">
             No team members added yet.
@@ -1419,7 +1425,7 @@
         <!-- TIER 1: KARIGAR PLAN (SOLO FABRICATOR) -->
         <div style="background:#0f172a; border:1.5px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-            <div style="color:#38bdf8; font-weight:800; font-size:0.9rem;">🛠️ 1. KARIGAR PLAN (কারিগর প্ল্যান)</div>
+            <div style="color:#38bdf8; font-weight:800; font-size:0.9rem;">🛠️ 1. KARIGAR PLAN (Solo Fabricator)</div>
             <div style="background:#0284c7; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">1 User (Single)</div>
           </div>
           <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For individual solo fabricators & small local workshops</div>
@@ -1436,7 +1442,7 @@
         <!-- TIER 2: WORKSHOP TEAM PLAN (5 TO 10 USERS) -->
         <div style="background:#0f172a; border:2px solid #22c55e; border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 3px 12px rgba(34, 197, 94, 0.15);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-            <div style="color:#4ade80; font-weight:800; font-size:0.9rem;">🏭 2. WORKSHOP PLAN (মাঝারি টিম)</div>
+            <div style="color:#4ade80; font-weight:800; font-size:0.9rem;">🏭 2. WORKSHOP PLAN (Medium Team)</div>
             <div style="background:#16a34a; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">5 to 10 Workers</div>
           </div>
           <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For medium workshops handling 2-3 ongoing sites simultaneously</div>
@@ -1453,7 +1459,7 @@
         <!-- TIER 3: CORPORATE ENTERPRISE (UP TO 50 USERS) -->
         <div style="background:#0f172a; border:2px solid #8b5cf6; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 4px 14px rgba(139, 92, 246, 0.2);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-            <div style="color:#c084fc; font-weight:800; font-size:0.9rem;">🏢 3. CORPORATE ENTERPRISE (বড় কারখানা)</div>
+            <div style="color:#c084fc; font-weight:800; font-size:0.9rem;">🏢 3. CORPORATE ENTERPRISE (Large Factory)</div>
             <div style="background:#7c3aed; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">Up to 50 Workers</div>
           </div>
           <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For large contractors, promoters & multi-branch fabrication factories</div>
@@ -3532,7 +3538,7 @@
           localStorage.setItem('sw_custom_logo', base64);
           renderBrandingPreviews();
           loadSavedProfile();
-          alert("দোকানের লোগো সফলভাবে যুক্ত হয়েছে!");
+          alert("Shop logo uploaded successfully!");
         };
         reader.readAsDataURL(input.files[0]);
       }
@@ -3542,7 +3548,7 @@
       localStorage.removeItem('sw_custom_logo');
       renderBrandingPreviews();
       loadSavedProfile();
-      alert("লোগো মুছে ফেলা হয়েছে।");
+      alert("Shop logo removed successfully.");
     }
 
     function uploadPaymentQr(input) {
@@ -3552,7 +3558,7 @@
           const base64 = e.target.result;
           localStorage.setItem('sw_custom_qr', base64);
           renderBrandingPreviews();
-          alert("পেমেন্ট কিউআর কোড সফলভাবে যুক্ত হয়েছে!");
+          alert("Payment QR Code uploaded successfully!");
         };
         reader.readAsDataURL(input.files[0]);
       }
@@ -3561,7 +3567,7 @@
     function removePaymentQr() {
       localStorage.removeItem('sw_custom_qr');
       renderBrandingPreviews();
-      alert("পেমেন্ট কিউআর কোড মুছে ফেলা হয়েছে।");
+      alert("Payment QR Code removed successfully.");
     }
 
     function renderBrandingPreviews() {
@@ -4202,7 +4208,7 @@
       const outText = document.getElementById(outId).textContent.trim();
       const matText = document.getElementById(matId).textContent.trim();
 
-      if (!outText || outText.includes("here") || outText.includes("এখানে")) {
+      if (!outText || outText.includes("here") || false) {
         alert("Please calculate at least one window cutting size first!");
         return;
       }
@@ -4279,11 +4285,11 @@
               // Feature 2: Determine Cut Angle / Degree
               let angle = "90° Straight";
               if ((winTitle.includes("Domal") || winTitle.includes("Casement") || winTitle.includes("Door")) && (name.includes("Outer") || name.includes("Frame") || name.includes("Sash") || name.includes("Z-Handle"))) {
-                angle = "45° Miter (কোণাকাটা)";
+                angle = "45° Miter (Miter)";
               } else if (name.includes("Outer") && winTitle.includes("Domal")) {
-                angle = "45° Miter (কোণাকাটা)";
+                angle = "45° Miter (Miter)";
               } else {
-                angle = "90° Straight (সোজা)";
+                angle = "90° Straight (Straight)";
               }
 
               const tag = `W${winIdx + 1}-P${profiles.length + 1}`;
@@ -4382,7 +4388,7 @@
       });
 
       // Feature 4: Stick-by-Stick Cutting Sequence (Material Optimization)
-      if (matText && !matText.includes("এখানে")) {
+      if (matText && !false) {
         if (currentY > 210) {
           doc.addPage();
           currentY = 16;
@@ -4434,7 +4440,7 @@
             let wasteStr = "0\"";
             if (wasteMatch) {
               const wVal = parseFloat(wasteMatch[1]);
-              const tag = wVal >= 24 ? "(Usable Offcut / বাকি টুকরো কাজে লাগবে)" : (wVal >= 10 ? "(Short Offcut)" : "(Scrap / ছাঁট)");
+              const tag = wVal >= 24 ? "(Usable Offcut / Usable Offcut)" : (wVal >= 10 ? "(Short Offcut)" : "(Scrap)");
               wasteStr = `${wVal}\" ${tag}`;
             }
 
@@ -4445,7 +4451,7 @@
         if (stickRows.length > 0) {
           doc.autoTable({
             startY: currentY,
-            head: [['Stick #', 'Step-by-Step Cutting Sequence (কাটার ক্রম)', 'Waste / Remaining Balance']],
+            head: [['Stick #', 'Step-by-Step Cutting Sequence (Cutting Sequence)', 'Waste / Remaining Balance']],
             body: stickRows,
             theme: 'grid',
             headStyles: {
@@ -4516,7 +4522,7 @@
 
       const keys = Object.keys(glassDict);
       if (keys.length === 0) {
-        alert("কোনো গ্লাসের মাপ পাওয়া যায়নি!");
+        alert("No glass sizes calculated yet!");
         return;
       }
 
@@ -5415,6 +5421,241 @@ function saveMeasurementData(projectType, outId, matId) {
       appId: "1:320695880279:web:abcdef123456"
     };
 
+    
+    // ========================================================
+    // COMPLETE 3-LANGUAGE TRANSLATION ENGINE (EN / BN / HI)
+    // 100% Pure Language Segregation - No Mixed Text
+    // ========================================================
+    const I18N_DICT = {
+      en: {
+        title_app: "SMART WORKER PRO",
+        nav_home: "Home",
+        nav_dashboard: "Dashboard",
+        nav_records: "Records",
+        nav_profile: "Profile",
+        nav_login: "LOGIN",
+        welcome_prefix: "Welcome,",
+        sec_fab_systems: "FABRICATION SYSTEMS",
+        sec_business_billing: "BUSINESS & BILLING",
+        mod_khata_title: "Site Measurement Khata",
+        mod_khata_sub: "Digital Khata Book: Room Tracking, Auto Labour & Billing",
+        mod_domal: "Domal Window",
+        mod_sliding: "Sliding Window",
+        mod_casement: "Custom Casement",
+        mod_partition: "Partition & Door",
+        mod_door: "Simple Door Option",
+        mod_quotation: "Pro Quotation",
+        mod_ceiling: "Ceiling Estimator",
+        btn_clear: "CLEAR",
+        btn_calculate: "+ CALCULATE",
+        btn_save: "SAVE",
+        btn_cut_pdf: "CUT PDF",
+        btn_glass_pdf: "GLASS PDF",
+        btn_order_slip: "ORDER SLIP",
+        lbl_cutting_sizes: "CUTTING SIZES:",
+        lbl_mat_purchase: "MATERIAL PURCHASE (AUTO-OPTIMIZED):",
+        lbl_height: "Height:",
+        lbl_width: "Width:",
+        lbl_qty: "Quantity (Pcs):",
+        lbl_unit: "Input Unit:",
+        lbl_room_tag: "Room / Location Tag:",
+        btn_add_khata: "ADD TO SITE KHATA",
+        btn_process_all: "PROCESS ALL MULTI-PRODUCT CUTS",
+        btn_khata_master_pdf: "GENERATE SITE KHATA MASTER PDF",
+        btn_client_bill: "CLIENT BILL",
+        btn_generate_bill: "GENERATE BILL",
+        btn_save_bill: "SAVE BILL",
+        btn_pdf_bill: "PDF BILL",
+        lbl_client_details: "CUSTOMER & BILL DETAILS",
+        lbl_add_item: "ADD BILL ITEM",
+        lbl_rate_sqft: "Rate (Rs/Sq.Ft):",
+        lbl_advance: "Advance (Rs):",
+        lbl_due_balance: "Due Balance:",
+        lbl_total_sales: "TOTAL SALES",
+        lbl_purchases: "PURCHASES",
+        lbl_balance: "BALANCE",
+        btn_add_purchase: "+ ADD MATERIAL PURCHASE",
+        btn_update_profile: "UPDATE PROFILE",
+        btn_save_settings: "SAVE ALL SETTINGS",
+        auth_heading: "SMART WORKER PRO",
+        auth_subheading: "Aluminium & UPVC Fabrication Management",
+        tab_signin: "Sign In",
+        tab_register: "Register Workshop",
+        btn_signin_acc: "Sign In to Account",
+        btn_create_acc: "Create Account & Cloud Sync",
+        btn_guest_demo: "Continue as Guest / Demo Mode →"
+      },
+      bn: {
+        title_app: "স্মার্ট ওয়ার্কার প্রো",
+        nav_home: "হোম",
+        nav_dashboard: "ড্যাশবোর্ড",
+        nav_records: "হিস্ট্রি",
+        nav_profile: "প্রোফাইল",
+        nav_login: "লগইন",
+        welcome_prefix: "স্বাগতম,",
+        sec_fab_systems: "ফেব্রیکیشن সিস্টেম",
+        sec_business_billing: "ব্যবসা ও বিলিং",
+        mod_khata_title: "সাইট মেজারমেন্ট খাতা",
+        mod_khata_sub: "ডিজিটাল খাতা বুক: রুম ট্র্যাকিং, অটো লেবার ও বিলিং",
+        mod_domal: "ডমাল উইন্ডো",
+        mod_sliding: "স্লাইডিং উইন্ডো",
+        mod_casement: "কাস্টম কেসমেন্ট",
+        mod_partition: "পার্টিশন ও ডোর",
+        mod_door: "সিম্পল ডোর অপশন",
+        mod_quotation: "প্রো কোটেশন",
+        mod_ceiling: "সিলিং এস্টিমেটর",
+        btn_clear: "ক্লিয়ার",
+        btn_calculate: "+ হিসাব করুন",
+        btn_save: "সেভ করুন",
+        btn_cut_pdf: "কাটিং PDF",
+        btn_glass_pdf: "গ্লাস PDF",
+        btn_order_slip: "অর্ডার স্লিপ",
+        lbl_cutting_sizes: "কাটিং মাপসমূহ:",
+        lbl_mat_purchase: "মেটেরিয়াল খরিদ (অটো-অপ্টিমাইজড):",
+        lbl_height: "উচ্চতা (Height):",
+        lbl_width: "প্রস্থ (Width):",
+        lbl_qty: "জানালার সংখ্যা (Pcs):",
+        lbl_unit: "মাপের একক (Unit):",
+        lbl_room_tag: "রুম / লোকেশন ট্যাগ:",
+        btn_add_khata: "+ সাইট খাতায় যোগ করুন",
+        btn_process_all: "⚡ সব প্রোডাক্ট একসাথে কাটিং প্রসেস",
+        btn_khata_master_pdf: "📄 সাইট খাতা মাস্টার PDF তৈরি করুন",
+        btn_client_bill: "ক্লায়েন্ট বিলিং",
+        btn_generate_bill: "বিল তৈরি করুন",
+        btn_save_bill: "বিল সেভ করুন",
+        btn_pdf_bill: "PDF বিল ডাউনলোড",
+        lbl_client_details: "গ্রাহক ও বিলের বিবরণ",
+        lbl_add_item: "বিলের আইটেম যোগ করুন",
+        lbl_rate_sqft: "দর (টাকা / স্কয়ার ফিট):",
+        lbl_advance: "অ্যাডভান্স জমা (টাকা):",
+        lbl_due_balance: "বকেয়া টাকা:",
+        lbl_total_sales: "মোট বিক্রি",
+        lbl_purchases: "মাল খরিদ খরচ",
+        lbl_balance: "মোট ব্যালেন্স",
+        btn_add_purchase: "+ মেটেরিয়াল খরিদ যোগ করুন",
+        btn_update_profile: "প্রোফাইল আপডেট করুন",
+        btn_save_settings: "সব সেটিংস সেভ করুন",
+        auth_heading: "স্মার্ট ওয়ার্কার প্রো",
+        auth_subheading: "অ্যালুমিনিয়াম ও ইউপিভিসি ফেব্রیکیشن ম্যানেজমেন্ট",
+        tab_signin: "সাইন-ইন (লগইন)",
+        tab_register: "ওয়ার্কশপ রেজিস্ট্রেশন",
+        btn_signin_acc: "অ্যাকাউন্টে লগইন করুন",
+        btn_create_acc: "অ্যাকাউন্ট তৈরি ও সিঙ্ক করুন",
+        btn_guest_demo: "লগইন ছাড়া ডেমো ব্যবহার করুন →"
+      },
+      hi: {
+        title_app: "स्मार्ट वर्कर प्रो",
+        nav_home: "होम",
+        nav_dashboard: "डैशबोर्ड",
+        nav_records: "रिकॉर्ड्स",
+        nav_profile: "प्रोफाइल",
+        nav_login: "लॉगिन",
+        welcome_prefix: "नमस्ते,",
+        sec_fab_systems: "फैब्रिकेशन सिस्टम",
+        sec_business_billing: "बिजनेस और बिलिंग",
+        mod_khata_title: "साइट मेजरमेंट खाता",
+        mod_khata_sub: "डिजिटल खाता बुक: रूम ट्रैकिंग, ऑटो लेबर और बिलिंग",
+        mod_domal: "डोमल विंडो",
+        mod_sliding: "स्लाइडिंग विंडो",
+        mod_casement: "कस्टम केसमेंट",
+        mod_partition: "पार्टीशन और डोर",
+        mod_door: "सिंपल डोर विकल्प",
+        mod_quotation: "प्रो कोटेशन",
+        mod_ceiling: "सीलिंग एस्टीमेटर",
+        btn_clear: "साफ करें",
+        btn_calculate: "+ गणना करें",
+        btn_save: "सेव करें",
+        btn_cut_pdf: "कटिंग PDF",
+        btn_glass_pdf: "ग्लास PDF",
+        btn_order_slip: "ऑर्डर स्लिप",
+        lbl_cutting_sizes: "कटिंग साइज विवरण:",
+        lbl_mat_purchase: "मटेरियल खरीद (ऑटो-ऑप्टिमाइज्ड):",
+        lbl_height: "ऊंचाई (Height):",
+        lbl_width: "चौड़ाई (Width):",
+        lbl_qty: "खिड़कियों की संख्या:",
+        lbl_unit: "माप इकाई (Unit):",
+        lbl_room_tag: "रूम / लोकेशन टैग:",
+        btn_add_khata: "+ साइट खाते में जोड़ें",
+        btn_process_all: "⚡ सभी प्रोडक्ट एक साथ कटिंग प्रोसेस करें",
+        btn_khata_master_pdf: "📄 साइट खाता मास्टर PDF तैयार करें",
+        btn_client_bill: "क्लाइंट बिलिंग",
+        btn_generate_bill: "बिल जनरेट करें",
+        btn_save_bill: "बिल सेव करें",
+        btn_pdf_bill: "PDF बिल डाउनलोड",
+        lbl_client_details: "ग्राहक और बिल विवरण",
+        lbl_add_item: "बिल आइटम जोड़ें",
+        lbl_rate_sqft: "दर (रु / वर्ग फीट):",
+        lbl_advance: "अग्रिम जमा (रु):",
+        lbl_due_balance: "बकाया राशि:",
+        lbl_total_sales: "कुल बिक्री",
+        lbl_purchases: "मटेरियल खरीद",
+        lbl_balance: "नेट बैलेंस",
+        btn_add_purchase: "+ मटेरियल खरीद जोड़ें",
+        btn_update_profile: "प्रोफाइल अपडेट करें",
+        btn_save_settings: "सभी सेटिंग्स सेव करें",
+        auth_heading: "स्मार्ट वर्कर प्रो",
+        auth_subheading: "एल्यूमिनियम और यूपीवीसी फैब्रिकेशन मैनेजमेंट",
+        tab_signin: "साइन-इन (लॉगिन)",
+        tab_register: "वर्कशॉप रजिस्ट्रेशन",
+        btn_signin_acc: "अकाउंट में लॉगिन करें",
+        btn_create_acc: "अकाउंट बनाएं और सिंक करें",
+        btn_guest_demo: "बिना लॉगिन डेमो शुरू करें →"
+      }
+    };
+
+    let currentAppLang = localStorage.getItem('sw_lang') || 'en';
+
+    function changeLanguage(lang) {
+      if (!I18N_DICT[lang]) lang = 'en';
+      currentAppLang = lang;
+      localStorage.setItem('sw_lang', lang);
+
+      const selector = document.getElementById('langSelector');
+      if (selector) selector.value = lang;
+
+      applyLanguageTranslations(lang);
+    }
+
+    function applyLanguageTranslations(lang) {
+      const d = I18N_DICT[lang] || I18N_DICT['en'];
+
+      // App Title
+      const titleElem = document.getElementById('titleText');
+      if (titleElem) titleElem.textContent = d.title_app;
+
+      // Menu Section Headers
+      const secHeaders = document.querySelectorAll('.menu-section-title');
+      if (secHeaders.length >= 2) {
+        secHeaders[0].textContent = d.sec_fab_systems;
+        secHeaders[1].textContent = d.sec_business_billing;
+      }
+
+      // Bottom Navigation
+      const navItems = document.querySelectorAll('.bottom-nav .nav-item span');
+      if (navItems.length >= 4) {
+        navItems[0].textContent = d.nav_home;
+        navItems[1].textContent = d.nav_dashboard;
+        navItems[2].textContent = d.nav_records;
+        navItems[3].textContent = d.nav_profile;
+      }
+
+      // Home Header Welcome
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const greetingElem = document.getElementById('homeGreeting');
+      if (greetingElem) {
+        const pName = profile.name || "Brother";
+        greetingElem.textContent = `${d.welcome_prefix} ${pName}!`;
+      }
+
+      // Elements with data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (d[key]) {
+          el.textContent = d[key];
+        }
+      });
+    }
+
     function initFirebaseCloud() {
       try {
         const savedConfig = localStorage.getItem('sw_firebase_config');
@@ -5500,7 +5741,7 @@ function saveMeasurementData(projectType, outId, matId) {
       if (fbAuth) {
         fbAuth.signInWithEmailAndPassword(email, pass)
           .then(res => {
-            alert("সফলভাবে লগইন হয়েছে! ক্লাউড ডেটা সিঙ্ক করা হচ্ছে...");
+            alert("সফলভাবে LOGIN হয়েছে! ক্লাউড ডেটা সিঙ্ক করা হচ্ছে...");
             closeAuthModal();
           })
           .catch(err => {
@@ -5549,7 +5790,7 @@ function saveMeasurementData(projectType, outId, matId) {
         const provider = new firebase.auth.GoogleAuthProvider();
         fbAuth.signInWithPopup(provider)
           .then(res => {
-            alert(`Google দিয়ে লগইন সফল হয়েছে: ${res.user.displayName || res.user.email}`);
+            alert(`Google দিয়ে LOGIN সফল হয়েছে: ${res.user.displayName || res.user.email}`);
             closeAuthModal();
           })
           .catch(err => {
@@ -5572,11 +5813,11 @@ function saveMeasurementData(projectType, outId, matId) {
     }
 
     function handleCloudLogout() {
-      if (confirm("আপনি কি সত্যিই ক্লাউড অ্যাকাউন্ট থেকে লগআউট করতে চান?")) {
+      if (confirm("আপনি কি সত্যিই ক্লাউড অ্যাকাউন্ট থেকে LOGOUT করতে চান?")) {
         if (fbAuth) fbAuth.signOut();
         currentCloudUser = null;
         updateCloudUserUI(null);
-        alert("লগআউট সম্পন্ন হয়েছে।");
+        alert("LOGOUT সম্পন্ন হয়েছে।");
       }
     }
 
@@ -5584,7 +5825,7 @@ function saveMeasurementData(projectType, outId, matId) {
       currentCloudUser = { uid: "local_" + btoa(email).substring(0, 10), email: email };
       updateCloudUserUI(currentCloudUser);
       closeAuthModal();
-      alert(`লগইন সম্পন্ন হয়েছে (${email})! আপনার ডেটা ব্যাকআপের জন্য প্রস্তুত।`);
+      alert(`LOGIN সম্পন্ন হয়েছে (${email})! আপনার ডেটা ব্যাকআপের জন্য প্রস্তুত।`);
     }
 
     // Live Sync to Cloud Firestore
@@ -5664,6 +5905,7 @@ function saveMeasurementData(projectType, outId, matId) {
 
     
     window.onload = function() {
+      changeLanguage(currentAppLang);
       setupDb();
       initFirebaseCloud();
       loadSavedProfile();
@@ -5736,6 +5978,7 @@ function updateProfile() {
     
 
     window.onload = function() {
+      changeLanguage(currentAppLang);
       setupDb();
       initFirebaseCloud();
       loadSavedProfile();
@@ -5756,4 +5999,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-            </html>
+ </html>
