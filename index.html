@@ -198,12 +198,12 @@
         <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
         <button onclick="handleCloudLogout()" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-weight:bold; margin-left:2px;" title="Logout"><i class="fa-solid fa-power-off"></i></button>
       </div>
-      <!-- Compact Language Selector -->
-      <select id="langSelector" onchange="changeLanguage(this.value)" style="background:#0f172a; color:#fbbf24; border:1px solid #475569; border-radius:6px; padding:3px 4px; font-size:0.75rem; font-weight:bold; cursor:pointer; outline:none; max-width:82px;">
-        <option value="en" selected>🌐 EN</option>
-        <option value="bn">🌐 বাংলা</option>
-        <option value="hi">🌐 हिन्दी</option>
-      </select>
+      <!-- Sleek Native App Language Switcher -->
+      <div class="lang-switch-pill" style="display:flex; align-items:center; background:#0f172a; border:1px solid #334155; border-radius:18px; padding:2px; gap:2px;">
+        <button type="button" id="btnLangEn" onclick="changeLanguage('en')" style="background:transparent; border:none; color:#94a3b8; font-size:0.72rem; font-weight:700; padding:3px 6px; border-radius:12px; cursor:pointer;">EN</button>
+        <button type="button" id="btnLangBn" onclick="changeLanguage('bn')" style="background:#f59e0b; border:none; color:#0f172a; font-size:0.72rem; font-weight:800; padding:3px 6px; border-radius:12px; cursor:pointer;">বাং</button>
+        <button type="button" id="btnLangHi" onclick="changeLanguage('hi')" style="background:transparent; border:none; color:#94a3b8; font-size:0.72rem; font-weight:700; padding:3px 6px; border-radius:12px; cursor:pointer;">हिं</button>
+      </div>
       <button id="cloudLoginTriggerBtn" onclick="openScreen('auth', 'SIGN IN / REGISTER')" style="background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px;">
         <i class="fa-solid fa-user-lock"></i> <span data-i18n="nav_login">LOGIN</span>
       </button>
@@ -1531,7 +1531,7 @@
   </nav>
 
   <!-- Floating Add Button -->
-  <button class="fab" onclick="openScreen('quotation', 'PRO QUOTATION')">➕</button>
+  
 
   <!-- Keypad Modal -->
   <div class="modal-overlay" id="keypadModal">
@@ -5443,7 +5443,7 @@ function saveMeasurementData(projectType, outId, matId) {
         nav_profile: "Profile",
         nav_login: "LOGIN",
         welcome_prefix: "Welcome,",
-        sec_fab_systems: "FABRICATION SYSTEMS",
+        sec_fab_systems: "WINDOW & DOOR SYSTEMS",
         sec_business_billing: "BUSINESS & BILLING",
         mod_khata_title: "Site Measurement Khata",
         mod_khata_sub: "Digital Khata Book: Room Tracking, Auto Labour & Billing",
@@ -5501,7 +5501,7 @@ function saveMeasurementData(projectType, outId, matId) {
         nav_profile: "প্রোফাইল",
         nav_login: "লগইন",
         welcome_prefix: "স্বাগতম,",
-        sec_fab_systems: "ফেব্রیکیشن সিস্টেম",
+        sec_fab_systems: "উইন্ডো ও ডোর সিস্টেম",
         sec_business_billing: "ব্যবসা ও বিলিং",
         mod_khata_title: "সাইট মেজারমেন্ট খাতা",
         mod_khata_sub: "ডিজিটাল খাতা বুক: রুম ট্র্যাকিং, অটো লেবার ও বিলিং",
@@ -5559,7 +5559,7 @@ function saveMeasurementData(projectType, outId, matId) {
         nav_profile: "प्रोफाइल",
         nav_login: "लॉगिन",
         welcome_prefix: "नमस्ते,",
-        sec_fab_systems: "फैब्रिकेशन सिस्टम",
+        sec_fab_systems: "विंडो और डोर सिस्टम",
         sec_business_billing: "बिजनेस और बिलिंग",
         mod_khata_title: "साइट मेजरमेंट खाता",
         mod_khata_sub: "डिजिटल खाता बुक: रूम ट्रैकिंग, ऑटो लेबर और बिलिंग",
@@ -5625,6 +5625,31 @@ function saveMeasurementData(projectType, outId, matId) {
     }
 
     function applyLanguageTranslations(lang) {
+      // Update Language Switcher Pill Active State
+      const btnEn = document.getElementById('btnLangEn');
+      const btnBn = document.getElementById('btnLangBn');
+      const btnHi = document.getElementById('btnLangHi');
+      if (btnEn && btnBn && btnHi) {
+        [btnEn, btnBn, btnHi].forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = '#94a3b8';
+          b.style.fontWeight = '700';
+        });
+        if (lang === 'en') {
+          btnEn.style.background = '#f59e0b';
+          btnEn.style.color = '#0f172a';
+          btnEn.style.fontWeight = '800';
+        } else if (lang === 'bn') {
+          btnBn.style.background = '#f59e0b';
+          btnBn.style.color = '#0f172a';
+          btnBn.style.fontWeight = '800';
+        } else if (lang === 'hi') {
+          btnHi.style.background = '#f59e0b';
+          btnHi.style.color = '#0f172a';
+          btnHi.style.fontWeight = '800';
+        }
+      }
+
       const d = I18N_DICT[lang] || I18N_DICT['en'];
 
       // App Title
@@ -5916,6 +5941,9 @@ function saveMeasurementData(projectType, outId, matId) {
     }
 
     
+    
+
+
     window.onload = function() {
       changeLanguage(currentAppLang);
       setupDb();
@@ -5989,6 +6017,42 @@ function updateProfile() {
 
     
 
+    
+    // ==========================================
+    // PWA & APP INSTALLATION MANAGEMENT
+    // ==========================================
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBox = document.getElementById('pwaInstallPrompt');
+      if (installBox) installBox.style.display = 'flex';
+    });
+
+    function triggerPwaInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User installed Smart Worker Pro app');
+          }
+          deferredPrompt = null;
+          const installBox = document.getElementById('pwaInstallPrompt');
+          if (installBox) installBox.style.display = 'none';
+        });
+      } else {
+        alert("মোবাইলে অ্যাপ হিসেবে সেভ করতে:\n১. ব্রাউজারের ওপরে ৩টি ডটে (⋮) চাপ দিন।\n২. 'Install app' অথবা 'Add to Home screen' (হোম স্ক্রিনে যোগ করুন) চাপুন!");
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+          console.log('ServiceWorker registration optional', err);
+        });
+      });
+    }
+
     window.onload = function() {
       changeLanguage(currentAppLang);
       setupDb();
@@ -6011,4 +6075,4 @@ function updateProfile() {
 </body>
 </html>
 </body>
-        </html>
+              </html>
