@@ -1078,7 +1078,7 @@
  </div>  
  <div class="form-group" style="margin-bottom:8px;">  
  <label>Phone Number:</label>  
- <input type="text" id="set_phone" value="9239413517">  
+ <input type="text" id="set_phone" placeholder="Enter 10-digit mobile">  
  </div>  
  <div class="form-group" style="margin-bottom:8px;">  
  <label>Email / Gmail ID:</label>  
@@ -1119,7 +1119,7 @@
  </div>  
  <div class="form-group">  
  <label>UPI ID (VPA):</label>  
- <input type="text" id="set_upi_id" placeholder="e.g. 9239413517@upi">  
+ <input type="text" id="set_upi_id" placeholder="e.g. yourname@bank">  
  </div>  
  </div>  
   
@@ -1344,7 +1344,7 @@
  <div class="form-group">  
  <label>Enter Customer PIN (Last 4 digits of Phone):</label>  
  <div style="display:flex; gap:6px; margin-top:4px;">  
- <input type="text" id="lookup_pin" placeholder="e.g. 3517">  
+ <input type="text" id="lookup_pin" placeholder="e.g. 1234">  
  <button class="action-btn btn-calc" style="flex:0.4;" onclick="searchCustomer()">ðŸ” SEARCH</button>  
  </div>  
  </div>  
@@ -2989,7 +2989,7 @@
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact_info = profile.phone || "9239413517 / 9641405426";  
+ const contact_info = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const email_info = profile.email ? \`\\n Email: ${profile.email}\` : "";  
  const gst_info = profile.gst ? \`\\n GST No: ${profile.gst}\` : "";  
@@ -3138,7 +3138,7 @@ function exportMatPurchasePdf(filename, title, buckets, glassDict) {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact = profile.phone || "9239413517 / 9641405426";  
+ const contact = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});  
  const po_no = "PO-" + Math.floor(1000 + Math.random() * 9000);  
@@ -4013,7 +4013,7 @@ function addTeamMember() {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact = profile.phone || "9239413517 / 9641405426";  
+ const contact = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const clientName = document.getElementById('sk_client_name').value.trim() || "Valued Client";  
  const clientPhone = document.getElementById('sk_client_phone').value.trim() || "N/A";  
@@ -4319,7 +4319,7 @@ function addTeamMember() {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact = profile.phone || "9239413517 / 9641405426";  
+ const contact = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});  
   
@@ -4473,7 +4473,7 @@ function addTeamMember() {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact = profile.phone || "9239413517 / 9641405426";  
+ const contact = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});  
  const orderRef = "GL-" + Math.floor(1000 + Math.random() * 9000);  
@@ -4616,7 +4616,7 @@ function addTeamMember() {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact = profile.phone || "9239413517 / 9641405426";  
+ const contact = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});  
  const po_no = "PO-ALU-" + Math.floor(1000 + Math.random() * 9000);  
@@ -4714,7 +4714,7 @@ function addTeamMember() {
  doc.setFontSize(8);  
  doc.setTextColor(71, 85, 105);  
  doc.text("Aluminium Dealer Sign: ____________________", 16, currentY);  
- doc.text("Requisition By: Saheb Ghati (9239413517)", 120, currentY);  
+ doc.text(`Requisition By: ${profile.name || "Authorized Person"} (${profile.phone || ""})`, 120, currentY);  
   
  doc.save(\`${filename}_Alu_Purchase_Order.pdf\`);  
  }  
@@ -4746,7 +4746,7 @@ function addTeamMember() {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact = profile.phone || "9239413517 / 9641405426";  
+ const contact = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});  
  const hwNo = "HW-" + Math.floor(1000 + Math.random() * 9000);  
@@ -4835,7 +4835,7 @@ function addTeamMember() {
  doc.setFontSize(8);  
  doc.setTextColor(71, 85, 105);  
  doc.text("Hardware Store Sign: ____________________", 16, currentY);  
- doc.text("Requisition By: Saheb Ghati (9239413517)", 120, currentY);  
+ doc.text(`Requisition By: ${profile.name || "Authorized Person"} (${profile.phone || ""})`, 120, currentY);  
   
  doc.save(\`${filename}_Hardware_Order.pdf\`);  
  }  
@@ -4899,7 +4899,7 @@ function exportBillPdf() {
   
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');  
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();  
- const contact_info = profile.phone || "9239413517 / 9641405426";  
+ const contact_info = profile.phone || "Contact Not Set";  
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";  
  const gst_no = profile.gst ? \` | GSTIN: ${profile.gst}\` : "";  
  const email_id = profile.email ? \` | Email: ${profile.email}\` : "";  
@@ -6080,4 +6080,4 @@ function setupDb() {
 
 </script>
 </body>
-                                                     </html>
+  </html>
