@@ -1,8 +1,9 @@
- {
-  "name": "Smart Worker Pro",
+{
+  "name": "Smart Worker Pro - Aluminium & UPVC Fabrication Management",
   "short_name": "SmartWorker",
-  "description": "Aluminium, UPVC & Fabrication Management System",
-  "start_url": "./index.html",
+  "id": "smart-worker-pro-v2",
+  "description": "ডিজিটাল কাস্টমার খাতা, কাটিং লিস্ট, জিএসটি কোটেশন ও ইনভয়েস ম্যানেজমেন্ট সফটওয়্যার",
+  "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -17,21 +18,9 @@
     },
     {
       "src": "logo.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
- }
+}
