@@ -24,18 +24,22 @@
  }
 
  function goHome() {
- document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
- document.getElementById('screen-home').classList.add('active');
- // Restore Centered Logo & App Title
- document.getElementById('screenTitle').innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:6px;"><img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;"> <span id="titleText" style="font-size:0.95rem; font-weight:800; color:#fbbf24; white-space:nowrap;">SMART WORKER PRO</span></div>`;
- document.getElementById('topBackBtn').style.display = 'none';
- // Show Language Selector, Login & PRO badge ONLY on Home screen
- const rightActions = document.getElementById('topBarRightActions');
- if (rightActions) rightActions.style.display = 'flex';
- document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
- document.querySelectorAll('.nav-item')[0].classList.add('active');
- window.scrollTo({ top: 0, behavior: 'smooth' });
- }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const home = document.getElementById('screen-home');
+  if (home) home.classList.add('active');
+  const title = document.getElementById('screenTitle');
+  if (title) title.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; gap:6px;"><img src="logo.png?v=2" alt="SWA" onerror="this.style.display=\'none\';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;"> <span id="titleText" style="font-size:0.95rem; font-weight:800; color:#fbbf24; white-space:nowrap;">SMART WORKER PRO</span></div>';
+  const back = document.getElementById('topBackBtn');
+  if (back) back.style.display = 'none';
+  const rightActions = document.getElementById('topBarRightActions');
+  if (rightActions) rightActions.style.display = 'flex';
+  const navItems = document.querySelectorAll('.nav-item');
+  if (navItems && navItems.length > 0) {
+    navItems.forEach(n => n.classList.remove('active'));
+    navItems[0].classList.add('active');
+  }
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
+}
 
  // Save and Load Settings
 
@@ -983,33 +987,49 @@ function updateProfile() {
  });
  }
 
- window.onload = function() {
-   // Ensure default profile for Saheb Ghanti & SMART WORKER ALUMINIUM
-   if (!localStorage.getItem('sw_profile')) {
-     const defaultProfile = {
-       name: "Saheb Ghanti",
-       shop_name: "SMART WORKER ALUMINIUM",
-       phone: "9876543210",
-       email: "sahebghanti669@gmail.com",
-       address: "Amta, Howrah • Fabrication Workshop"
-     };
-     localStorage.setItem('sw_profile', JSON.stringify(defaultProfile));
-   }
-   if (!localStorage.getItem('sw_lang')) {
-     localStorage.setItem('sw_lang', 'bn');
-     currentAppLang = 'bn';
-   }
+ function bootApp() {
+  try {
+    const home = document.getElementById('screen-home');
+    if (home) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      home.classList.add('active');
+    }
+  } catch(e){}
 
-   changeLanguage(currentAppLang);
-   setupDb();
-   if (typeof initFirebaseCloud === 'function') initFirebaseCloud();
-   if (typeof initCloudKhataSyncListener === 'function') initCloudKhataSyncListener();
-   loadSavedProfile();
-   loadBillSettings();
-   updateSuggestedRate();
+  try {
+    if (!localStorage.getItem('sw_profile')) {
+      const defaultProfile = {
+        name: "Saheb Ghanti",
+        shop_name: "SMART WORKER ALUMINIUM",
+        phone: "9876543210",
+        email: "sahebghanti669@gmail.com",
+        address: "Amta, Howrah • Fabrication Workshop"
+      };
+      localStorage.setItem('sw_profile', JSON.stringify(defaultProfile));
+    }
+  } catch(e){}
 
-   // Directly open the home screen with Image 2 design
-   goHome();
- };
+  try {
+    if (!localStorage.getItem('sw_lang')) {
+      localStorage.setItem('sw_lang', 'bn');
+      currentAppLang = 'bn';
+    }
+  } catch(e){}
 
- 
+  try { changeLanguage(currentAppLang); } catch(e){ console.warn("changeLanguage error", e); }
+  try { setupDb(); } catch(e){}
+  try { if (typeof initFirebaseCloud === 'function') initFirebaseCloud(); } catch(e){}
+  try { if (typeof initCloudKhataSyncListener === 'function') initCloudKhataSyncListener(); } catch(e){}
+  try { loadSavedProfile(); } catch(e){}
+  try { loadBillSettings(); } catch(e){}
+  try { updateSuggestedRate(); } catch(e){}
+  try { goHome(); } catch(e){}
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  bootApp();
+}
+window.addEventListener('load', bootApp);
+window.onload = bootApp;
