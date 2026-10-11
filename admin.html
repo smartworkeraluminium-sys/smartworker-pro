@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart Worker Pro • অ্যাডমিন রিচার্জ ও কাস্টমার বিল পোর্টাল</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --accent: #f59e0b;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      background: #1e1b4b;
+      border-bottom: 1px solid #4338ca;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .top-bar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .top-bar .title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fbbf24;
+    }
+    .top-bar .sub {
+      font-size: 0.72rem;
+      color: #c7d2fe;
+    }
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 14px 12px;
+    }
+
+    /* Dashboard Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stat-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+    .stat-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #38bdf8;
+      margin-top: 4px;
+    }
+
+    /* Cards */
+    .admin-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .card-title i {
+      color: var(--accent);
+    }
+
+    /* Form Groups */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .form-group label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.15s;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-wa { background: #22c55e; color: #fff; }
+    .btn-danger { background: #ef4444; color: #fff; }
+
+    /* Key Box */
+    .key-box {
+      background: #064e3b;
+      border: 1px solid #10b981;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      display: none;
+    }
+    .key-display {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-align: center;
+      color: #6ee7b7;
+      background: #022c22;
+      padding: 8px;
+      border-radius: 8px;
+      margin: 6px 0;
+      font-family: monospace;
+    }
+
+    /* Customer List */
+    .cust-card {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--primary);
+    }
+    .cust-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .cust-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .cust-shop {
+      font-size: 0.74rem;
+      color: var(--accent);
+    }
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .badge-paid { background: #14532d; color: #4ade80; }
+    .badge-due { background: #7f1d1d; color: #f87171; }
+    
+    .cust-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      margin: 8px 0;
+      background: #1e293b;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .btn-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .btn-sm {
+      padding: 8px;
+      font-size: 0.75rem;
+      border-radius: 7px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .search-box {
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .search-box input {
+      padding-left: 36px;
+    }
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="brand">
+      <img src="logo.png" alt="Logo" onerror="this.style.display='none'" style="height:32px; width:auto; border-radius:6px; background:#fff; padding:2px;">
+      <div>
+        <div class="title">SMART WORKER ADMIN</div>
+        <div class="sub">মাস্টার রিচার্জ, বিল ও লাইসেন্স পোর্টাল</div>
+      </div>
+    </div>
+    <a href="index.html" class="btn-nav">
+      <i class="fa-solid fa-house"></i> মূল অ্যাপ
+    </a>
+  </div>
+
+  <div class="container">
+
+    <!-- Stats Summary Row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">মোট অ্যাক্টিভ কাস্টমার</div>
+        <div class="stat-val" id="totalActiveCust">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">মোট বিল কালেকশন</div>
+        <div class="stat-val" id="totalRevenue" style="color:#4ade80;">₹0</div>
+      </div>
+    </div>
+
+    <!-- 1. কাস্টমার রিচার্জ ও বিল এন্ট্রি ফর্ম -->
+    <div class="admin-card">
+      <div class="card-title">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>কাস্টমার রিচার্জ ও বিল এন্ট্রি</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>কাস্টমারের নাম *</label>
+          <input type="text" id="cust_name" placeholder="যেমন: বিশ্বজিৎ মন্ডল">
+        </div>
+        <div class="form-group">
+          <label>দোকানের নাম</label>
+          <input type="text" id="cust_shop" placeholder="যেমন: মা তারা অ্যালুমিনিয়াম">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>মোবাইল / WhatsApp *</label>
+          <input type="text" id="cust_phone" placeholder="যেমন: 9876543210">
+        </div>
+        <div class="form-group">
+          <label>কাস্টমারের Device ID * (৮ অক্ষর)</label>
+          <input type="text" id="cust_dev_id" placeholder="যেমন: A1B2C3D4" maxlength="8" style="text-transform:uppercase; font-weight:bold; letter-spacing:1px; color:#38bdf8;">
+        </div>
+      </div>
+
+      <!-- Plan Duration & Pricing -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>কত মাসের জন্য নিচ্ছে? *</label>
+          <select id="cust_duration" onchange="autoFillPlanAmount()">
+            <option value="KARIGAR_1M">কারিগর প্ল্যান - ১ মাস (₹৯৯)</option>
+            <option value="KARIGAR_3M">কারিগর প্ল্যান - ৩ মাস (₹২৮০)</option>
+            <option value="KARIGAR_6M">কারিগর প্ল্যান - ৬ মাস (₹৫৫০)</option>
+            <option value="KARIGAR_1Y">কারিগর প্ল্যান - ১ বছর (₹৭৯৯)</option>
+            <option value="TEAM_1M">ওয়ার্কশপ টিম (১০ জন) - ১ মাস (₹৪৯৯)</option>
+            <option value="TEAM_1Y">ওয়ার্কশপ টিম (১০ জন) - ১ বছর (₹৩,৯৯৯)</option>
+            <option value="CORP_1M">কর্পোরেট (৫০ জন) - ১ মাস (₹১,৪৯৯)</option>
+            <option value="CORP_1Y">কর্পোরেট (৫০ জন) - ১ বছর (₹১৪,৯৯৯)</option>
+            <option value="LIFETIME">👑 লাইফটাইম আনলিমিটেড (Lifetime VIP)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>মোট বিলের পরিমাণ (₹)</label>
+          <input type="number" id="bill_amount" value="99" oninput="calcDueAmount()">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>টাকা জমা (Paid Amount ₹)</label>
+          <input type="number" id="paid_amount" value="99" oninput="calcDueAmount()">
+        </div>
+        <div class="form-group">
+          <label>বকেয়া (Due Amount ₹)</label>
+          <input type="number" id="due_amount" value="0" readonly style="background:#1e293b; color:#f87171; font-weight:bold;">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>পেমেন্ট মোড</label>
+          <select id="pay_mode">
+            <option value="Google Pay / PhonePe">Google Pay / PhonePe (UPI)</option>
+            <option value="Cash">নগদ টাকা (Cash)</option>
+            <option value="Bank Transfer">ব্যাংক ট্রান্সফার (Bank NEFT)</option>
+            <option value="Paytm">Paytm</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>পেমেন্ট UTR / ট্রানজ্যাকশন আইডি</label>
+          <input type="text" id="pay_utr" placeholder="UTR বা রেফারেন্স নং">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button type="button" class="btn btn-primary" onclick="saveAndGenerateKey()" style="flex:1;">
+          <i class="fa-solid fa-key"></i> বিল ও কোড তৈরি করুন
+        </button>
+      </div>
+
+      <!-- Generated Key Box -->
+      <div id="keyBoxResult" class="key-box">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; font-weight:bold; color:#6ee7b7;">অ্যাক্টিভেশন কোড সফলভাবে তৈরি হয়েছে:</span>
+          <span id="keyExpText" style="font-size:0.72rem; color:#a7f3d0;"></span>
+        </div>
+        <div class="key-display" id="displayGeneratedKey">--------</div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="btn btn-wa" onclick="sendInvoiceWhatsApp()" style="flex:2;">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp-এ বিল ও কোড পাঠান
+          </button>
+          <button type="button" class="btn" style="flex:1; background:#0284c7; color:#fff;" onclick="copyKeyText()">
+            <i class="fa-solid fa-copy"></i> COPY
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <!-- অনলাইন রিচার্জ রিকোয়েস্ট (কাস্টমারদের পাঠানো রিকোয়েস্ট) -->
+    <div class="admin-card">
+      <div class="card-title">
+        <i class="fa-solid fa-bell" style="color:#38bdf8;"></i>
+        <span>কাস্টমারদের পাঠানো অনলাইন রিকোয়েস্ট</span>
+        <span id="pendingReqBadge" style="margin-left:auto; background:#d97706; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">0 টি রিকোয়েস্ট</span>
+      </div>
+      <div id="onlineRequestsContainer" style="max-height:260px; overflow-y:auto;">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- 2. সমস্ত কাস্টমারের বিল ও সাবস্ক্রিপশন তালিকা -->
+    <div class="admin-card">
+      <div class="card-title">
+        <i class="fa-solid fa-users"></i>
+        <span>কাস্টমার ও রিচার্জ হিস্ট্রি</span>
+      </div>
+
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchCustInput" placeholder="নাম, ফোন বা Device ID দিয়ে খুঁজুন..." oninput="filterCustomerList()">
+      </div>
+
+      <div id="customerListContainer">
+        <!-- Dynamic Customers will be loaded here -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SHA-256 Engine & Admin Logic -->
+  <script>
+    function sha256(ascii) {
+      function rightRotate(value, amount) { return (value>>>amount) | (value<<(32 - amount)); }
+      var mathPow = Math.pow; var maxWord = mathPow(2, 32); var lengthProperty = 'length';
+      var i, j; var result = ''; var words = []; var asciiBitLength = ascii[lengthProperty]*8;
+      var hash = sha256.h = sha256.h || []; var k = sha256.k = sha256.k || []; var primeCounter = k[lengthProperty];
+      var isComposite = {};
+      for (var candidate = 2; primeCounter < 64; candidate++) {
+        if (!isComposite[candidate]) {
+          for (i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }
+          hash[primeCounter] = (mathPow(candidate, .5)*maxWord)|0;
+          k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
+        }
+      }
+      ascii += '\x80';
+      while (ascii[lengthProperty]%64 - 56) ascii += '\x00';
+      for (i = 0; i < ascii[lengthProperty]; i++) {
+        j = ascii.charCodeAt(i);
+        if (j>>8) return;
+        words[i>>2] |= j << ((3 - i)%4)*8;
+      }
+      words[words[lengthProperty]] = ((asciiBitLength/maxWord)|0);
+      words[words[lengthProperty]] = (asciiBitLength);
+      for (j = 0; j < words[lengthProperty];) {
+        var w = words.slice(j, j += 16); var oldHash = hash;
+        hash = hash.slice(0, 8);
+        for (i = 0; i < 64; i++) {
+          var i2 = i + j;
+          var w15 = w[i - 15], w2 = w[i - 2];
+          var a = hash[0], e = hash[4];
+          var temp1 = hash[7]
+            + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+            + ((e & hash[5]) ^ ((~e) & hash[6]))
+            + k[i]
+            + (w[i] = (i < 16) ? w[i] : (
+                w[i - 16]
+                + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15>>>3))
+                + w[i - 7]
+                + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2>>>10))
+              )|0
+            );
+          var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+            + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+          hash = [(temp1 + temp2)|0].concat(hash);
+          hash[4] = (hash[4] + temp1)|0;
+        }
+        for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i])|0; }
+      }
+      for (i = 0; i < 8; i++) {
+        for (j = 3; j + 1; j--) {
+          var b = (hash[i]>>(j*8))&255;
+          result += ((b < 16) ? 0 : '') + b.toString(16);
+        }
+      }
+      return result;
+    }
+
+    const SALTS = {
+      "KARIGAR_1M": "SAHEB_1M_PRO",
+      "KARIGAR_3M": "SAHEB_1M_PRO",
+      "KARIGAR_6M": "SAHEB_1Y_PRO",
+      "KARIGAR_1Y": "SAHEB_1Y_PRO",
+      "TEAM_1M": "SAHEB_TEAM_1M_PRO",
+      "TEAM_1Y": "SAHEB_TEAM_1Y_PRO",
+      "CORP_1M": "SAHEB_CORP_1M_PRO",
+      "CORP_1Y": "SAHEB_CORP_1Y_PRO"
+    };
+    const SPECIAL_PROMO_CODE = "SMARTWORKER_ADMIN_100";
+
+    const PLAN_PRICES = {
+      "KARIGAR_1M": 99,
+      "KARIGAR_3M": 280,
+      "KARIGAR_6M": 550,
+      "KARIGAR_1Y": 799,
+      "TEAM_1M": 499,
+      "TEAM_1Y": 3999,
+      "CORP_1M": 1499,
+      "CORP_1Y": 14999,
+      "LIFETIME": 25000
+    };
+
+    let activeInvoiceData = null;
+
+    function autoFillPlanAmount() {
+      const plan = document.getElementById('cust_duration').value;
+      const amt = PLAN_PRICES[plan] || 99;
+      document.getElementById('bill_amount').value = amt;
+      document.getElementById('paid_amount').value = amt;
+      calcDueAmount();
+    }
+
+    function calcDueAmount() {
+      const bill = parseFloat(document.getElementById('bill_amount').value) || 0;
+      const paid = parseFloat(document.getElementById('paid_amount').value) || 0;
+      const due = Math.max(0, bill - paid);
+      document.getElementById('due_amount').value = due;
+    }
+
+    function generateKeyForDevice(deviceId, plan) {
+      deviceId = String(deviceId || '').trim().toUpperCase();
+      if (!deviceId) return null;
+      if (plan === "LIFETIME") return SPECIAL_PROMO_CODE;
+      const salt = SALTS[plan] || "SAHEB_1M_PRO";
+      return sha256(deviceId + salt).substring(0, 8).toUpperCase();
+    }
+
+    function calculateExpiryDate(plan) {
+      const d = new Date();
+      if (plan.includes('1M')) d.setDate(d.getDate() + 30);
+      else if (plan.includes('3M')) d.setDate(d.getDate() + 90);
+      else if (plan.includes('6M')) d.setDate(d.getDate() + 180);
+      else if (plan.includes('1Y')) d.setDate(d.getDate() + 365);
+      else if (plan === 'LIFETIME') return "আজীবন (Lifetime)";
+      return d.toLocaleDateString('en-GB');
+    }
+
+    function saveAndGenerateKey() {
+      const name = document.getElementById('cust_name').value.trim();
+      const shop = document.getElementById('cust_shop').value.trim();
+      const phone = document.getElementById('cust_phone').value.trim();
+      const devId = document.getElementById('cust_dev_id').value.trim().toUpperCase();
+      const plan = document.getElementById('cust_duration').value;
+      const billAmt = parseFloat(document.getElementById('bill_amount').value) || 0;
+      const paidAmt = parseFloat(document.getElementById('paid_amount').value) || 0;
+      const dueAmt = parseFloat(document.getElementById('due_amount').value) || 0;
+      const payMode = document.getElementById('pay_mode').value;
+      const utr = document.getElementById('pay_utr').value.trim();
+
+      if (!name || !phone || !devId) {
+        alert("অনুগ্রহ করে কাস্টমারের নাম, ফোন নম্বর এবং ৮-অক্ষরের Device ID লিখুন!");
+        return;
+      }
+      if (devId.length !== 8) {
+        alert("Device ID অবশ্যই ৮ অক্ষরের হতে হবে!");
+        return;
+      }
+
+      const generatedKey = generateKeyForDevice(devId, plan);
+      const expDate = calculateExpiryDate(plan);
+      const today = new Date().toLocaleDateString('en-GB');
+
+      const planNames = {
+        "KARIGAR_1M": "কারিগর প্ল্যান (১ মাস)",
+        "KARIGAR_3M": "কারিগর প্ল্যান (৩ মাস)",
+        "KARIGAR_6M": "কারিগর প্ল্যান (৬ মাস)",
+        "KARIGAR_1Y": "কারিগর প্ল্যান (১ বছর)",
+        "TEAM_1M": "ওয়ার্কশপ টিম (১০ জন - ১ মাস)",
+        "TEAM_1Y": "ওয়ার্কশপ টিম (১০ জন - ১ বছর)",
+        "CORP_1M": "কর্পোরেট (৫০ জন - ১ মাস)",
+        "CORP_1Y": "কর্পোরেট (৫০ জন - ১ বছর)",
+        "LIFETIME": "লাইফটাইম ভিআইপি"
+      };
+
+      const record = {
+        id: "SUB_" + Date.now(),
+        name,
+        shop: shop || "Aluminium Workshop",
+        phone,
+        devId,
+        plan,
+        planLabel: planNames[plan] || plan,
+        billAmt,
+        paidAmt,
+        dueAmt,
+        payMode,
+        utr: utr || "Paid",
+        key: generatedKey,
+        startDate: today,
+        expiryDate: expDate
+      };
+
+      let list = JSON.parse(localStorage.getItem('sw_admin_subscribers') || '[]');
+      // Update if already exists with same deviceId, else add new
+      const existingIdx = list.findIndex(item => item.devId === devId);
+      if (existingIdx !== -1) {
+        list[existingIdx] = record;
+      } else {
+        list.unshift(record);
+      }
+      localStorage.setItem('sw_admin_subscribers', JSON.stringify(list));
+
+      // Display key
+      document.getElementById('displayGeneratedKey').textContent = generatedKey;
+      document.getElementById('keyExpText').textContent = "মেয়াদ: " + expDate;
+      document.getElementById('keyBoxResult').style.display = "block";
+
+      activeInvoiceData = record;
+      renderCustomerList();
+      alert("✅ কাস্টমার বিল ও অ্যাক্টিভেশন কি সফলভাবে তৈরি হয়েছে!");
+    }
+
+    function sendInvoiceWhatsApp(rec = null) {
+      const data = rec || activeInvoiceData;
+      if (!data) { alert("কোনো বিল রেকর্ড পাওয়া যায়নি!"); return; }
+
+      const msg = `*SMART WORKER PRO - অফিশিয়াল সাবস্ক্রিপশন মেমো*\n` +
+        `----------------------------------------\n` +
+        `👤 কাস্টমার: *${data.name}*\n` +
+        `🏪 দোকান: ${data.shop}\n` +
+        `📱 মোবাইল: ${data.phone}\n` +
+        `💻 Device ID: \`${data.devId}\`\n` +
+        `----------------------------------------\n` +
+        `📦 প্ল্যান: *${data.planLabel}*\n` +
+        `💵 মোট বিল: ₹${data.billAmt}\n` +
+        `✅ জমা টাকা: ₹${data.paidAmt}\n` +
+        `⏳ বকেয়া: ₹${data.dueAmt}\n` +
+        `📅 মেয়াদ শেষ: *${data.expiryDate}*\n` +
+        `----------------------------------------\n` +
+        `🔑 *আপনার সিক্রেট অ্যাক্টিভেশন কি:*\n` +
+        `👉 *${data.key}*\n` +
+        `----------------------------------------\n` +
+        `💡 *চালু করার নিয়ম:*\n` +
+        `অ্যাপ খুলে PRO UPGRADE অপশনে যান, উপরের কোডটি পেস্ট করে Activate বাটনে ক্লিক করুন। সাথে সাথে সমস্ত ফিচার আনলক হয়ে যাবে।\n\n` +
+        `ধন্যবাদ!\n-- Saheb Ghanti (Smart Worker Pro, Amta, Howrah)`;
+
+      const cleanPhone = String(data.phone).replace(/[^0-9]/g, '');
+      const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
+    }
+
+    function copyKeyText() {
+      const key = document.getElementById('displayGeneratedKey').textContent;
+      if (!key || key.includes('-')) return;
+      navigator.clipboard.writeText(key).then(() => {
+        alert("✅ কোড কপি হয়েছে: " + key);
+      }).catch(() => {
+        prompt("কোডটি কপি করুন:", key);
+      });
+    }
+
+    function renderCustomerList() {
+      const list = JSON.parse(localStorage.getItem('sw_admin_subscribers') || '[]');
+      const container = document.getElementById('customerListContainer');
+      const query = (document.getElementById('searchCustInput')?.value || '').trim().toLowerCase();
+
+      // Update Top Stats
+      document.getElementById('totalActiveCust').textContent = list.length;
+      const totalRev = list.reduce((sum, item) => sum + (parseFloat(item.paidAmt) || 0), 0);
+      document.getElementById('totalRevenue').textContent = "₹" + totalRev.toLocaleString('en-IN');
+
+      const filtered = list.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.phone.includes(query) ||
+        c.devId.toLowerCase().includes(query) ||
+        c.shop.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:30px 10px; color:#64748b; font-size:0.85rem;">
+            <i class="fa-solid fa-users-slash" style="font-size:2rem; margin-bottom:8px; display:block;"></i>
+            কোনো কাস্টমার বা রিচার্জ রেকর্ড নেই।
+          </div>`;
+        return;
+      }
+
+      let html = "";
+      filtered.forEach((c) => {
+        const isPaid = c.dueAmt <= 0;
+        const badgeClass = isPaid ? "badge-paid" : "badge-due";
+        const badgeText = isPaid ? "FULL PAID" : `DUE: ₹${c.dueAmt}`;
+
+        html += `
+          <div class="cust-card">
+            <div class="cust-header">
+              <div>
+                <div class="cust-name">${c.name}</div>
+                <div class="cust-shop"><i class="fa-solid fa-store"></i> ${c.shop}</div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+
+            <div class="cust-info-grid">
+              <div><b>মোবাইল:</b> ${c.phone}</div>
+              <div><b>Device ID:</b> <code style="color:#38bdf8;">${c.devId}</code></div>
+              <div><b>প্ল্যান:</b> ${c.planLabel}</div>
+              <div><b>মেয়াদ:</b> ${c.expiryDate}</div>
+              <div><b>বিল:</b> ₹${c.billAmt} (জমা ₹${c.paidAmt})</div>
+              <div><b>কি:</b> <code style="color:#4ade80; font-weight:bold;">${c.key}</code></div>
+            </div>
+
+            <div class="btn-grid-2">
+              <button type="button" class="btn-sm btn-wa" onclick='sendInvoiceWhatsApp(${JSON.stringify(c)})'>
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp মেমো
+              </button>
+              <button type="button" class="btn-sm" style="background:#0284c7; color:#fff;" onclick="quickCopy('${c.key}')">
+                <i class="fa-solid fa-copy"></i> কোড কপি
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function quickCopy(key) {
+      navigator.clipboard.writeText(key).then(() => {
+        alert("✅ কোড কপি হয়েছে: " + key);
+      }).catch(() => {
+        prompt("কোড:", key);
+      });
+    }
+
+    function filterCustomerList() {
+      renderCustomerList();
+    }
+
+    // Initialize on load
+    
+    function renderOnlineRequests() {
+      const container = document.getElementById('onlineRequestsContainer');
+      const badge = document.getElementById('pendingReqBadge');
+      if (!container) return;
+
+      const requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      if (badge) badge.textContent = `${requests.length} টি রিকোয়েস্ট`;
+
+      if (requests.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:18px 10px; color:#64748b; font-size:0.82rem;">
+            <i class="fa-solid fa-inbox" style="font-size:1.5rem; margin-bottom:4px; display:block; color:#475569;"></i>
+            কোনো অনলাইন রিকোয়েস্ট জমা নেই।
+          </div>`;
+        return;
+      }
+
+      let html = "";
+      requests.forEach((req) => {
+        html += `
+          <div style="background:#0f172a; border:1px solid #334155; border-radius:10px; padding:10px; margin-bottom:8px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-size:0.88rem; font-weight:800; color:#fff;">${req.name} (${req.phone})</div>
+              <span style="background:${req.status === 'Approved' ? '#16a34a' : '#d97706'}; color:#fff; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:5px;">${req.status}</span>
+            </div>
+            <div style="font-size:0.74rem; color:#94a3b8; margin:4px 0;">
+              <b>Device:</b> <code style="color:#38bdf8;">${req.device_id}</code> | <b>প্ল্যান:</b> ${req.plan} | <b>Ref:</b> ${req.utr}
+            </div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <button type="button" class="btn-sm btn-wa" style="flex:1;" onclick="acceptAndFillForm('${req.name}', '${req.phone}', '${req.device_id}', '${req.plan}', '${req.utr}', '${req.id}')">
+                <i class="fa-solid fa-check"></i> ফর্মে লোড ও বিল বানান
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function acceptAndFillForm(name, phone, devId, plan, utr, reqId) {
+      document.getElementById('cust_name').value = name;
+      document.getElementById('cust_phone').value = phone;
+      document.getElementById('cust_dev_id').value = devId;
+      document.getElementById('cust_duration').value = plan;
+      document.getElementById('pay_utr').value = utr;
+      autoFillPlanAmount();
+
+      // Mark request as processed
+      let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      const r = requests.find(item => item.id === reqId);
+      if (r) { r.status = "Approved"; localStorage.setItem('sw_recharge_requests', JSON.stringify(requests)); }
+      renderOnlineRequests();
+
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderOnlineRequests();
+      autoFillPlanAmount();
+      renderCustomerList();
+    });
+  </script>
+</body>
+</html>

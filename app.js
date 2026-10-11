@@ -1058,52 +1058,109 @@ function keypadEnter() {
  const w = is_mm ? raw_w / 25.4 : raw_w;
  const d_type = document.getElementById('dr_type').value;
 
- let outer_v = h, outer_h = w - 3.0, has_outer = true;
+ let outer_v = h, outer_h = w - 3.0, has_outer = true, has_mid = false;
  let door_v = 0, door_tb = 0, palla_qty = 1;
+ let leaf_w = w;
 
  if (d_type === "Standard Door") {
- door_v = h - 1.75; door_tb = w - 6.75; palla_qty = 1;
+   door_v = h - 1.75; door_tb = w - 6.75; palla_qty = 1;
  } else if (d_type === "Floor Spring Door") {
- door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
+   door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
  } else if (d_type === "Top Hung Door") {
- door_v = h; door_tb = w - 6.75; palla_qty = 1; has_outer = false;
+   // User Formula: হাইটে মাইনাস ২ ইঞ্চি, চওড়ায় প্লাস ৪ ইঞ্চি
+   door_v = h - 2.0; 
+   leaf_w = w + 4.0; 
+   door_tb = leaf_w - 3.5; // দুই পাশের খাড়া সেকশন বাদ দিয়ে টপ, বটম ও মিডিল পাট্টা
+   palla_qty = 1; 
+   has_outer = false;
+   has_mid = true;
  } else if (d_type === "Domal System Door") {
- door_v = h - (25.0 / 25.4); door_tb = (w - (38.0 / 25.4)) - 3.5; palla_qty = 1;
+   door_v = h - (25.0 / 25.4); door_tb = (w - (38.0 / 25.4)) - 3.5; palla_qty = 1;
  } else {
- door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
+   door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
  }
 
- const glass_h = door_v - 5.875 - 0.25;
- const glass_w = door_tb - 0.25;
-
- dr_door_count += 1;
  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
  const unit_str = is_mm ? "mm" : "Inch";
+ dr_door_count += 1;
 
- let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
- hw_txt += `> Door Hinges / Pivot: 3 pc (Per Leaf)\n> Door Handle: 1 Set\n> Door Lock: 1 Set\n`;
- if (d_type === "Standard Door" || d_type === "Floor Spring Door") {
- hw_txt += "> Door Closer / Floor Spring: 1 pc\n";
- }
+ let out = `[Door #${dr_door_count} - ${d_type} (${raw_h} x ${raw_w} ${unit_str})]
+`;
 
- let out = `[Door #${dr_door_count} - ${d_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
  if (has_outer) {
- out += `--- OUTER FRAME ---\n> Outer Vertical: ${disp(outer_v)} (2 pc)\n> Outer Top Horizontal: ${disp(outer_h)} (1 pc)\n`;
- dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
+   out += `--- OUTER FRAME ---
+> Outer Vertical: ${disp(outer_v)} (2 pc)
+> Outer Top Horizontal: ${disp(outer_h)} (1 pc)
+`;
+   dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
  }
- out += `--- DOOR SASH (${palla_qty} Palla) ---\n> Door Vertical: ${disp(door_v)} (${palla_qty * 2} pc)\n> Door Top/Bottom: ${disp(door_tb)} (${palla_qty * 2} pc)\n`;
- for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Verticals"].push(door_v);
- for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Horizontals"].push(door_tb);
 
- out += hw_txt;
- out += `--- GLASS / BOARD ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${palla_qty} pc)\n`;
- const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
- dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + palla_qty;
+ if (d_type === "Top Hung Door") {
+   out += `--- DOOR SASH (Top Hung Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---
+`;
+   out += `> Door Vertical (খাড়া রড): ${disp(door_v)} (2 pc)
+`;
+   out += `> Top Rail (টপ পাট্টা): ${disp(door_tb)} (1 pc)
+`;
+   out += `> Bottom Rail (বটম পাট্টা): ${disp(door_tb)} (1 pc)
+`;
+   out += `> Middle Section (মিডিল পাট্টা): ${disp(door_tb)} (1 pc)
+`;
+   out += `> Top Running Track: ${disp(w * 2)} (1 pc)
+`;
+
+   dr_buckets["Door Verticals"].push(door_v, door_v);
+   dr_buckets["Door Horizontals"].push(door_tb, door_tb, door_tb);
+
+   out += `--- HARDWARE & ACCESSORIES ---
+`;
+   out += `> Top Hung Heavy Rollers: 1 Set (2 pc)
+`;
+   out += `> Bottom Floor Guide: 1 pc
+`;
+   out += `> Door Handle: 1 Set
+`;
+   out += `> Concealed Hook Lock: 1 Set
+`;
+
+   const mid_g_h = ((door_v - 7.75) / 2.0) - 0.25;
+   const mid_g_w = door_tb - 0.25;
+   out += `--- GLASS / BOARD ---
+> Panel Glass / Board: ${disp(mid_g_h)} x ${disp(mid_g_w)} (2 pc)
+`;
+   const gKey = `${disp(mid_g_h)} x ${disp(mid_g_w)}`;
+   dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + 2;
+
+ } else {
+   out += `--- DOOR SASH (${palla_qty} Palla) ---\n> Door Vertical: ${disp(door_v)} (${palla_qty * 2} pc)\n> Door Top/Bottom: ${disp(door_tb)} (${palla_qty * 2} pc)\n`;
+   for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Verticals"].push(door_v);
+   for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Horizontals"].push(door_tb);
+
+   let hw_txt = `--- HARDWARE & ACCESSORIES ---
+`;
+   hw_txt += `> Door Hinges / Pivot: 3 pc (Per Leaf)
+> Door Handle: 1 Set
+> Door Lock: 1 Set
+`;
+   if (d_type === "Standard Door" || d_type === "Floor Spring Door") {
+     hw_txt += `> Door Closer / Floor Spring: 1 pc
+`;
+   }
+   out += hw_txt;
+
+   const glass_h = door_v - 5.875 - 0.25;
+   const glass_w = door_tb - 0.25;
+   out += `--- GLASS / BOARD ---
+> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${palla_qty} pc)
+`;
+   const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
+   dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + palla_qty;
+ }
 
  const prevOut = document.getElementById('dr_out').textContent;
- document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
+ document.getElementById('dr_out').textContent = out +  + prevOut;
  document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
- }
+}
 
  function clearDoor() {
  dr_door_count = 0;
@@ -5348,3 +5405,282 @@ if (document.readyState === 'loading') {
 }
 window.addEventListener('load', bootApp);
 window.onload = bootApp;
+
+
+
+// =========================================================================
+// SMART WORKER PRO - MASTER ADMIN SUBSCRIPTION & RECHARGE ENGINE
+// =========================================================================
+
+const DEFAULT_ADMIN_PIN = "7860";
+let lastGeneratedAdminKey = "";
+let lastTargetPhone = "";
+let lastTargetPlan = "";
+let lastTargetName = "";
+
+function getAdminPin() {
+  return localStorage.getItem('sw_admin_pin') || DEFAULT_ADMIN_PIN;
+}
+
+function openAdminPortalWithPin() {
+  const savedPin = getAdminPin();
+  const entered = prompt("🔑 অ্যাডমিন সিকিউরিটি পিন (Admin PIN) লিখুন:\n(Default PIN: 7860)");
+  if (entered === null) return;
+  if (entered.trim() === savedPin) {
+    sessionStorage.setItem('sw_admin_authenticated', 'true');
+    openScreen('admin-portal', 'ADMIN PORTAL');
+    renderAdminPortal();
+  } else {
+    alert("❌ ভুল পিন! অ্যাডমিন পোর্টাল খোলা সম্ভব নয়।");
+  }
+}
+
+function lockAdminPortal() {
+  sessionStorage.removeItem('sw_admin_authenticated');
+  alert("🔒 অ্যাডমিন পোর্টাল লক করা হয়েছে।");
+  goHome();
+}
+
+function adminChangePinPrompt() {
+  const current = getAdminPin();
+  const oldPin = prompt("বর্তমান অ্যাডমিন পিন লিখুন:");
+  if (oldPin !== current) { alert("❌ বর্তমান পিন ভুল!"); return; }
+  const newPin = prompt("নতুন ৪-সংখ্যার পিন লিখুন:");
+  if (!newPin || newPin.trim().length < 4) { alert("❌ কমপক্ষে ৪ সংখ্যার পিন দিন!"); return; }
+  localStorage.setItem('sw_admin_pin', newPin.trim());
+  document.getElementById('admCurrentPinDisplay').textContent = newPin.trim();
+  alert("✅ অ্যাডমিন পিন সফলভাবে পরিবর্তন করা হয়েছে!");
+}
+
+// Generate mathematical key matching checkActivationType
+function generateActivationKey(deviceId, planType) {
+  deviceId = String(deviceId || '').trim().toUpperCase();
+  if (!deviceId) return null;
+  if (planType === "LIFETIME") return SPECIAL_PROMO_CODE;
+  const salt = SALTS[planType] || SALTS["KARIGAR_1M"];
+  return sha256(deviceId + salt).substring(0, 8).toUpperCase();
+}
+
+// Customer submits online recharge request
+function submitCustomerRechargeRequest() {
+  const name = document.getElementById('req_cust_name').value.trim();
+  const phone = document.getElementById('req_cust_phone').value.trim();
+  const plan = document.getElementById('req_cust_plan').value;
+  const utr = document.getElementById('req_cust_utr').value.trim();
+  const devId = getDeviceId();
+
+  if (!name || !phone) {
+    alert("অনুগ্রহ করে আপনার নাম ও মোবাইল নম্বর লিখুন!");
+    return;
+  }
+
+  const reqObj = {
+    id: "REQ_" + Date.now(),
+    name: name,
+    phone: phone,
+    device_id: devId,
+    plan: plan,
+    utr: utr || "Paid online",
+    date: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+    status: "Pending"
+  };
+
+  let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+  requests.unshift(reqObj);
+  localStorage.setItem('sw_recharge_requests', JSON.stringify(requests));
+
+  // Sync to Firebase if connected
+  try {
+    if (window.fbDb) {
+      fbDb.collection('recharge_requests').doc(reqObj.id).set(reqObj).catch(()=>{});
+    }
+  } catch(e){}
+
+  alert("✅ আপনার রিচার্জ রিকোয়েস্ট সফলভাবে জমা হয়েছে!\n\nঅ্যাডমিন খুব শীঘ্রই ভেরিফাই করে আপনার নম্বরে অ্যাক্টিভেশন কি পাঠিয়ে দেবে।");
+  document.getElementById('req_cust_name').value = "";
+  document.getElementById('req_cust_phone').value = "";
+  document.getElementById('req_cust_utr').value = "";
+}
+
+// Render Admin Portal UI
+function renderAdminPortal() {
+  const devInput = document.getElementById('adm_target_device');
+  if (devInput && !devInput.value) devInput.value = getDeviceId();
+  const pinDisplay = document.getElementById('admCurrentPinDisplay');
+  if (pinDisplay) pinDisplay.textContent = getAdminPin();
+  renderAdminRechargeRequests();
+}
+
+function renderAdminRechargeRequests() {
+  const container = document.getElementById('admRequestsListContainer');
+  const badge = document.getElementById('admReqCountBadge');
+  if (!container) return;
+
+  let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+  if (badge) badge.textContent = `${requests.length} টি রিকোয়েস্ট`;
+
+  if (requests.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:24px 10px; color:#94a3b8; font-size:0.85rem;">
+        <i class="fa-solid fa-inbox" style="font-size:1.8rem; margin-bottom:6px; color:#cbd5e1; display:block;"></i>
+        এখনও কোনো পেন্ডিং রিচার্জ রিকোয়েস্ট নেই।
+      </div>`;
+    return;
+  }
+
+  let html = "";
+  requests.forEach((req, idx) => {
+    const isPending = req.status === "Pending";
+    const statusColor = isPending ? "#f59e0b" : "#16a34a";
+    const planLabels = {
+      "KARIGAR_1M": "কারিগর ১ মাস (₹৯৯)",
+      "KARIGAR_1Y": "কারিগর ১ বছর (₹৭৯৯)",
+      "TEAM_1M": "টিম ১ মাস (₹৪৯৯)",
+      "TEAM_1Y": "টিম ১ বছর (₹৩,৯৯৯)",
+      "CORP_1M": "কর্পোরেট ১ মাস (₹১,৪৯৯)",
+      "CORP_1Y": "কর্পোরেট ১ বছর (₹১৪,৯৯৯)",
+      "LIFETIME": "লাইফটাইম ভিআইপি"
+    };
+    const planText = planLabels[req.plan] || req.plan;
+
+    html += `
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:10px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size:0.92rem; font-weight:800; color:#0f172a;">${req.name}</div>
+            <div style="font-size:0.75rem; color:#475569; margin-top:1px;"><i class="fa-solid fa-phone"></i> ${req.phone}</div>
+          </div>
+          <span style="background:${statusColor}; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 7px; border-radius:6px;">
+            ${req.status}
+          </span>
+        </div>
+        
+        <div style="margin-top:8px; font-size:0.76rem; color:#334155; line-height:1.4; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1;">
+          <div><b>Device ID:</b> <span style="font-family:monospace; font-weight:bold; color:#0284c7;">${req.device_id}</span></div>
+          <div><b>Plan:</b> ${planText}</div>
+          <div><b>Ref / UTR:</b> ${req.utr}</div>
+          <div style="font-size:0.7rem; color:#94a3b8;"><b>তারিখ:</b> ${req.date}</div>
+        </div>
+
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button type="button" onclick="adminProcessRequest('${req.id}')" style="flex:2; background:#2563eb; color:#fff; border:none; padding:7px; border-radius:6px; font-size:0.76rem; font-weight:bold; cursor:pointer;">
+            <i class="fa-solid fa-key"></i> কোড বানান ও হোয়াটসঅ্যাপে পাঠান
+          </button>
+          <button type="button" onclick="adminDeleteRequest('${req.id}')" style="flex:1; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; padding:7px; border-radius:6px; font-size:0.76rem; font-weight:bold; cursor:pointer;">
+            মুছুন
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// Process a customer request directly
+function adminProcessRequest(reqId) {
+  let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+  const req = requests.find(r => r.id === reqId);
+  if (!req) return;
+
+  const key = generateActivationKey(req.device_id, req.plan);
+  req.status = "Approved";
+  req.generated_key = key;
+  localStorage.setItem('sw_recharge_requests', JSON.stringify(requests));
+  renderAdminRechargeRequests();
+
+  lastGeneratedAdminKey = key;
+  lastTargetPhone = req.phone;
+  lastTargetPlan = req.plan;
+  lastTargetName = req.name;
+
+  const planLabels = {
+    "KARIGAR_1M": "কারিগর প্ল্যান (১ মাস)",
+    "KARIGAR_1Y": "কারিগর প্ল্যান (১ বছর)",
+    "TEAM_1M": "ওয়ার্কশপ টিম (১ মাস)",
+    "TEAM_1Y": "ওয়ার্কশপ টিম (১ বছর)",
+    "CORP_1M": "কর্পোরেট প্ল্যান (১ মাস)",
+    "CORP_1Y": "কর্পোরেট প্ল্যান (১ বছর)",
+    "LIFETIME": "লাইফটাইম ভিআইপি"
+  };
+  const planText = planLabels[req.plan] || req.plan;
+
+  const msg = `নমস্কার ${req.name} দা, Smart Worker Pro-তে আপনার ${planText} সফলভাবে সক্রিয় করা হয়েছে!\n\nআপনার অ্যাক্টিভেশন কি:\n👉 *${key}*\n\nঅ্যাপের PRO UPGRADE অপশনে গিয়ে এই কোডটি পেস্ট করে Activate বাটনে ক্লিক করলেই সমস্ত প্রিমিয়াম ফিচার চালু হয়ে যাবে। ধন্যবাদ!\n-- Saheb Ghanti (Smart Worker Pro)`;
+
+  const cleanPhone = req.phone.replace(/[^0-9]/g, '');
+  const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
+}
+
+function adminDeleteRequest(reqId) {
+  if (!confirm("আপনি কি নিশ্চিত এই রিকোয়েস্টটি মুছতে চান?")) return;
+  let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+  requests = requests.filter(r => r.id !== reqId);
+  localStorage.setItem('sw_recharge_requests', JSON.stringify(requests));
+  renderAdminRechargeRequests();
+}
+
+// Manual Key Generator
+function adminGenerateManualKey() {
+  const devId = document.getElementById('adm_target_device').value.trim().toUpperCase();
+  const plan = document.getElementById('adm_target_plan').value;
+
+  if (!devId || devId.length !== 8) {
+    alert("অনুগ্রহ করে সঠিক ৮-অক্ষরের Device ID দিন!");
+    return;
+  }
+
+  const key = generateActivationKey(devId, plan);
+  lastGeneratedAdminKey = key;
+  lastTargetPlan = plan;
+
+  document.getElementById('admGeneratedKeyDisplay').value = key;
+  document.getElementById('admGeneratedResultBox').style.display = "block";
+}
+
+function adminCopyGeneratedKey() {
+  if (!lastGeneratedAdminKey) return;
+  navigator.clipboard.writeText(lastGeneratedAdminKey).then(() => {
+    const btn = document.getElementById('admCopyKeyBtn');
+    btn.textContent = "COPIED!";
+    btn.style.background = "#0284c7";
+    setTimeout(() => {
+      btn.textContent = "COPY";
+      btn.style.background = "#16a34a";
+    }, 2000);
+  }).catch(() => {
+    alert("Key: " + lastGeneratedAdminKey);
+  });
+}
+
+function adminShareKeyWhatsApp() {
+  if (!lastGeneratedAdminKey) return;
+  const devId = document.getElementById('adm_target_device').value.trim().toUpperCase();
+  const plan = document.getElementById('adm_target_plan').value;
+  const msg = `নমস্কার, Smart Worker Pro-তে আপনার সাবস্ক্রিপশন কি:\n👉 *${lastGeneratedAdminKey}*\nDevice ID: ${devId}\nPlan: ${plan}\n\nঅ্যাপে এই কোডটি দিয়ে Activate করলেই সমস্ত ফিচার চালু হয়ে যাবে। ধন্যবাদ!`;
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// Directly unlock this device on the spot
+function adminDirectSelfApplyKey() {
+  if (!lastGeneratedAdminKey) return;
+  document.getElementById('activationInput').value = lastGeneratedAdminKey;
+  activateAppKey();
+  alert("🎉 অভিনন্দন! এই ডিভাইসে সফলভাবে সাবস্ক্রিপশন সক্রিয় করা হয়েছে!");
+  goHome();
+}
+
+// URL Hash router check
+function checkUrlHash() {
+  if (window.location.hash === '#admin' || window.location.hash === '#admin-portal') {
+    openAdminPortalWithPin();
+  }
+}
+
+window.addEventListener('hashchange', checkUrlHash);
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(checkUrlHash, 500);
+  // Auto-fill Device ID on recharge form
+  const reqDev = document.getElementById('req_cust_device');
+  if (reqDev) reqDev.value = getDeviceId();
+});
