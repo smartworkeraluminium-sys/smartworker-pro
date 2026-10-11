@@ -1,36 +1,41 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart Worker Pro • অ্যাডমিন রিচার্জ ও কাস্টমার বিল পোর্টাল</title>
+  <title>Smart Worker Pro • Owner Admin Console</title>
   
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Cloud Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
+      --bg: #090d16;
+      --card-bg: #131b2e;
+      --card-border: #1e293b;
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
       --primary: #0284c7;
-      --primary-hover: #0369a1;
       --accent: #f59e0b;
-      --success: #16a34a;
+      --success: #10b981;
       --danger: #ef4444;
       --purple: #8b5cf6;
+      --blue: #3b82f6;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -38,109 +43,169 @@
       background: var(--bg);
       color: var(--text-main);
       min-height: 100vh;
-      padding-bottom: 50px;
+      padding-bottom: 60px;
     }
 
     /* Top Bar */
     .top-bar {
-      background: #1e1b4b;
-      border-bottom: 1px solid #4338ca;
-      padding: 14px 16px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
     .top-bar .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .top-bar .title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 800;
       color: #fbbf24;
+      letter-spacing: 0.5px;
     }
     .top-bar .sub {
       font-size: 0.72rem;
-      color: #c7d2fe;
+      color: #94a3b8;
+      margin-top: 1px;
     }
     .btn-nav {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #fff;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 0.78rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover {
+      background: #334155;
+      color: #fff;
     }
 
     .container {
-      max-width: 600px;
+      max-width: 640px;
       margin: 0 auto;
-      padding: 14px 12px;
+      padding: 16px 14px;
     }
 
-    /* Dashboard Stats Grid */
-    .stats-grid {
+    /* Status Grid */
+    .status-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, 1fr);
       gap: 10px;
       margin-bottom: 16px;
     }
-    .stat-card {
+    .status-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 12px 14px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      position: relative;
+      overflow: hidden;
     }
-    .stat-label {
+    .status-card.red-alert {
+      border-left: 4px solid var(--danger);
+    }
+    .status-card.green-alert {
+      border-left: 4px solid var(--success);
+    }
+    .status-card.blue-alert {
+      border-left: 4px solid var(--blue);
+    }
+    .status-card.yellow-alert {
+      border-left: 4px solid var(--accent);
+    }
+    .status-label {
       font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-sub);
       text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .stat-val {
-      font-size: 1.35rem;
+    .status-val {
+      font-size: 1.45rem;
       font-weight: 800;
-      color: #38bdf8;
-      margin-top: 4px;
+      color: #fff;
+      margin-top: 6px;
     }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    .dot-green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .dot-blue { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+    .dot-yellow { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
 
-    /* Cards */
+    /* Admin Cards */
     .admin-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
     }
     .card-title {
-      font-size: 1rem;
+      font-size: 0.98rem;
       font-weight: 800;
       color: #f8fafc;
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .card-title i {
       color: var(--accent);
     }
 
-    /* Form Groups */
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: #94a3b8;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: #0284c7;
+      color: #fff;
+      border-color: #0284c7;
+    }
+
+    /* Form Fields */
     .form-group {
       display: flex;
       flex-direction: column;
@@ -157,14 +222,14 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-    input, select, textarea {
+    input, select {
       width: 100%;
-      background: #0f172a;
-      border: 1px solid var(--card-border);
+      background: #090d16;
+      border: 1px solid #1e293b;
       color: #fff;
       padding: 10px 12px;
       border-radius: 9px;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       outline: none;
       transition: border 0.2s;
     }
@@ -185,91 +250,107 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: 0.15s;
+      transition: all 0.15s;
     }
     .btn:active {
       transform: scale(0.98);
     }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-success { background: #16a34a; color: #fff; }
+    .btn-primary { background: #0284c7; color: #fff; }
+    .btn-success { background: #10b981; color: #fff; }
     .btn-wa { background: #22c55e; color: #fff; }
     .btn-danger { background: #ef4444; color: #fff; }
 
-    /* Key Box */
+    /* Key Display Box */
     .key-box {
       background: #064e3b;
       border: 1px solid #10b981;
       border-radius: 12px;
-      padding: 12px;
+      padding: 14px;
       margin-top: 12px;
       display: none;
     }
     .key-display {
-      font-size: 1.4rem;
+      font-size: 1.45rem;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       text-align: center;
       color: #6ee7b7;
       background: #022c22;
-      padding: 8px;
+      padding: 10px;
       border-radius: 8px;
-      margin: 6px 0;
-      font-family: monospace;
+      margin: 8px 0;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Customer List */
-    .cust-card {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
+    /* Subscriber Card */
+    .sub-card {
+      background: #090d16;
+      border: 1px solid #1e293b;
       border-radius: 12px;
       padding: 12px;
       margin-bottom: 10px;
-      border-left: 4px solid var(--primary);
+      position: relative;
     }
-    .cust-header {
+    .sub-card.pending {
+      border-left: 4px solid var(--danger);
+    }
+    .sub-card.active {
+      border-left: 4px solid var(--success);
+    }
+    .sub-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 6px;
     }
-    .cust-name {
+    .sub-name {
       font-size: 0.95rem;
       font-weight: 800;
       color: #fff;
     }
-    .cust-shop {
+    .sub-shop {
       font-size: 0.74rem;
       color: var(--accent);
+      margin-top: 1px;
     }
     .badge {
       font-size: 0.68rem;
       font-weight: 800;
       padding: 3px 8px;
       border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
-    .badge-paid { background: #14532d; color: #4ade80; }
-    .badge-due { background: #7f1d1d; color: #f87171; }
-    
-    .cust-info-grid {
+    .badge-red { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+    .badge-green { background: #022c22; color: #4ade80; border: 1px solid #16a34a; }
+    .badge-blue { background: #172554; color: #60a5fa; border: 1px solid #2563eb; }
+
+    .sub-meta-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 6px;
       font-size: 0.75rem;
       color: #cbd5e1;
       margin: 8px 0;
-      background: #1e293b;
-      padding: 8px;
+      background: #131b2e;
+      padding: 8px 10px;
       border-radius: 8px;
     }
-    .btn-grid-2 {
+    .sub-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .btn-row-sm {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.5fr 1fr;
       gap: 6px;
       margin-top: 8px;
     }
     .btn-sm {
       padding: 8px;
-      font-size: 0.75rem;
+      font-size: 0.76rem;
       border-radius: 7px;
       font-weight: 700;
       border: none;
@@ -302,160 +383,175 @@
     <div class="brand">
       <img src="logo.png" alt="Logo" onerror="this.style.display='none'" style="height:32px; width:auto; border-radius:6px; background:#fff; padding:2px;">
       <div>
-        <div class="title">SMART WORKER ADMIN</div>
-        <div class="sub">মাস্টার রিচার্জ, বিল ও লাইসেন্স পোর্টাল</div>
+        <div class="title">SMART WORKER PRO • ADMIN</div>
+        <div class="sub">Owner Control Console & License Portal</div>
       </div>
     </div>
     <a href="index.html" class="btn-nav">
-      <i class="fa-solid fa-house"></i> মূল অ্যাপ
+      <i class="fa-solid fa-arrow-left"></i> Customer App
     </a>
   </div>
 
   <div class="container">
 
-    <!-- Stats Summary Row -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">মোট অ্যাক্টিভ কাস্টমার</div>
-        <div class="stat-val" id="totalActiveCust">0</div>
+    <!-- Realtime Metric Status Cards -->
+    <div class="status-grid">
+      <div class="status-card red-alert">
+        <div class="status-label">
+          <span class="status-dot dot-red"></span>
+          <span>New / Pending</span>
+        </div>
+        <div class="status-val" id="statPendingCount" style="color:#f87171;">0</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">মোট বিল কালেকশন</div>
-        <div class="stat-val" id="totalRevenue" style="color:#4ade80;">₹0</div>
+      <div class="status-card green-alert">
+        <div class="status-label">
+          <span class="status-dot dot-green"></span>
+          <span>Active Pro</span>
+        </div>
+        <div class="status-val" id="statActiveCount" style="color:#4ade80;">0</div>
+      </div>
+      <div class="status-card blue-alert">
+        <div class="status-label">
+          <span class="status-dot dot-blue"></span>
+          <span>Online Today</span>
+        </div>
+        <div class="status-val" id="statOnlineCount" style="color:#60a5fa;">0</div>
+      </div>
+      <div class="status-card yellow-alert">
+        <div class="status-label">
+          <span class="status-dot dot-yellow"></span>
+          <span>Total Billed</span>
+        </div>
+        <div class="status-val" id="statTotalRevenue" style="color:#fbbf24;">₹0</div>
       </div>
     </div>
 
-    <!-- 1. কাস্টমার রিচার্জ ও বিল এন্ট্রি ফর্ম -->
+    <!-- Section 1: Live Subscribers & Activity Queue -->
     <div class="admin-card">
       <div class="card-title">
-        <i class="fa-solid fa-file-invoice-dollar"></i>
-        <span>কাস্টমার রিচার্জ ও বিল এন্ট্রি</span>
+        <i class="fa-solid fa-tower-broadcast" style="color:#38bdf8;"></i>
+        <span>Live Subscriber Queue & Activity</span>
+        <span id="queueTotalBadge" style="margin-left:auto; background:#1e293b; color:#94a3b8; font-size:0.72rem; padding:2px 8px; border-radius:10px;">0 Total</span>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="subscriberSearchInput" placeholder="Search by Name, Mobile, or Device ID..." oninput="filterSubscribers()">
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button type="button" class="tab-btn active" onclick="setFilterTab('all')">All</button>
+        <button type="button" class="tab-btn" onclick="setFilterTab('pending')">🔴 Pending Activation</button>
+        <button type="button" class="tab-btn" onclick="setFilterTab('active')">🟢 Active Pro</button>
+        <button type="button" class="tab-btn" onclick="setFilterTab('expiring')">🟡 Expiring Soon</button>
+      </div>
+
+      <!-- Subscriber List Container -->
+      <div id="subscribersListContainer" style="max-height:420px; overflow-y:auto;">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- Section 2: Manual Key Generator & Billing Form -->
+    <div class="admin-card">
+      <div class="card-title">
+        <i class="fa-solid fa-key" style="color:#f59e0b;"></i>
+        <span>Create Subscription & Billing Memo</span>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>কাস্টমারের নাম *</label>
-          <input type="text" id="cust_name" placeholder="যেমন: বিশ্বজিৎ মন্ডল">
+          <label>Customer Full Name *</label>
+          <input type="text" id="in_name" placeholder="e.g. John Doe">
         </div>
         <div class="form-group">
-          <label>দোকানের নাম</label>
-          <input type="text" id="cust_shop" placeholder="যেমন: মা তারা অ্যালুমিনিয়াম">
+          <label>Workshop / Business Name</label>
+          <input type="text" id="in_shop" placeholder="e.g. Apex Fabrication Works">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>মোবাইল / WhatsApp *</label>
-          <input type="text" id="cust_phone" placeholder="যেমন: 9876543210">
+          <label>WhatsApp Mobile Number *</label>
+          <input type="text" id="in_phone" placeholder="e.g. 9876543210">
         </div>
         <div class="form-group">
-          <label>কাস্টমারের Device ID * (৮ অক্ষর)</label>
-          <input type="text" id="cust_dev_id" placeholder="যেমন: A1B2C3D4" maxlength="8" style="text-transform:uppercase; font-weight:bold; letter-spacing:1px; color:#38bdf8;">
+          <label>Customer Device ID * (8 Characters)</label>
+          <input type="text" id="in_dev_id" placeholder="e.g. A1B2C3D4" maxlength="8" style="text-transform:uppercase; font-weight:800; font-family:'JetBrains Mono', monospace; color:#38bdf8;">
         </div>
       </div>
 
-      <!-- Plan Duration & Pricing -->
       <div class="form-row">
         <div class="form-group">
-          <label>কত মাসের জন্য নিচ্ছে? *</label>
-          <select id="cust_duration" onchange="autoFillPlanAmount()">
-            <option value="KARIGAR_1M">কারিগর প্ল্যান - ১ মাস (₹৯৯)</option>
-            <option value="KARIGAR_3M">কারিগর প্ল্যান - ৩ মাস (₹২৮০)</option>
-            <option value="KARIGAR_6M">কারিগর প্ল্যান - ৬ মাস (₹৫৫০)</option>
-            <option value="KARIGAR_1Y">কারিগর প্ল্যান - ১ বছর (₹৭৯৯)</option>
-            <option value="TEAM_1M">ওয়ার্কশপ টিম (১০ জন) - ১ মাস (₹৪৯৯)</option>
-            <option value="TEAM_1Y">ওয়ার্কশপ টিম (১০ জন) - ১ বছর (₹৩,৯৯৯)</option>
-            <option value="CORP_1M">কর্পোরেট (৫০ জন) - ১ মাস (₹১,৪৯৯)</option>
-            <option value="CORP_1Y">কর্পোরেট (৫০ জন) - ১ বছর (₹১৪,৯৯৯)</option>
-            <option value="LIFETIME">👑 লাইফটাইম আনলিমিটেড (Lifetime VIP)</option>
+          <label>Select Duration & Plan *</label>
+          <select id="in_plan" onchange="autoFillPlanCost()">
+            <option value="KARIGAR_1M">Karigar Plan - 1 Month (₹99)</option>
+            <option value="KARIGAR_3M">Karigar Plan - 3 Months (₹280)</option>
+            <option value="KARIGAR_6M">Karigar Plan - 6 Months (₹550)</option>
+            <option value="KARIGAR_1Y">Karigar Plan - 1 Year (₹799)</option>
+            <option value="TEAM_1M">Workshop Team (10 Users) - 1 Month (₹499)</option>
+            <option value="TEAM_1Y">Workshop Team (10 Users) - 1 Year (₹3,999)</option>
+            <option value="CORP_1M">Corporate Enterprise (50 Users) - 1 Month (₹1,499)</option>
+            <option value="CORP_1Y">Corporate Enterprise (50 Users) - 1 Year (₹14,999)</option>
+            <option value="LIFETIME">👑 Lifetime Unlimited VIP (Lifetime Pro)</option>
           </select>
         </div>
         <div class="form-group">
-          <label>মোট বিলের পরিমাণ (₹)</label>
-          <input type="number" id="bill_amount" value="99" oninput="calcDueAmount()">
+          <label>Billing Amount (₹)</label>
+          <input type="number" id="in_bill" value="99" oninput="calculateBalanceDue()">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>টাকা জমা (Paid Amount ₹)</label>
-          <input type="number" id="paid_amount" value="99" oninput="calcDueAmount()">
+          <label>Amount Received (Paid ₹)</label>
+          <input type="number" id="in_paid" value="99" oninput="calculateBalanceDue()">
         </div>
         <div class="form-group">
-          <label>বকেয়া (Due Amount ₹)</label>
-          <input type="number" id="due_amount" value="0" readonly style="background:#1e293b; color:#f87171; font-weight:bold;">
+          <label>Balance Due (₹)</label>
+          <input type="number" id="in_due" value="0" readonly style="background:#131b2e; color:#f87171; font-weight:800;">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>পেমেন্ট মোড</label>
-          <select id="pay_mode">
-            <option value="Google Pay / PhonePe">Google Pay / PhonePe (UPI)</option>
-            <option value="Cash">নগদ টাকা (Cash)</option>
-            <option value="Bank Transfer">ব্যাংক ট্রান্সফার (Bank NEFT)</option>
-            <option value="Paytm">Paytm</option>
+          <label>Payment Method</label>
+          <select id="in_pay_mode">
+            <option value="Google Pay / PhonePe (UPI)">Google Pay / PhonePe (UPI)</option>
+            <option value="Cash Payment">Cash Payment</option>
+            <option value="Bank Transfer (NEFT/IMPS)">Bank Transfer (NEFT/IMPS)</option>
+            <option value="Paytm Wallet / UPI">Paytm Wallet / UPI</option>
           </select>
         </div>
         <div class="form-group">
-          <label>পেমেন্ট UTR / ট্রানজ্যাকশন আইডি</label>
-          <input type="text" id="pay_utr" placeholder="UTR বা রেফারেন্স নং">
+          <label>Transaction ID / UTR Number</label>
+          <input type="text" id="in_utr" placeholder="e.g. 423156789012">
         </div>
       </div>
 
-      <div style="display:flex; gap:8px; margin-top:8px;">
-        <button type="button" class="btn btn-primary" onclick="saveAndGenerateKey()" style="flex:1;">
-          <i class="fa-solid fa-key"></i> বিল ও কোড তৈরি করুন
-        </button>
-      </div>
+      <button type="button" class="btn btn-primary" onclick="generateAndSaveKey()" style="margin-top:6px;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Activation Key & Save Memo
+      </button>
 
-      <!-- Generated Key Box -->
+      <!-- Key Generated Result Display -->
       <div id="keyBoxResult" class="key-box">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.78rem; font-weight:bold; color:#6ee7b7;">অ্যাক্টিভেশন কোড সফলভাবে তৈরি হয়েছে:</span>
-          <span id="keyExpText" style="font-size:0.72rem; color:#a7f3d0;"></span>
+          <span style="font-size:0.78rem; font-weight:800; color:#6ee7b7;">ACTIVATION KEY GENERATED:</span>
+          <span id="keyExpiryInfo" style="font-size:0.72rem; color:#a7f3d0;"></span>
         </div>
         <div class="key-display" id="displayGeneratedKey">--------</div>
         <div style="display:flex; gap:8px; margin-top:8px;">
-          <button type="button" class="btn btn-wa" onclick="sendInvoiceWhatsApp()" style="flex:2;">
-            <i class="fa-brands fa-whatsapp"></i> WhatsApp-এ বিল ও কোড পাঠান
+          <button type="button" class="btn btn-wa" onclick="sendInvoiceWhatsAppDirect()" style="flex:2;">
+            <i class="fa-brands fa-whatsapp"></i> Send Invoice & Key via WhatsApp
           </button>
-          <button type="button" class="btn" style="flex:1; background:#0284c7; color:#fff;" onclick="copyKeyText()">
+          <button type="button" class="btn" style="flex:1; background:#0284c7; color:#fff;" onclick="copyGeneratedKeyToClipboard()">
             <i class="fa-solid fa-copy"></i> COPY
           </button>
         </div>
       </div>
 
-    </div>
-
-    
-    <!-- অনলাইন রিচার্জ রিকোয়েস্ট (কাস্টমারদের পাঠানো রিকোয়েস্ট) -->
-    <div class="admin-card">
-      <div class="card-title">
-        <i class="fa-solid fa-bell" style="color:#38bdf8;"></i>
-        <span>কাস্টমারদের পাঠানো অনলাইন রিকোয়েস্ট</span>
-        <span id="pendingReqBadge" style="margin-left:auto; background:#d97706; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">0 টি রিকোয়েস্ট</span>
-      </div>
-      <div id="onlineRequestsContainer" style="max-height:260px; overflow-y:auto;">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
-
-    <!-- 2. সমস্ত কাস্টমারের বিল ও সাবস্ক্রিপশন তালিকা -->
-    <div class="admin-card">
-      <div class="card-title">
-        <i class="fa-solid fa-users"></i>
-        <span>কাস্টমার ও রিচার্জ হিস্ট্রি</span>
-      </div>
-
-      <div class="search-box">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchCustInput" placeholder="নাম, ফোন বা Device ID দিয়ে খুঁজুন..." oninput="filterCustomerList()">
-      </div>
-
-      <div id="customerListContainer">
-        <!-- Dynamic Customers will be loaded here -->
-      </div>
     </div>
 
   </div>
@@ -530,7 +626,7 @@
     };
     const SPECIAL_PROMO_CODE = "SMARTWORKER_ADMIN_100";
 
-    const PLAN_PRICES = {
+    const PLAN_RATES = {
       "KARIGAR_1M": 99,
       "KARIGAR_3M": 280,
       "KARIGAR_6M": 550,
@@ -542,212 +638,266 @@
       "LIFETIME": 25000
     };
 
-    let activeInvoiceData = null;
+    const PLAN_NAMES = {
+      "KARIGAR_1M": "Karigar Plan (1 Month)",
+      "KARIGAR_3M": "Karigar Plan (3 Months)",
+      "KARIGAR_6M": "Karigar Plan (6 Months)",
+      "KARIGAR_1Y": "Karigar Plan (1 Year)",
+      "TEAM_1M": "Workshop Team (10 Users - 1 Month)",
+      "TEAM_1Y": "Workshop Team (10 Users - 1 Year)",
+      "CORP_1M": "Corporate Enterprise (50 Users - 1 Month)",
+      "CORP_1Y": "Corporate Enterprise (50 Users - 1 Year)",
+      "LIFETIME": "Lifetime VIP Pro"
+    };
 
-    function autoFillPlanAmount() {
-      const plan = document.getElementById('cust_duration').value;
-      const amt = PLAN_PRICES[plan] || 99;
-      document.getElementById('bill_amount').value = amt;
-      document.getElementById('paid_amount').value = amt;
-      calcDueAmount();
+    let activeInvoiceObj = null;
+    let currentTabFilter = "all";
+
+    function autoFillPlanCost() {
+      const plan = document.getElementById('in_plan').value;
+      const amt = PLAN_RATES[plan] || 99;
+      document.getElementById('in_bill').value = amt;
+      document.getElementById('in_paid').value = amt;
+      calculateBalanceDue();
     }
 
-    function calcDueAmount() {
-      const bill = parseFloat(document.getElementById('bill_amount').value) || 0;
-      const paid = parseFloat(document.getElementById('paid_amount').value) || 0;
+    function calculateBalanceDue() {
+      const bill = parseFloat(document.getElementById('in_bill').value) || 0;
+      const paid = parseFloat(document.getElementById('in_paid').value) || 0;
       const due = Math.max(0, bill - paid);
-      document.getElementById('due_amount').value = due;
+      document.getElementById('in_due').value = due;
     }
 
-    function generateKeyForDevice(deviceId, plan) {
-      deviceId = String(deviceId || '').trim().toUpperCase();
-      if (!deviceId) return null;
+    function computeKey(devId, plan) {
+      devId = String(devId || '').trim().toUpperCase();
+      if (!devId) return null;
       if (plan === "LIFETIME") return SPECIAL_PROMO_CODE;
       const salt = SALTS[plan] || "SAHEB_1M_PRO";
-      return sha256(deviceId + salt).substring(0, 8).toUpperCase();
+      return sha256(devId + salt).substring(0, 8).toUpperCase();
     }
 
-    function calculateExpiryDate(plan) {
+    function computeExpiry(plan) {
       const d = new Date();
       if (plan.includes('1M')) d.setDate(d.getDate() + 30);
       else if (plan.includes('3M')) d.setDate(d.getDate() + 90);
       else if (plan.includes('6M')) d.setDate(d.getDate() + 180);
       else if (plan.includes('1Y')) d.setDate(d.getDate() + 365);
-      else if (plan === 'LIFETIME') return "আজীবন (Lifetime)";
+      else if (plan === 'LIFETIME') return "Lifetime Active";
       return d.toLocaleDateString('en-GB');
     }
 
-    function saveAndGenerateKey() {
-      const name = document.getElementById('cust_name').value.trim();
-      const shop = document.getElementById('cust_shop').value.trim();
-      const phone = document.getElementById('cust_phone').value.trim();
-      const devId = document.getElementById('cust_dev_id').value.trim().toUpperCase();
-      const plan = document.getElementById('cust_duration').value;
-      const billAmt = parseFloat(document.getElementById('bill_amount').value) || 0;
-      const paidAmt = parseFloat(document.getElementById('paid_amount').value) || 0;
-      const dueAmt = parseFloat(document.getElementById('due_amount').value) || 0;
-      const payMode = document.getElementById('pay_mode').value;
-      const utr = document.getElementById('pay_utr').value.trim();
+    function generateAndSaveKey() {
+      const name = document.getElementById('in_name').value.trim();
+      const shop = document.getElementById('in_shop').value.trim();
+      const phone = document.getElementById('in_phone').value.trim();
+      const devId = document.getElementById('in_dev_id').value.trim().toUpperCase();
+      const plan = document.getElementById('in_plan').value;
+      const bill = parseFloat(document.getElementById('in_bill').value) || 0;
+      const paid = parseFloat(document.getElementById('in_paid').value) || 0;
+      const due = parseFloat(document.getElementById('in_due').value) || 0;
+      const payMode = document.getElementById('in_pay_mode').value;
+      const utr = document.getElementById('in_utr').value.trim();
 
       if (!name || !phone || !devId) {
-        alert("অনুগ্রহ করে কাস্টমারের নাম, ফোন নম্বর এবং ৮-অক্ষরের Device ID লিখুন!");
+        alert("Please provide Customer Name, Phone, and 8-character Device ID!");
         return;
       }
       if (devId.length !== 8) {
-        alert("Device ID অবশ্যই ৮ অক্ষরের হতে হবে!");
+        alert("Device ID must be exactly 8 characters!");
         return;
       }
 
-      const generatedKey = generateKeyForDevice(devId, plan);
-      const expDate = calculateExpiryDate(plan);
+      const key = computeKey(devId, plan);
+      const expDate = computeExpiry(plan);
       const today = new Date().toLocaleDateString('en-GB');
 
-      const planNames = {
-        "KARIGAR_1M": "কারিগর প্ল্যান (১ মাস)",
-        "KARIGAR_3M": "কারিগর প্ল্যান (৩ মাস)",
-        "KARIGAR_6M": "কারিগর প্ল্যান (৬ মাস)",
-        "KARIGAR_1Y": "কারিগর প্ল্যান (১ বছর)",
-        "TEAM_1M": "ওয়ার্কশপ টিম (১০ জন - ১ মাস)",
-        "TEAM_1Y": "ওয়ার্কশপ টিম (১০ জন - ১ বছর)",
-        "CORP_1M": "কর্পোরেট (৫০ জন - ১ মাস)",
-        "CORP_1Y": "কর্পোরেট (৫০ জন - ১ বছর)",
-        "LIFETIME": "লাইফটাইম ভিআইপি"
-      };
-
-      const record = {
+      const subscriberRecord = {
         id: "SUB_" + Date.now(),
-        name,
+        device_id: devId,
+        name: name,
         shop: shop || "Aluminium Workshop",
-        phone,
-        devId,
-        plan,
-        planLabel: planNames[plan] || plan,
-        billAmt,
-        paidAmt,
-        dueAmt,
-        payMode,
+        phone: phone,
+        plan: plan,
+        plan_name: PLAN_NAMES[plan] || plan,
+        bill_amount: bill,
+        paid_amount: paid,
+        due_amount: due,
+        pay_mode: payMode,
         utr: utr || "Paid",
-        key: generatedKey,
-        startDate: today,
-        expiryDate: expDate
+        activation_key: key,
+        status: "ACTIVE",
+        start_date: today,
+        expiry_date: expDate,
+        timestamp: Date.now()
       };
 
-      let list = JSON.parse(localStorage.getItem('sw_admin_subscribers') || '[]');
-      // Update if already exists with same deviceId, else add new
-      const existingIdx = list.findIndex(item => item.devId === devId);
-      if (existingIdx !== -1) {
-        list[existingIdx] = record;
+      let list = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
+      const existIdx = list.findIndex(s => s.device_id === devId);
+      if (existIdx !== -1) {
+        list[existIdx] = subscriberRecord;
       } else {
-        list.unshift(record);
+        list.unshift(subscriberRecord);
       }
-      localStorage.setItem('sw_admin_subscribers', JSON.stringify(list));
+      localStorage.setItem('sw_active_subscribers', JSON.stringify(list));
 
-      // Display key
-      document.getElementById('displayGeneratedKey').textContent = generatedKey;
-      document.getElementById('keyExpText').textContent = "মেয়াদ: " + expDate;
+      // Also sync to Firebase if available
+      try {
+        if (window.fbDb) {
+          fbDb.collection('subscribers').doc(devId).set(subscriberRecord).catch(() => {});
+        }
+      } catch(e){}
+
+      document.getElementById('displayGeneratedKey').textContent = key;
+      document.getElementById('keyExpiryInfo').textContent = "Valid Till: " + expDate;
       document.getElementById('keyBoxResult').style.display = "block";
 
-      activeInvoiceData = record;
-      renderCustomerList();
-      alert("✅ কাস্টমার বিল ও অ্যাক্টিভেশন কি সফলভাবে তৈরি হয়েছে!");
+      activeInvoiceObj = subscriberRecord;
+      renderSubscribers();
+      alert("Activation Key Generated Successfully!");
     }
 
-    function sendInvoiceWhatsApp(rec = null) {
-      const data = rec || activeInvoiceData;
-      if (!data) { alert("কোনো বিল রেকর্ড পাওয়া যায়নি!"); return; }
+    function sendInvoiceWhatsAppDirect(rec = null) {
+      const data = rec || activeInvoiceObj;
+      if (!data) { alert("No subscriber data found!"); return; }
 
-      const msg = `*SMART WORKER PRO - অফিশিয়াল সাবস্ক্রিপশন মেমো*\n` +
+      const msg = `*SMART WORKER PRO - OFFICIAL LICENSE INVOICE*\n` +
         `----------------------------------------\n` +
-        `👤 কাস্টমার: *${data.name}*\n` +
-        `🏪 দোকান: ${data.shop}\n` +
-        `📱 মোবাইল: ${data.phone}\n` +
-        `💻 Device ID: \`${data.devId}\`\n` +
+        `Customer: *${data.name}*\n` +
+        `Workshop: ${data.shop}\n` +
+        `Mobile: ${data.phone}\n` +
+        `Device ID: \`${data.device_id}\`\n` +
         `----------------------------------------\n` +
-        `📦 প্ল্যান: *${data.planLabel}*\n` +
-        `💵 মোট বিল: ₹${data.billAmt}\n` +
-        `✅ জমা টাকা: ₹${data.paidAmt}\n` +
-        `⏳ বকেয়া: ₹${data.dueAmt}\n` +
-        `📅 মেয়াদ শেষ: *${data.expiryDate}*\n` +
+        `Plan: *${data.plan_name || data.plan}*\n` +
+        `Total Bill: ₹${data.bill_amount}\n` +
+        `Amount Paid: ₹${data.paid_amount}\n` +
+        `Balance Due: ₹${data.due_amount}\n` +
+        `Valid Until: *${data.expiry_date}*\n` +
         `----------------------------------------\n` +
-        `🔑 *আপনার সিক্রেট অ্যাক্টিভেশন কি:*\n` +
-        `👉 *${data.key}*\n` +
+        `SECRET ACTIVATION KEY:\n` +
+        `👉 *${data.activation_key}*\n` +
         `----------------------------------------\n` +
-        `💡 *চালু করার নিয়ম:*\n` +
-        `অ্যাপ খুলে PRO UPGRADE অপশনে যান, উপরের কোডটি পেস্ট করে Activate বাটনে ক্লিক করুন। সাথে সাথে সমস্ত ফিচার আনলক হয়ে যাবে।\n\n` +
-        `ধন্যবাদ!\n-- Saheb Ghanti (Smart Worker Pro, Amta, Howrah)`;
+        `INSTRUCTIONS:\n` +
+        `1. Open Smart Worker Pro.\n` +
+        `2. Go to 'PRO UPGRADE' or 'Settings'.\n` +
+        `3. Paste this key and tap 'ACTIVATE'.\n\n` +
+        `Thank you for choosing Smart Worker Pro!\n` +
+        `Support: Saheb Ghanti (+91 9239413517)`;
 
       const cleanPhone = String(data.phone).replace(/[^0-9]/g, '');
       const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
     }
 
-    function copyKeyText() {
+    function copyGeneratedKeyToClipboard() {
       const key = document.getElementById('displayGeneratedKey').textContent;
       if (!key || key.includes('-')) return;
       navigator.clipboard.writeText(key).then(() => {
-        alert("✅ কোড কপি হয়েছে: " + key);
+        alert("Activation Key Copied: " + key);
       }).catch(() => {
-        prompt("কোডটি কপি করুন:", key);
+        prompt("Copy Key:", key);
       });
     }
 
-    function renderCustomerList() {
-      const list = JSON.parse(localStorage.getItem('sw_admin_subscribers') || '[]');
-      const container = document.getElementById('customerListContainer');
-      const query = (document.getElementById('searchCustInput')?.value || '').trim().toLowerCase();
+    function setFilterTab(tab) {
+      currentTabFilter = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      renderSubscribers();
+    }
 
-      // Update Top Stats
-      document.getElementById('totalActiveCust').textContent = list.length;
-      const totalRev = list.reduce((sum, item) => sum + (parseFloat(item.paidAmt) || 0), 0);
-      document.getElementById('totalRevenue').textContent = "₹" + totalRev.toLocaleString('en-IN');
+    function renderSubscribers() {
+      const list = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
+      const requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      
+      // Combine requests and subscribers
+      const combined = [...requests.filter(r => r.status === 'Pending').map(r => ({
+        device_id: r.device_id,
+        name: r.name,
+        shop: r.shop || "New Customer",
+        phone: r.phone,
+        plan: r.plan,
+        plan_name: PLAN_NAMES[r.plan] || r.plan,
+        bill_amount: PLAN_RATES[r.plan] || 99,
+        paid_amount: PLAN_RATES[r.plan] || 99,
+        due_amount: 0,
+        activation_key: r.generated_key || "PENDING",
+        status: "PENDING_ACTIVATION",
+        start_date: r.date || "Today",
+        expiry_date: "Pending Activation",
+        utr: r.utr
+      })), ...list];
 
-      const filtered = list.filter(c => 
-        c.name.toLowerCase().includes(query) ||
-        c.phone.includes(query) ||
-        c.devId.toLowerCase().includes(query) ||
-        c.shop.toLowerCase().includes(query)
-      );
+      // Update Metric Badges
+      const pendingCount = combined.filter(s => s.status === 'PENDING_ACTIVATION' || s.status === 'Pending').length;
+      const activeCount = combined.filter(s => s.status === 'ACTIVE').length;
+      const totalRev = combined.reduce((sum, s) => sum + (parseFloat(s.paid_amount) || 0), 0);
+
+      document.getElementById('statPendingCount').textContent = pendingCount;
+      document.getElementById('statActiveCount').textContent = activeCount;
+      document.getElementById('statOnlineCount').textContent = combined.length;
+      document.getElementById('statTotalRevenue').textContent = "₹" + totalRev.toLocaleString('en-IN');
+      document.getElementById('queueTotalBadge').textContent = `${combined.length} Total`;
+
+      const container = document.getElementById('subscribersListContainer');
+      const query = (document.getElementById('subscriberSearchInput')?.value || '').trim().toLowerCase();
+
+      let filtered = combined;
+      if (currentTabFilter === 'pending') {
+        filtered = combined.filter(s => s.status === 'PENDING_ACTIVATION' || s.status === 'Pending');
+      } else if (currentTabFilter === 'active') {
+        filtered = combined.filter(s => s.status === 'ACTIVE');
+      }
+
+      if (query) {
+        filtered = filtered.filter(s => 
+          (s.name || '').toLowerCase().includes(query) ||
+          (s.phone || '').includes(query) ||
+          (s.device_id || '').toLowerCase().includes(query)
+        );
+      }
 
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div style="text-align:center; padding:30px 10px; color:#64748b; font-size:0.85rem;">
-            <i class="fa-solid fa-users-slash" style="font-size:2rem; margin-bottom:8px; display:block;"></i>
-            কোনো কাস্টমার বা রিচার্জ রেকর্ড নেই।
+          <div style="text-align:center; padding:36px 10px; color:#64748b; font-size:0.85rem;">
+            <i class="fa-solid fa-inbox" style="font-size:2rem; margin-bottom:8px; display:block; color:#334155;"></i>
+            No subscribers found matching the criteria.
           </div>`;
         return;
       }
 
       let html = "";
-      filtered.forEach((c) => {
-        const isPaid = c.dueAmt <= 0;
-        const badgeClass = isPaid ? "badge-paid" : "badge-due";
-        const badgeText = isPaid ? "FULL PAID" : `DUE: ₹${c.dueAmt}`;
+      filtered.forEach((sub, i) => {
+        const isPending = sub.status === 'PENDING_ACTIVATION' || sub.status === 'Pending';
+        const cardClass = isPending ? 'pending' : 'active';
+        const badgeMarkup = isPending ?
+          `<span class="badge badge-red"><span class="status-dot dot-red"></span> NEW SUBSCRIBER</span>` :
+          `<span class="badge badge-green"><span class="status-dot dot-green"></span> ACTIVE PRO</span>`;
 
         html += `
-          <div class="cust-card">
-            <div class="cust-header">
+          <div class="sub-card ${cardClass}">
+            <div class="sub-header">
               <div>
-                <div class="cust-name">${c.name}</div>
-                <div class="cust-shop"><i class="fa-solid fa-store"></i> ${c.shop}</div>
+                <div class="sub-name">${sub.name}</div>
+                <div class="sub-shop"><i class="fa-solid fa-store"></i> ${sub.shop || "Workshop"}</div>
               </div>
-              <span class="badge ${badgeClass}">${badgeText}</span>
+              ${badgeMarkup}
             </div>
 
-            <div class="cust-info-grid">
-              <div><b>মোবাইল:</b> ${c.phone}</div>
-              <div><b>Device ID:</b> <code style="color:#38bdf8;">${c.devId}</code></div>
-              <div><b>প্ল্যান:</b> ${c.planLabel}</div>
-              <div><b>মেয়াদ:</b> ${c.expiryDate}</div>
-              <div><b>বিল:</b> ₹${c.billAmt} (জমা ₹${c.paidAmt})</div>
-              <div><b>কি:</b> <code style="color:#4ade80; font-weight:bold;">${c.key}</code></div>
+            <div class="sub-meta-grid">
+              <div><b>Mobile:</b> ${sub.phone}</div>
+              <div><b>Device ID:</b> <span class="sub-code">${sub.device_id}</span></div>
+              <div><b>Plan:</b> ${sub.plan_name || sub.plan}</div>
+              <div><b>Expiry:</b> ${sub.expiry_date}</div>
+              <div><b>Bill / Paid:</b> ₹${sub.bill_amount} / ₹${sub.paid_amount}</div>
+              <div><b>Key:</b> <span class="sub-code" style="color:#4ade80;">${sub.activation_key || "NOT ISSUED"}</span></div>
             </div>
 
-            <div class="btn-grid-2">
-              <button type="button" class="btn-sm btn-wa" onclick='sendInvoiceWhatsApp(${JSON.stringify(c)})'>
-                <i class="fa-brands fa-whatsapp"></i> WhatsApp মেমো
+            <div class="btn-row-sm">
+              <button type="button" class="btn-sm btn-wa" onclick='activateAndSendWhatsApp("${sub.device_id}", "${sub.name}", "${sub.phone}", "${sub.plan}")'>
+                <i class="fa-brands fa-whatsapp"></i> Generate & Send Key
               </button>
-              <button type="button" class="btn-sm" style="background:#0284c7; color:#fff;" onclick="quickCopy('${c.key}')">
-                <i class="fa-solid fa-copy"></i> কোড কপি
+              <button type="button" class="btn-sm" style="background:#1e293b; border:1px solid #334155; color:#38bdf8;" onclick='quickFillForm("${sub.device_id}", "${sub.name}", "${sub.phone}", "${sub.plan}")'>
+                <i class="fa-solid fa-pen-to-square"></i> Edit Memo
               </button>
             </div>
           </div>
@@ -757,80 +907,85 @@
       container.innerHTML = html;
     }
 
-    function quickCopy(key) {
-      navigator.clipboard.writeText(key).then(() => {
-        alert("✅ কোড কপি হয়েছে: " + key);
-      }).catch(() => {
-        prompt("কোড:", key);
-      });
+    function activateAndSendWhatsApp(devId, name, phone, plan) {
+      const key = computeKey(devId, plan);
+      const expDate = computeExpiry(plan);
+      const today = new Date().toLocaleDateString('en-GB');
+
+      const record = {
+        id: "SUB_" + Date.now(),
+        device_id: devId,
+        name: name,
+        shop: "Workshop",
+        phone: phone,
+        plan: plan,
+        plan_name: PLAN_NAMES[plan] || plan,
+        bill_amount: PLAN_RATES[plan] || 99,
+        paid_amount: PLAN_RATES[plan] || 99,
+        due_amount: 0,
+        activation_key: key,
+        status: "ACTIVE",
+        start_date: today,
+        expiry_date: expDate,
+        timestamp: Date.now()
+      };
+
+      let list = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
+      const existIdx = list.findIndex(s => s.device_id === devId);
+      if (existIdx !== -1) list[existIdx] = record;
+      else list.unshift(record);
+      localStorage.setItem('sw_active_subscribers', JSON.stringify(list));
+
+      // Remove from pending requests if any
+      let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      reqs = reqs.map(r => r.device_id === devId ? { ...r, status: "Approved", generated_key: key } : r);
+      localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
+
+      renderSubscribers();
+      sendInvoiceWhatsAppDirect(record);
     }
 
-    function filterCustomerList() {
-      renderCustomerList();
+    function quickFillForm(devId, name, phone, plan) {
+      document.getElementById('in_dev_id').value = devId;
+      document.getElementById('in_name').value = name;
+      document.getElementById('in_phone').value = phone;
+      document.getElementById('in_plan').value = plan;
+      autoFillPlanCost();
+      window.scrollTo({ top: 400, behavior: 'smooth' });
     }
 
-    // Initialize on load
-    
-    function renderOnlineRequests() {
-      const container = document.getElementById('onlineRequestsContainer');
-      const badge = document.getElementById('pendingReqBadge');
-      if (!container) return;
-
-      const requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
-      if (badge) badge.textContent = `${requests.length} টি রিকোয়েস্ট`;
-
-      if (requests.length === 0) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:18px 10px; color:#64748b; font-size:0.82rem;">
-            <i class="fa-solid fa-inbox" style="font-size:1.5rem; margin-bottom:4px; display:block; color:#475569;"></i>
-            কোনো অনলাইন রিকোয়েস্ট জমা নেই।
-          </div>`;
-        return;
-      }
-
-      let html = "";
-      requests.forEach((req) => {
-        html += `
-          <div style="background:#0f172a; border:1px solid #334155; border-radius:10px; padding:10px; margin-bottom:8px; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div style="font-size:0.88rem; font-weight:800; color:#fff;">${req.name} (${req.phone})</div>
-              <span style="background:${req.status === 'Approved' ? '#16a34a' : '#d97706'}; color:#fff; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:5px;">${req.status}</span>
-            </div>
-            <div style="font-size:0.74rem; color:#94a3b8; margin:4px 0;">
-              <b>Device:</b> <code style="color:#38bdf8;">${req.device_id}</code> | <b>প্ল্যান:</b> ${req.plan} | <b>Ref:</b> ${req.utr}
-            </div>
-            <div style="display:flex; gap:6px; margin-top:6px;">
-              <button type="button" class="btn-sm btn-wa" style="flex:1;" onclick="acceptAndFillForm('${req.name}', '${req.phone}', '${req.device_id}', '${req.plan}', '${req.utr}', '${req.id}')">
-                <i class="fa-solid fa-check"></i> ফর্মে লোড ও বিল বানান
-              </button>
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
+    function filterSubscribers() {
+      renderSubscribers();
     }
 
-    function acceptAndFillForm(name, phone, devId, plan, utr, reqId) {
-      document.getElementById('cust_name').value = name;
-      document.getElementById('cust_phone').value = phone;
-      document.getElementById('cust_dev_id').value = devId;
-      document.getElementById('cust_duration').value = plan;
-      document.getElementById('pay_utr').value = utr;
-      autoFillPlanAmount();
-
-      // Mark request as processed
-      let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
-      const r = requests.find(item => item.id === reqId);
-      if (r) { r.status = "Approved"; localStorage.setItem('sw_recharge_requests', JSON.stringify(requests)); }
-      renderOnlineRequests();
-
-      window.scrollTo({ top: 120, behavior: 'smooth' });
+    // Live Firebase Realtime Sync
+    function initFirebaseLiveListener() {
+      try {
+        const config = {
+          apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv98idLAhJys2-M",
+          authDomain: "nisha-creations.firebaseapp.com",
+          projectId: "nisha-creations"
+        };
+        if (window.firebase && !firebase.apps.length) {
+          firebase.initializeApp(config);
+          const db = firebase.firestore();
+          // Listen to live subscribers
+          db.collection('subscribers').onSnapshot(snap => {
+            const liveData = [];
+            snap.forEach(doc => liveData.push(doc.data()));
+            if (liveData.length > 0) {
+              localStorage.setItem('sw_active_subscribers', JSON.stringify(liveData));
+              renderSubscribers();
+            }
+          });
+        }
+      } catch (err) {}
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      renderOnlineRequests();
-      autoFillPlanAmount();
-      renderCustomerList();
+      autoFillPlanCost();
+      renderSubscribers();
+      initFirebaseLiveListener();
     });
   </script>
 </body>

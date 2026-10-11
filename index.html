@@ -57,10 +57,7 @@
  </div>
  <div class="top-bar-right">
  <div id="topBarRightActions" style="display:flex; align-items:center; gap:6px;">
-        <a href="admin.html" style="background:#f59e0b; color:#0f172a; padding:6px 12px; border-radius:20px; font-weight:800; font-size:0.75rem; text-decoration:none; display:flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(245,158,11,0.35);" title="Admin Portal">
-          <i class="fa-solid fa-crown" style="color:#000;"></i> <span>ADMIN</span>
-        </a>
- <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">
+        <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">
  <i class="fa-solid fa-cloud"></i>
  <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
  </div>
@@ -1252,22 +1249,7 @@
  </div>
 
       <!-- Admin Master Subscription & Recharge Portal (Password Protected) -->
-      <a href="admin.html" class="gemini-pill-btn" style="border:1px solid #f59e0b; background:#fffbeb; margin-bottom:12px; text-decoration:none; display:flex;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span class="gemini-icon" style="color:#d97706; font-size:1.2rem;"><i class="fa-solid fa-crown"></i></span>
-          <div>
-            <div style="font-size:0.92rem; font-weight:800; color:#b45309;">অ্যাডমিন রিচার্জ ও লাইসেন্স পোর্টাল</div>
-            <div style="font-size:0.72rem; color:#92400e; font-weight:600;">সরাসরি কোড বানান ও রিচার্জ অ্যাক্টিভেট করুন</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="font-size:0.7rem; font-weight:800; color:#fff; background:#d97706; padding:2px 7px; border-radius:10px;">MASTER</span>
-          <i class="fa-solid fa-chevron-right gemini-chevron" style="color:#d97706;"></i>
-        </div>
-      </a>
-
-
- <!-- Grouped Menu Card (Clean Gemini List with Hairline Dividers) -->
+      <!-- Grouped Menu Card (Clean Gemini List with Hairline Dividers) -->
  <div class="gemini-card">
 
 <!-- App Language Selector Row (Built directly inside Settings!) -->
@@ -1823,78 +1805,7 @@
 
 
 
-    <!-- ================= 15. MASTER ADMIN SUBSCRIPTION & RECHARGE PORTAL ================= -->
-    <div id="screen-admin-portal" class="screen">
-      <div style="padding:14px 16px;">
-        
-        <!-- Top Status Banner -->
-        <div style="background:linear-gradient(135deg, #1e1b4b, #312e81); border:1px solid #6366f1; border-radius:14px; padding:14px; color:#fff; margin-bottom:14px; box-shadow:0 4px 12px rgba(99,102,241,0.25);">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:1.15rem; font-weight:800; color:#fbbf24; display:flex; align-items:center; gap:8px;">
-                <i class="fa-solid fa-shield-halved"></i> MASTER ADMIN PORTAL
-              </div>
-              <div style="font-size:0.75rem; color:#c7d2fe; margin-top:2px;">স্মার্ট ওয়ার্কার প্রো - রিচার্জ ও লাইসেন্স ম্যানেজার</div>
-            </div>
-            <button type="button" onclick="lockAdminPortal()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
-              <i class="fa-solid fa-lock"></i> LOCK
-            </button>
-          </div>
-        </div>
-
-        <!-- Tool 1: Instant Universal Key Generator -->
-        <div class="gemini-card" style="padding:16px; margin-bottom:14px; border:1px solid #e2e8f0;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <span style="background:#dbeafe; color:#2563eb; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.95rem;">
-              <i class="fa-solid fa-key"></i>
-            </span>
-            <div style="font-size:0.98rem; font-weight:800; color:#0f172a;">ইনস্ট্যান্ট অ্যাক্টিভেশন কোড জেনারেটর</div>
-          </div>
-          <p style="font-size:0.76rem; color:#64748b; margin-bottom:12px;">
-            কাস্টমারের ৮-অক্ষরের ডিভাইস আইডি দিলে সঙ্গে সঙ্গে তার জন্য নির্দিষ্ট লাইসেন্স কি তৈরি হবে।
-          </p>
-
-          <div class="form-group" style="margin-bottom:10px;">
-            <label style="font-size:0.76rem; font-weight:bold; color:#334155;">কাস্টমারের Device ID (৮ অক্ষর):</label>
-            <input type="text" id="adm_target_device" placeholder="যেমন: A1B2C3D4" maxlength="8" style="text-transform:uppercase; font-weight:800; font-size:1.1rem; letter-spacing:1px; width:100%; padding:9px; border-radius:8px; border:1px solid #cbd5e1;">
-          </div>
-
-          <div class="form-group" style="margin-bottom:12px;">
-            <label style="font-size:0.76rem; font-weight:bold; color:#334155;">প্ল্যান নির্বাচন করুন:</label>
-            <select id="adm_target_plan" style="font-weight:700; width:100%; padding:9px; border-radius:8px; border:1px solid #cbd5e1;">
-              <option value="KARIGAR_1M">কারিগর প্ল্যান - ১ মাস (₹৯৯)</option>
-              <option value="KARIGAR_1Y">কারিগর প্ল্যান - ১ বছর (₹৭৯৯)</option>
-              <option value="TEAM_1M">ওয়ার্কশপ টিম - ১ মাস (₹৪৯৯ - ১০ জন)</option>
-              <option value="TEAM_1Y">ওয়ার্কশপ টিম - ১ বছর (₹৩,৯৯৯ - ১০ জন)</option>
-              <option value="CORP_1M">কর্পোরেট প্ল্যান - ১ মাস (₹১,৪৯৯ - ৫০ জন)</option>
-              <option value="CORP_1Y">কর্পোরেট প্ল্যান - ১ বছর (₹১৪,৯৯৯ - ৫০ জন)</option>
-              <option value="LIFETIME">👑 লাইফটাইম আনলিমিটেড ভিআইপি (Lifetime VIP Pro)</option>
-            </select>
-          </div>
-
-          <button type="button" class="action-btn" style="background:#2563eb; width:100%; font-size:0.9rem; padding:11px; border-radius:8px; cursor:pointer;" onclick="adminGenerateManualKey()">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> অ্যাক্টিভেশন কি তৈরি করুন
-          </button>
-
-          <!-- Generated Result Box -->
-          <div id="admGeneratedResultBox" style="display:none; background:#f0fdf4; border:1px solid #86efac; border-radius:12px; padding:12px; margin-top:12px;">
-            <div style="font-size:0.76rem; font-weight:800; color:#166534; margin-bottom:6px;">সফলভাবে তৈরি হওয়া অ্যাক্টিভেশন কি:</div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <input type="text" id="admGeneratedKeyDisplay" readonly style="font-size:1.35rem; font-weight:800; color:#14532d; text-align:center; background:#fff; border:1px solid #86efac; padding:8px; flex:1; letter-spacing:2px; border-radius:8px;">
-              <button type="button" id="admCopyKeyBtn" onclick="adminCopyGeneratedKey()" style="background:#16a34a; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                COPY
-              </button>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:10px;">
-              <button type="button" class="action-btn" style="background:#22c55e; flex:1; font-size:0.82rem; padding:9px; border-radius:8px;" onclick="adminShareKeyWhatsApp()">
-                <i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে কোড পাঠান
-              </button>
-              <button type="button" class="action-btn" style="background:#7c3aed; flex:1; font-size:0.82rem; padding:9px; border-radius:8px;" onclick="adminDirectSelfApplyKey()">
-                <i class="fa-solid fa-circle-check"></i> এই ফোনে চালু করুন
-              </button>
-            </div>
-          </div>
-        </div>
+    
 
         <!-- Tool 2: Customer Recharge Requests Queue -->
         <div class="gemini-card" style="padding:16px; margin-bottom:14px; border:1px solid #e2e8f0;">
