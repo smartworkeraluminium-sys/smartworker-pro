@@ -3908,6 +3908,7 @@ function saveMeasurementData(projectType, outId, matId) {
    bill_text: bill_text
  });
  localStorage.setItem('sw_invoices', JSON.stringify(invoices));
+ if (typeof addToOfflineQueue === 'function') addToOfflineQueue('invoices', invoices);
  if (typeof syncCustomersToFirestore === 'function') {
    syncCustomersToFirestore(getKhataCustomers());
  }
