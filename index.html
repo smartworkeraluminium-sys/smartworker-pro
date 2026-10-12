@@ -76,7 +76,7 @@
  <div class="screen-container">
 
  <!-- ================= 0. AUTH / LOGIN SCREEN (OPENS FIRST IF NOT LOGGED IN) ================= -->
- <div id="screen-auth" class="screen">
+ <div id="screen-auth" class="screen active">
  <div class="auth-screen-box">
  <img src="logo.png?v=2" alt="Logo" class="auth-logo" onerror="this.style.display='none';">
  <div class="auth-title">SMART WORKER PRO</div>
@@ -150,16 +150,16 @@
  </div>
 
  <!-- ================= 1. HOME SCREEN ================= -->
- <div id="screen-home" class="screen active">
+ <div id="screen-home" class="screen">
  <!-- Workshop Digital Identity Card (User's Factory) -->
  <div class="home-header" style="background:linear-gradient(135deg, #0b132b, #1e3a8a); padding:16px; border-radius:0 0 20px 20px; box-shadow:0 4px 14px rgba(11,19,43,0.25); display:flex; align-items:center; justify-content:space-between;">
  <div style="display:flex; align-items:center; gap:12px;">
  <img src="logo.png?v=2" alt="Logo" onerror="this.style.display='none';" style="height:48px; width:auto; border-radius:10px; background:#fff; padding:2px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
  <div>
- <div class="welcome" id="homeGreeting" style="font-size:0.75rem; color:#93c5fd; font-weight:600;">Welcome, Saheb Ghanti!</div>
- <div class="shop-name" id="homeShop" style="font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:0.3px;">SMART WORKER ALUMINIUM</div>
+ <div class="welcome" id="homeGreeting" style="font-size:0.75rem; color:#93c5fd; font-weight:600;">Welcome, Fabricator!</div>
+ <div class="shop-name" id="homeShop" style="font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:0.3px;">FABRICATION WORKSHOP</div>
  <div style="font-size:0.68rem; color:#cbd5e1; margin-top:2px; display:flex; align-items:center; gap:4px;">
- <i class="fa-solid fa-location-dot" style="color:#38bdf8;"></i> <span>Amta, Howrah • Fabrication Workshop</span>
+ <i class="fa-solid fa-location-dot" style="color:#38bdf8;"></i> <span id="homeAddress">Fabrication Workshop</span>
  </div>
  <div id="homeSyncNotice" style="font-size:0.65rem; color:#bae6fd; margin-top:3px; display:flex; align-items:center; gap:5px;">
  <i class="fa-solid fa-shield-halved" style="color:#4ade80;"></i> <span>100% Offline Ready • Auto Cloud Sync</span>
@@ -1072,11 +1072,11 @@
  <div class="form-box">
  <div class="form-group" style="margin-bottom:8px;">
  <label>Your Name:</label>
- <input type="text" id="set_name" value="Saheb Ghati">
+ <input type="text" id="set_name" placeholder="Enter your full name">
  </div>
  <div class="form-group" style="margin-bottom:8px;">
  <label>Shop / Company Name:</label>
- <input type="text" id="set_shop" value="SMART WORKER ALUMINIUM">
+ <input type="text" id="set_shop" placeholder="Enter shop / business name">
  </div>
  <div class="form-group" style="margin-bottom:8px;">
  <label>Phone Number:</label>
@@ -1092,7 +1092,7 @@
  </div>
  <div class="form-group" style="margin-bottom:10px;">
  <label>Shop Address:</label>
- <textarea id="set_address" rows="2">Amta (Chandni), Howrah, West Bengal</textarea>
+ <textarea id="set_address" rows="2" placeholder="Enter workshop address"></textarea>
  </div>
 
  <div style="font-size:0.82rem; font-weight:800; color:#2563eb; margin:12px 0 6px 0; border-top:1px dashed #cbd5e1; padding-top:8px;">
@@ -1146,6 +1146,9 @@
  </div>
 
  <button class="action-btn btn-save" style="width:100%; padding:12px;" onclick="updateProfile()">UPDATE PROFILE</button>
+ <button type="button" class="action-btn" style="width:100%; margin-top:8px; padding:11px; background:#475569; font-size:0.85rem; font-weight:700;" onclick="handleCloudLogout()">
+ <i class="fa-solid fa-right-from-bracket"></i> Sign Out / Switch Account
+ </button>
  </div>
  </div>
 
@@ -1231,12 +1234,12 @@
 <!-- Gemini User Profile Header Card -->
  <div class="gemini-card" style="padding:16px 18px; margin-bottom:12px; display:flex; align-items:center; gap:14px;">
  <div style="position:relative;">
- <img src="logo.png?v=2" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=Saheb+Ghati&background=0284c7&color=fff';" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8; padding:2px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+ <img src="logo.png?v=2" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=Smart+Worker&background=0284c7&color=fff';" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8; padding:2px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
  <span style="position:absolute; bottom:0; right:0; background:#0284c7; color:#fff; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; border:2px solid #fff;"><i class="fa-solid fa-pen"></i></span>
  </div>
  <div style="flex:1;">
- <div style="font-size:1.05rem; font-weight:800; color:#0f172a;" id="settingsUserName">Saheb Ghati</div>
- <div style="font-size:0.78rem; color:#64748b; margin-top:1px;" id="settingsUserEmail">sahebghanti669@gmail.com</div>
+ <div style="font-size:1.05rem; font-weight:800; color:#0f172a;" id="settingsUserName">Fabricator</div>
+ <div style="font-size:0.78rem; color:#64748b; margin-top:1px;" id="settingsUserEmail">Local Account</div>
  <div style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#2563eb; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px; margin-top:5px; border:1px solid #bfdbfe;">
  <i class="fa-solid fa-circle-check" style="font-size:0.68rem;"></i> <span>Pro Member</span>
  </div>
@@ -1262,6 +1265,15 @@
  <span style="font-size:0.72rem; font-weight:800; color:#f59e0b; background:#fef3c7; padding:2px 7px; border-radius:6px;">PRO</span>
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
+ </div>
+
+ <!-- Sign Out / Switch Account Button -->
+ <div onclick="handleCloudLogout()" class="gemini-pill-btn" style="border-color:#fecdd3; background:#fff1f2;">
+ <div style="display:flex; align-items:center; gap:12px;">
+ <span class="gemini-icon" style="color:#e11d48;"><i class="fa-solid fa-right-from-bracket"></i></span>
+ <span style="font-size:0.92rem; font-weight:700; color:#be123c;">Sign Out / Switch Workshop Account</span>
+ </div>
+ <i class="fa-solid fa-chevron-right gemini-chevron" style="color:#be123c;"></i>
  </div>
 
       <!-- Admin Master Subscription & Recharge Portal (Password Protected) -->

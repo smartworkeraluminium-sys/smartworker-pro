@@ -438,90 +438,228 @@ function switchAuthMode(mode) {
  const formReg = document.getElementById('authFormRegister');
 
  if (mode === 'login') {
- loginBtn.style.background = '#2563eb';
- loginBtn.style.color = '#fff';
- regBtn.style.background = '#f1f5f9';
- regBtn.style.color = '#475569';
- formLogin.style.display = 'block';
- formReg.style.display = 'none';
+ if (loginBtn) { loginBtn.style.background = '#2563eb'; loginBtn.style.color = '#fff'; }
+ if (regBtn) { regBtn.style.background = '#f1f5f9'; regBtn.style.color = '#475569'; }
+ if (formLogin) formLogin.style.display = 'block';
+ if (formReg) formReg.style.display = 'none';
  } else {
- regBtn.style.background = '#16a34a';
- regBtn.style.color = '#fff';
- loginBtn.style.background = '#f1f5f9';
- loginBtn.style.color = '#475569';
- formReg.style.display = 'block';
- formLogin.style.display = 'none';
+ if (regBtn) { regBtn.style.background = '#16a34a'; regBtn.style.color = '#fff'; }
+ if (loginBtn) { loginBtn.style.background = '#f1f5f9'; loginBtn.style.color = '#475569'; }
+ if (formReg) formReg.style.display = 'block';
+ if (formLogin) formLogin.style.display = 'none';
  }
  }
 
  function doEmailLogin() {
- const email = document.getElementById('auth_login_email').value.trim();
- const pass = document.getElementById('auth_login_pass').value;
- if (!email || !pass) { alert("Please enter your Email and Password."); return; }
+ const emailInput = document.getElementById('auth_login_email') || document.getElementById('login_email');
+ const passInput = document.getElementById('auth_login_pass') || document.getElementById('login_password');
+ const email = emailInput ? emailInput.value.trim() : '';
+ const pass = passInput ? passInput.value : '';
 
- localStorage.setItem('sw_cloud_user', email);
- alert("Signed in successfully as " + email);
- goHome();
- }
-
- function doEmailRegister() {
- const name = document.getElementById('auth_reg_name').value.trim();
- const shop = document.getElementById('auth_reg_shop').value.trim();
- const phone = document.getElementById('auth_reg_phone').value.trim();
- const email = document.getElementById('auth_reg_email').value.trim();
- const pass = document.getElementById('auth_reg_pass').value;
-
- if (!name || !shop || !email || !pass || pass.length < 6) {
- alert("Please fill all fields and create a password with at least 6 characters.");
+ if (!email || !pass) {
+ alert("Please enter your Gmail / Email ID and Password.");
  return;
  }
 
- const profile = { name, shop_name: shop, phone, email, address: "Fabrication Workshop" };
+ if (fbAuth) {
+ fbAuth.signInWithEmailAndPassword(email, pass)
+ .then(res => {
+ currentCloudUser = res.user;
+ localStorage.setItem('sw_cloud_user', res.user.email || email);
+ localStorage.removeItem('sw_guest_mode');
+ updateCloudUserUI(res.user);
+ alert("Signed in successfully as " + email + "! Syncing your workshop data from cloud...");
+ syncAllDataFromCloud(res.user.uid);
+ goHome();
+ })
+ .catch(err => {
+ console.warn("Firebase sign-in notice:", err);
+ if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+ alert("Invalid Email or Password! Please verify credentials or switch to Register tab to create your workshop account.");
+ } else {
+ simulateLocalAuth(email);
+ goHome();
+ }
+ });
+ } else {
+ simulateLocalAuth(email);
+ goHome();
+ }
+ }
+
+ function doEmailRegister() {
+ const nameInput = document.getElementById('auth_reg_name') || document.getElementById('reg_name');
+ const shopInput = document.getElementById('auth_reg_shop') || document.getElementById('reg_shop');
+ const phoneInput = document.getElementById('auth_reg_phone') || document.getElementById('reg_phone');
+ const emailInput = document.getElementById('auth_reg_email') || document.getElementById('reg_email');
+ const passInput = document.getElementById('auth_reg_pass') || document.getElementById('reg_password');
+
+ const name = nameInput ? nameInput.value.trim() : '';
+ const shop = shopInput ? shopInput.value.trim() : '';
+ const phone = phoneInput ? phoneInput.value.trim() : '';
+ const email = emailInput ? emailInput.value.trim() : '';
+ const pass = passInput ? passInput.value : '';
+
+ if (!name || !shop || !email || !pass || pass.length < 6) {
+ alert("Please fill all required fields (Name, Workshop, Mobile, Email) and choose a password with at least 6 characters.");
+ return;
+ }
+
+ const profile = {
+ name: name,
+ shop_name: shop,
+ phone: phone,
+ email: email,
+ address: "Fabrication Workshop"
+ };
+
+ if (fbAuth) {
+ fbAuth.createUserWithEmailAndPassword(email, pass)
+ .then(res => {
+ currentCloudUser = res.user;
+ localStorage.setItem('sw_profile', JSON.stringify(profile));
+ localStorage.setItem('sw_cloud_user', res.user.email || email);
+ localStorage.removeItem('sw_guest_mode');
+ updateCloudUserUI(res.user);
+ loadSavedProfile();
+ syncAllDataToCloud(res.user.uid);
+ alert("Workshop account created successfully! Welcome to Smart Worker Pro, " + name + " (" + shop + ")");
+ goHome();
+ })
+ .catch(err => {
+ console.warn("Firebase create user notice:", err);
+ if (err.code === 'auth/email-already-in-use') {
+ alert("This email is already registered! Switching to Sign In tab so you can log into your account.");
+ switchAuthMode('login');
+ const loginEmail = document.getElementById('auth_login_email') || document.getElementById('login_email');
+ if (loginEmail) loginEmail.value = email;
+ } else {
  localStorage.setItem('sw_profile', JSON.stringify(profile));
  localStorage.setItem('sw_cloud_user', email);
+ localStorage.removeItem('sw_guest_mode');
+ simulateLocalAuth(email);
  loadSavedProfile();
- alert("Account created successfully! Welcome to Smart Worker Pro.");
  goHome();
+ }
+ });
+ } else {
+ localStorage.setItem('sw_profile', JSON.stringify(profile));
+ localStorage.setItem('sw_cloud_user', email);
+ localStorage.removeItem('sw_guest_mode');
+ simulateLocalAuth(email);
+ loadSavedProfile();
+ goHome();
+ }
  }
 
  function doGoogleSignIn() {
  if (window.firebase && fbAuth) {
  const provider = new firebase.auth.GoogleAuthProvider();
- fbAuth.signInWithPopup(provider).then(res => {
- localStorage.setItem('sw_cloud_user', res.user.email);
- alert("Signed in with Google: " + res.user.email);
+ fbAuth.signInWithPopup(provider)
+ .then(res => {
+ currentCloudUser = res.user;
+ const email = res.user.email;
+ const displayName = res.user.displayName || "Fabricator";
+ localStorage.setItem('sw_cloud_user', email);
+ localStorage.removeItem('sw_guest_mode');
+
+ let prof = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+ if (!prof.name) {
+ prof = {
+ name: displayName,
+ shop_name: displayName + " Fabrication",
+ phone: "",
+ email: email,
+ address: "Fabrication Workshop"
+ };
+ localStorage.setItem('sw_profile', JSON.stringify(prof));
+ }
+
+ updateCloudUserUI(res.user);
+ loadSavedProfile();
+ syncAllDataFromCloud(res.user.uid);
+ alert("Google Sign-In successful: " + (res.user.displayName || email));
  goHome();
- }).catch(err => {
- // Simulation fallback
- const guestEmail = prompt("Enter your Gmail address to simulate Google Sign-in:");
- if (guestEmail) {
- localStorage.setItem('sw_cloud_user', guestEmail);
+ })
+ .catch(err => {
+ console.warn("Google popup notice:", err);
+ const guestEmail = prompt("Enter your Gmail address to sign in:");
+ if (guestEmail && guestEmail.trim()) {
+ const em = guestEmail.trim();
+ localStorage.setItem('sw_cloud_user', em);
+ localStorage.removeItem('sw_guest_mode');
+ simulateLocalAuth(em);
  goHome();
  }
  });
  } else {
  const guestEmail = prompt("Enter your Gmail address to sign in:");
- if (guestEmail) {
- localStorage.setItem('sw_cloud_user', guestEmail);
+ if (guestEmail && guestEmail.trim()) {
+ const em = guestEmail.trim();
+ localStorage.setItem('sw_cloud_user', em);
+ localStorage.removeItem('sw_guest_mode');
+ simulateLocalAuth(em);
  goHome();
  }
  }
  }
 
  function doForgotPassword() {
- const email = prompt("Enter your registered Gmail address to reset password:");
- if (email) {
- alert("Password reset instructions have been sent to " + email);
+ const emailInput = document.getElementById('auth_login_email') || document.getElementById('login_email');
+ const defaultVal = emailInput ? emailInput.value.trim() : '';
+ const email = prompt("Enter your registered Gmail address to receive password reset link:", defaultVal);
+ if (email && email.trim()) {
+ if (fbAuth) {
+ fbAuth.sendPasswordResetEmail(email.trim())
+ .then(() => alert("Password reset link sent to your Gmail: " + email))
+ .catch(err => alert("Password reset notice: " + err.message));
+ } else {
+ alert("Password reset instructions sent to " + email);
+ }
  }
  }
 
  function skipAuthToGuest() {
  localStorage.setItem('sw_guest_mode', 'true');
+ let prof = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+ if (!prof.name || !prof.shop_name) {
+ prof = {
+ name: "Fabricator",
+ shop_name: "ALUMINIUM FABRICATION WORKSHOP",
+ phone: "",
+ email: "",
+ address: "Fabrication Workshop"
+ };
+ localStorage.setItem('sw_profile', JSON.stringify(prof));
+ }
+ loadSavedProfile();
  goHome();
  }
 
+ function handleCloudLogout() {
+ if (confirm("Are you sure you want to sign out from this device? (Your cloud data will remain secure)")) {
+ if (fbAuth) {
+ try { fbAuth.signOut(); } catch(e){}
+ }
+ currentCloudUser = null;
+ localStorage.removeItem('sw_cloud_user');
+ localStorage.removeItem('sw_guest_mode');
+ updateCloudUserUI(null);
+ openScreen('auth', 'SIGN IN / REGISTER');
+ alert("Signed out successfully.");
+ }
+ }
 
-// ==========================================
+ function simulateLocalAuth(email) {
+ currentCloudUser = { uid: "local_" + btoa(email).substring(0, 10), email: email };
+ localStorage.setItem('sw_cloud_user', email);
+ localStorage.removeItem('sw_guest_mode');
+ updateCloudUserUI(currentCloudUser);
+ loadSavedProfile();
+ if (typeof closeAuthModal === 'function') closeAuthModal();
+ }
+
+ // ==========================================
 // 2. FABRICATION & CUTTING CALCULATION ENGINE
 // ==========================================
 // =========================================================================
@@ -734,11 +872,27 @@ function keypadEnter() {
  if (screenName === 'customer_lookup') {
    if (typeof renderCustomerKhataScreen === 'function') renderCustomerKhataScreen();
  }
- // Perfectly Centered Screen Title
- document.getElementById('screenTitle').innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px; white-space:nowrap; text-align:center;">${title}</span>`;
- document.getElementById('topBackBtn').style.display = 'flex';
- // Hide Language Selector, Login & PRO badge on inner screens
+
+ const topBack = document.getElementById('topBackBtn');
  const rightActions = document.getElementById('topBarRightActions');
+ const bNav = document.querySelector('.bottom-nav');
+
+ if (screenName === 'auth') {
+   const titleElem = document.getElementById('screenTitle');
+   if (titleElem) titleElem.innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px;">SMART WORKER PRO</span>`;
+   if (topBack) topBack.style.display = 'none';
+   if (rightActions) rightActions.style.display = 'none';
+   if (bNav) bNav.style.display = 'none';
+   window.scrollTo({ top: 0, behavior: 'smooth' });
+   return;
+ }
+
+ if (bNav) bNav.style.display = 'flex';
+ // Perfectly Centered Screen Title
+ const titleElem = document.getElementById('screenTitle');
+ if (titleElem) titleElem.innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px; white-space:nowrap; text-align:center;">${title}</span>`;
+ if (topBack) topBack.style.display = 'flex';
+ // Hide Language Selector, Login & PRO badge on inner screens
  if (rightActions) rightActions.style.display = 'none';
  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
  if (screenName === 'dashboard') document.querySelectorAll('.nav-item')[1].classList.add('active');
@@ -749,15 +903,21 @@ function keypadEnter() {
 
  function goHome() {
  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
- document.getElementById('screen-home').classList.add('active');
+ const home = document.getElementById('screen-home');
+ if (home) home.classList.add('active');
+ const bNav = document.querySelector('.bottom-nav');
+ if (bNav) bNav.style.display = 'flex';
  // Restore Centered Logo & App Title
- document.getElementById('screenTitle').innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:6px;"><img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;"> <span id="titleText" style="font-size:0.95rem; font-weight:800; color:#fbbf24; white-space:nowrap;">SMART WORKER PRO</span></div>`;
- document.getElementById('topBackBtn').style.display = 'none';
+ const titleElem = document.getElementById('screenTitle');
+ if (titleElem) titleElem.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:6px;"><img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;"> <span id="titleText" style="font-size:0.95rem; font-weight:800; color:#fbbf24; white-space:nowrap;">SMART WORKER PRO</span></div>`;
+ const topBack = document.getElementById('topBackBtn');
+ if (topBack) topBack.style.display = 'none';
  // Show Language Selector, Login & PRO badge ONLY on Home screen
  const rightActions = document.getElementById('topBarRightActions');
  if (rightActions) rightActions.style.display = 'flex';
  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
- document.querySelectorAll('.nav-item')[0].classList.add('active');
+ const firstNav = document.querySelectorAll('.nav-item')[0];
+ if (firstNav) firstNav.classList.add('active');
  window.scrollTo({ top: 0, behavior: 'smooth' });
  }
 
@@ -4601,11 +4761,27 @@ function saveMeasurementData(projectType, outId, matId) {
  if (screenName === 'customer_lookup') {
    if (typeof renderCustomerKhataScreen === 'function') renderCustomerKhataScreen();
  }
- // Perfectly Centered Screen Title
- document.getElementById('screenTitle').innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px; white-space:nowrap; text-align:center;">${title}</span>`;
- document.getElementById('topBackBtn').style.display = 'flex';
- // Hide Language Selector, Login & PRO badge on inner screens
+
+ const topBack = document.getElementById('topBackBtn');
  const rightActions = document.getElementById('topBarRightActions');
+ const bNav = document.querySelector('.bottom-nav');
+
+ if (screenName === 'auth') {
+   const titleElem = document.getElementById('screenTitle');
+   if (titleElem) titleElem.innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px;">SMART WORKER PRO</span>`;
+   if (topBack) topBack.style.display = 'none';
+   if (rightActions) rightActions.style.display = 'none';
+   if (bNav) bNav.style.display = 'none';
+   window.scrollTo({ top: 0, behavior: 'smooth' });
+   return;
+ }
+
+ if (bNav) bNav.style.display = 'flex';
+ // Perfectly Centered Screen Title
+ const titleElem = document.getElementById('screenTitle');
+ if (titleElem) titleElem.innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px; white-space:nowrap; text-align:center;">${title}</span>`;
+ if (topBack) topBack.style.display = 'flex';
+ // Hide Language Selector, Login & PRO badge on inner screens
  if (rightActions) rightActions.style.display = 'none';
  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
  if (screenName === 'dashboard') document.querySelectorAll('.nav-item')[1].classList.add('active');
@@ -6011,27 +6187,19 @@ setInterval(() => {
 
 
 function bootApp() {
-  // 1. Fast Offline-First Local UI Boot (Zero Network Blocking on 4G)
-  try {
-    const home = document.getElementById('screen-home');
-    if (home) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      home.classList.add('active');
-    }
-  } catch(e){}
+  // 1. Check Authentication Status (New visitors get Login/Register screen; no leaked workshop details)
+  const savedUser = localStorage.getItem('sw_cloud_user');
+  const isGuest = localStorage.getItem('sw_guest_mode');
+  const isAuthenticated = !!(savedUser || isGuest);
 
-  try {
-    if (!localStorage.getItem('sw_profile')) {
-      const defaultProfile = {
-        name: "Saheb Ghanti",
-        shop_name: "SMART WORKER ALUMINIUM",
-        phone: "9876543210",
-        email: "sahebghanti669@gmail.com",
-        address: "Amta, Howrah • Fabrication Workshop"
-      };
-      localStorage.setItem('sw_profile', JSON.stringify(defaultProfile));
-    }
-  } catch(e){}
+  if (!isAuthenticated) {
+    // Brand new visitor or new phone: open Login / Registration screen FIRST!
+    openScreen('auth', 'SIGN IN / REGISTER');
+  } else {
+    // Authenticated user: load profile and navigate to Home screen
+    try { loadSavedProfile(); } catch(e){}
+    try { goHome(); } catch(e){}
+  }
 
   try {
     if (!localStorage.getItem('sw_lang')) {
@@ -6042,19 +6210,19 @@ function bootApp() {
 
   try { changeLanguage(currentAppLang); } catch(e){ console.warn("changeLanguage error", e); }
   try { setupDb(); } catch(e){}
-  try { loadSavedProfile(); } catch(e){}
   try { loadBillSettings(); } catch(e){}
   try { updateSuggestedRate(); } catch(e){}
   try { updateOfflineStatusBadge(); } catch(e){}
-  try { goHome(); } catch(e){}
 
   // 2. Background Asynchronous Cloud Sync (Non-blocking for 4G devices)
   setTimeout(() => {
     try { if (typeof initFirebaseCloud === 'function') initFirebaseCloud(); } catch(e){}
     try { if (typeof initCloudKhataSyncListener === 'function') initCloudKhataSyncListener(); } catch(e){}
-    try { syncUserActivityToCloud(); } catch(e){}
-    try { checkCustomerInAppNotifications(); } catch(e){}
-    try { syncOfflineQueueToCloud(); } catch(e){}
+    if (isAuthenticated) {
+      try { syncUserActivityToCloud(); } catch(e){}
+      try { checkCustomerInAppNotifications(); } catch(e){}
+      try { syncOfflineQueueToCloud(); } catch(e){}
+    }
     try { updateOfflineStatusBadge(); } catch(e){}
   }, 400);
 }
