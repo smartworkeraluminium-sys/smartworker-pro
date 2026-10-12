@@ -546,3 +546,28 @@ body, button, input, select, textarea {
  font-weight: 500;
  }
 
+
+
+/* =========================================================================
+   MOBILE 4G & TOUCHSCREEN PERFORMANCE OPTIMIZATIONS
+   ========================================================================= */
+html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .gemini-pill-btn, .gemini-menu-row {
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pro-card:active, .menu-card:active, .k-btn:active, button:active, .gemini-pill-btn:active {
+  transform: scale(0.97);
+  transition: transform 0.05s ease;
+}
+
+.modal-overlay:not(.active) {
+  display: none !important;
+  pointer-events: none !important;
+}

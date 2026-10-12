@@ -947,7 +947,12 @@
           messagingSenderId: "726716735582",
           appId: "1:726716735582:web:a477dcd273501e5d7dd4cf"
         };
-        if (window.firebase && !firebase.apps.length) {
+        if (!window.firebase) {
+          console.log("Admin Portal operating in Offline Local Mode");
+          renderSubscribers();
+          return;
+        }
+        if (!firebase.apps.length) {
           window.fbApp = firebase.initializeApp(config);
         }
         const db = firebase.firestore();

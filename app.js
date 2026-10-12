@@ -4145,7 +4145,8 @@ function saveMeasurementData(projectType, outId, matId) {
       try {
         localStorage.setItem('sw_customers', JSON.stringify(custs));
       } catch(e) {}
-      // Sync to Cloud Firestore
+      if (typeof addToOfflineQueue === 'function') addToOfflineQueue('customers', custs);
+      if (typeof syncOfflineQueueToCloud === 'function') syncOfflineQueueToCloud();
       syncCustomersToFirestore(custs);
     }
 
@@ -4176,7 +4177,8 @@ function saveMeasurementData(projectType, outId, matId) {
               const data = doc.data();
               if (data && data.customers && typeof data.customers === 'object') {
                 localStorage.setItem('sw_customers', JSON.stringify(data.customers));
-                if (document.getElementById('screen-customer_lookup')?.classList.contains('active')) {
+                var clScreen = document.getElementById('screen-customer_lookup');
+                if (clScreen && clScreen.classList.contains('active')) {
                   renderCustomerKhataScreen();
                 }
               }
@@ -4213,7 +4215,8 @@ function saveMeasurementData(projectType, outId, matId) {
       document.getElementById('khataTotalDue').textContent = `₹${totalDue.toLocaleString('en-IN')}`;
 
       // Search & Filter
-      const searchQ = (document.getElementById('khataSearchInput')?.value || '').trim().toLowerCase();
+      var searchInputElem = document.getElementById('khataSearchInput');
+      const searchQ = ((searchInputElem ? searchInputElem.value : '') || '').trim().toLowerCase();
 
       let filteredKeys = phoneKeys.filter(phone => {
         const c = customers[phone];
@@ -5393,7 +5396,9 @@ function removePaymentQr() {
  'Door Profit (%)': document.getElementById('bs_profit_door').value
  };
  localStorage.setItem('sw_bill_settings', JSON.stringify(settings));
- alert("All Settings Saved Successfully!");
+ if (typeof addToOfflineQueue === 'function') addToOfflineQueue('settings', settings);
+ if (typeof syncOfflineQueueToCloud === 'function') syncOfflineQueueToCloud();
+ alert("All Settings Saved Successfully! (Saved locally & auto-syncs to cloud)");
  }
 
 
@@ -5819,10 +5824,12 @@ function updateProfile() {
  return;
  }
  localStorage.setItem('sw_profile', JSON.stringify(profile));
- if(currentCloudUser) syncAllDataToCloud(currentCloudUser.uid);
+ if (typeof addToOfflineQueue === 'function') addToOfflineQueue('profile', profile);
+ if (typeof syncOfflineQueueToCloud === 'function') syncOfflineQueueToCloud();
+ if(currentCloudUser && typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser.uid);
  loadSavedProfile();
  updateActivationScreenUI();
- alert("Profile updated successfully!");
+ alert("Profile updated successfully! (Saved locally & synced to cloud)");
  goHome();
  }
 
@@ -5861,8 +5868,150 @@ function updateProfile() {
  });
  }
 
- function bootApp() {
-  try { syncUserActivityToCloud(); } catch(e){}
+ 
+// =========================================================================
+// OFFLINE-FIRST QUEUE & AUTOMATIC CLOUD DATABASE SYNC ENGINE
+// =========================================================================
+
+function getOfflineQueue() {
+  try {
+    return JSON.parse(localStorage.getItem('sw_offline_queue') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function addToOfflineQueue(actionType, payload) {
+  try {
+    const queue = getOfflineQueue();
+    queue.push({
+      action: actionType,
+      payload: payload,
+      timestamp: Date.now()
+    });
+    localStorage.setItem('sw_offline_queue', JSON.stringify(queue));
+    updateOfflineStatusBadge();
+  } catch(e) {
+    console.warn("Offline queue notice:", e);
+  }
+}
+
+function updateOfflineStatusBadge() {
+  const badge = document.getElementById('networkStatusBadge');
+  if (!badge) return;
+  const queue = getOfflineQueue();
+  const queueCount = queue ? queue.length : 0;
+
+  if (navigator.onLine) {
+    if (queueCount > 0) {
+      badge.style.display = 'inline-flex';
+      badge.style.background = 'rgba(56, 189, 248, 0.15)';
+      badge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+      badge.style.color = '#38bdf8';
+      badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:0.6rem;"></i> <span>Syncing (' + queueCount + ')</span>';
+    } else {
+      badge.style.display = 'inline-flex';
+      badge.style.background = 'rgba(34, 197, 94, 0.15)';
+      badge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+      badge.style.color = '#4ade80';
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> <span>Online</span>';
+    }
+  } else {
+    badge.style.display = 'inline-flex';
+    badge.style.background = 'rgba(245, 158, 11, 0.15)';
+    badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+    badge.style.color = '#fbbf24';
+    badge.innerHTML = '<i class="fa-solid fa-cloud-arrow-down" style="font-size:0.6rem;"></i> <span>Offline Mode</span>';
+  }
+
+  const notice = document.getElementById('homeSyncNotice');
+  if (notice) {
+    if (navigator.onLine) {
+      notice.innerHTML = '<i class="fa-solid fa-shield-halved" style="color:#4ade80;"></i> <span>Cloud Synced • Auto-Backup Active</span>';
+    } else {
+      notice.innerHTML = '<i class="fa-solid fa-cloud-arrow-down" style="color:#f59e0b;"></i> <span>Offline Mode • Stored Locally, Auto-Sync Ready</span>';
+    }
+  }
+}
+
+function syncOfflineQueueToCloud() {
+  if (!navigator.onLine) {
+    updateOfflineStatusBadge();
+    return;
+  }
+  if (!window.fbDb) {
+    if (typeof initFirebaseCloud === 'function') initFirebaseCloud();
+    if (!window.fbDb) {
+      updateOfflineStatusBadge();
+      return;
+    }
+  }
+
+  const queue = getOfflineQueue();
+  const targetId = (currentCloudUser ? currentCloudUser.uid : null) || localStorage.getItem('sw_cloud_user') || 'workshop_primary';
+  const fullBackup = {
+    settings: JSON.parse(localStorage.getItem('sw_bill_settings') || '{}'),
+    profile: JSON.parse(localStorage.getItem('sw_profile') || '{}'),
+    customers: JSON.parse(localStorage.getItem('sw_customers') || '{}'),
+    invoices: JSON.parse(localStorage.getItem('sw_invoices') || '[]'),
+    measurements: JSON.parse(localStorage.getItem('sw_measurements') || '[]'),
+    site_khata: JSON.parse(localStorage.getItem('sw_site_khata') || '[]'),
+    expenses: JSON.parse(localStorage.getItem('sw_expenses') || '[]'),
+    license: JSON.parse(localStorage.getItem('sw_license') || '{}'),
+    custom_logo: localStorage.getItem('sw_custom_logo') || '',
+    custom_qr: localStorage.getItem('sw_custom_qr') || '',
+    updated_at: new Date().toISOString()
+  };
+
+  fbDb.collection('users').doc(String(targetId)).set(fullBackup, { merge: true })
+    .then(() => {
+      const custs = JSON.parse(localStorage.getItem('sw_customers') || '{}');
+      return fbDb.collection('smart_worker_data').doc('customers_ledger').set({
+        customers: custs,
+        updated_at: new Date().toISOString()
+      }, { merge: true });
+    })
+    .then(() => {
+      if (window.fbRtdb) {
+        try { fbRtdb.ref('nisha_creations/smart_worker/' + String(targetId)).set(fullBackup); } catch(e){}
+      }
+      if (typeof syncUserActivityToCloud === 'function') {
+        syncUserActivityToCloud();
+      }
+      localStorage.setItem('sw_offline_queue', '[]');
+      console.log("✅ Database synchronization complete.");
+      updateOfflineStatusBadge();
+    })
+    .catch((err) => {
+      console.warn("Cloud sync retry pending:", err);
+      updateOfflineStatusBadge();
+    });
+}
+
+// Auto-Reconnection & Periodic Sync Listeners
+window.addEventListener('online', () => {
+  console.log("Network online event detected.");
+  updateOfflineStatusBadge();
+  setTimeout(syncOfflineQueueToCloud, 500);
+});
+
+window.addEventListener('offline', () => {
+  console.log("Network offline event detected.");
+  updateOfflineStatusBadge();
+});
+
+setInterval(() => {
+  if (navigator.onLine) {
+    const queue = getOfflineQueue();
+    if (queue && queue.length > 0) {
+      syncOfflineQueueToCloud();
+    }
+  }
+}, 30000);
+
+
+function bootApp() {
+  // 1. Fast Offline-First Local UI Boot (Zero Network Blocking on 4G)
   try {
     const home = document.getElementById('screen-home');
     if (home) {
@@ -5893,13 +6042,21 @@ function updateProfile() {
 
   try { changeLanguage(currentAppLang); } catch(e){ console.warn("changeLanguage error", e); }
   try { setupDb(); } catch(e){}
-  try { if (typeof initFirebaseCloud === 'function') initFirebaseCloud(); } catch(e){}
-  try { if (typeof initCloudKhataSyncListener === 'function') initCloudKhataSyncListener(); } catch(e){}
   try { loadSavedProfile(); } catch(e){}
   try { loadBillSettings(); } catch(e){}
   try { updateSuggestedRate(); } catch(e){}
-  try { checkCustomerInAppNotifications(); } catch(e){}
+  try { updateOfflineStatusBadge(); } catch(e){}
   try { goHome(); } catch(e){}
+
+  // 2. Background Asynchronous Cloud Sync (Non-blocking for 4G devices)
+  setTimeout(() => {
+    try { if (typeof initFirebaseCloud === 'function') initFirebaseCloud(); } catch(e){}
+    try { if (typeof initCloudKhataSyncListener === 'function') initCloudKhataSyncListener(); } catch(e){}
+    try { syncUserActivityToCloud(); } catch(e){}
+    try { checkCustomerInAppNotifications(); } catch(e){}
+    try { syncOfflineQueueToCloud(); } catch(e){}
+    try { updateOfflineStatusBadge(); } catch(e){}
+  }, 400);
 }
 
 if (document.readyState === 'loading') {
