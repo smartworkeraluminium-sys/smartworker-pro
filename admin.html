@@ -15,6 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
   <style>
     :root {
@@ -936,10 +937,33 @@
       else list.unshift(record);
       localStorage.setItem('sw_active_subscribers', JSON.stringify(list));
 
-      // Remove from pending requests if any
+      // Update pending requests in localStorage
       let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
       reqs = reqs.map(r => r.device_id === devId ? { ...r, status: "Approved", generated_key: key } : r);
       localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
+
+      // Sync approval and subscriber record to Firebase Firestore
+      try {
+        if (window.fbDb) {
+          fbDb.collection('subscribers').doc(devId).set(record, { merge: true }).catch(() => {});
+          fbDb.collection('recharge_requests').doc(devId).set({
+            status: "Approved",
+            activation_key: key,
+            approved_at: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+        }
+      } catch(e){}
+
+      // Sync to Realtime Database
+      try {
+        if (window.fbRtdb) {
+          fbRtdb.ref('subscribers/' + devId).set(record);
+          fbRtdb.ref('recharge_requests/' + devId).update({
+            status: "Approved",
+            activation_key: key
+          });
+        }
+      } catch(e){}
 
       renderSubscribers();
       sendInvoiceWhatsAppDirect(record);
@@ -959,33 +983,70 @@
     }
 
     // Live Firebase Realtime Sync
+    // Live Firebase Realtime Sync (Firestore + Realtime Database)
     function initFirebaseLiveListener() {
       try {
         const config = {
           apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv98idLAhJys2-M",
           authDomain: "nisha-creations.firebaseapp.com",
-          projectId: "nisha-creations"
+          databaseURL: "https://nisha-creations-default-rtdb.firebaseio.com",
+          projectId: "nisha-creations",
+          storageBucket: "nisha-creations.firebasestorage.app",
+          messagingSenderId: "726716735582",
+          appId: "1:726716735582:web:a477dcd273501e5d7dd4cf"
         };
         if (window.firebase && !firebase.apps.length) {
-          firebase.initializeApp(config);
-          const db = firebase.firestore();
-          // Listen to live subscribers
-          db.collection('subscribers').onSnapshot(snap => {
-            const liveData = [];
-            snap.forEach(doc => liveData.push(doc.data()));
-            if (liveData.length > 0) {
-              localStorage.setItem('sw_active_subscribers', JSON.stringify(liveData));
+          window.fbApp = firebase.initializeApp(config);
+        }
+        const db = firebase.firestore();
+        window.fbDb = db;
+        const rtdb = (firebase.database && typeof firebase.database === 'function') ? firebase.database() : null;
+        window.fbRtdb = rtdb;
+
+        // 1. Listen to Realtime recharge_requests in Firestore
+        db.collection('recharge_requests').onSnapshot(snap => {
+          const liveReqs = [];
+          snap.forEach(doc => {
+            const data = doc.data();
+            if (data) liveReqs.push(data);
+          });
+          if (liveReqs.length > 0) {
+            localStorage.setItem('sw_recharge_requests', JSON.stringify(liveReqs));
+            renderSubscribers();
+          }
+        }, err => console.warn("Firestore recharge_requests listen:", err));
+
+        // 2. Also listen to Realtime Database recharge_requests
+        if (rtdb) {
+          rtdb.ref('recharge_requests').on('value', snap => {
+            const val = snap.val();
+            if (val) {
+              const reqArray = Object.values(val);
+              localStorage.setItem('sw_recharge_requests', JSON.stringify(reqArray));
               renderSubscribers();
             }
           });
         }
-      } catch (err) {}
+
+        // 3. Listen to live subscribers in Firestore
+        db.collection('subscribers').onSnapshot(snap => {
+          const liveData = [];
+          snap.forEach(doc => liveData.push(doc.data()));
+          if (liveData.length > 0) {
+            localStorage.setItem('sw_active_subscribers', JSON.stringify(liveData));
+            renderSubscribers();
+          }
+        }, err => console.warn("Firestore subscribers listen:", err));
+
+      } catch (err) {
+        console.warn("initFirebaseLiveListener error:", err);
+      }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      autoFillPlanCost();
+    window.addEventListener('storage', () => {
       renderSubscribers();
-      initFirebaseLiveListener();
+    });
+    initFirebaseLiveListener();
     });
   </script>
 </body>
