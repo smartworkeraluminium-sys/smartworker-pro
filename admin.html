@@ -375,6 +375,15 @@
       top: 13px;
       color: #64748b;
     }
+  
+    .badge-purple { background: #581c87; color: #e9d5ff; border: 1px solid #9333ea; }
+    .badge-yellow { background: #854d0e; color: #fef08a; border: 1px solid #eab308; }
+    .badge-green { background: #14532d; color: #86efac; border: 1px solid #22c55e; }
+    .badge-red { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
+    .badge-blue { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+    .btn-notif { background: #6366f1; color: #fff; }
+    .btn-notif:hover { background: #4f46e5; }
+
   </style>
 </head>
 <body>
@@ -576,6 +585,42 @@
 
   <!-- SHA-256 Engine & Admin Logic -->
   <script>
+
+    // Universal Clipboard Copy with Fallback for Older Browsers
+    function universalAdminCopyText(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          alert(successMsg || "Copied to clipboard: " + text);
+        }).catch(function() {
+          execCommandFallbackAdmin(text, successMsg);
+        });
+      } else {
+        execCommandFallbackAdmin(text, successMsg);
+      }
+    }
+
+    function execCommandFallbackAdmin(text, successMsg) {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) {
+          alert(successMsg || "Copied to clipboard: " + text);
+        } else {
+          prompt("Copy manually:", text);
+        }
+      } catch(e) {
+        prompt("Copy manually:", text);
+      }
+    }
+
     function sha256(ascii) {
       function rightRotate(value, amount) { return (value>>>amount) | (value<<(32 - amount)); }
       var mathPow = Math.pow; var maxWord = mathPow(2, 32); var lengthProperty = 'length';
@@ -807,122 +852,12 @@
     }
 
     function copyGeneratedKeyToClipboard() {
-      const key = document.getElementById('displayGeneratedKey').textContent;
-      if (!key || key.includes('-')) return;
-      navigator.clipboard.writeText(key).then(() => {
-        alert("Activation Key Copied: " + key);
-      }).catch(() => {
-        prompt("Copy Key:", key);
-      });
-    }
-
-    function setFilterTab(tab) {
-      currentTabFilter = tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
-      renderSubscribers();
-    }
-
-    function renderSubscribers() {
-      const list = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
-      const requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
-      
-      // Combine requests and subscribers
-      const combined = [...requests.filter(r => r.status === 'Pending').map(r => ({
-        device_id: r.device_id,
-        name: r.name,
-        shop: r.shop || "New Customer",
-        phone: r.phone,
-        plan: r.plan,
-        plan_name: PLAN_NAMES[r.plan] || r.plan,
-        bill_amount: PLAN_RATES[r.plan] || 99,
-        paid_amount: PLAN_RATES[r.plan] || 99,
-        due_amount: 0,
-        activation_key: r.generated_key || "PENDING",
-        status: "PENDING_ACTIVATION",
-        start_date: r.date || "Today",
-        expiry_date: "Pending Activation",
-        utr: r.utr
-      })), ...list];
-
-      // Update Metric Badges
-      const pendingCount = combined.filter(s => s.status === 'PENDING_ACTIVATION' || s.status === 'Pending').length;
-      const activeCount = combined.filter(s => s.status === 'ACTIVE').length;
-      const totalRev = combined.reduce((sum, s) => sum + (parseFloat(s.paid_amount) || 0), 0);
-
-      document.getElementById('statPendingCount').textContent = pendingCount;
-      document.getElementById('statActiveCount').textContent = activeCount;
-      document.getElementById('statOnlineCount').textContent = combined.length;
-      document.getElementById('statTotalRevenue').textContent = "₹" + totalRev.toLocaleString('en-IN');
-      document.getElementById('queueTotalBadge').textContent = `${combined.length} Total`;
-
-      const container = document.getElementById('subscribersListContainer');
-      const query = (document.getElementById('subscriberSearchInput')?.value || '').trim().toLowerCase();
-
-      let filtered = combined;
-      if (currentTabFilter === 'pending') {
-        filtered = combined.filter(s => s.status === 'PENDING_ACTIVATION' || s.status === 'Pending');
-      } else if (currentTabFilter === 'active') {
-        filtered = combined.filter(s => s.status === 'ACTIVE');
-      }
-
-      if (query) {
-        filtered = filtered.filter(s => 
-          (s.name || '').toLowerCase().includes(query) ||
-          (s.phone || '').includes(query) ||
-          (s.device_id || '').toLowerCase().includes(query)
-        );
-      }
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:36px 10px; color:#64748b; font-size:0.85rem;">
-            <i class="fa-solid fa-inbox" style="font-size:2rem; margin-bottom:8px; display:block; color:#334155;"></i>
-            No subscribers found matching the criteria.
-          </div>`;
+      var key = document.getElementById('displayGeneratedKey').textContent.trim();
+      if (!key || key.includes('-')) {
+        alert("Please generate a key first!");
         return;
       }
-
-      let html = "";
-      filtered.forEach((sub, i) => {
-        const isPending = sub.status === 'PENDING_ACTIVATION' || sub.status === 'Pending';
-        const cardClass = isPending ? 'pending' : 'active';
-        const badgeMarkup = isPending ?
-          `<span class="badge badge-red"><span class="status-dot dot-red"></span> NEW SUBSCRIBER</span>` :
-          `<span class="badge badge-green"><span class="status-dot dot-green"></span> ACTIVE PRO</span>`;
-
-        html += `
-          <div class="sub-card ${cardClass}">
-            <div class="sub-header">
-              <div>
-                <div class="sub-name">${sub.name}</div>
-                <div class="sub-shop"><i class="fa-solid fa-store"></i> ${sub.shop || "Workshop"}</div>
-              </div>
-              ${badgeMarkup}
-            </div>
-
-            <div class="sub-meta-grid">
-              <div><b>Mobile:</b> ${sub.phone}</div>
-              <div><b>Device ID:</b> <span class="sub-code">${sub.device_id}</span></div>
-              <div><b>Plan:</b> ${sub.plan_name || sub.plan}</div>
-              <div><b>Expiry:</b> ${sub.expiry_date}</div>
-              <div><b>Bill / Paid:</b> ₹${sub.bill_amount} / ₹${sub.paid_amount}</div>
-              <div><b>Key:</b> <span class="sub-code" style="color:#4ade80;">${sub.activation_key || "NOT ISSUED"}</span></div>
-            </div>
-
-            <div class="btn-row-sm">
-              <button type="button" class="btn-sm btn-wa" onclick='activateAndSendWhatsApp("${sub.device_id}", "${sub.name}", "${sub.phone}", "${sub.plan}")'>
-                <i class="fa-brands fa-whatsapp"></i> Generate & Send Key
-              </button>
-              <button type="button" class="btn-sm" style="background:#1e293b; border:1px solid #334155; color:#38bdf8;" onclick='quickFillForm("${sub.device_id}", "${sub.name}", "${sub.phone}", "${sub.plan}")'>
-                <i class="fa-solid fa-pen-to-square"></i> Edit Memo
-              </button>
-            </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
+      universalAdminCopyText(key, "Activation Key (" + key + ") copied successfully!");
     }
 
     function activateAndSendWhatsApp(devId, name, phone, plan) {
@@ -1064,6 +999,183 @@
       renderSubscribers();
     });
 
+    
+    // Calculate Days Remaining and Expiry Status
+    function calculateDaysRemaining(expiryStr, status) {
+      if (status === 'PENDING_ACTIVATION' || status === 'Pending') {
+        return { text: "Pending Activation", days: null, badgeClass: "badge-red", color: "#f87171" };
+      }
+      if (!expiryStr || expiryStr === "Pending Activation" || expiryStr === "Pending") {
+        return { text: "Pending", days: null, badgeClass: "badge-red", color: "#f87171" };
+      }
+      if (typeof expiryStr === 'string' && expiryStr.toLowerCase().includes('lifetime')) {
+        return { text: "Lifetime VIP Pro", days: 9999, badgeClass: "badge-purple", color: "#c084fc" };
+      }
+
+      let expDate = null;
+      if (typeof expiryStr === 'string' && expiryStr.includes('/')) {
+        const parts = expiryStr.split('/');
+        if (parts.length === 3) {
+          expDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
+        }
+      } else if (typeof expiryStr === 'string' && expiryStr.includes('-')) {
+        const parts = expiryStr.split('-');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            expDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59);
+          } else {
+            expDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
+          }
+        }
+      }
+
+      if (!expDate || isNaN(expDate.getTime())) {
+        return { text: expiryStr, days: null, badgeClass: "badge-blue", color: "#60a5fa" };
+      }
+
+      const now = new Date();
+      const diffTime = expDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return { text: "Expired (" + Math.abs(diffDays) + "d ago)", days: diffDays, badgeClass: "badge-red", color: "#f87171" };
+      } else if (diffDays === 0) {
+        return { text: "Expires Today!", days: 0, badgeClass: "badge-yellow", color: "#fbbf24" };
+      } else if (diffDays <= 5) {
+        return { text: diffDays + " Days Left (Expiring Soon)", days: diffDays, badgeClass: "badge-yellow", color: "#fbbf24" };
+      } else {
+        return { text: diffDays + " Days Left", days: diffDays, badgeClass: "badge-green", color: "#4ade80" };
+      }
+    }
+
+    // Active customer notification context
+    let curNotifCustomer = null;
+
+    function openNotificationModal(devId, name, phone, plan, key, expiry) {
+      const validity = calculateDaysRemaining(expiry, key ? "ACTIVE" : "Pending");
+      curNotifCustomer = {
+        devId: devId,
+        name: name || "Valued Customer",
+        phone: phone || "",
+        plan: plan,
+        plan_name: PLAN_NAMES[plan] || plan,
+        key: key || computeKey(devId, plan),
+        expiry: expiry,
+        daysText: validity.text,
+        days: validity.days
+      };
+
+      document.getElementById('notifTargetName').textContent = curNotifCustomer.name;
+      document.getElementById('notifTargetPhone').textContent = curNotifCustomer.phone || "Not Set";
+      document.getElementById('notifTargetDevId').textContent = curNotifCustomer.devId;
+      document.getElementById('notifTargetValidity').textContent = "Current Validity: " + curNotifCustomer.daysText + " (Expiry: " + curNotifCustomer.expiry + ")";
+      
+      document.getElementById('notifTemplateSelect').value = curNotifCustomer.key ? "EXPIRY_REMINDER" : "KEY_ACTIVATION";
+      applyNotifTemplate();
+
+      const modal = document.getElementById('notifModal');
+      modal.style.display = 'flex';
+    }
+
+    function closeNotifModal() {
+      const modal = document.getElementById('notifModal');
+      modal.style.display = 'none';
+      curNotifCustomer = null;
+    }
+
+    function applyNotifTemplate() {
+      if (!curNotifCustomer) return;
+      const type = document.getElementById('notifTemplateSelect').value;
+      const c = curNotifCustomer;
+      let msg = "";
+
+      if (type === "KEY_ACTIVATION") {
+        msg = "Hello " + c.name + ",\n\n" +
+              "Your Smart Worker PRO license is approved!\n" +
+              "• Device ID: " + c.devId + "\n" +
+              "• Plan: " + c.plan_name + "\n" +
+              "• Valid Till: " + c.expiry + " (" + c.daysText + ")\n\n" +
+              "🔑 ACTIVATION KEY: " + c.key + "\n\n" +
+              "How to Activate:\n" +
+              "1. Open Smart Worker Pro App.\n" +
+              "2. Go to Activation Screen.\n" +
+              "3. Enter the 8-digit Key: " + c.key + "\n" +
+              "4. Tap 'ACTIVATE PRO KEY'.\n\n" +
+              "Support: +91 9239413517";
+      } else if (type === "EXPIRY_REMINDER") {
+        msg = "Hello " + c.name + ",\n\n" +
+              "⏳ RENEWAL REMINDER: Your Smart Worker PRO subscription has " + c.daysText + " remaining (Expiry Date: " + c.expiry + ").\n\n" +
+              "Please recharge your plan on time to enjoy uninterrupted cutting list calculations, digital khata, and professional PDF bills.\n\n" +
+              "Payment UPI: 9239413517 (PhonePe / GPay)\n" +
+              "Support Helpline: +91 9239413517";
+      } else if (type === "APP_UPDATE") {
+        msg = "Hello " + c.name + ",\n\n" +
+              "📢 NEW UPDATE: Smart Worker PRO has added new tools!\n" +
+              "• 16-Fraction Inch Measurement Calculator\n" +
+              "• Top Hung Sliding Door Formula updates\n" +
+              "• Instant Customer Khata & Balance tracking\n\n" +
+              "Open the app to experience the latest features!\n" +
+              "Smart Worker Aluminium Team";
+      } else {
+        msg = "Hello " + c.name + ",\n\n" +
+              "Message from Smart Worker Pro Team regarding your device (" + c.devId + "):\n\n" +
+              "Thank you for using Smart Worker Pro!\n" +
+              "Contact: +91 9239413517";
+      }
+
+      document.getElementById('notifMessageText').value = msg;
+    }
+
+    function sendNotifWhatsApp() {
+      if (!curNotifCustomer) return;
+      let phone = (curNotifCustomer.phone || "").replace(/[^0-9]/g, '');
+      if (phone.length === 10) phone = "91" + phone;
+      if (!phone || phone.length < 10) {
+        const inputPhone = prompt("Enter customer WhatsApp number (10 digits):", "");
+        if (inputPhone) {
+          phone = inputPhone.replace(/[^0-9]/g, '');
+          if (phone.length === 10) phone = "91" + phone;
+        } else {
+          return;
+        }
+      }
+
+      const text = document.getElementById('notifMessageText').value.trim();
+      const encoded = encodeURIComponent(text);
+      window.open("https://wa.me/" + phone + "?text=" + encoded, '_blank');
+    }
+
+    function sendNotifCloudPush() {
+      if (!curNotifCustomer) return;
+      const text = document.getElementById('notifMessageText').value.trim();
+      const notifObj = {
+        id: "NOTIF_" + Date.now(),
+        device_id: curNotifCustomer.devId,
+        title: "Smart Worker Pro Notice",
+        message: text,
+        date: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        timestamp: Date.now()
+      };
+
+      // Save to localStorage
+      try {
+        localStorage.setItem('sw_client_notification_' + curNotifCustomer.devId, JSON.stringify(notifObj));
+      } catch(e){}
+
+      // Save to Firebase
+      try {
+        if (window.fbDb) {
+          fbDb.collection('notifications').doc(curNotifCustomer.devId).set(notifObj, { merge: true }).catch(()=>{});
+        }
+        if (window.fbRtdb) {
+          fbRtdb.ref('notifications/' + curNotifCustomer.devId).set(notifObj).catch(()=>{});
+        }
+      } catch(e){}
+
+      alert("✅ Notification successfully pushed to Customer App (Device ID: " + curNotifCustomer.devId + ")!");
+      closeNotifModal();
+    }
+
     // Quick Import from WhatsApp or Device ID
     function quickImportWhatsAppMessage() {
       const input = (document.getElementById('waQuickInput').value || '').trim();
@@ -1194,5 +1306,56 @@
       initFirebaseLiveListener();
     });
   </script>
+
+  <!-- Notification Dispatch Modal -->
+  <div class="modal-overlay" id="notifModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0f172a; border:1.5px solid #38bdf8; border-radius:14px; max-width:480px; width:100%; box-shadow:0 12px 36px rgba(0,0,0,0.6); overflow:hidden;">
+      <div style="background:#1e293b; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:800; color:#38bdf8; font-size:0.95rem;">
+          <i class="fa-solid fa-bell"></i> Send Customer Notification
+        </div>
+        <button type="button" onclick="closeNotifModal()" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+      <div style="padding:14px 16px;">
+        <!-- Target Customer Info Banner -->
+        <div style="background:#1e1b4b; border:1px solid #6366f1; border-radius:8px; padding:10px; margin-bottom:12px; font-size:0.78rem;">
+          <div style="color:#fbbf24; font-weight:800; font-size:0.88rem;" id="notifTargetName">Customer Name</div>
+          <div style="color:#c7d2fe; margin-top:2px;">
+            <span>Mobile: <b id="notifTargetPhone">--</b></span> • 
+            <span>Device ID: <b id="notifTargetDevId" style="font-family:monospace; color:#38bdf8;">--</b></span>
+          </div>
+          <div style="color:#e0e7ff; margin-top:4px;" id="notifTargetValidity">Validity: --</div>
+        </div>
+
+        <!-- Notification Template Selector -->
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.75rem; font-weight:bold; color:#cbd5e1; display:block; margin-bottom:4px;">Notification Type / Template:</label>
+          <select id="notifTemplateSelect" onchange="applyNotifTemplate()" style="width:100%; padding:9px 10px; border-radius:7px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:0.82rem;">
+            <option value="KEY_ACTIVATION">🔑 Pro Key & Activation Instructions</option>
+            <option value="EXPIRY_REMINDER">⏳ Validity & Renewal Reminder (Days Left)</option>
+            <option value="APP_UPDATE">📢 App Update & New Fabrication Tools</option>
+            <option value="CUSTOM">💬 Custom Workshop Notice</option>
+          </select>
+        </div>
+
+        <!-- Notification Message Content -->
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.75rem; font-weight:bold; color:#cbd5e1; display:block; margin-bottom:4px;">Message Text (Editable):</label>
+          <textarea id="notifMessageText" rows="6" style="width:100%; padding:10px; border-radius:8px; background:#0b1329; border:1px solid #334155; color:#fff; font-size:0.82rem; line-height:1.45; resize:none; font-family:inherit;"></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-wa" onclick="sendNotifWhatsApp()" style="flex:1.2; padding:10px; font-size:0.82rem;">
+            <i class="fa-brands fa-whatsapp"></i> Send via WhatsApp
+          </button>
+          <button type="button" class="btn" onclick="sendNotifCloudPush()" style="flex:1; background:#6366f1; color:#fff; padding:10px; font-size:0.82rem;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Push In-App
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

@@ -1,3 +1,39 @@
+
+// Universal Clipboard Copy with Fallback for Older Android WebViews
+function universalCopyText(text, successMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert(successMsg || "সফলভাবে কপি হয়েছে: " + text);
+    }).catch(function() {
+      execCommandFallbackCopy(text, successMsg);
+    });
+  } else {
+    execCommandFallbackCopy(text, successMsg);
+  }
+}
+
+function execCommandFallbackCopy(text, successMsg) {
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) {
+      alert(successMsg || "সফলভাবে কপি হয়েছে: " + text);
+    } else {
+      prompt("কপি করতে নিচের কোডটি সিলেক্ট করুন:", text);
+    }
+  } catch(e) {
+    prompt("কপি করতে নিচের কোডটি সিলেক্ট করুন:", text);
+  }
+}
+
 // =========================================================================
 // SMART WORKER PRO - UNIFIED PRODUCTION JAVASCRIPT ENGINE
 // Modules: Firebase Cloud Sync, Formulas, Digital Khata, Billing, Keypad, UI
@@ -1426,7 +1462,7 @@ function keypadEnter() {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -1580,7 +1616,7 @@ function keypadEnter() {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -1723,7 +1759,7 @@ function keypadEnter() {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -1853,7 +1889,7 @@ function keypadEnter() {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -1960,7 +1996,7 @@ function keypadEnter() {
  }
 
  if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF();
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -2123,7 +2159,7 @@ function keypadEnter() {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -2436,7 +2472,7 @@ function keypadEnter() {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -2896,7 +2932,7 @@ function saveMeasurementData(projectType, outId, matId) {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -3561,7 +3597,7 @@ function saveMeasurementData(projectType, outId, matId) {
  return;
  }
 
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF('p', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -3765,7 +3801,7 @@ function saveMeasurementData(projectType, outId, matId) {
  }
 
  if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
- const { jsPDF } = window.jspdf;
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
  const doc = new jsPDF();
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -4315,7 +4351,7 @@ function saveMeasurementData(projectType, outId, matId) {
       const c = customers[currentActiveKhataPhone];
       if (!c) return;
 
-      const { jsPDF } = window.jspdf;
+      var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
       const doc = new jsPDF();
 
       const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -4542,17 +4578,76 @@ function addTeamMember() {
  }
 
  function checkActivationType(deviceId, inputKey) {
- inputKey = inputKey.trim().toUpperCase();
- if (inputKey === SPECIAL_PROMO_CODE) return "LIFETIME";
- for (const duration in SALTS) {
- const expectedKey = sha256(deviceId + SALTS[duration]).substring(0, 8).toUpperCase();
- if (inputKey === expectedKey) return duration;
- }
- return null;
- }
+  inputKey = String(inputKey || '').trim().toUpperCase();
+  if (!inputKey || !deviceId) return null;
+  if (inputKey === SPECIAL_PROMO_CODE) return "LIFETIME";
+
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+
+  // 1. Check current month dynamic rotating key
+  for (const duration in SALTS) {
+    const baseSalt = SALTS[duration];
+    let dynSalt = baseSalt;
+    if (duration.includes("1Y")) {
+      dynSalt = baseSalt + "_" + y;
+    } else {
+      dynSalt = baseSalt + "_" + y + "_" + m;
+    }
+    const expectedKey = sha256(deviceId + dynSalt).substring(0, 8).toUpperCase();
+    if (inputKey === expectedKey) return duration;
+  }
+
+  // 2. Also check base salt (for initial cycle and backward compatibility)
+  for (const duration in SALTS) {
+    const baseSalt = SALTS[duration];
+    const expectedKey = sha256(deviceId + baseSalt).substring(0, 8).toUpperCase();
+    if (inputKey === expectedKey) return duration;
+  }
+
+  // 3. Check previous/next month transition window (allows activation if recharged early)
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const pY = prevMonth.getFullYear(), pM = String(prevMonth.getMonth() + 1).padStart(2, '0');
+  const nY = nextMonth.getFullYear(), nM = String(nextMonth.getMonth() + 1).padStart(2, '0');
+
+  for (const duration in SALTS) {
+    const baseSalt = SALTS[duration];
+    const keyPrev = sha256(deviceId + baseSalt + "_" + pY + "_" + pM).substring(0, 8).toUpperCase();
+    const keyNext = sha256(deviceId + baseSalt + "_" + nY + "_" + nM).substring(0, 8).toUpperCase();
+    if (inputKey === keyPrev || inputKey === keyNext) return duration;
+  }
+
+  return null;
+}
 
  function isAppActivated() {
-  return true; // Lifetime Pro Licensed for Saheb Ghanti
+  const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
+  if (!lic || !lic.key) return false;
+  if (lic.key === SPECIAL_PROMO_CODE) return true;
+  if (lic.expiry_date) {
+    if (typeof lic.expiry_date === 'string' && lic.expiry_date.toLowerCase().includes('lifetime')) return true;
+    const now = new Date();
+    let exp = null;
+    if (lic.expiry_date.includes('/')) {
+      const parts = lic.expiry_date.split('/');
+      exp = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
+    } else if (lic.expiry_date.includes('-')) {
+      const parts = lic.expiry_date.split('-');
+      if (parts[0].length === 4) {
+        exp = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59);
+      } else {
+        exp = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
+      }
+    } else {
+      exp = new Date(lic.expiry_date);
+    }
+    if (exp && !isNaN(exp.getTime())) {
+      return exp >= now;
+    }
+  }
+  return false;
 }
 
  function updateActivationScreenUI() {
@@ -4593,59 +4688,75 @@ function addTeamMember() {
  }
 
  function copyDeviceId() {
- const dId = getDeviceId();
- navigator.clipboard.writeText(dId).then(() => {
- const btn = document.getElementById('actCopyBtn');
- btn.textContent = "COPIED!";
- btn.style.background = "#2e7d32";
- setTimeout(() => {
- btn.textContent = "COPY";
- btn.style.background = "#1976d2";
- }, 2000);
- }).catch(() => {
- alert(`Your Device ID: ${dId}`);
- });
- }
+  var dId = getDeviceId();
+  universalCopyText(dId, "Device ID (" + dId + ") সফলভাবে কপি হয়েছে!");
+}
 
- function activateAppKey() {
- const inputKey = document.getElementById('activationInput').value.trim();
- const deviceId = getDeviceId();
- const durationType = checkActivationType(deviceId, inputKey);
+ function activateAppKey(providedKey) {
+  const inputKey = (providedKey || document.getElementById('activationInput').value || '').trim().toUpperCase();
+  const deviceId = getDeviceId();
 
- if (durationType) {
- let daysToAdd = 30;
- let planCategory = "KARIGAR";
- let maxUsers = 1;
+  if (!inputKey) {
+    alert("অনুগ্রহ করে ৮-অক্ষরের অ্যাক্টিভেশন কি লিখুন!");
+    return;
+  }
 
- if (durationType === "KARIGAR_1M" || durationType === "1M") { daysToAdd = 30; maxUsers = 1; planCategory = "KARIGAR"; }
- else if (durationType === "KARIGAR_1Y" || durationType === "1Y") { daysToAdd = 365; maxUsers = 1; planCategory = "KARIGAR"; }
- else if (durationType === "TEAM_1M") { daysToAdd = 30; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
- else if (durationType === "TEAM_1Y") { daysToAdd = 365; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
- else if (durationType === "CORP_1M") { daysToAdd = 30; maxUsers = 50; planCategory = "CORPORATE"; }
- else if (durationType === "CORP_1Y") { daysToAdd = 365; maxUsers = 50; planCategory = "CORPORATE"; }
- else if (durationType === "LIFETIME") { daysToAdd = 36500; maxUsers = 50; planCategory = "LIFETIME"; }
+  // Anti-Reuse Protection: check if this key was already used previously on this device
+  let usedKeys = JSON.parse(localStorage.getItem('sw_used_keys') || '[]');
+  const currentLic = JSON.parse(localStorage.getItem('sw_license') || '{}');
 
- const expiry = new Date();
- expiry.setDate(expiry.getDate() + daysToAdd);
- const expiryStr = expiry.toISOString().split('T')[0];
+  // If the key was already used and the license is either expired or a new activation attempt
+  if (usedKeys.includes(inputKey) && currentLic.key === inputKey && !isAppActivated()) {
+    alert("❌ এই অ্যাক্টিভেশন কি-টি পূর্বে ব্যবহার করা হয়েছে এবং এর মেয়াদ শেষ হয়ে গেছে!\n\nপুরনো কি দিয়ে পুনরায় আনলক করা সম্ভব নয়। দয়া করে পরবর্তী মাসের জন্য নতুন রিচার্জ কি সংগ্রহ করুন।");
+    return;
+  }
+  if (usedKeys.includes(inputKey) && currentLic.key !== inputKey) {
+    alert("❌ এই অ্যাক্টিভেশন কি-টি ইতিমধ্যে ব্যবহার করা হয়েছে!\n\nএকই কি একাধিকবার ব্যবহার করা যায় না। নতুন রিচার্জ কি সংগ্রহ করুন।");
+    return;
+  }
 
- localStorage.setItem('sw_license', JSON.stringify({
- key: inputKey.toUpperCase(),
- plan: durationType,
- plan_category: planCategory,
- max_users: maxUsers,
- expiry_date: expiryStr
- }));
+  const durationType = checkActivationType(deviceId, inputKey);
 
- alert(`PRO Activated Successfully! Valid till: ${durationType === 'LIFETIME' ? 'Lifetime' : expiryStr}`);
- updateActivationScreenUI();
- goHome();
- } else {
- alert("Invalid Activation Key! Please contact Smart Worker Aluminium.");
- }
- }
+  if (durationType) {
+    let daysToAdd = 30;
+    let planCategory = "KARIGAR";
+    let maxUsers = 1;
 
- 
+    if (durationType === "KARIGAR_1M" || durationType === "1M") { daysToAdd = 30; maxUsers = 1; planCategory = "KARIGAR"; }
+    else if (durationType === "KARIGAR_1Y" || durationType === "1Y") { daysToAdd = 365; maxUsers = 1; planCategory = "KARIGAR"; }
+    else if (durationType === "TEAM_1M") { daysToAdd = 30; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
+    else if (durationType === "TEAM_1Y") { daysToAdd = 365; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
+    else if (durationType === "CORP_1M") { daysToAdd = 30; maxUsers = 50; planCategory = "CORPORATE"; }
+    else if (durationType === "CORP_1Y") { daysToAdd = 365; maxUsers = 50; planCategory = "CORPORATE"; }
+    else if (durationType === "LIFETIME") { daysToAdd = 36500; maxUsers = 50; planCategory = "LIFETIME"; }
+
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + daysToAdd);
+    const expiryStr = expiry.toISOString().split('T')[0];
+
+    localStorage.setItem('sw_license', JSON.stringify({
+      key: inputKey,
+      plan: durationType,
+      plan_category: planCategory,
+      max_users: maxUsers,
+      activated_at: new Date().toISOString(),
+      expiry_date: expiryStr
+    }));
+
+    // Record key in usedKeys list so it can NEVER be reused after its expiry
+    if (!usedKeys.includes(inputKey) && inputKey !== SPECIAL_PROMO_CODE) {
+      usedKeys.push(inputKey);
+      localStorage.setItem('sw_used_keys', JSON.stringify(usedKeys));
+    }
+
+    alert("✅ PRO সফলভাবে অ্যাক্টিভেট হয়েছে!\n\nমেয়াদ: " + (durationType === 'LIFETIME' ? 'লাইফটাইম' : expiryStr + ' (' + daysToAdd + ' দিন)'));
+    updateActivationScreenUI();
+    goHome();
+  } else {
+    alert("❌ অবৈধ বা মেয়াদোত্তীর্ণ অ্যাক্টিভেশন কি!\n\nঅনুগ্রহ করে বর্তমান মাসের সঠিক রিচার্জ কি লিখুন অথবা Smart Worker Aluminium-এর সাথে যোগাযোগ করুন।");
+  }
+}
+
 function subscribeViaWhatsApp(plan) {
   const deviceId = getDeviceId();
   let planKey = "KARIGAR_1M";
@@ -5528,6 +5639,7 @@ function updateProfile() {
   try { loadSavedProfile(); } catch(e){}
   try { loadBillSettings(); } catch(e){}
   try { updateSuggestedRate(); } catch(e){}
+  try { checkCustomerInAppNotifications(); } catch(e){}
   try { goHome(); } catch(e){}
 }
 
@@ -5854,3 +5966,82 @@ function syncUserActivityToCloud() {
   } catch(e) {}
 }
 
+
+
+
+// =========================================================================
+// IN-APP NOTIFICATIONS & CLOUD ACTIVATION AUTO-DETECTOR
+// =========================================================================
+
+function showCustomerNotificationPopup(notif) {
+  let bar = document.getElementById('inAppNotifBanner');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'inAppNotifBanner';
+    bar.style.cssText = 'position:fixed; top:12px; left:12px; right:12px; z-index:99999; background:linear-gradient(135deg, #1e1b4b, #312e81); border:1.5px solid #818cf8; border-radius:12px; padding:12px 14px; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:flex; gap:10px; align-items:flex-start;';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML = `
+    <div style="font-size:1.4rem; color:#fde047;"><i class="fa-solid fa-bell"></i></div>
+    <div style="flex:1;">
+      <div style="font-size:0.88rem; font-weight:800; color:#38bdf8;">${notif.title || 'অ্যাডমিন নোটিফিকেশন'}</div>
+      <div style="font-size:0.78rem; color:#e0e7ff; margin-top:3px; line-height:1.4; white-space:pre-line;">${notif.message}</div>
+      <div style="font-size:0.68rem; color:#94a3b8; margin-top:5px;">${notif.date || 'Today'}</div>
+    </div>
+    <button type="button" onclick="dismissCustomerNotif('${notif.device_id || getDeviceId()}', '${notif.timestamp}')" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:6px; padding:4px 8px; font-size:0.8rem; cursor:pointer;">&times;</button>
+  `;
+  bar.style.display = 'flex';
+}
+
+function dismissCustomerNotif(devId, ts) {
+  const bar = document.getElementById('inAppNotifBanner');
+  if (bar) bar.style.display = 'none';
+  localStorage.setItem('sw_last_seen_notif_' + devId, String(ts));
+}
+
+function checkCustomerInAppNotifications() {
+  const devId = getDeviceId();
+  // 1. Local Notification Check
+  try {
+    const raw = localStorage.getItem('sw_client_notification_' + devId);
+    if (raw) {
+      const notif = JSON.parse(raw);
+      const lastSeen = localStorage.getItem('sw_last_seen_notif_' + devId);
+      if (notif && notif.timestamp && String(notif.timestamp) !== lastSeen) {
+        showCustomerNotificationPopup(notif);
+      }
+    }
+  } catch(e){}
+
+  // 2. Firebase Cloud Notification Check
+  try {
+    const db = window.fbDb || (window.firebase && firebase.apps.length ? firebase.firestore() : null);
+    if (db) {
+      db.collection('notifications').doc(devId).get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          const lastSeen = localStorage.getItem('sw_last_seen_notif_' + devId);
+          if (data && data.timestamp && String(data.timestamp) !== lastSeen) {
+            showCustomerNotificationPopup(data);
+          }
+        }
+      }).catch(()=>{});
+    }
+  } catch(e){}
+
+  // 3. Auto-sync approved key from Firebase
+  try {
+    const db = window.fbDb || (window.firebase && firebase.apps.length ? firebase.firestore() : null);
+    if (db) {
+      db.collection('recharge_requests').doc(devId).get().then(doc => {
+        if (doc.exists) {
+          const req = doc.data();
+          if (req && req.status === 'Approved' && req.activation_key) {
+            const actInput = document.getElementById('activationInput');
+            if (actInput && !actInput.value) actInput.value = req.activation_key;
+          }
+        }
+      }).catch(()=>{});
+    }
+  } catch(e){}
+}
