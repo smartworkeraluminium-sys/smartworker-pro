@@ -1,4 +1,91 @@
 
+// ========================================================
+// GLASS BILLING SLAB SAFE-GUARD ENGINE (6-INCH / 1-FOOT SLAB PROTECTOR)
+// Prevents glass shops from jumping to next 6-inch slab for +1 suta!
+// ========================================================
+function safeGlassSlabCap(dim) {
+  dim = parseFloat(dim) || 0;
+  if (dim <= 0) return { cut: 0, slab: 0, savedPenalty: false };
+
+  // Standard retail billing slabs in inches (multiples of 6" / 0.5 ft)
+  var slabs = [12.0, 18.0, 24.0, 30.0, 36.0, 42.0, 48.0, 54.0, 60.0, 66.0, 72.0, 78.0, 84.0, 90.0, 96.0];
+
+  for (var i = 0; i < slabs.length; i++) {
+    var s = slabs[i];
+    // If dimension is up to 0.5" (4 sutas) over a slab boundary (e.g. 30.125", 36.125", 24.125")
+    if (dim > s && dim <= s + 0.5) {
+      // Cap strictly at (slab - 0.25) so it fits into beading and stays inside the lower slab!
+      return { cut: s - 0.25, slab: s, savedPenalty: true };
+    } else if (dim <= s) {
+      return { cut: dim, slab: s, savedPenalty: false };
+    }
+  }
+
+  return { cut: dim, slab: Math.ceil(dim / 6.0) * 6.0, savedPenalty: false };
+}
+
+
+// ========================================================
+// UNIVERSAL PROFESSIONAL PDF HEADER WITH CUSTOM WORKSHOP LOGO
+// ========================================================
+function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
+  themeColor = themeColor || [74, 20, 140];
+  var profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+  var shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+  var contact = profile.phone || "9239413517 / 9641405426";
+  var addr = profile.address || "Amta, Howrah, West Bengal";
+  var customLogo = localStorage.getItem('sw_custom_logo');
+
+  // 1. Draw top banner
+  doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
+  doc.rect(0, 0, 210, 36, 'F');
+
+  var textStartX = 14;
+  if (customLogo) {
+    try {
+      // Draw white rounded card behind logo so it always pops cleanly
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(12, 4, 28, 28, 3, 3, 'F');
+
+      var fmt = customLogo.indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
+      doc.addImage(customLogo, fmt, 13, 5, 26, 26);
+      textStartX = 45; // Shift text right so logo and text NEVER overlap!
+    } catch(e) {
+      try {
+        doc.addImage(customLogo, 13, 5, 26, 26);
+        textStartX = 45;
+      } catch(err) {
+        textStartX = 14;
+      }
+    }
+  }
+
+  // Shop Name
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(255, 255, 255);
+  doc.text(shop_name, textStartX, 14);
+
+  // Address and Contact
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(226, 232, 240);
+  doc.text(addr + " | Contact: " + contact, textStartX, 21);
+
+  // Document Title / Subtitle
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(254, 240, 138); // Warm gold accent
+  doc.text(title.toUpperCase(), textStartX, 28);
+  if (subtitle) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(203, 213, 225);
+    doc.text(subtitle, textStartX, 33);
+  }
+}
+
+
 // Universal Clipboard Copy with Fallback for Older Android WebViews
 function universalCopyText(text, successMsg) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1227,7 +1314,10 @@ function keypadEnter() {
  function calculatePartition() {
  const raw_h = safeEval(document.getElementById('pt_h').value);
  const raw_w = safeEval(document.getElementById('pt_w').value);
- if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
+ if (raw_h === 0 || raw_w === 0) {
+   alert(currentAppLang === 'bn' ? "অনুগ্রহ করে উচ্চতা এবং চওড়া লিখুন।" : "Please enter Height and Width.");
+   return;
+ }
 
  const is_mm = document.getElementById('pt_unit').value.includes('Millimeter');
  const h = is_mm ? raw_h / 25.4 : raw_h;
@@ -1235,103 +1325,269 @@ function keypadEnter() {
  const p_type = document.getElementById('pt_type').value;
  const cols = Math.max(1, parseInt(safeEval(document.getElementById('pt_cols').value)) || 3);
  const rows = Math.max(1, parseInt(safeEval(document.getElementById('pt_rows').value)) || 3);
+ const panel_mode = (document.getElementById('pt_panel_mode') ? document.getElementById('pt_panel_mode').value : "OPTIMIZED_4X8");
 
  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
  pt_part_count += 1;
  const unit_str = is_mm ? "mm" : "Inch";
+ const isBn = (currentAppLang === 'bn');
 
- let hw_txt = "--- HARDWARE & ACCESSORIES ---\n> Square Clip (Beading) Required\n> Rubber/Sealant as per perimeter\n";
  let out = "";
 
+ // Frame height deductions: top 1.5", bottom 1.5", and (rows - 1) transoms (each 1.5")
+ const frame_deduct = (rows + 1) * 1.5;
+ const total_open_h = Math.max(10, h - frame_deduct);
+
+ let bottom_h = 0, mid_h = 0, top_h = 0;
+ if (rows === 3) {
+   if (panel_mode === "CUSTOM_BOTTOM_3FT") {
+     bottom_h = 36.0;
+     mid_h = 36.0;
+     top_h = Math.max(8.0, total_open_h - (bottom_h + mid_h));
+   } else if (panel_mode === "CUSTOM_BOTTOM_2.5FT") {
+     bottom_h = 30.0;
+     mid_h = 30.0;
+     top_h = Math.max(8.0, total_open_h - (bottom_h + mid_h));
+   } else if (panel_mode === "EQUAL_DIVIDE") {
+     const eq = total_open_h / 3.0;
+     bottom_h = eq; mid_h = eq; top_h = eq;
+   } else {
+     // OPTIMIZED_4X8: 4'x8' Sheet & 6" Glass Slab Protected
+     if (h <= 88.0) {
+       bottom_h = 30.0; // 30" (2.5 ft slab)
+       mid_h = 30.0;    // Equal to bottom!
+       top_h = Math.max(8.0, total_open_h - 60.0); // Smaller top box (~18")
+     } else if (h <= 100.0) {
+       bottom_h = 36.0; // 36" (3 ft slab)
+       mid_h = 36.0;    // Equal to bottom!
+       top_h = Math.max(8.0, total_open_h - 72.0); // Smaller top box (~18")
+     } else {
+       bottom_h = 36.0;
+       mid_h = 36.0;
+       top_h = Math.max(8.0, total_open_h - 72.0);
+     }
+   }
+ } else {
+   const eq = total_open_h / rows;
+   bottom_h = eq; mid_h = eq; top_h = eq;
+ }
+
  if (p_type === "Fixed Partition") {
- out = `[Partition #${pt_part_count} - ${p_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
- const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
- const inner_h = (w - ((cols + 1) * 1.5)) / cols;
+   out = `[Partition #${pt_part_count} - ${p_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
+   const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
+   const inner_h = (w - ((cols + 1) * 1.5)) / cols;
 
- out += "--- SINGLE GLAZING ---\n";
- out += `> Vertical: ${disp(outer_v)} (2 pc)\n> Horizontal: ${disp(outer_h)} (2 pc)\n`;
- pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
+   // 1. FRAME SECTIONS
+   out += "===================================\n";
+   out += isBn ? "🔨 অ্যালুমিনিয়াম ফ্রেম কাটিং মাপ (FRAME SECTIONS)\n" : "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
+   out += "===================================\n";
+   out += isBn ? `> আউটার খাঁড়া পাইপ (Outer Verticals): ${disp(outer_v)} (2 pc)\n` : `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
+   out += isBn ? `> আউটার টপ ও বটম পাইপ (Outer Horizontals): ${disp(outer_h)} (2 pc)\n` : `> Outer Horizontals (Top/Bottom): ${disp(outer_h)} (2 pc)\n`;
+   pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
 
- out += "--- DOUBLE GLAZING ---\n";
- if (cols > 1) {
- out += `> Vertical: ${disp(inter_v)} (${cols - 1} pc)\n`;
- for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
- }
- const h_qty = cols * (rows - 1);
- if (h_qty > 0) {
- out += `> Horizontal: ${disp(inner_h)} (${h_qty} pc)\n`;
- for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
- }
+   if (cols > 1) {
+     out += isBn ? `> ভেতরের খাঁড়া পাইপ (Intermediate Verticals): ${disp(inter_v)} (${cols - 1} pc)\n` : `> Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
+     for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
+   }
 
- const gap_h = (h - ((rows + 1) * 1.5)) / rows;
- const glass_qty = cols * rows;
- out += hw_txt;
- out += `--- GLASS / BOARD ---\n> Size: ${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)} (${glass_qty} pc)\n`;
- const gKey = `${disp(gap_h - 0.25)} x ${disp(inner_h - 0.25)}`;
- pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
+   const h_qty = cols * (rows - 1);
+   if (h_qty > 0) {
+     out += isBn ? `> ভেতরের মাঝের বাটা/বিট (Transom Divider Tubes): ${disp(inner_h)} (${h_qty} pc)\n` : `> Internal Transom Divider Tubes: ${disp(inner_h)} (${h_qty} pc)\n`;
+     for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
+   }
+
+   // 2. FRAME BOX CLEAR OPENINGS & VERTICAL PIPE MARKING GUIDE
+   const mark_bottom_transom = bottom_h + 1.5;
+   const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
+
+   out += "\n===================================\n";
+   out += isBn ? "📐 ফ্রেমের ভেতরের খোপ ও খাঁড়া পাইপ মার্কিং চার্ট\n" : "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
+   out += "===================================\n";
+   out += isBn ? `• তলার খোপের ক্লিয়ার সাইজ: ${disp(bottom_h)} x ${disp(inner_h)} [তলা ACP]\n` : `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP Board]\n`;
+   out += isBn ? `• মিডিল খোপের ক্লিয়ার সাইজ: ${disp(mid_h)} x ${disp(inner_h)} [মিডিল গ্লাস - সেম সাইজ]\n` : `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
+   out += isBn ? `• মাথার খাপের ক্লিয়ার সাইজ: ${disp(top_h)} x ${disp(inner_h)} [মাথার ছোট গ্লাস]\n\n` : `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
+
+   out += isBn ? "📍 খাঁড়া পাইপে বাটা লাগানোর দাগ/লেভেল (Vertical Marking):\n" : "📍 Vertical Pipe Transom Marking Levels:\n";
+   out += isBn ? `  1. ১ম বাটা (তলার লেভেল): মেঝে থেকে ${disp(bottom_h)} ক্লিয়ার (${disp(mark_bottom_transom)} দাগ)\n` : `  1. First Transom (Bottom Level): Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
+   out += isBn ? `  2. ২য় বাটা (মিডিল লেভেল): ১ম বাটা থেকে ${disp(mid_h)} ক্লিয়ার (${disp(mark_mid_transom)} দাগ)\n` : `  2. Second Transom (Middle Level): First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
+   out += isBn ? `  3. মাথার খাপ: ২য় বাটা থেকে ছাদ পর্যন্ত ক্লিয়ার ${disp(top_h)}\n` : `  3. Top Box (Header Level): Second Transom to Ceiling ${disp(top_h)} clear\n`;
+
+   // 3. GLASS & ACP CUTTING WITH SLAB SAFE-GUARD
+   const raw_cut_w = inner_h - 0.25;
+   const w_guard = safeGlassSlabCap(raw_cut_w);
+   const cut_w = w_guard.cut;
+
+   const bottom_cut_h = bottom_h - 0.25;
+   const mid_guard = safeGlassSlabCap(mid_h - 0.25);
+   const mid_cut_h = mid_guard.cut;
+   const top_guard = safeGlassSlabCap(top_h - 0.25);
+   const top_cut_h = top_guard.cut;
+
+   if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
+     out += "\n===================================\n";
+     out += isBn ? "🪟 গ্লাস ও এসিপি বোর্ড কাটিং মাপ (GLASS & ACP)\n" : "🪟 4'x8' SHEET OPTIMIZED PANELS (ACP & GLASS)\n";
+     out += "===================================\n";
+     out += isBn ? `> [তলা] Bottom ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Bottom] ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += isBn ? `> [মিডিল] Middle Glass (সেম মাপ): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Middle] Glass (Identical Size): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += isBn ? `> [মাথার খাপ] Top Header Glass (ছোট): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Top] Header Glass (Smaller Box): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+
+     pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+     pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+     pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+
+     // 4'x8' Sheet count
+     const sheet_w = 48.0, sheet_h = 96.0;
+     const acp_per_sheet = Math.max(1, Math.floor(sheet_w / cut_w) * Math.floor(sheet_h / bottom_cut_h));
+     const acp_sheets = Math.ceil(cols / acp_per_sheet);
+
+     const glass_per_sheet = Math.max(1, Math.floor(sheet_w / cut_w) * Math.floor(sheet_h / mid_cut_h));
+     const glass_sheets = Math.ceil(cols / glass_per_sheet);
+
+     out += "\n" + (isBn ? "--- ৪'×৮' (৪৮ x ৯৬ ইঞ্চি) শিট ও কাটিং চার্ট ---\n" : "--- 4'x8' (48 x 96 Inch) SHEET CUTTING CHART ---\n");
+     out += isBn ? `• তলার এসিপি শিট লাগবে: ${acp_sheets} খানা ৪'×৮' শিট (১ শিটে ${acp_per_sheet} পিস)\n` : `• Bottom ACP Sheets Required: ${acp_sheets} sheets of 4'x8' (${acp_per_sheet} pcs per sheet)\n`;
+     out += isBn ? `• মিডিল গ্লাস লাগবে: ${glass_sheets} খানা ৪'×৮' শিট (১ শিটে ${glass_per_sheet} পিস)\n` : `• Middle Glass Sheets Required: ${glass_sheets} sheets of 4'x8' (${glass_per_sheet} pcs per sheet)\n`;
+
+     out += "\n" + (isBn ? "--- 🛡️ গ্লাস দোকান বিলিং স্ল্যাব সেফ গার্ড (ZERO PENALTY) ---\n" : "--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
+     out += isBn ? `• মিডিল গ্লাস বিলিং স্ল্যাব: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/পিস)\n` : `• Middle Glass Billing Slab: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
+     out += isBn ? `• মাথার খাপ বিলিং স্ল্যাব: ${top_guard.slab}" x ${w_guard.slab}" (${((top_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/পিস)\n` : `• Top Header Glass Billing Slab: ${top_guard.slab}" x ${w_guard.slab}" (${((top_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
+     out += isBn ? `✔ নিশ্চিতকরণ: ফ্রেমের সাথে গ্লাস ও এসিপি ১০০% মিলে থাকবে, ১ সুতোও অমিল হবে না!\n` : `✔ Guaranteed: Dimensions strictly capped below 30", 36", 24", 18" slabs. Zero extra 6-inch penalty!\n`;
+   } else {
+     const raw_gap = (h - ((rows + 1) * 1.5)) / rows - 0.25;
+     const g_guard = safeGlassSlabCap(raw_gap);
+     const glass_qty = cols * rows;
+     out += `--- GLASS / BOARD ---\n> Size: ${disp(g_guard.cut)} x ${disp(cut_w)} (${glass_qty} pc)\n`;
+     out += `> Shop Billing Slab: ${g_guard.slab}" x ${w_guard.slab}"\n`;
+     const gKey = `${disp(g_guard.cut)} x ${disp(cut_w)}`;
+     pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
+   }
+
+   // 4. HARDWARE
+   const beading_rft = Math.round(((bottom_h + inner_h)*2 + (mid_h + inner_h)*2 + (top_h + inner_h)*2) * cols / 12);
+   out += "\n" + (isBn ? "--- হার্ডওয়্যার ও এক্সেসরিজ ---\n" : "--- HARDWARE & ACCESSORIES ---\n");
+   out += isBn ? `> স্কয়ার ক্লিপ (Beading): প্রায় ${beading_rft} রানিং ফুট\n` : `> Square Clip (Beading): Approx ${beading_rft} Running Feet\n`;
+   out += isBn ? `> গ্লাস রাবার / সিলিকন পেস্টিং: প্রায় ${beading_rft} ফুট\n` : `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
+   out += isBn ? `> কর্নার ক্লিট ও স্ক্রু সেট\n` : `> Corner Cleats & Screws Set\n`;
 
  } else {
- const raw_dh = safeEval(document.getElementById('pt_dh').value);
- const raw_dw = safeEval(document.getElementById('pt_dw').value);
- if (raw_dh === 0 || raw_dw === 0) { alert("Please enter Door Size."); return; }
+   // Door + Partition Mode
+   const raw_dh = safeEval(document.getElementById('pt_dh').value);
+   const raw_dw = safeEval(document.getElementById('pt_dw').value);
+   if (raw_dh === 0 || raw_dw === 0) {
+     alert(isBn ? "অনুগ্রহ করে দরজার সাইজ লিখুন।" : "Please enter Door Size.");
+     return;
+   }
 
- const dh = is_mm ? raw_dh / 25.4 : raw_dh;
- const dw = is_mm ? raw_dw / 25.4 : raw_dw;
+   const dh = is_mm ? raw_dh / 25.4 : raw_dh;
+   const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
- out = `[Partition #${pt_part_count} - Door + Partition (${raw_h} x ${raw_w} ${unit_str})]\n`;
- const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
- const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
- const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
+   out = `[Partition #${pt_part_count} - Door + Partition (${raw_h} x ${raw_w} ${unit_str})]\n`;
+   const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
+   const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
+   const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
 
- out += "--- VERTICALS ---\n";
- out += `> Outer Vertical: ${disp(outer_v)} (2 pc)\n> Door Side Vertical: ${disp(door_side_v)} (1 pc)\n`;
- pt_buckets["Single Glazing"].push(outer_v, outer_v);
- pt_buckets["Double Glazing"].push(door_side_v);
+   out += "===================================\n";
+   out += isBn ? "🔨 অ্যালুমিনিয়াম ফ্রেম কাটিং মাপ (FRAME SECTIONS)\n" : "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
+   out += "===================================\n";
+   out += isBn ? `> আউটার খাঁড়া পাইপ (Outer Verticals): ${disp(outer_v)} (2 pc)\n` : `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
+   out += isBn ? `> ডোর সাইড খাঁড়া পাইপ (Door Post Vertical): ${disp(door_side_v)} (1 pc)\n` : `> Door Post Vertical: ${disp(door_side_v)} (1 pc)\n`;
+   pt_buckets["Single Glazing"].push(outer_v, outer_v);
+   pt_buckets["Double Glazing"].push(door_side_v);
 
- if (cols > 1) {
- out += `> Intermediate Vertical: ${disp(inter_v)} (${cols - 1} pc)\n`;
- for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
- }
+   if (cols > 1) {
+     out += isBn ? `> সাইড খাঁড়া পাইপ (Intermediate Verticals): ${disp(inter_v)} (${cols - 1} pc)\n` : `> Side Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
+     for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
+   }
 
- out += "--- HORIZONTALS ---\n";
- out += `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n> Door Top Transom: ${disp(rem_w)} (1 pc)\n`;
- pt_buckets["Single Glazing"].push(outer_h_top);
- pt_buckets["Double Glazing"].push(rem_w);
+   out += isBn ? `> আউটার টপ পাইপ (Outer Top Horizontal): ${disp(outer_h_top)} (1 pc)\n` : `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n`;
+   out += isBn ? `> ডোর টপ ট্রান্সম বাটা (Door Transom Tube): ${disp(rem_w)} (1 pc)\n` : `> Door Top Transom Tube: ${disp(rem_w)} (1 pc)\n`;
+   pt_buckets["Single Glazing"].push(outer_h_top);
+   pt_buckets["Double Glazing"].push(rem_w);
 
- const h_qty = cols * (rows - 1);
- if (h_qty > 0) {
- out += `> Internal Horizontal: ${disp(inner_h)} (${h_qty} pc)\n`;
- for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
- }
+   const h_qty = cols * (rows - 1);
+   if (h_qty > 0) {
+     out += isBn ? `> সাইড মাঝের বাটা/বিট (Partition Transoms): ${disp(inner_h)} (${h_qty} pc)\n` : `> Side Partition Transoms: ${disp(inner_h)} (${h_qty} pc)\n`;
+     for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
+   }
 
- const door_v = dh - 1.75, door_tb = dw - 6.75;
- const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
+   // Door Frame & Sash
+   const door_v = dh - 1.75, door_tb = dw - 6.75;
+   const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
 
- out += `--- DOOR SASH ---\n> Vertical: ${disp(door_v)} (2 pc)\n> Top/Bottom: ${disp(door_tb)} (2 pc)\n> Glass Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
- pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
+   out += "\n" + (isBn ? "--- ডোর পাল্লা ও ফ্রেম (DOOR SASH) ---\n" : "--- DOOR SASH & FRAME ---\n");
+   out += isBn ? `> ডোর পাল্লা খাঁড়া: ${disp(door_v)} (2 pc)\n` : `> Door Sash Verticals: ${disp(door_v)} (2 pc)\n`;
+   out += isBn ? `> ডোর পাল্লা টপ/বটম: ${disp(door_tb)} (2 pc)\n` : `> Door Sash Top/Bottom: ${disp(door_tb)} (2 pc)\n`;
+   out += isBn ? `> ডোরের গ্লাস/বোর্ড মাপ: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n` : `> Door Glass/Board Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
+   pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
 
- const transom_g_h = (h - dh - 1.5) - 0.25, transom_g_w = dw - 0.25;
- const part_g_h = ((h - ((rows + 1) * 1.5)) / rows) - 0.25, part_g_w = inner_h - 0.25;
- const part_g_qty = cols * rows;
+   const transom_g_h = (h - dh - 1.5) - 0.25, transom_g_w = dw - 0.25;
 
- hw_txt += "> Door Lock: 1 Set\n> Door Pivot / Floor Spring: 1 Set\n> Door Handle: 1 Set\n";
- out += hw_txt;
- out += `--- FIXED GLASS / BOARD ---\n> Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
- if (part_g_qty > 0) {
- out += `> Partition Grid Glass: ${disp(part_g_h)} x ${disp(part_g_w)} (${part_g_qty} pc)\n`;
- }
+   // Marking Guide
+   const mark_bottom_transom = bottom_h + 1.5;
+   const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
 
- pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
- pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)}`] || 0) + 1;
- if (part_g_qty > 0) {
- pt_glass_dict[`${disp(part_g_h)} x ${disp(part_g_w)}`] = (pt_glass_dict[`${disp(part_g_h)} x ${disp(part_g_w)}`] || 0) + part_g_qty;
- }
+   out += "\n===================================\n";
+   out += isBn ? "📐 সাইড ফ্রেমের খোপ ও মার্কিং চার্ট (FRAME MARKING)\n" : "📐 FRAME OPENINGS & MARKING GUIDE\n";
+   out += "===================================\n";
+   out += isBn ? `• তলার খোপের ক্লিয়ার সাইজ: ${disp(bottom_h)} x ${disp(inner_h)} [তলা ACP]\n` : `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP]\n`;
+   out += isBn ? `• মিডিল খোপের ক্লিয়ার সাইজ: ${disp(mid_h)} x ${disp(inner_h)} [মিডিল গ্লাস - সেম সাইজ]\n` : `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
+   out += isBn ? `• মাথার খাপের ক্লিয়ার সাইজ: ${disp(top_h)} x ${disp(inner_h)} [মাথার ছোট গ্লাস]\n\n` : `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
+
+   out += isBn ? "📍 খাঁড়া পাইপে বাটা লাগানোর মার্কিং:\n" : "📍 Vertical Pipe Marking Levels:\n";
+   out += isBn ? `  1. ডোর হেডার লেভেল: মেঝে থেকে ক্লিয়ার ${disp(dh)}\n` : `  1. Door Header Level: Floor to ${disp(dh)} clear\n`;
+   out += isBn ? `  2. সাইড ১ম বাটা (তলার লেভেল): মেঝে থেকে ${disp(bottom_h)} ক্লিয়ার (${disp(mark_bottom_transom)} দাগ)\n` : `  2. Side First Transom: Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
+   out += isBn ? `  3. সাইড ২য় বাটা (মিডিল লেভেল): ১ম বাটা থেকে ${disp(mid_h)} ক্লিয়ার (${disp(mark_mid_transom)} দাগ)\n` : `  3. Side Second Transom: First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
+
+   const raw_cut_w = inner_h - 0.25;
+   const w_guard = safeGlassSlabCap(raw_cut_w);
+   const cut_w = w_guard.cut;
+
+   const bottom_cut_h = bottom_h - 0.25;
+   const mid_guard = safeGlassSlabCap(mid_h - 0.25);
+   const mid_cut_h = mid_guard.cut;
+   const top_guard = safeGlassSlabCap(top_h - 0.25);
+   const top_cut_h = top_guard.cut;
+
+   out += "\n===================================\n";
+   out += isBn ? "🪟 গ্লাস ও এসিপি কাটিং মাপ (GLASS & ACP CUTTING)\n" : "🪟 GLASS & ACP CUTTING SIZES\n";
+   out += "===================================\n";
+   out += isBn ? `> ডোর মাথার ফ্যানলাইট গ্লাস: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n` : `> Door Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
+
+   if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE") && cols > 0) {
+     out += isBn ? `> [তলা] Side Partition Bottom ACP: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Bottom] Side Partition ACP: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += isBn ? `> [মিডিল] Side Partition Middle Glass (সেম মাপ): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Middle] Side Partition Glass (Identical): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += isBn ? `> [মাথার খাপ] Side Partition Top Glass (ছোট): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Top] Side Partition Header Glass (Small): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+
+     pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
+     pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)}`] = (pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)}`] || 0) + 1;
+     pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+     pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+     pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+
+     out += "\n" + (isBn ? "--- 🛡️ গ্লাস দোকান বিলিং স্ল্যাব সেফ গার্ড (ZERO PENALTY) ---\n" : "--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
+     out += isBn ? `• মিডিল গ্লাস স্ল্যাব: ${mid_guard.slab}" x ${w_guard.slab}" | মাথার খাপ স্ল্যাব: ${top_guard.slab}" x ${w_guard.slab}"\n` : `• Middle Glass Slab: ${mid_guard.slab}" x ${w_guard.slab}" | Top Header Glass Slab: ${top_guard.slab}" x ${w_guard.slab}"\n`;
+     out += isBn ? `✔ নিশ্চিতকরণ: মাপ ৩০", ৩৬", ২৪" বা ১৮" এর থেকে ১ সুতোও বেশি নয়!\n` : `✔ Guaranteed: Dimensions strictly capped below 30", 36", 24", 18" slabs. Zero extra 6-inch penalty!\n`;
+   } else {
+     const raw_part_h = ((h - ((rows + 1) * 1.5)) / rows) - 0.25;
+     const part_guard = safeGlassSlabCap(raw_part_h);
+     const part_g_qty = cols * rows;
+     if (part_g_qty > 0) {
+       out += `> Partition Grid Glass: ${disp(part_guard.cut)} x ${disp(cut_w)} (${part_g_qty} pc)\n`;
+     }
+     pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
+     pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)}`] || 0) + 1;
+     if (part_g_qty > 0) {
+       pt_glass_dict[`${disp(part_guard.cut)} x ${disp(cut_w)}`] = (pt_glass_dict[`${disp(part_guard.cut)} x ${disp(cut_w)}`] || 0) + part_g_qty;
+     }
+   }
+
+   out += "\n" + (isBn ? "--- হার্ডওয়্যার ও ফিটিংস ---\n" : "--- HARDWARE & FITTINGS ---\n");
+   out += isBn ? "> ডোর লক: 1 Set\n> ফ্লোর স্প্রিং / পিভট: 1 Set\n> ডোর হ্যান্ডেল: 1 Set\n" : "> Door Lock: 1 Set\n> Floor Spring / Pivot: 1 Set\n> Door Handle: 1 Set\n";
  }
 
  const prevOut = document.getElementById('pt_out').textContent;
  document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
  document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
- }
+}
 
  function clearPartition() {
  pt_part_count = 0;
@@ -1471,24 +1727,7 @@ function keypadEnter() {
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
- // Banner Header (Deep Navy)
- doc.setFillColor(15, 23, 42); // Slate 900
- doc.rect(0, 0, 210, 30, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(15);
- doc.setTextColor(251, 191, 36); // Amber
- doc.text(shop_name, 105, 10, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8);
- doc.setTextColor(226, 232, 240);
- doc.text(`${addr} | Contact: ${contact}`, 105, 16, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10);
- doc.setTextColor(255, 255, 255);
- doc.text(`1. FACTORY CUTTING JOB CARD (${title.toUpperCase()})`, 105, 24, { align: "center" });
+ drawDocHeaderWithLogo(doc, "FACTORY CUTTING JOB CARD (" + title.toUpperCase() + ")", "ZERO TOLERANCE PRECISION", [15, 23, 42]);
 
  // Sub-bar
  doc.setFillColor(241, 245, 249);
@@ -1626,24 +1865,7 @@ function keypadEnter() {
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
  const orderRef = "GL-" + Math.floor(1000 + Math.random() * 9000);
 
- // Sky Blue Banner
- doc.setFillColor(2, 132, 199); // Sky 600
- doc.rect(0, 0, 210, 30, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(15);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 105, 10, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8);
- doc.setTextColor(224, 242, 254);
- doc.text(`${addr} | Contact: ${contact}`, 105, 16, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10);
- doc.setTextColor(254, 240, 138); // Light Gold
- doc.text(`2. GLASS PROCUREMENT & CUTTING ORDER SLIP (${title.toUpperCase()})`, 105, 24, { align: "center" });
+ drawDocHeaderWithLogo(doc, "GLASS PROCUREMENT & CUTTING ORDER (" + title.toUpperCase() + ")", "FACTORY CUTTING SLIP", [2, 132, 199]);
 
  // Sub-bar
  doc.setFillColor(240, 249, 255);
@@ -1769,24 +1991,7 @@ function keypadEnter() {
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
  const po_no = "PO-ALU-" + Math.floor(1000 + Math.random() * 9000);
 
- // Emerald Green Header
- doc.setFillColor(15, 118, 110); // Teal 700
- doc.rect(0, 0, 210, 30, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(15);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 105, 10, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8);
- doc.setTextColor(204, 251, 241);
- doc.text(`${addr} | Contact: ${contact}`, 105, 16, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10);
- doc.setTextColor(254, 240, 138); // Yellow
- doc.text(`3. ALUMINIUM SECTION PURCHASE REQUISITION (${title.toUpperCase()})`, 105, 24, { align: "center" });
+ drawDocHeaderWithLogo(doc, "ALUMINIUM SECTION PURCHASE REQUISITION (" + title.toUpperCase() + ")", "PROCUREMENT SLIP", [15, 118, 110]);
 
  // Sub-bar
  doc.setFillColor(240, 253, 250);
@@ -1989,109 +2194,106 @@ function keypadEnter() {
  }
 
  function exportBillPdf() {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate PDF bills.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
- }
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF bills.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
 
- if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF();
+  if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
+  const doc = new jsPDF();
 
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact_info = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+  const c_name = document.getElementById('q_name').value || 'Customer';
+  const c_phone = document.getElementById('q_phone').value || 'N/A';
+  const c_addr = document.getElementById('q_addr').value || 'N/A';
+  const bill_stage = document.getElementById('q_stage').value;
+  const today = new Date().toLocaleDateString('en-GB');
 
- const c_name = document.getElementById('q_name').value || 'Customer';
- const c_phone = document.getElementById('q_phone').value || 'N/A';
- const c_addr = document.getElementById('q_addr').value || 'N/A';
- const bill_stage = document.getElementById('q_stage').value;
- const today = new Date().toLocaleDateString('en-GB');
+  // Draw Header with Customer's Exact Logo (Never overlaps!)
+  drawDocHeaderWithLogo(doc, "JOB CARD / ESTIMATION BILL", "Stage: " + bill_stage, [74, 20, 140]);
 
- doc.setFillColor(74, 20, 140);
- doc.rect(0, 0, 210, 36, 'F');
- const customLogo = localStorage.getItem('sw_custom_logo');
- if (customLogo) {
- try {
- doc.addImage(customLogo, 14, 5, 26, 26);
- } catch (e) {}
- }
- doc.setFont("helvetica", "bold");
- doc.setFontSize(16);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 14, 15);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Bill To:", 14, 46);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Name: ${c_name}`, 14, 52);
+  doc.text(`Phone: ${c_phone}`, 14, 57);
+  doc.text(`Address: ${c_addr}`, 14, 62);
 
- doc.setFont("helvetica", "normal");
- doc.setFontSize(9);
- doc.setTextColor(220, 220, 220);
- doc.text(`${addr} | Contact: ${contact_info}`, 14, 22);
- doc.text("JOB CARD / ESTIMATION BILL", 14, 28);
+  doc.text(`Date: ${today}`, 150, 46);
+  doc.text(`Stage: ${bill_stage}`, 150, 52);
+  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
 
- doc.setTextColor(0, 0, 0);
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10);
- doc.text("Bill To:", 14, 46);
- doc.setFont("helvetica", "normal");
- doc.text(`Name: ${c_name}`, 14, 52);
- doc.text(`Phone: ${c_phone}`, 14, 57);
- doc.text(`Address: ${c_addr}`, 14, 62);
+  const tableData = billItems.map((itm, i) => [
+    i + 1,
+    `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
+    itm.qty,
+    itm.area.toFixed(1),
+    `Rs ${itm.rate}`,
+    `Rs ${itm.price.toFixed(2)}`
+  ]);
 
- doc.text(`Date: ${today}`, 150, 46);
- doc.text(`Stage: ${bill_stage}`, 150, 52);
- doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
+  const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+  const [discount, gst_pct] = getDiscountAndGst();
+  const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+  const net_total = grand_total - discount;
+  const gst_amount = net_total * (gst_pct / 100);
+  const final_total = net_total + gst_amount + extra_charge;
+  const advance_paid = safeEval(document.getElementById('q_advance').value);
+  const due_amount = final_total - advance_paid;
 
- const tableData = billItems.map((itm, i) => [
- i + 1,
- `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
- itm.qty,
- itm.area.toFixed(1),
- `Rs ${itm.rate}`,
- `Rs ${itm.price.toFixed(2)}`
- ]);
+  doc.autoTable({
+    startY: 68,
+    head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
+    body: tableData,
+    theme: 'striped',
+    headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
+    styles: { fontSize: 8.5 }
+  });
 
- const grand_total = billItems.reduce((a, b) => a + b.price, 0);
- const [discount, gst_pct] = getDiscountAndGst();
- const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
- const net_total = grand_total - discount;
- const gst_amount = net_total * (gst_pct / 100);
- const final_total = net_total + gst_amount + extra_charge;
- const advance_paid = safeEval(document.getElementById('q_advance').value);
- const due_amount = final_total - advance_paid;
+  const finalY = doc.lastAutoTable.finalY + 8;
+  doc.setFontSize(9);
+  doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
+  if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
+  if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
+  if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
 
- doc.autoTable({
- startY: 68,
- head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
- body: tableData,
- theme: 'striped',
- headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
- styles: { fontSize: 8.5 }
- });
+  doc.setFont("helvetica", "bold");
+  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(200, 0, 0);
+  doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
 
- const finalY = doc.lastAutoTable.finalY + 8;
- doc.setFontSize(9);
- doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
- if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
- if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
- if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
+  // Render UPI QR Code if uploaded
+  const customQr = localStorage.getItem('sw_custom_qr');
+  if (customQr) {
+    try {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(14, finalY + 2, 28, 28, 2, 2, 'FD');
+      var qrFmt = customQr.indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
+      doc.addImage(customQr, qrFmt, 15, finalY + 3, 26, 26);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(74, 20, 140);
+      doc.text("SCAN TO PAY (UPI)", 14, finalY + 33);
+    } catch(e){}
+  }
 
- doc.setFont("helvetica", "bold");
- doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
- doc.setFont("helvetica", "normal");
- doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
- doc.setFont("helvetica", "bold");
- doc.setTextColor(200, 0, 0);
- doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+  doc.setTextColor(120, 120, 120);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 40);
+  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, finalY + 48);
 
- doc.setTextColor(120, 120, 120);
- doc.setFont("helvetica", "normal");
- doc.setFontSize(7.5);
- doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 44);
- doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, finalY + 52);
-
- doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
- }
+  doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
+}
 
  // ========================================================
  // 10. PDF EXPORTS FOR CUT SIZES & GLASS LIST
@@ -2944,24 +3146,7 @@ function saveMeasurementData(projectType, outId, matId) {
  const siteLoc = document.getElementById('sk_site_loc').value.trim() || "Project Site";
  const today = new Date().toLocaleDateString('en-GB');
 
- // Header Banner
- doc.setFillColor(30, 58, 138); // Royal Blue
- doc.rect(0, 0, 210, 32, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(16);
- doc.setTextColor(251, 191, 36);
- doc.text(shop_name, 105, 12, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8.5);
- doc.setTextColor(224, 242, 254);
- doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10.5);
- doc.setTextColor(255, 255, 255);
- doc.text("MASTER SITE MEASUREMENT & INSTALLATION KHATA BOOK", 105, 26, { align: "center" });
+ drawDocHeaderWithLogo(doc, "MASTER SITE MEASUREMENT KHATA BOOK", "Site: " + siteLoc, [30, 58, 138]);
 
  // Client & Site Card
  doc.setFillColor(248, 250, 252);
@@ -3794,109 +3979,106 @@ function saveMeasurementData(projectType, outId, matId) {
  }
 
  function exportBillPdf() {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate PDF bills.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
- }
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF bills.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
 
- if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF();
+  if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
+  const doc = new jsPDF();
 
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact_info = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
+  const c_name = document.getElementById('q_name').value || 'Customer';
+  const c_phone = document.getElementById('q_phone').value || 'N/A';
+  const c_addr = document.getElementById('q_addr').value || 'N/A';
+  const bill_stage = document.getElementById('q_stage').value;
+  const today = new Date().toLocaleDateString('en-GB');
 
- const c_name = document.getElementById('q_name').value || 'Customer';
- const c_phone = document.getElementById('q_phone').value || 'N/A';
- const c_addr = document.getElementById('q_addr').value || 'N/A';
- const bill_stage = document.getElementById('q_stage').value;
- const today = new Date().toLocaleDateString('en-GB');
+  // Draw Header with Customer's Exact Logo (Never overlaps!)
+  drawDocHeaderWithLogo(doc, "JOB CARD / ESTIMATION BILL", "Stage: " + bill_stage, [74, 20, 140]);
 
- doc.setFillColor(74, 20, 140);
- doc.rect(0, 0, 210, 36, 'F');
- const customLogo = localStorage.getItem('sw_custom_logo');
- if (customLogo) {
- try {
- doc.addImage(customLogo, 14, 5, 26, 26);
- } catch (e) {}
- }
- doc.setFont("helvetica", "bold");
- doc.setFontSize(16);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 14, 15);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Bill To:", 14, 46);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Name: ${c_name}`, 14, 52);
+  doc.text(`Phone: ${c_phone}`, 14, 57);
+  doc.text(`Address: ${c_addr}`, 14, 62);
 
- doc.setFont("helvetica", "normal");
- doc.setFontSize(9);
- doc.setTextColor(220, 220, 220);
- doc.text(`${addr} | Contact: ${contact_info}`, 14, 22);
- doc.text("JOB CARD / ESTIMATION BILL", 14, 28);
+  doc.text(`Date: ${today}`, 150, 46);
+  doc.text(`Stage: ${bill_stage}`, 150, 52);
+  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
 
- doc.setTextColor(0, 0, 0);
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10);
- doc.text("Bill To:", 14, 46);
- doc.setFont("helvetica", "normal");
- doc.text(`Name: ${c_name}`, 14, 52);
- doc.text(`Phone: ${c_phone}`, 14, 57);
- doc.text(`Address: ${c_addr}`, 14, 62);
+  const tableData = billItems.map((itm, i) => [
+    i + 1,
+    `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
+    itm.qty,
+    itm.area.toFixed(1),
+    `Rs ${itm.rate}`,
+    `Rs ${itm.price.toFixed(2)}`
+  ]);
 
- doc.text(`Date: ${today}`, 150, 46);
- doc.text(`Stage: ${bill_stage}`, 150, 52);
- doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
+  const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+  const [discount, gst_pct] = getDiscountAndGst();
+  const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+  const net_total = grand_total - discount;
+  const gst_amount = net_total * (gst_pct / 100);
+  const final_total = net_total + gst_amount + extra_charge;
+  const advance_paid = safeEval(document.getElementById('q_advance').value);
+  const due_amount = final_total - advance_paid;
 
- const tableData = billItems.map((itm, i) => [
- i + 1,
- `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\\nSpecs: ${itm.color} (${itm.thickness})\\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
- itm.qty,
- itm.area.toFixed(1),
- `Rs ${itm.rate}`,
- `Rs ${itm.price.toFixed(2)}`
- ]);
+  doc.autoTable({
+    startY: 68,
+    head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
+    body: tableData,
+    theme: 'striped',
+    headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
+    styles: { fontSize: 8.5 }
+  });
 
- const grand_total = billItems.reduce((a, b) => a + b.price, 0);
- const [discount, gst_pct] = getDiscountAndGst();
- const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
- const net_total = grand_total - discount;
- const gst_amount = net_total * (gst_pct / 100);
- const final_total = net_total + gst_amount + extra_charge;
- const advance_paid = safeEval(document.getElementById('q_advance').value);
- const due_amount = final_total - advance_paid;
+  const finalY = doc.lastAutoTable.finalY + 8;
+  doc.setFontSize(9);
+  doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
+  if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
+  if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
+  if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
 
- doc.autoTable({
- startY: 68,
- head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
- body: tableData,
- theme: 'striped',
- headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
- styles: { fontSize: 8.5 }
- });
+  doc.setFont("helvetica", "bold");
+  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(200, 0, 0);
+  doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
 
- const finalY = doc.lastAutoTable.finalY + 8;
- doc.setFontSize(9);
- doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
- if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
- if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
- if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
+  // Render UPI QR Code if uploaded
+  const customQr = localStorage.getItem('sw_custom_qr');
+  if (customQr) {
+    try {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(14, finalY + 2, 28, 28, 2, 2, 'FD');
+      var qrFmt = customQr.indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
+      doc.addImage(customQr, qrFmt, 15, finalY + 3, 26, 26);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(74, 20, 140);
+      doc.text("SCAN TO PAY (UPI)", 14, finalY + 33);
+    } catch(e){}
+  }
 
- doc.setFont("helvetica", "bold");
- doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
- doc.setFont("helvetica", "normal");
- doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
- doc.setFont("helvetica", "bold");
- doc.setTextColor(200, 0, 0);
- doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+  doc.setTextColor(120, 120, 120);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 40);
+  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, finalY + 48);
 
- doc.setTextColor(120, 120, 120);
- doc.setFont("helvetica", "normal");
- doc.setFontSize(7.5);
- doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 44);
- doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, finalY + 52);
-
- doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
- }
+  doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
+}
 
  // ========================================================
  // 10. PDF EXPORTS FOR CUT SIZES & GLASS LIST
@@ -4359,18 +4541,7 @@ function saveMeasurementData(projectType, outId, matId) {
       const myPhone = profile.phone || '9239413517 / 9641405426';
       const myAddr = profile.address || 'Amta (Chandni), Howrah, West Bengal';
 
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, 210, 32, 'F');
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.setTextColor(251, 191, 36);
-      doc.text(shop, 14, 14);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(226, 232, 240);
-      doc.text(`${myAddr} | Contact: ${myPhone}`, 14, 22);
-      doc.text("CUSTOMER KHATA & LEDGER STATEMENT", 14, 28);
+      drawDocHeaderWithLogo(doc, "CUSTOMER KHATA & LEDGER STATEMENT", "Client: " + c.name + " (" + c.phone + ")", [15, 23, 42]);
 
       doc.setTextColor(0, 0, 0);
       doc.setFont("helvetica", "bold");
@@ -4903,45 +5074,111 @@ Please verify payment and issue my Pro Activation Key!`;
 // ========================================================
  // CUSTOM WORKSHOP BRANDING (LOGO & PAYMENT QR UPLOAD)
  // ========================================================
- function uploadShopLogo(input) {
- if (input.files && input.files[0]) {
- const reader = new FileReader();
- reader.onload = function(e) {
- const base64 = e.target.result;
- localStorage.setItem('sw_custom_logo', base64);
- renderBrandingPreviews();
- loadSavedProfile();
- alert("Shop logo uploaded successfully!");
- };
- reader.readAsDataURL(input.files[0]);
- }
- }
+ // ========================================================
+// CUSTOM WORKSHOP BRANDING (CANVAS OPTIMIZED LOGO & PAYMENT QR)
+// ========================================================
+function uploadShopLogo(input) {
+  if (input.files && input.files[0]) {
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var canvas = document.createElement('canvas');
+          var MAX_DIM = 400; // Optimal 300DPI crisp resolution for PDF print
+          var w = img.width;
+          var h = img.height;
+          if (w > h) {
+            if (w > MAX_DIM) { h = Math.round(h * (MAX_DIM / w)); w = MAX_DIM; }
+          } else {
+            if (h > MAX_DIM) { w = Math.round(w * (MAX_DIM / h)); h = MAX_DIM; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          var optimized = canvas.toDataURL('image/png');
+          localStorage.setItem('sw_custom_logo', optimized);
+          renderBrandingPreviews();
+          loadSavedProfile();
+          alert("✅ আপনার দোকানের লোগো সফলভাবে সেভ হয়েছে! সমস্ত বিলে ও পিডিএফে এই লোগোটিই বের হবে।");
+        } catch(err) {
+          try {
+            localStorage.setItem('sw_custom_logo', e.target.result);
+            renderBrandingPreviews();
+            loadSavedProfile();
+            alert("✅ আপনার দোকানের লোগো সফলভাবে সেভ হয়েছে! সমস্ত বিলে ও পিডিএফে এই লোগোটিই বের হবে।");
+          } catch(storageErr) {
+            alert("❌ ছবির সাইজ অতিরিক্ত বড়! দয়া করে ছোট সাইজের ছবি নির্বাচন করুন।");
+          }
+        }
+      };
+      img.onerror = function() {
+        alert("❌ ছবি লোড করা সম্ভব হয়নি! সঠিক ইমেজ ফাইল নির্বাচন করুন।");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
 
- function removeShopLogo() {
- localStorage.removeItem('sw_custom_logo');
- renderBrandingPreviews();
- loadSavedProfile();
- alert("Shop logo removed successfully.");
- }
+function removeShopLogo() {
+  localStorage.removeItem('sw_custom_logo');
+  renderBrandingPreviews();
+  loadSavedProfile();
+  alert("Shop logo removed successfully.");
+}
 
- function uploadPaymentQr(input) {
- if (input.files && input.files[0]) {
- const reader = new FileReader();
- reader.onload = function(e) {
- const base64 = e.target.result;
- localStorage.setItem('sw_custom_qr', base64);
- renderBrandingPreviews();
- alert("Payment QR Code uploaded successfully!");
- };
- reader.readAsDataURL(input.files[0]);
- }
- }
+function uploadPaymentQr(input) {
+  if (input.files && input.files[0]) {
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var canvas = document.createElement('canvas');
+          var MAX_DIM = 400;
+          var w = img.width;
+          var h = img.height;
+          if (w > h) {
+            if (w > MAX_DIM) { h = Math.round(h * (MAX_DIM / w)); w = MAX_DIM; }
+          } else {
+            if (h > MAX_DIM) { w = Math.round(w * (MAX_DIM / h)); h = MAX_DIM; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          var optimized = canvas.toDataURL('image/png');
+          localStorage.setItem('sw_custom_qr', optimized);
+          renderBrandingPreviews();
+          alert("✅ আপনার পেমেন্ট QR কোড সফলভাবে সেভ হয়েছে! সমস্ত বিলে এই QR কোডটি বের হবে।");
+        } catch(err) {
+          try {
+            localStorage.setItem('sw_custom_qr', e.target.result);
+            renderBrandingPreviews();
+            alert("✅ আপনার পেমেন্ট QR কোড সফলভাবে সেভ হয়েছে!");
+          } catch(storageErr) {
+            alert("❌ ছবির সাইজ অতিরিক্ত বড়! দয়া করে ছোট সাইজের ছবি নির্বাচন করুন।");
+          }
+        }
+      };
+      img.onerror = function() {
+        alert("❌ QR কোড লোড করা সম্ভব হয়নি! সঠিক ইমেজ ফাইল নির্বাচন করুন।");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
 
- function removePaymentQr() {
- localStorage.removeItem('sw_custom_qr');
- renderBrandingPreviews();
- alert("Payment QR Code removed successfully.");
- }
+function removePaymentQr() {
+  localStorage.removeItem('sw_custom_qr');
+  renderBrandingPreviews();
+  alert("Payment QR Code removed successfully.");
+}
 
  function renderBrandingPreviews() {
  const logo = localStorage.getItem('sw_custom_logo');
@@ -5304,7 +5541,18 @@ function setupDb() {
  tab_register: "Register Workshop",
  btn_signin_acc: "Sign In to Account",
  btn_create_acc: "Create Account & Cloud Sync",
- btn_guest_demo: "Continue as Guest / Demo Mode →"
+ btn_guest_demo: "Continue as Guest / Demo Mode →",
+   lbl_panel_mode: "Panel Division & 4'x8' Sheet Optimization:",
+   opt_panel_4x8: "✨ 4'x8' Sheet Optimized (Bottom & Middle Equal, Top Small - Zero Waste)",
+   opt_panel_3ft: "Bottom 3ft (36 Inch) ACP, Middle 3ft (36 Inch) Glass, Top Small",
+   opt_panel_2_5ft: "Bottom 2.5ft (30 Inch) ACP, Middle 2.5ft (30 Inch) Glass, Top Small",
+   opt_panel_equal: "Equal 3 Rows Divide",
+   keypad_title: "Smart Dimension Calculator",
+   keypad_ok: "OK Insert",
+   keypad_numbers: "Numbers",
+   keypad_fractions: "Fractions (16 Sizes)",
+   suta_1: "", suta_2: "", suta_3: "", suta_4: "", suta_5: "", suta_6: "", suta_7: "", suta_half: ""
+
  },
  bn: {
  title_app: "SMART WORKER PRO",
@@ -5372,7 +5620,18 @@ function setupDb() {
  tab_register: "ওয়ার্কশপ রেজিস্ট্রেশন",
  btn_signin_acc: "অ্যাকাউন্টে লগইন করুন",
  btn_create_acc: "অ্যাকাউন্ট তৈরি ও সিঙ্ক করুন",
- btn_guest_demo: "লগইন ছাড়া ডেমো ব্যবহার করুন →"
+ btn_guest_demo: "লগইন ছাড়া ডেমো ব্যবহার করুন →",
+   lbl_panel_mode: "প্যানেল কাটিং ও ৪'×৮' অপ্টিমাইজেশন:",
+   opt_panel_4x8: "✨ ৪'×৮' শিট অপ্টিমাইজড (তলা ও মিডিল সমান, মাথার খাপ ছোট - Zero Waste)",
+   opt_panel_3ft: "তলা ৩ ফুট (৩৬ ইঞ্চি) ACP, মিডিল ৩ ফুট (৩৬ ইঞ্চি) গ্লাস, মাথা ছোট",
+   opt_panel_2_5ft: "তলা ২.৫ ফুট (৩০ ইঞ্চি) ACP, মিডিল ২.৫ ফুট (৩০ ইঞ্চি) গ্লাস, মাথা ছোট",
+   opt_panel_equal: "সাধারণ সমান ভাগ (Equal Divide)",
+   keypad_title: "স্মার্ট পরিমাপ ক্যালকুলেটর",
+   keypad_ok: "OK বসান",
+   keypad_numbers: "সংখ্যা (Numbers)",
+   keypad_fractions: "ভগ্নাংশ (১৬ খানা মাপ)",
+   suta_1: "(১ সুতো)", suta_2: "(২ সুতো)", suta_3: "(৩ সুতো)", suta_4: "(৪ সুতো)", suta_5: "(৫ সুতো)", suta_6: "(৬ সুতো)", suta_7: "(৭ সুতো)", suta_half: "(হাফ সুতো)"
+
  },
  hi: {
  title_app: "स्मार्ट वर्कर प्रो",
@@ -5444,7 +5703,7 @@ function setupDb() {
  }
  };
 
- let currentAppLang = localStorage.getItem('sw_lang') || 'bn';
+ let currentAppLang = localStorage.getItem('sw_lang') || 'en';
 
  function changeLanguage(lang) {
  if (!I18N_DICT[lang]) lang = 'en';
@@ -5627,8 +5886,8 @@ function updateProfile() {
 
   try {
     if (!localStorage.getItem('sw_lang')) {
-      localStorage.setItem('sw_lang', 'bn');
-      currentAppLang = 'bn';
+      localStorage.setItem('sw_lang', 'en');
+      currentAppLang = 'en';
     }
   } catch(e){}
 
