@@ -427,6 +427,23 @@
       </div>
     </div>
 
+        <!-- Quick Import from WhatsApp Card -->
+    <div class="admin-card" style="border: 1px solid #38bdf8; background: linear-gradient(135deg, #0f172a, #1e293b);">
+      <div class="card-title" style="color:#38bdf8;">
+        <i class="fa-brands fa-whatsapp" style="color:#22c55e;"></i>
+        <span>Instant WhatsApp Request Importer</span>
+      </div>
+      <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
+        Paste any WhatsApp customer message or 8-character Device ID (e.g. <code>2E9D51B5</code>) below to instantly register and generate their license key:
+      </p>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="waQuickInput" placeholder="Paste WhatsApp message or Device ID (e.g. 2E9D51B5)..." style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid #334155; background:#0b1329; color:#fff; font-size:0.85rem;">
+        <button type="button" class="btn btn-wa" onclick="quickImportWhatsAppMessage()" style="padding:9px 16px; font-size:0.82rem; white-space:nowrap;">
+          <i class="fa-solid fa-bolt"></i> Add to Queue
+        </button>
+      </div>
+    </div>
+
     <!-- Section 1: Live Subscribers & Activity Queue -->
     <div class="admin-card">
       <div class="card-title">
@@ -1046,7 +1063,135 @@
     window.addEventListener('storage', () => {
       renderSubscribers();
     });
-    initFirebaseLiveListener();
+
+    // Quick Import from WhatsApp or Device ID
+    function quickImportWhatsAppMessage() {
+      const input = (document.getElementById('waQuickInput').value || '').trim();
+      if (!input) {
+        alert("Please paste the WhatsApp message or enter the 8-character Device ID!");
+        return;
+      }
+
+      // Extract Device ID
+      let devId = "";
+      const devMatch = input.match(/Device\s*ID[:\s]*([A-Za-z0-9]{8})/i);
+      if (devMatch) {
+        devId = devMatch[1].toUpperCase();
+      } else {
+        const clean = input.replace(/[^A-Za-z0-9]/g, '');
+        if (clean.length === 8) {
+          devId = clean.toUpperCase();
+        } else {
+          const words = input.split(/\s+/);
+          for (let w of words) {
+            const c = w.replace(/[^A-Za-z0-9]/g, '');
+            if (c.length === 8) { devId = c.toUpperCase(); break; }
+          }
+        }
+      }
+
+      if (!devId || devId.length !== 8) {
+        alert("Could not detect a valid 8-character Device ID. Please check and try again.");
+        return;
+      }
+
+      // Extract Plan
+      let plan = "KARIGAR_1M";
+      if (input.includes("799") || input.includes("1 Year") || input.includes("1Y") || input.includes("Annual")) {
+        if (input.includes("Workshop") || input.includes("Team")) plan = "TEAM_1Y";
+        elif_corp = input.includes("Corporate");
+        plan = elif_corp ? "CORP_1Y" : "KARIGAR_1Y";
+      } else if (input.includes("499") || (input.includes("Workshop") && input.includes("Month"))) {
+        plan = "TEAM_1M";
+      } else if (input.includes("1499") || (input.includes("Corporate") && input.includes("Month"))) {
+        plan = "CORP_1M";
+      } else if (input.includes("14999")) {
+        plan = "CORP_1Y";
+      } else if (input.includes("3999")) {
+        plan = "TEAM_1Y";
+      } else if (input.includes("99")) {
+        plan = "KARIGAR_1M";
+      }
+
+      // Check Customer Name if present
+      let custName = "Customer " + devId;
+      const nameMatch = input.match(/Name[:\s]*([^\n\r•]+)/i);
+      if (nameMatch) custName = nameMatch[1].trim();
+
+      // Check Mobile if present
+      let custPhone = "";
+      const phoneMatch = input.match(/(?:Mobile|Phone|Number)[:\s]*([0-9]{10})/i);
+      if (phoneMatch) custPhone = phoneMatch[1].trim();
+
+      const newReq = {
+        id: "REQ_" + devId,
+        device_id: devId,
+        name: custName,
+        shop: "Aluminium Workshop",
+        phone: custPhone || "WhatsApp User",
+        plan: plan,
+        plan_name: PLAN_NAMES[plan] || plan,
+        bill_amount: PLAN_RATES[plan] || 99,
+        paid_amount: PLAN_RATES[plan] || 99,
+        due_amount: 0,
+        status: "Pending",
+        date: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        timestamp: Date.now(),
+        utr: "Received on WhatsApp"
+      };
+
+      // Add to local storage
+      let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      reqs = reqs.filter(r => r.device_id !== devId);
+      reqs.unshift(newReq);
+      localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
+
+      // Sync to Firebase
+      try {
+        if (window.fbDb) {
+          fbDb.collection('recharge_requests').doc(devId).set(newReq, { merge: true }).catch(()=>{});
+        }
+        if (window.fbRtdb) {
+          fbRtdb.ref('recharge_requests/' + devId).set(newReq).catch(()=>{});
+        }
+      } catch(e){}
+
+      document.getElementById('waQuickInput').value = "";
+      renderSubscribers();
+      alert("✅ Request for Device ID " + devId + " (" + (PLAN_NAMES[plan] || plan) + ") successfully added to the queue!");
+    }
+
+    // Pre-populate initial default request (Customer 2E9D51B5 from user screenshot)
+    function checkDefaultRequests() {
+      let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      let active = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
+      const has2E9D = reqs.some(r => r.device_id === '2E9D51B5') || active.some(a => a.device_id === '2E9D51B5');
+      if (!has2E9D) {
+        reqs.unshift({
+          id: "REQ_2E9D51B5",
+          device_id: "2E9D51B5",
+          name: "Customer (Saheb Workshop)",
+          shop: "Aluminium Fabrication",
+          phone: "9641405426",
+          plan: "KARIGAR_1Y",
+          plan_name: "Karigar Plan (1 Year)",
+          bill_amount: 799,
+          paid_amount: 799,
+          due_amount: 0,
+          status: "Pending",
+          date: "Today " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+          timestamp: Date.now(),
+          utr: "WhatsApp Request"
+        });
+        localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      autoFillPlanCost();
+      checkDefaultRequests();
+      renderSubscribers();
+      initFirebaseLiveListener();
     });
   </script>
 </body>
