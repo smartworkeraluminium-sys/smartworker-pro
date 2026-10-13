@@ -82,68 +82,71 @@
  <div class="auth-title">SMART WORKER PRO</div>
  <div class="auth-sub">Aluminium & UPVC Fabrication Management</div>
 
- <div class="auth-tabs">
- <button id="tabBtnLogin" class="auth-tab-btn" style="background:#2563eb; color:#fff;" onclick="switchAuthMode('login')">Sign In</button>
- <button id="tabBtnRegister" class="auth-tab-btn" style="background:#f1f5f9; color:#475569;" onclick="switchAuthMode('register')">Register Workshop</button>
+ <!-- Two Clear Primary Tabs -->
+ <div class="auth-tabs" style="display:flex; gap:8px; margin-bottom:18px; background:#f1f5f9; padding:4px; border-radius:10px;">
+ <button id="tabBtnRegister" type="button" class="auth-tab-btn" style="background:#16a34a; color:#fff; font-weight:800; padding:11px; border-radius:8px; flex:1; cursor:pointer;" onclick="switchAuthMode('register')">
+ <i class="fa-solid fa-user-plus"></i> Register Workshop
+ </button>
+ <button id="tabBtnLogin" type="button" class="auth-tab-btn" style="background:transparent; color:#475569; font-weight:800; padding:11px; border-radius:8px; flex:1; cursor:pointer;" onclick="switchAuthMode('login')">
+ <i class="fa-solid fa-right-to-bracket"></i> Sign In
+ </button>
  </div>
 
- <!-- Login Form -->
- <div id="authFormLogin">
+ <!-- 1. Register Workshop Form (Active By Default for New Users) -->
+ <div id="authFormRegister" style="display:block;">
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Your Full Name *</label>
+ <input type="text" id="auth_reg_name" placeholder="Enter owner full name">
+ </div>
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Workshop / Shop Name *</label>
+ <input type="text" id="auth_reg_shop" placeholder="e.g. Smart Worker Aluminium">
+ </div>
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Mobile Number * (10 Digits)</label>
+ <input type="tel" id="auth_reg_phone" placeholder="Enter 10-digit mobile number" maxlength="10">
+ </div>
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Create Strong Password * (Min 6 Characters)</label>
+ <input type="password" id="auth_reg_pass" placeholder="Create your 6+ character password">
+ </div>
+ <div class="form-group" style="margin-bottom:14px;">
+ <label style="font-weight:700; color:#334155;">Confirm Password * (Re-enter same password)</label>
+ <input type="password" id="auth_reg_pass_confirm" placeholder="Re-enter identical password">
+ </div>
+ <button type="button" class="action-btn" style="background:#16a34a; width:100%; padding:13px; font-size:0.96rem; font-weight:800; border-radius:8px; margin-bottom:12px; cursor:pointer;" onclick="doEmailRegister()">
+ <i class="fa-solid fa-user-plus"></i> REGISTER WORKSHOP & CREATE ID
+ </button>
+ <div style="font-size:0.8rem; color:#64748b; margin-top:8px;">
+ Already registered? <a href="javascript:void(0)" onclick="switchAuthMode('login')" style="color:#2563eb; font-weight:800; text-decoration:none;">Sign In here &rarr;</a>
+ </div>
+ </div>
+
+ <!-- 2. Sign In Form (For Existing Registered Users) -->
+ <div id="authFormLogin" style="display:none;">
  <div class="form-group" style="margin-bottom:10px;">
- <label>Gmail / Email ID:</label>
- <input type="text" id="auth_login_email" placeholder="fabricator@gmail.com">
+ <label style="font-weight:700; color:#334155;">Registered Mobile Number * (10 Digits)</label>
+ <input type="tel" id="auth_login_email" placeholder="Enter your 10-digit mobile number" maxlength="10">
  </div>
  <div class="form-group" style="margin-bottom:14px;">
- <label>Password:</label>
- <input type="password" id="auth_login_pass" placeholder="Enter password">
+ <label style="font-weight:700; color:#334155;">Your Password *</label>
+ <input type="password" id="auth_login_pass" placeholder="Enter your registered password">
  </div>
- <button class="action-btn" style="background:#2563eb; width:100%; padding:12px; font-size:0.95rem; margin-bottom:12px;" onclick="doEmailLogin()">
- <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+ <button type="button" class="action-btn" style="background:#2563eb; width:100%; padding:13px; font-size:0.96rem; font-weight:800; border-radius:8px; margin-bottom:12px; cursor:pointer;" onclick="doEmailLogin()">
+ <i class="fa-solid fa-right-to-bracket"></i> SIGN IN TO WORKSHOP
  </button>
- <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:14px;">
- <a href="javascript:void(0)" onclick="doForgotPassword()" style="color:#2563eb; text-decoration:none; font-weight:600;">Forgot Password?</a>
- <span style="color:#64748b;">Cloud Database Sync</span>
+ <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; margin-top:6px; margin-bottom:14px;">
+ <a href="javascript:void(0)" onclick="openForgotPassModal()" style="color:#ef4444; text-decoration:none; font-weight:700;"><i class="fa-solid fa-shield-halved"></i> Forgot Password?</a>
+ <span style="color:#64748b;">Direct Call Verification</span>
+ </div>
+ <div style="font-size:0.8rem; color:#64748b; border-top:1px dashed #cbd5e1; padding-top:12px;">
+ New workshop? <a href="javascript:void(0)" onclick="switchAuthMode('register')" style="color:#16a34a; font-weight:800; text-decoration:none;">Register Workshop here &rarr;</a>
  </div>
  </div>
 
- <!-- Register Form -->
- <div id="authFormRegister" style="display:none;">
- <div class="form-group" style="margin-bottom:8px;">
- <label>Your Name:</label>
- <input type="text" id="auth_reg_name" placeholder="Full name">
- </div>
- <div class="form-group" style="margin-bottom:8px;">
- <label>Workshop / Shop Name:</label>
- <input type="text" id="auth_reg_shop" placeholder="e.g. Royal Aluminium Works">
- </div>
- <div class="form-group" style="margin-bottom:8px;">
- <label>Mobile Number:</label>
- <input type="text" id="auth_reg_phone" placeholder="10-digit mobile">
- </div>
- <div class="form-group" style="margin-bottom:8px;">
- <label>Gmail Address:</label>
- <input type="text" id="auth_reg_email" placeholder="example@gmail.com">
- </div>
- <div class="form-group" style="margin-bottom:14px;">
- <label>Create Password:</label>
- <input type="password" id="auth_reg_pass" placeholder="At least 6 characters">
- </div>
- <button class="action-btn" style="background:#16a34a; width:100%; padding:12px; font-size:0.95rem; margin-bottom:12px;" onclick="doEmailRegister()">
- <i class="fa-solid fa-user-plus"></i> Create Account & Cloud Sync
- </button>
- </div>
-
- <!-- Google 1-Click Sign In -->
- <div style="border-top:1px dashed #cbd5e1; padding-top:14px; margin-top:8px;">
- <button onclick="doGoogleSignIn()" style="width:100%; padding:11px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; font-weight:700; font-size:0.86rem; color:#334155; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
- <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="height:18px;">
- <span>Sign in with Google</span>
- </button>
- </div>
-
- <div style="margin-top:16px;">
- <button onclick="skipAuthToGuest()" style="background:transparent; border:none; color:#64748b; font-size:0.78rem; text-decoration:underline; cursor:pointer;">
- Continue as Guest / Demo Mode &rarr;
+ <div style="margin-top:18px; border-top:1px solid #f1f5f9; padding-top:12px;">
+ <button type="button" onclick="skipAuthToGuest()" style="background:transparent; border:none; color:#64748b; font-size:0.78rem; text-decoration:underline; cursor:pointer;">
+ Continue as Demo / Guest Mode &rarr;
  </button>
  </div>
  </div>
@@ -1970,5 +1973,49 @@
     });
   }
 </script>
+
+<!-- Secure Password Reset & Owner Verification Request Modal -->
+<div id="forgotPassModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px);">
+  <div style="background:#ffffff; border-radius:18px; max-width:440px; width:100%; padding:22px; box-shadow:0 12px 35px rgba(0,0,0,0.35); text-align:left;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+      <h3 style="font-size:1.05rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-user-shield" style="color:#2563eb;"></i> <span>Forgot Password Verification</span>
+      </h3>
+      <button type="button" onclick="closeForgotPassModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer;">✕</button>
+    </div>
+
+    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px; margin-bottom:14px; font-size:0.75rem; color:#1e40af; line-height:1.45;">
+      <i class="fa-solid fa-shield-halved" style="color:#2563eb;"></i> <b>Security Notice:</b> To prevent unauthorized access, password will only be released after Admin verifies genuine workshop ownership via direct telephone call.
+    </div>
+
+    <form onsubmit="handleForgotPassSubmit(event)">
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.78rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Registered Mobile Number *</label>
+        <input type="tel" id="fp_phone" required placeholder="Enter 10-digit mobile number" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.78rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Your Full Name *</label>
+        <input type="text" id="fp_name" required placeholder="Owner full name" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Workshop / Shop Name *</label>
+        <input type="text" id="fp_shop" required placeholder="e.g. Royal Aluminium Works" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none;">
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="submit" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; border:none; padding:11px; border-radius:8px; font-size:0.88rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(37,99,235,0.3);">
+          <i class="fa-solid fa-paper-plane"></i> Submit Verification Request to Admin
+        </button>
+        <button type="button" onclick="contactAdminDirectWhatsApp()" style="background:#25D366; color:#fff; border:none; padding:10px; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <i class="fa-brands fa-whatsapp"></i> Call / WhatsApp Admin (9239413517)
+        </button>
+        <button type="button" onclick="closeForgotPassModal()" style="background:#f1f5f9; color:#475569; border:none; padding:8px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>

@@ -11,11 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Google Cloud Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <!-- Google Cloud Firebase SDKs (Deferred for non-blocking performance) -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
   <style>
     :root {
@@ -45,6 +45,7 @@
       color: var(--text-main);
       min-height: 100vh;
       padding-bottom: 60px;
+      touch-action: manipulation;
     }
 
     /* Top Bar */
@@ -69,35 +70,30 @@
       font-size: 1.05rem;
       font-weight: 800;
       color: #fbbf24;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     .top-bar .sub {
       font-size: 0.72rem;
-      color: #94a3b8;
-      margin-top: 1px;
+      color: var(--text-sub);
     }
-    .btn-nav {
+    .back-btn {
       background: #1e293b;
       border: 1px solid #334155;
       color: #38bdf8;
-      padding: 8px 14px;
-      border-radius: 9px;
-      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
       font-weight: 700;
-      cursor: pointer;
+      text-decoration: none;
       display: flex;
       align-items: center;
       gap: 6px;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .btn-nav:hover {
-      background: #334155;
-      color: #fff;
+      cursor: pointer;
     }
 
+    /* Container */
     .container {
-      max-width: 640px;
+      max-width: 800px;
       margin: 0 auto;
       padding: 16px 14px;
     }
@@ -109,200 +105,160 @@
       gap: 10px;
       margin-bottom: 16px;
     }
+    @media (min-width: 600px) {
+      .status-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
     .status-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      border-radius: 12px;
+      padding: 12px 14px;
       position: relative;
       overflow: hidden;
     }
-    .status-card.red-alert {
-      border-left: 4px solid var(--danger);
-    }
-    .status-card.green-alert {
-      border-left: 4px solid var(--success);
-    }
-    .status-card.blue-alert {
-      border-left: 4px solid var(--blue);
-    }
-    .status-card.yellow-alert {
-      border-left: 4px solid var(--accent);
-    }
+    .status-card.red-alert { border-left: 4px solid #ef4444; }
+    .status-card.green-alert { border-left: 4px solid #10b981; }
+    .status-card.blue-alert { border-left: 4px solid #3b82f6; }
+    .status-card.yellow-alert { border-left: 4px solid #f59e0b; }
     .status-label {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--text-sub);
-      text-transform: uppercase;
       display: flex;
       align-items: center;
       gap: 6px;
     }
     .status-val {
-      font-size: 1.45rem;
+      font-size: 1.25rem;
       font-weight: 800;
+      margin-top: 4px;
       color: #fff;
-      margin-top: 6px;
     }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-    .dot-red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
-    .dot-green { background: #10b981; box-shadow: 0 0 8px #10b981; }
-    .dot-blue { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
-    .dot-yellow { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
 
-    /* Admin Cards */
+    /* Card Panels */
     .admin-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     }
     .card-title {
-      font-size: 0.98rem;
+      font-size: 0.95rem;
       font-weight: 800;
-      color: #f8fafc;
+      color: #fff;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 14px;
-    }
-    .card-title i {
-      color: var(--accent);
     }
 
-    /* Filter Tabs */
-    .filter-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 12px;
-      overflow-x: auto;
-      padding-bottom: 4px;
+    /* Forms & Inputs */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
     }
-    .tab-btn {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      color: #94a3b8;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s;
+    @media (min-width: 520px) {
+      .form-row {
+        grid-template-columns: 1fr 1fr;
+      }
     }
-    .tab-btn.active {
-      background: #0284c7;
-      color: #fff;
-      border-color: #0284c7;
-    }
-
-    /* Form Fields */
     .form-group {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      margin-bottom: 10px;
     }
-    .form-group label {
-      font-size: 0.76rem;
+    label {
+      font-size: 0.75rem;
       font-weight: 700;
-      color: #cbd5e1;
+      color: var(--text-sub);
     }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    input, select {
-      width: 100%;
-      background: #090d16;
-      border: 1px solid #1e293b;
+    input, select, textarea {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
       color: #fff;
       padding: 10px 12px;
-      border-radius: 9px;
       font-size: 0.88rem;
       outline: none;
-      transition: border 0.2s;
+      transition: border 0.15s;
     }
-    input:focus, select:focus {
-      border-color: var(--primary);
+    input:focus, select:focus, textarea:focus {
+      border-color: #38bdf8;
     }
 
     /* Buttons */
     .btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
       border: none;
-      font-size: 0.88rem;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 0.86rem;
       font-weight: 800;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       transition: all 0.15s;
     }
     .btn:active {
       transform: scale(0.98);
     }
-    .btn-primary { background: #0284c7; color: #fff; }
-    .btn-success { background: #10b981; color: #fff; }
-    .btn-wa { background: #22c55e; color: #fff; }
-    .btn-danger { background: #ef4444; color: #fff; }
-
-    /* Key Display Box */
-    .key-box {
-      background: #064e3b;
-      border: 1px solid #10b981;
-      border-radius: 12px;
-      padding: 14px;
-      margin-top: 12px;
-      display: none;
+    .btn-wa {
+      background: #16a34a;
     }
-    .key-display {
-      font-size: 1.45rem;
-      font-weight: 800;
-      letter-spacing: 3px;
-      text-align: center;
-      color: #6ee7b7;
-      background: #022c22;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 8px 0;
-      font-family: 'JetBrains Mono', monospace;
+    .btn-warning {
+      background: #f59e0b;
+      color: #0f172a;
+    }
+    .btn-danger {
+      background: #ef4444;
+    }
+    .btn-sm {
+      padding: 7px 10px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    /* Subscriber Card */
+    /* Sub Cards */
     .sub-card {
-      background: #090d16;
+      background: #0f172a;
       border: 1px solid #1e293b;
       border-radius: 12px;
-      padding: 12px;
+      padding: 12px 14px;
       margin-bottom: 10px;
-      position: relative;
+      border-left: 4px solid #3b82f6;
     }
     .sub-card.pending {
-      border-left: 4px solid var(--danger);
+      border-left-color: #ef4444;
+      background: #141726;
     }
     .sub-card.active {
-      border-left: 4px solid var(--success);
+      border-left-color: #10b981;
+    }
+    .sub-card.reset-pending {
+      border-left-color: #f59e0b;
+      background: #1c1524;
+      border: 1px solid #4a2840;
     }
     .sub-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .sub-name {
       font-size: 0.95rem;
@@ -310,108 +266,101 @@
       color: #fff;
     }
     .sub-shop {
-      font-size: 0.74rem;
-      color: var(--accent);
+      font-size: 0.76rem;
+      color: #38bdf8;
+      font-weight: 600;
       margin-top: 1px;
     }
-    .badge {
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .badge-red { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
-    .badge-green { background: #022c22; color: #4ade80; border: 1px solid #16a34a; }
-    .badge-blue { background: #172554; color: #60a5fa; border: 1px solid #2563eb; }
-
     .sub-meta-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      font-size: 0.75rem;
-      color: #cbd5e1;
-      margin: 8px 0;
-      background: #131b2e;
-      padding: 8px 10px;
-      border-radius: 8px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 12px;
+      font-size: 0.76rem;
+      color: var(--text-sub);
+      margin-bottom: 10px;
     }
     .sub-code {
       font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
       color: #38bdf8;
-    }
-    .btn-row-sm {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 6px;
-      margin-top: 8px;
-    }
-    .btn-sm {
-      padding: 8px;
-      font-size: 0.76rem;
-      border-radius: 7px;
       font-weight: 700;
-      border: none;
-      cursor: pointer;
-      display: flex;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.68rem;
+      font-weight: 800;
     }
+    .badge-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge-green { background: rgba(16, 185, 129, 0.2); color: #4ade80; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-yellow { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot-red { background: #ef4444; }
+    .dot-green { background: #10b981; }
+    .dot-yellow { background: #f59e0b; }
 
-    .search-box {
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
       margin-bottom: 12px;
-      position: relative;
+      overflow-x: auto;
     }
-    .search-box input {
-      padding-left: 36px;
+    .tab-btn {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--text-sub);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
     }
-    .search-box i {
-      position: absolute;
-      left: 12px;
-      top: 13px;
-      color: #64748b;
+    .tab-btn.active {
+      background: #0284c7;
+      color: #fff;
+      border-color: #38bdf8;
     }
-  
-    .badge-purple { background: #581c87; color: #e9d5ff; border: 1px solid #9333ea; }
-    .badge-yellow { background: #854d0e; color: #fef08a; border: 1px solid #eab308; }
-    .badge-green { background: #14532d; color: #86efac; border: 1px solid #22c55e; }
-    .badge-red { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
-    .badge-blue { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
-    .btn-notif { background: #6366f1; color: #fff; }
-    .btn-notif:hover { background: #4f46e5; }
-
   </style>
 </head>
 <body>
 
-  <!-- Top Bar -->
+  <!-- Top Header Bar -->
   <div class="top-bar">
     <div class="brand">
-      <img src="logo.png" alt="Logo" onerror="this.style.display='none'" style="height:32px; width:auto; border-radius:6px; background:#fff; padding:2px;">
+      <img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:32px; width:auto; border-radius:6px; background:#fff; padding:2px;">
       <div>
         <div class="title">SMART WORKER PRO • ADMIN</div>
-        <div class="sub">Owner Control Console & License Portal</div>
+        <div class="sub">Owner Security Console & Account Manager</div>
       </div>
     </div>
-    <a href="index.html" class="btn-nav">
+    <a href="index.html" class="back-btn">
       <i class="fa-solid fa-arrow-left"></i> Customer App
     </a>
   </div>
 
   <div class="container">
 
-    <!-- Realtime Metric Status Cards -->
+    <!-- Metric Status Cards -->
     <div class="status-grid">
       <div class="status-card red-alert">
         <div class="status-label">
           <span class="status-dot dot-red"></span>
-          <span>New / Pending</span>
+          <span>Password Resets</span>
         </div>
-        <div class="status-val" id="statPendingCount" style="color:#f87171;">0</div>
+        <div class="status-val" id="statResetCount" style="color:#f87171;">0</div>
+      </div>
+      <div class="status-card yellow-alert">
+        <div class="status-label">
+          <span class="status-dot dot-yellow"></span>
+          <span>Pending License</span>
+        </div>
+        <div class="status-val" id="statPendingCount" style="color:#fbbf24;">0</div>
       </div>
       <div class="status-card green-alert">
         <div class="status-label">
@@ -423,56 +372,57 @@
       <div class="status-card blue-alert">
         <div class="status-label">
           <span class="status-dot dot-blue"></span>
-          <span>Online Today</span>
+          <span>Total Workshops</span>
         </div>
-        <div class="status-val" id="statOnlineCount" style="color:#60a5fa;">0</div>
-      </div>
-      <div class="status-card yellow-alert">
-        <div class="status-label">
-          <span class="status-dot dot-yellow"></span>
-          <span>Total Billed</span>
-        </div>
-        <div class="status-val" id="statTotalRevenue" style="color:#fbbf24;">₹0</div>
+        <div class="status-val" id="statTotalUsers" style="color:#60a5fa;">0</div>
       </div>
     </div>
 
-        <!-- Quick Import from WhatsApp Card -->
-    <div class="admin-card" style="border: 1px solid #38bdf8; background: linear-gradient(135deg, #0f172a, #1e293b);">
-      <div class="card-title" style="color:#38bdf8;">
-        <i class="fa-brands fa-whatsapp" style="color:#22c55e;"></i>
-        <span>Instant WhatsApp Request Importer</span>
+    <!-- ======================================================== -->
+    <!-- SECTION 1: PASSWORD RESET & OWNER VERIFICATION QUEUE     -->
+    <!-- ======================================================== -->
+    <div class="admin-card" style="border: 1.5px solid #ef4444; background: linear-gradient(135deg, #181119, #131b2e);">
+      <div class="card-title" style="color:#f87171; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-user-shield" style="color:#ef4444;"></i>
+          <span>Password Reset & Workshop Owner Verification Queue</span>
+        </div>
+        <span id="resetQueueBadge" class="badge badge-red" style="font-size:0.72rem;">0 Pending</span>
       </div>
-      <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
-        Paste any WhatsApp customer message or 8-character Device ID (e.g. <code>2E9D51B5</code>) below to instantly register and generate their license key:
-      </p>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="waQuickInput" placeholder="Paste WhatsApp message or Device ID (e.g. 2E9D51B5)..." style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid #334155; background:#0b1329; color:#fff; font-size:0.85rem;">
-        <button type="button" class="btn btn-wa" onclick="quickImportWhatsAppMessage()" style="padding:9px 16px; font-size:0.82rem; white-space:nowrap;">
-          <i class="fa-solid fa-bolt"></i> Add to Queue
-        </button>
+
+      <div style="background:#271422; border:1px solid #7f1d1d; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.76rem; color:#fca5a5; line-height:1.45;">
+        <i class="fa-solid fa-phone" style="color:#f87171;"></i>
+        <b>Strict Owner Verification Protocol:</b> Anyone can claim to have forgotten their password. To prevent unauthorized account takeover, tap <b>Call Mobile</b> to phone the workshop owner directly, verify their genuine identity, and then click <b>WhatsApp Password</b> or <b>Set New Password</b>.
+      </div>
+
+      <!-- Password Reset Requests List Container -->
+      <div id="passwordResetListContainer" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;">
+        <!-- Injected via JavaScript -->
       </div>
     </div>
 
-    <!-- Section 1: Live Subscribers & Activity Queue -->
+    <!-- ======================================================== -->
+    <!-- SECTION 2: LIVE REGISTERED WORKSHOPS & SUBSCRIBER QUEUE -->
+    <!-- ======================================================== -->
     <div class="admin-card">
-      <div class="card-title">
-        <i class="fa-solid fa-tower-broadcast" style="color:#38bdf8;"></i>
-        <span>Live Subscriber Queue & Activity</span>
-        <span id="queueTotalBadge" style="margin-left:auto; background:#1e293b; color:#94a3b8; font-size:0.72rem; padding:2px 8px; border-radius:10px;">0 Total</span>
+      <div class="card-title" style="justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-address-book" style="color:#38bdf8;"></i>
+          <span>Registered Workshops & Subscriber Directory</span>
+        </div>
+        <span id="queueTotalBadge" class="badge badge-green" style="font-size:0.72rem;">0 Total</span>
       </div>
 
-      <!-- Search Bar -->
-      <div class="search-box">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="subscriberSearchInput" placeholder="Search by Name, Mobile, or Device ID..." oninput="filterSubscribers()">
+      <!-- Search Box -->
+      <div style="margin-bottom:12px;">
+        <input type="text" id="subscriberSearchInput" placeholder="Search by Workshop Name, Mobile, or Device ID..." oninput="filterSubscribers()" style="width:100%;">
       </div>
 
       <!-- Filter Tabs -->
       <div class="filter-tabs">
-        <button type="button" class="tab-btn active" onclick="setFilterTab('all')">All</button>
-        <button type="button" class="tab-btn" onclick="setFilterTab('pending')">🔴 Pending Activation</button>
-        <button type="button" class="tab-btn" onclick="setFilterTab('active')">🟢 Active Pro</button>
-        <button type="button" class="tab-btn" onclick="setFilterTab('expiring')">🟡 Expiring Soon</button>
+        <button type="button" class="tab-btn active" onclick="setFilterTab('all', this)">All Accounts</button>
+        <button type="button" class="tab-btn" onclick="setFilterTab('pending', this)">🔴 Pending Activation</button>
+        <button type="button" class="tab-btn" onclick="setFilterTab('active', this)">🟢 Active Pro</button>
       </div>
 
       <!-- Subscriber List Container -->
@@ -481,7 +431,9 @@
       </div>
     </div>
 
-    <!-- Section 2: Manual Key Generator & Billing Form -->
+    <!-- ======================================================== -->
+    <!-- SECTION 3: CREATE LICENSE & RECHARGE BILLING MEMO        -->
+    <!-- ======================================================== -->
     <div class="admin-card">
       <div class="card-title">
         <i class="fa-solid fa-key" style="color:#f59e0b;"></i>
@@ -491,7 +443,7 @@
       <div class="form-row">
         <div class="form-group">
           <label>Customer Full Name *</label>
-          <input type="text" id="in_name" placeholder="e.g. John Doe">
+          <input type="text" id="in_name" placeholder="e.g. Saheb Ghanti">
         </div>
         <div class="form-group">
           <label>Workshop / Business Name</label>
@@ -506,7 +458,7 @@
         </div>
         <div class="form-group">
           <label>Customer Device ID * (8 Characters)</label>
-          <input type="text" id="in_dev_id" placeholder="e.g. A1B2C3D4" maxlength="8" style="text-transform:uppercase; font-weight:800; font-family:'JetBrains Mono', monospace; color:#38bdf8;">
+          <input type="text" id="in_dev_id" placeholder="e.g. 2E9D51B5" maxlength="8" style="text-transform:uppercase; font-weight:800; font-family:'JetBrains Mono', monospace; color:#38bdf8;">
         </div>
       </div>
 
@@ -522,7 +474,7 @@
             <option value="TEAM_1Y">Workshop Team (10 Users) - 1 Year (₹3,999)</option>
             <option value="CORP_1M">Corporate Enterprise (50 Users) - 1 Month (₹1,499)</option>
             <option value="CORP_1Y">Corporate Enterprise (50 Users) - 1 Year (₹14,999)</option>
-            <option value="LIFETIME">👑 Lifetime Unlimited VIP (Lifetime Pro)</option>
+            <option value="LIFETIME">Lifetime VIP Pro License (₹19,999)</option>
           </select>
         </div>
         <div class="form-group">
@@ -538,7 +490,7 @@
         </div>
         <div class="form-group">
           <label>Balance Due (₹)</label>
-          <input type="number" id="in_due" value="0" readonly style="background:#131b2e; color:#f87171; font-weight:800;">
+          <input type="number" id="in_due" value="0" readonly style="color:#f87171; font-weight:800;">
         </div>
       </div>
 
@@ -547,9 +499,9 @@
           <label>Payment Method</label>
           <select id="in_pay_mode">
             <option value="Google Pay / PhonePe (UPI)">Google Pay / PhonePe (UPI)</option>
-            <option value="Cash Payment">Cash Payment</option>
-            <option value="Bank Transfer (NEFT/IMPS)">Bank Transfer (NEFT/IMPS)</option>
             <option value="Paytm Wallet / UPI">Paytm Wallet / UPI</option>
+            <option value="Direct Bank Transfer (IMPS/NEFT)">Direct Bank Transfer (IMPS/NEFT)</option>
+            <option value="Cash Payment">Cash Payment</option>
           </select>
         </div>
         <div class="form-group">
@@ -558,39 +510,64 @@
         </div>
       </div>
 
-      <button type="button" class="btn btn-primary" onclick="generateAndSaveKey()" style="margin-top:6px;">
+      <button type="button" class="btn" style="width:100%; margin-top:6px; padding:12px; font-size:0.92rem;" onclick="generateAndSaveKey()">
         <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Activation Key & Save Memo
       </button>
 
-      <!-- Key Generated Result Display -->
-      <div id="keyBoxResult" class="key-box">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.78rem; font-weight:800; color:#6ee7b7;">ACTIVATION KEY GENERATED:</span>
-          <span id="keyExpiryInfo" style="font-size:0.72rem; color:#a7f3d0;"></span>
+      <!-- Key Result Display Box -->
+      <div id="keyBoxResult" style="display:none; margin-top:14px; background:#0b1329; border:1.5px solid #10b981; border-radius:12px; padding:14px; text-align:center;">
+        <div style="font-size:0.74rem; font-weight:800; color:#4ade80;">ACTIVATION KEY GENERATED</div>
+        <div id="displayGeneratedKey" style="font-family:'JetBrains Mono', monospace; font-size:1.6rem; font-weight:800; color:#4ade80; letter-spacing:3px; margin:8px 0;">
+          --------
         </div>
-        <div class="key-display" id="displayGeneratedKey">--------</div>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button type="button" class="btn btn-wa" onclick="sendInvoiceWhatsAppDirect()" style="flex:2;">
+        <div id="keyExpiryInfo" style="font-size:0.75rem; color:#94a3b8; margin-bottom:12px;">Valid Until: --</div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-wa" style="flex:1;" onclick="sendInvoiceWhatsAppDirect()">
             <i class="fa-brands fa-whatsapp"></i> Send Invoice & Key via WhatsApp
           </button>
-          <button type="button" class="btn" style="flex:1; background:#0284c7; color:#fff;" onclick="copyGeneratedKeyToClipboard()">
-            <i class="fa-solid fa-copy"></i> COPY
+          <button type="button" class="btn" style="flex:0.6; background:#1e293b; border:1px solid #334155; color:#fff;" onclick="copyGeneratedKeyToClipboard()">
+            <i class="fa-solid fa-copy"></i> Copy
           </button>
         </div>
       </div>
-
     </div>
 
   </div>
 
-  <!-- SHA-256 Engine & Admin Logic -->
+  <!-- Admin JavaScript Engine -->
   <script>
+    const PLAN_RATES = {
+      'KARIGAR_1M': 99,
+      'KARIGAR_3M': 280,
+      'KARIGAR_6M': 550,
+      'KARIGAR_1Y': 799,
+      'TEAM_1M': 499,
+      'TEAM_1Y': 3999,
+      'CORP_1M': 1499,
+      'CORP_1Y': 14999,
+      'LIFETIME': 19999
+    };
 
-    // Universal Clipboard Copy with Fallback for Older Browsers
+    const PLAN_NAMES = {
+      'KARIGAR_1M': 'Karigar Plan (1 Month)',
+      'KARIGAR_3M': 'Karigar Plan (3 Months)',
+      'KARIGAR_6M': 'Karigar Plan (6 Months)',
+      'KARIGAR_1Y': 'Karigar Plan (1 Year)',
+      'TEAM_1M': 'Workshop Team (1 Month)',
+      'TEAM_1Y': 'Workshop Team (1 Year)',
+      'CORP_1M': 'Corporate Enterprise (1 Month)',
+      'CORP_1Y': 'Corporate Enterprise (1 Year)',
+      'LIFETIME': 'Lifetime VIP Pro Access'
+    };
+
+    let currentTabFilter = 'all';
+    let activeInvoiceObj = null;
+
+    // Universal Clipboard Copy with Fallback
     function universalAdminCopyText(text, successMsg) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(function() {
-          alert(successMsg || "Copied to clipboard: " + text);
+          alert(successMsg || "Copied: " + text);
         }).catch(function() {
           execCommandFallbackAdmin(text, successMsg);
         });
@@ -605,22 +582,19 @@
         ta.value = text;
         ta.style.position = "fixed";
         ta.style.top = "-9999px";
-        ta.style.left = "-9999px";
         document.body.appendChild(ta);
         ta.focus();
         ta.select();
         var ok = document.execCommand('copy');
         document.body.removeChild(ta);
-        if (ok) {
-          alert(successMsg || "Copied to clipboard: " + text);
-        } else {
-          prompt("Copy manually:", text);
-        }
+        if (ok) alert(successMsg || "Copied: " + text);
+        else prompt("Copy manually:", text);
       } catch(e) {
         prompt("Copy manually:", text);
       }
     }
 
+    // SHA-256 Engine for Key Generation
     function sha256(ascii) {
       function rightRotate(value, amount) { return (value>>>amount) | (value<<(32 - amount)); }
       var mathPow = Math.pow; var maxWord = mathPow(2, 32); var lengthProperty = 'length';
@@ -644,7 +618,8 @@
       words[words[lengthProperty]] = ((asciiBitLength/maxWord)|0);
       words[words[lengthProperty]] = (asciiBitLength);
       for (j = 0; j < words[lengthProperty];) {
-        var w = words.slice(j, j += 16); var oldHash = hash;
+        var w = words.slice(j, j += 16);
+        var oldHash = hash;
         hash = hash.slice(0, 8);
         for (i = 0; i < 64; i++) {
           var i2 = i + j;
@@ -666,10 +641,12 @@
           hash = [(temp1 + temp2)|0].concat(hash);
           hash[4] = (hash[4] + temp1)|0;
         }
-        for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i])|0; }
+        for (i = 0; i < 8; i++) {
+          hash[i] = (hash[i] + oldHash[i])|0;
+        }
       }
       for (i = 0; i < 8; i++) {
-        for (j = 3; j + 1; j--) {
+        for (j = 3; j >= 0; j--) {
           var b = (hash[i]>>(j*8))&255;
           result += ((b < 16) ? 0 : '') + b.toString(16);
         }
@@ -677,96 +654,56 @@
       return result;
     }
 
-    const SALTS = {
-      "KARIGAR_1M": "SAHEB_1M_PRO",
-      "KARIGAR_3M": "SAHEB_1M_PRO",
-      "KARIGAR_6M": "SAHEB_1Y_PRO",
-      "KARIGAR_1Y": "SAHEB_1Y_PRO",
-      "TEAM_1M": "SAHEB_TEAM_1M_PRO",
-      "TEAM_1Y": "SAHEB_TEAM_1Y_PRO",
-      "CORP_1M": "SAHEB_CORP_1M_PRO",
-      "CORP_1Y": "SAHEB_CORP_1Y_PRO"
-    };
-    const SPECIAL_PROMO_CODE = "SMARTWORKER_ADMIN_100";
+    function computeKey(devId, plan) {
+      const raw = String(devId).toUpperCase().trim() + "_SMARTWORKER_PRO_SECRET_SALT_2026_" + plan;
+      const hash = sha256(raw);
+      let out = "";
+      for (let i = 0; i < 8; i++) {
+        out += hash[(i * 7) % hash.length];
+      }
+      return out.toUpperCase();
+    }
 
-    const PLAN_RATES = {
-      "KARIGAR_1M": 99,
-      "KARIGAR_3M": 280,
-      "KARIGAR_6M": 550,
-      "KARIGAR_1Y": 799,
-      "TEAM_1M": 499,
-      "TEAM_1Y": 3999,
-      "CORP_1M": 1499,
-      "CORP_1Y": 14999,
-      "LIFETIME": 25000
-    };
-
-    const PLAN_NAMES = {
-      "KARIGAR_1M": "Karigar Plan (1 Month)",
-      "KARIGAR_3M": "Karigar Plan (3 Months)",
-      "KARIGAR_6M": "Karigar Plan (6 Months)",
-      "KARIGAR_1Y": "Karigar Plan (1 Year)",
-      "TEAM_1M": "Workshop Team (10 Users - 1 Month)",
-      "TEAM_1Y": "Workshop Team (10 Users - 1 Year)",
-      "CORP_1M": "Corporate Enterprise (50 Users - 1 Month)",
-      "CORP_1Y": "Corporate Enterprise (50 Users - 1 Year)",
-      "LIFETIME": "Lifetime VIP Pro"
-    };
-
-    let activeInvoiceObj = null;
-    let currentTabFilter = "all";
+    function computeExpiry(plan) {
+      const now = new Date();
+      if (plan.includes('1M')) now.setMonth(now.getMonth() + 1);
+      else if (plan.includes('3M')) now.setMonth(now.getMonth() + 3);
+      else if (plan.includes('6M')) now.setMonth(now.getMonth() + 6);
+      else if (plan.includes('1Y')) now.setFullYear(now.getFullYear() + 1);
+      else if (plan.includes('LIFETIME')) return "Lifetime VIP Access";
+      return now.toLocaleDateString('en-GB');
+    }
 
     function autoFillPlanCost() {
       const plan = document.getElementById('in_plan').value;
-      const amt = PLAN_RATES[plan] || 99;
-      document.getElementById('in_bill').value = amt;
-      document.getElementById('in_paid').value = amt;
+      const rate = PLAN_RATES[plan] || 99;
+      document.getElementById('in_bill').value = rate;
+      document.getElementById('in_paid').value = rate;
       calculateBalanceDue();
     }
 
     function calculateBalanceDue() {
       const bill = parseFloat(document.getElementById('in_bill').value) || 0;
       const paid = parseFloat(document.getElementById('in_paid').value) || 0;
-      const due = Math.max(0, bill - paid);
-      document.getElementById('in_due').value = due;
-    }
-
-    function computeKey(devId, plan) {
-      devId = String(devId || '').trim().toUpperCase();
-      if (!devId) return null;
-      if (plan === "LIFETIME") return SPECIAL_PROMO_CODE;
-      const salt = SALTS[plan] || "SAHEB_1M_PRO";
-      return sha256(devId + salt).substring(0, 8).toUpperCase();
-    }
-
-    function computeExpiry(plan) {
-      const d = new Date();
-      if (plan.includes('1M')) d.setDate(d.getDate() + 30);
-      else if (plan.includes('3M')) d.setDate(d.getDate() + 90);
-      else if (plan.includes('6M')) d.setDate(d.getDate() + 180);
-      else if (plan.includes('1Y')) d.setDate(d.getDate() + 365);
-      else if (plan === 'LIFETIME') return "Lifetime Active";
-      return d.toLocaleDateString('en-GB');
+      document.getElementById('in_due').value = Math.max(0, bill - paid);
     }
 
     function generateAndSaveKey() {
-      const name = document.getElementById('in_name').value.trim();
-      const shop = document.getElementById('in_shop').value.trim();
-      const phone = document.getElementById('in_phone').value.trim();
       const devId = document.getElementById('in_dev_id').value.trim().toUpperCase();
+      const name = document.getElementById('in_name').value.trim();
+      const shop = document.getElementById('in_shop').value.trim() || "Workshop";
+      const phone = document.getElementById('in_phone').value.trim();
       const plan = document.getElementById('in_plan').value;
-      const bill = parseFloat(document.getElementById('in_bill').value) || 0;
-      const paid = parseFloat(document.getElementById('in_paid').value) || 0;
-      const due = parseFloat(document.getElementById('in_due').value) || 0;
-      const payMode = document.getElementById('in_pay_mode').value;
-      const utr = document.getElementById('in_utr').value.trim();
+      const bill = document.getElementById('in_bill').value;
+      const paid = document.getElementById('in_paid').value;
+      const due = document.getElementById('in_due').value;
 
-      if (!name || !phone || !devId) {
-        alert("Please provide Customer Name, Phone, and 8-character Device ID!");
+      if (!devId || devId.length < 6) {
+        alert("Please enter a valid Device ID (at least 6-8 characters).");
         return;
       }
-      if (devId.length !== 8) {
-        alert("Device ID must be exactly 8 characters!");
+      if (!name) {
+        alert("Please enter Customer Full Name.");
         return;
       }
 
@@ -774,19 +711,17 @@
       const expDate = computeExpiry(plan);
       const today = new Date().toLocaleDateString('en-GB');
 
-      const subscriberRecord = {
-        id: "SUB_" + Date.now(),
+      activeInvoiceObj = {
+        id: "INV_" + Date.now(),
         device_id: devId,
         name: name,
-        shop: shop || "Aluminium Workshop",
+        shop: shop,
         phone: phone,
         plan: plan,
         plan_name: PLAN_NAMES[plan] || plan,
         bill_amount: bill,
         paid_amount: paid,
         due_amount: due,
-        pay_mode: payMode,
-        utr: utr || "Paid",
         activation_key: key,
         status: "ACTIVE",
         start_date: today,
@@ -794,27 +729,21 @@
         timestamp: Date.now()
       };
 
+      document.getElementById('displayGeneratedKey').textContent = key;
+      document.getElementById('keyExpiryInfo').textContent = "Valid Until: " + expDate + " • " + (PLAN_NAMES[plan] || plan);
+      document.getElementById('keyBoxResult').style.display = 'block';
+
+      // Save into active subscribers
       let list = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
       const existIdx = list.findIndex(s => s.device_id === devId);
-      if (existIdx !== -1) {
-        list[existIdx] = subscriberRecord;
-      } else {
-        list.unshift(subscriberRecord);
-      }
+      if (existIdx !== -1) list[existIdx] = activeInvoiceObj;
+      else list.unshift(activeInvoiceObj);
       localStorage.setItem('sw_active_subscribers', JSON.stringify(list));
 
-      // Also sync to Firebase if available
-      try {
-        if (window.fbDb) {
-          fbDb.collection('subscribers').doc(devId).set(subscriberRecord).catch(() => {});
-        }
-      } catch(e){}
+      if (window.fbDb) {
+        fbDb.collection('subscribers').doc(devId).set(activeInvoiceObj, { merge: true }).catch(() => {});
+      }
 
-      document.getElementById('displayGeneratedKey').textContent = key;
-      document.getElementById('keyExpiryInfo').textContent = "Valid Till: " + expDate;
-      document.getElementById('keyBoxResult').style.display = "block";
-
-      activeInvoiceObj = subscriberRecord;
       renderSubscribers();
       alert("Activation Key Generated Successfully!");
     }
@@ -833,7 +762,6 @@
         `Plan: *${data.plan_name || data.plan}*\n` +
         `Total Bill: ₹${data.bill_amount}\n` +
         `Amount Paid: ₹${data.paid_amount}\n` +
-        `Balance Due: ₹${data.due_amount}\n` +
         `Valid Until: *${data.expiry_date}*\n` +
         `----------------------------------------\n` +
         `SECRET ACTIVATION KEY:\n` +
@@ -841,7 +769,7 @@
         `----------------------------------------\n` +
         `INSTRUCTIONS:\n` +
         `1. Open Smart Worker Pro.\n` +
-        `2. Go to 'PRO UPGRADE' or 'Settings'.\n` +
+        `2. Go to 'PRO UPGRADE' or Settings.\n` +
         `3. Paste this key and tap 'ACTIVATE'.\n\n` +
         `Thank you for choosing Smart Worker Pro!\n` +
         `Support: Saheb Ghanti (+91 9239413517)`;
@@ -852,12 +780,323 @@
     }
 
     function copyGeneratedKeyToClipboard() {
-      var key = document.getElementById('displayGeneratedKey').textContent.trim();
-      if (!key || key.includes('-')) {
-        alert("Please generate a key first!");
+      const key = document.getElementById('displayGeneratedKey').textContent.trim();
+      if (!key || key.includes('-')) return;
+      universalAdminCopyText(key, "Activation Key copied: " + key);
+    }
+
+    function setFilterTab(tab, btnElem) {
+      currentTabFilter = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (btnElem) btnElem.classList.add('active');
+      renderSubscribers();
+    }
+
+    function filterSubscribers() {
+      renderSubscribers();
+    }
+
+    // ========================================================
+    // PASSWORD RESET QUEUE & OWNER CALL VERIFICATION LOGIC
+    // ========================================================
+
+    function renderPasswordResetQueue() {
+      const container = document.getElementById('passwordResetListContainer');
+      const badge = document.getElementById('resetQueueBadge');
+      const statBadge = document.getElementById('statResetCount');
+      if (!container) return;
+
+      const requests = JSON.parse(localStorage.getItem('sw_password_reset_requests') || '[]');
+      const pendingList = requests.filter(r => r.status === 'PENDING_VERIFICATION' || r.status === 'Pending');
+
+      if (badge) badge.textContent = pendingList.length + " Pending";
+      if (statBadge) statBadge.textContent = pendingList.length;
+
+      if (requests.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:24px 10px; color:#64748b; font-size:0.82rem;">
+            <i class="fa-solid fa-shield-check" style="font-size:1.8rem; margin-bottom:8px; display:block; color:#10b981;"></i>
+            No password reset requests pending. All customer accounts are fully secure.
+          </div>`;
         return;
       }
-      universalAdminCopyText(key, "Activation Key (" + key + ") copied successfully!");
+
+      let html = "";
+      requests.forEach(sub => {
+        const isPending = sub.status === 'PENDING_VERIFICATION' || sub.status === 'Pending';
+        const cardStyle = isPending ? 'border-left: 4px solid #ef4444; background: #1a1424;' : 'border-left: 4px solid #10b981; background: #0f172a;';
+        const statusBadge = isPending ?
+          `<span class="badge badge-red"><span class="status-dot dot-red"></span> CALL VERIFICATION PENDING</span>` :
+          `<span class="badge badge-green"><span class="status-dot dot-green"></span> VERIFIED & RESOLVED</span>`;
+
+        html += `
+          <div class="sub-card" style="${cardStyle}">
+            <div class="sub-header">
+              <div>
+                <div class="sub-name">${sub.name || "Workshop Owner"}</div>
+                <div class="sub-shop"><i class="fa-solid fa-store"></i> ${sub.shop || "Fabrication Workshop"}</div>
+              </div>
+              ${statusBadge}
+            </div>
+
+            <div class="sub-meta-grid">
+              <div><b>Owner Mobile:</b> <a href="tel:+91${sub.phone}" style="color:#38bdf8; font-weight:800; text-decoration:none;">📞 +91 ${sub.phone}</a></div>
+              <div><b>Request Date:</b> ${sub.date_str || "Today"}</div>
+              <div style="grid-column: span 2;">
+                <b>Saved Password in Database:</b> 
+                <span style="font-family:'JetBrains Mono', monospace; font-size:0.92rem; color:#fbbf24; background:#0b1329; border:1px solid #334155; padding:2px 8px; border-radius:5px; font-weight:800;">
+                  ${sub.registered_password || "123456"}
+                </span>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+              <a href="tel:+91${sub.phone}" class="btn-sm" style="background:#2563eb; color:#fff; text-decoration:none; padding:7px 11px;">
+                <i class="fa-solid fa-phone"></i> 1. Call Owner
+              </a>
+              <button type="button" class="btn-sm btn-wa" onclick='sendVerifiedPasswordWhatsApp("${sub.phone}", "${sub.name}", "${sub.shop}", "${sub.registered_password || "123456"}")'>
+                <i class="fa-brands fa-whatsapp"></i> 2. WhatsApp Password
+              </button>
+              <button type="button" class="btn-sm" style="background:#f59e0b; color:#0f172a; font-weight:800;" onclick='adminResetUserPassword("${sub.phone}", "${sub.name}")'>
+                <i class="fa-solid fa-key"></i> 3. Set New Password
+              </button>
+              <button type="button" class="btn-sm" style="background:#10b981; color:#fff;" onclick='markResetVerified("${sub.phone}")'>
+                <i class="fa-solid fa-check"></i> Mark Resolved
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function sendVerifiedPasswordWhatsApp(phone, name, shop, pass) {
+      const msg = `*SMART WORKER PRO - VERIFIED PASSWORD RELEASE*\n` +
+        `----------------------------------------\n` +
+        `Workshop: *${shop || "Workshop"}*\n` +
+        `Owner: *${name || "Customer"}*\n` +
+        `Mobile: *${phone}*\n` +
+        `----------------------------------------\n` +
+        `Dear ${name || "Customer"}, your identity and workshop ownership have been successfully verified by Admin.\n\n` +
+        `YOUR ACCOUNT PASSWORD:\n` +
+        `👉 *${pass}*\n` +
+        `----------------------------------------\n` +
+        `INSTRUCTIONS:\n` +
+        `1. Open Smart Worker Pro app.\n` +
+        `2. In the Sign In tab, enter your Mobile Number (${phone}) and this password.\n` +
+        `3. Tap 'Sign In to Account' to access your workshop.\n\n` +
+        `Support: Saheb Ghanti (+91 9239413517)`;
+
+      const cleanPhone = String(phone).replace(/[^0-9]/g, '');
+      const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
+    }
+
+    function adminResetUserPassword(phone, name) {
+      const cleanPhone = String(phone).replace(/\D/g, '');
+      const newPass = prompt("Enter NEW custom password for " + name + " (" + cleanPhone + "):", "123456");
+      if (!newPass || newPass.trim().length < 6) {
+        alert("Password must be at least 6 characters.");
+        return;
+      }
+
+      const p = newPass.trim();
+
+      // 1. Update in sw_registered_users
+      const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+      if (users[cleanPhone]) {
+        users[cleanPhone].password = p;
+        localStorage.setItem('sw_registered_users', JSON.stringify(users));
+      }
+
+      // 2. Update in reset requests
+      let requests = JSON.parse(localStorage.getItem('sw_password_reset_requests') || '[]');
+      requests = requests.map(r => r.phone === cleanPhone ? { ...r, registered_password: p, status: "VERIFIED_RESOLVED" } : r);
+      localStorage.setItem('sw_password_reset_requests', JSON.stringify(requests));
+
+      // 3. Update in Cloud Firestore
+      if (window.fbDb) {
+        fbDb.collection('users').doc(cleanPhone).set({
+          password: p,
+          updated_at: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+
+        fbDb.collection('password_reset_requests').doc(cleanPhone).set({
+          registered_password: p,
+          status: "VERIFIED_RESOLVED",
+          resolved_at: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+      }
+
+      // 4. Update in Realtime Database
+      if (window.fbRtdb) {
+        try {
+          fbRtdb.ref('users/' + cleanPhone).update({ password: p });
+          fbRtdb.ref('password_reset_requests/' + cleanPhone).update({ registered_password: p, status: "VERIFIED_RESOLVED" });
+        } catch(e){}
+      }
+
+      renderPasswordResetQueue();
+      alert("Password successfully updated to: " + p);
+
+      if (confirm("Send this new password to " + name + " on WhatsApp now?")) {
+        sendVerifiedPasswordWhatsApp(cleanPhone, name, "Workshop", p);
+      }
+    }
+
+    function markResetVerified(phone) {
+      const cleanPhone = String(phone).replace(/\D/g, '');
+      let requests = JSON.parse(localStorage.getItem('sw_password_reset_requests') || '[]');
+      requests = requests.map(r => r.phone === cleanPhone ? { ...r, status: "VERIFIED_RESOLVED" } : r);
+      localStorage.setItem('sw_password_reset_requests', JSON.stringify(requests));
+
+      if (window.fbDb) {
+        fbDb.collection('password_reset_requests').doc(cleanPhone).set({
+          status: "VERIFIED_RESOLVED",
+          resolved_at: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+      }
+      if (window.fbRtdb) {
+        try { fbRtdb.ref('password_reset_requests/' + cleanPhone).update({ status: "VERIFIED_RESOLVED" }); } catch(e){}
+      }
+
+      renderPasswordResetQueue();
+      alert("Request marked as Verified & Resolved!");
+    }
+
+    // ========================================================
+    // RENDER REGISTERED SUBSCRIBERS DIRECTORY
+    // ========================================================
+
+    function renderSubscribers() {
+      const list = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
+      const requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+      const registeredUsers = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+
+      // Build comprehensive list
+      const combined = [...requests.filter(r => r.status === 'Pending').map(r => ({
+        device_id: r.device_id,
+        name: r.name,
+        shop: r.shop || "New Workshop",
+        phone: r.phone,
+        plan: r.plan,
+        plan_name: PLAN_NAMES[r.plan] || r.plan,
+        bill_amount: PLAN_RATES[r.plan] || 99,
+        paid_amount: PLAN_RATES[r.plan] || 99,
+        due_amount: 0,
+        activation_key: r.generated_key || "PENDING",
+        status: "PENDING_ACTIVATION",
+        start_date: r.date || "Today",
+        expiry_date: "Pending Activation"
+      })), ...list];
+
+      // Add users from registeredUsers dictionary if not present
+      Object.keys(registeredUsers).forEach(phoneKey => {
+        const u = registeredUsers[phoneKey];
+        if (!combined.some(c => c.phone === u.phone)) {
+          combined.push({
+            device_id: (u.phone || "USER").substring(0, 8),
+            name: u.name,
+            shop: u.shop_name,
+            phone: u.phone,
+            password: u.password,
+            plan: 'KARIGAR_1M',
+            plan_name: 'Karigar Plan',
+            bill_amount: 99,
+            paid_amount: 99,
+            due_amount: 0,
+            activation_key: "ACTIVE",
+            status: "ACTIVE",
+            start_date: "Registered",
+            expiry_date: "Active Account"
+          });
+        }
+      });
+
+      // Update Top Status Cards
+      const pendingCount = combined.filter(s => s.status === 'PENDING_ACTIVATION' || s.status === 'Pending').length;
+      const activeCount = combined.filter(s => s.status === 'ACTIVE').length;
+
+      document.getElementById('statPendingCount').textContent = pendingCount;
+      document.getElementById('statActiveCount').textContent = activeCount;
+      document.getElementById('statTotalUsers').textContent = combined.length;
+      document.getElementById('queueTotalBadge').textContent = `${combined.length} Total`;
+
+      const container = document.getElementById('subscribersListContainer');
+      const searchInput = document.getElementById('subscriberSearchInput');
+      const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+
+      let filtered = combined;
+      if (currentTabFilter === 'pending') {
+        filtered = combined.filter(s => s.status === 'PENDING_ACTIVATION' || s.status === 'Pending');
+      } else if (currentTabFilter === 'active') {
+        filtered = combined.filter(s => s.status === 'ACTIVE');
+      }
+
+      if (query) {
+        filtered = filtered.filter(s => 
+          (s.name || '').toLowerCase().includes(query) ||
+          (s.shop || '').toLowerCase().includes(query) ||
+          (s.phone || '').includes(query) ||
+          (s.device_id || '').toLowerCase().includes(query)
+        );
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:32px 10px; color:#64748b; font-size:0.85rem;">
+            <i class="fa-solid fa-inbox" style="font-size:2rem; margin-bottom:8px; display:block; color:#334155;"></i>
+            No matching accounts found.
+          </div>`;
+        return;
+      }
+
+      let html = "";
+      filtered.forEach((sub) => {
+        const isPending = sub.status === 'PENDING_ACTIVATION' || sub.status === 'Pending';
+        const cardClass = isPending ? 'pending' : 'active';
+        const badgeMarkup = isPending ?
+          `<span class="badge badge-red"><span class="status-dot dot-red"></span> NEW SUBSCRIBER</span>` :
+          `<span class="badge badge-green"><span class="status-dot dot-green"></span> ACTIVE PRO</span>`;
+
+        const savedPass = sub.password || (registeredUsers[sub.phone] ? registeredUsers[sub.phone].password : "123456");
+
+        html += `
+          <div class="sub-card ${cardClass}">
+            <div class="sub-header">
+              <div>
+                <div class="sub-name">${sub.name}</div>
+                <div class="sub-shop"><i class="fa-solid fa-store"></i> ${sub.shop || "Workshop"}</div>
+              </div>
+              ${badgeMarkup}
+            </div>
+
+            <div class="sub-meta-grid">
+              <div><b>Mobile:</b> <a href="tel:+91${sub.phone}" style="color:#38bdf8; text-decoration:none; font-weight:700;">📞 +91 ${sub.phone}</a></div>
+              <div><b>Device ID:</b> <span class="sub-code">${sub.device_id}</span></div>
+              <div><b>Plan:</b> ${sub.plan_name || sub.plan}</div>
+              <div><b>Account Password:</b> <span class="sub-code" style="color:#fbbf24;">${savedPass}</span></div>
+              <div><b>Expiry:</b> ${sub.expiry_date}</div>
+              <div><b>Key:</b> <span class="sub-code" style="color:#4ade80;">${sub.activation_key || "NOT ISSUED"}</span></div>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <a href="tel:+91${sub.phone}" class="btn-sm" style="background:#2563eb; color:#fff; text-decoration:none;">
+                <i class="fa-solid fa-phone"></i> Call
+              </a>
+              <button type="button" class="btn-sm btn-wa" onclick='activateAndSendWhatsApp("${sub.device_id}", "${sub.name}", "${sub.phone}", "${sub.plan}")'>
+                <i class="fa-brands fa-whatsapp"></i> Generate & WhatsApp Key
+              </button>
+              <button type="button" class="btn-sm" style="background:#1e293b; border:1px solid #334155; color:#38bdf8;" onclick='quickFillForm("${sub.device_id}", "${sub.name}", "${sub.phone}", "${sub.plan}")'>
+                <i class="fa-solid fa-pen-to-square"></i> Edit Memo
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
     }
 
     function activateAndSendWhatsApp(devId, name, phone, plan) {
@@ -889,33 +1128,13 @@
       else list.unshift(record);
       localStorage.setItem('sw_active_subscribers', JSON.stringify(list));
 
-      // Update pending requests in localStorage
       let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
       reqs = reqs.map(r => r.device_id === devId ? { ...r, status: "Approved", generated_key: key } : r);
       localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
 
-      // Sync approval and subscriber record to Firebase Firestore
-      try {
-        if (window.fbDb) {
-          fbDb.collection('subscribers').doc(devId).set(record, { merge: true }).catch(() => {});
-          fbDb.collection('recharge_requests').doc(devId).set({
-            status: "Approved",
-            activation_key: key,
-            approved_at: new Date().toISOString()
-          }, { merge: true }).catch(() => {});
-        }
-      } catch(e){}
-
-      // Sync to Realtime Database
-      try {
-        if (window.fbRtdb) {
-          fbRtdb.ref('subscribers/' + devId).set(record);
-          fbRtdb.ref('recharge_requests/' + devId).update({
-            status: "Approved",
-            activation_key: key
-          });
-        }
-      } catch(e){}
+      if (window.fbDb) {
+        fbDb.collection('subscribers').doc(devId).set(record, { merge: true }).catch(() => {});
+      }
 
       renderSubscribers();
       sendInvoiceWhatsAppDirect(record);
@@ -927,15 +1146,10 @@
       document.getElementById('in_phone').value = phone;
       document.getElementById('in_plan').value = plan;
       autoFillPlanCost();
-      window.scrollTo({ top: 400, behavior: 'smooth' });
-    }
-
-    function filterSubscribers() {
-      renderSubscribers();
+      window.scrollTo({ top: 500, behavior: 'smooth' });
     }
 
     // Live Firebase Realtime Sync
-    // Live Firebase Realtime Sync (Firestore + Realtime Database)
     function initFirebaseLiveListener() {
       try {
         const config = {
@@ -949,6 +1163,7 @@
         };
         if (!window.firebase) {
           console.log("Admin Portal operating in Offline Local Mode");
+          renderPasswordResetQueue();
           renderSubscribers();
           return;
         }
@@ -960,7 +1175,41 @@
         const rtdb = (firebase.database && typeof firebase.database === 'function') ? firebase.database() : null;
         window.fbRtdb = rtdb;
 
-        // 1. Listen to Realtime recharge_requests in Firestore
+        // 1. Listen to Realtime Password Reset Requests in Firestore
+        db.collection('password_reset_requests').onSnapshot(snap => {
+          const resets = [];
+          snap.forEach(doc => {
+            const data = doc.data();
+            if (data) resets.push(data);
+          });
+          if (resets.length > 0) {
+            localStorage.setItem('sw_password_reset_requests', JSON.stringify(resets));
+            renderPasswordResetQueue();
+          }
+        }, err => console.warn("Firestore password_reset_requests listener note:", err));
+
+        // 2. Listen to Realtime DB Password Reset Requests
+        if (rtdb) {
+          rtdb.ref('password_reset_requests').on('value', snap => {
+            const val = snap.val();
+            if (val) {
+              localStorage.setItem('sw_password_reset_requests', JSON.stringify(Object.values(val)));
+              renderPasswordResetQueue();
+            }
+          });
+        }
+
+        // 3. Listen to Realtime Subscribers
+        db.collection('subscribers').onSnapshot(snap => {
+          const liveData = [];
+          snap.forEach(doc => liveData.push(doc.data()));
+          if (liveData.length > 0) {
+            localStorage.setItem('sw_active_subscribers', JSON.stringify(liveData));
+            renderSubscribers();
+          }
+        }, err => console.warn("Firestore subscribers listener note:", err));
+
+        // 4. Listen to Recharge Requests
         db.collection('recharge_requests').onSnapshot(snap => {
           const liveReqs = [];
           snap.forEach(doc => {
@@ -971,396 +1220,24 @@
             localStorage.setItem('sw_recharge_requests', JSON.stringify(liveReqs));
             renderSubscribers();
           }
-        }, err => console.warn("Firestore recharge_requests listen:", err));
-
-        // 2. Also listen to Realtime Database recharge_requests
-        if (rtdb) {
-          rtdb.ref('recharge_requests').on('value', snap => {
-            const val = snap.val();
-            if (val) {
-              const reqArray = Object.values(val);
-              localStorage.setItem('sw_recharge_requests', JSON.stringify(reqArray));
-              renderSubscribers();
-            }
-          });
-        }
-
-        // 3. Listen to live subscribers in Firestore
-        db.collection('subscribers').onSnapshot(snap => {
-          const liveData = [];
-          snap.forEach(doc => liveData.push(doc.data()));
-          if (liveData.length > 0) {
-            localStorage.setItem('sw_active_subscribers', JSON.stringify(liveData));
-            renderSubscribers();
-          }
-        }, err => console.warn("Firestore subscribers listen:", err));
+        }, err => console.warn("Firestore recharge_requests listener note:", err));
 
       } catch (err) {
-        console.warn("initFirebaseLiveListener error:", err);
+        console.warn("Live listener fallback:", err);
       }
     }
 
     window.addEventListener('storage', () => {
+      renderPasswordResetQueue();
       renderSubscribers();
     });
 
-    
-    // Calculate Days Remaining and Expiry Status
-    function calculateDaysRemaining(expiryStr, status) {
-      if (status === 'PENDING_ACTIVATION' || status === 'Pending') {
-        return { text: "Pending Activation", days: null, badgeClass: "badge-red", color: "#f87171" };
-      }
-      if (!expiryStr || expiryStr === "Pending Activation" || expiryStr === "Pending") {
-        return { text: "Pending", days: null, badgeClass: "badge-red", color: "#f87171" };
-      }
-      if (typeof expiryStr === 'string' && expiryStr.toLowerCase().includes('lifetime')) {
-        return { text: "Lifetime VIP Pro", days: 9999, badgeClass: "badge-purple", color: "#c084fc" };
-      }
-
-      let expDate = null;
-      if (typeof expiryStr === 'string' && expiryStr.includes('/')) {
-        const parts = expiryStr.split('/');
-        if (parts.length === 3) {
-          expDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
-        }
-      } else if (typeof expiryStr === 'string' && expiryStr.includes('-')) {
-        const parts = expiryStr.split('-');
-        if (parts.length === 3) {
-          if (parts[0].length === 4) {
-            expDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59);
-          } else {
-            expDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
-          }
-        }
-      }
-
-      if (!expDate || isNaN(expDate.getTime())) {
-        return { text: expiryStr, days: null, badgeClass: "badge-blue", color: "#60a5fa" };
-      }
-
-      const now = new Date();
-      const diffTime = expDate.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays < 0) {
-        return { text: "Expired (" + Math.abs(diffDays) + "d ago)", days: diffDays, badgeClass: "badge-red", color: "#f87171" };
-      } else if (diffDays === 0) {
-        return { text: "Expires Today!", days: 0, badgeClass: "badge-yellow", color: "#fbbf24" };
-      } else if (diffDays <= 5) {
-        return { text: diffDays + " Days Left (Expiring Soon)", days: diffDays, badgeClass: "badge-yellow", color: "#fbbf24" };
-      } else {
-        return { text: diffDays + " Days Left", days: diffDays, badgeClass: "badge-green", color: "#4ade80" };
-      }
-    }
-
-    // Active customer notification context
-    let curNotifCustomer = null;
-
-    function openNotificationModal(devId, name, phone, plan, key, expiry) {
-      const validity = calculateDaysRemaining(expiry, key ? "ACTIVE" : "Pending");
-      curNotifCustomer = {
-        devId: devId,
-        name: name || "Valued Customer",
-        phone: phone || "",
-        plan: plan,
-        plan_name: PLAN_NAMES[plan] || plan,
-        key: key || computeKey(devId, plan),
-        expiry: expiry,
-        daysText: validity.text,
-        days: validity.days
-      };
-
-      document.getElementById('notifTargetName').textContent = curNotifCustomer.name;
-      document.getElementById('notifTargetPhone').textContent = curNotifCustomer.phone || "Not Set";
-      document.getElementById('notifTargetDevId').textContent = curNotifCustomer.devId;
-      document.getElementById('notifTargetValidity').textContent = "Current Validity: " + curNotifCustomer.daysText + " (Expiry: " + curNotifCustomer.expiry + ")";
-      
-      document.getElementById('notifTemplateSelect').value = curNotifCustomer.key ? "EXPIRY_REMINDER" : "KEY_ACTIVATION";
-      applyNotifTemplate();
-
-      const modal = document.getElementById('notifModal');
-      modal.style.display = 'flex';
-    }
-
-    function closeNotifModal() {
-      const modal = document.getElementById('notifModal');
-      modal.style.display = 'none';
-      curNotifCustomer = null;
-    }
-
-    function applyNotifTemplate() {
-      if (!curNotifCustomer) return;
-      const type = document.getElementById('notifTemplateSelect').value;
-      const c = curNotifCustomer;
-      let msg = "";
-
-      if (type === "KEY_ACTIVATION") {
-        msg = "Hello " + c.name + ",\n\n" +
-              "Your Smart Worker PRO license is approved!\n" +
-              "• Device ID: " + c.devId + "\n" +
-              "• Plan: " + c.plan_name + "\n" +
-              "• Valid Till: " + c.expiry + " (" + c.daysText + ")\n\n" +
-              "🔑 ACTIVATION KEY: " + c.key + "\n\n" +
-              "How to Activate:\n" +
-              "1. Open Smart Worker Pro App.\n" +
-              "2. Go to Activation Screen.\n" +
-              "3. Enter the 8-digit Key: " + c.key + "\n" +
-              "4. Tap 'ACTIVATE PRO KEY'.\n\n" +
-              "Support: +91 9239413517";
-      } else if (type === "EXPIRY_REMINDER") {
-        msg = "Hello " + c.name + ",\n\n" +
-              "⏳ RENEWAL REMINDER: Your Smart Worker PRO subscription has " + c.daysText + " remaining (Expiry Date: " + c.expiry + ").\n\n" +
-              "Please recharge your plan on time to enjoy uninterrupted cutting list calculations, digital khata, and professional PDF bills.\n\n" +
-              "Payment UPI: 9239413517 (PhonePe / GPay)\n" +
-              "Support Helpline: +91 9239413517";
-      } else if (type === "APP_UPDATE") {
-        msg = "Hello " + c.name + ",\n\n" +
-              "📢 NEW UPDATE: Smart Worker PRO has added new tools!\n" +
-              "• 16-Fraction Inch Measurement Calculator\n" +
-              "• Top Hung Sliding Door Formula updates\n" +
-              "• Instant Customer Khata & Balance tracking\n\n" +
-              "Open the app to experience the latest features!\n" +
-              "Smart Worker Aluminium Team";
-      } else {
-        msg = "Hello " + c.name + ",\n\n" +
-              "Message from Smart Worker Pro Team regarding your device (" + c.devId + "):\n\n" +
-              "Thank you for using Smart Worker Pro!\n" +
-              "Contact: +91 9239413517";
-      }
-
-      document.getElementById('notifMessageText').value = msg;
-    }
-
-    function sendNotifWhatsApp() {
-      if (!curNotifCustomer) return;
-      let phone = (curNotifCustomer.phone || "").replace(/[^0-9]/g, '');
-      if (phone.length === 10) phone = "91" + phone;
-      if (!phone || phone.length < 10) {
-        const inputPhone = prompt("Enter customer WhatsApp number (10 digits):", "");
-        if (inputPhone) {
-          phone = inputPhone.replace(/[^0-9]/g, '');
-          if (phone.length === 10) phone = "91" + phone;
-        } else {
-          return;
-        }
-      }
-
-      const text = document.getElementById('notifMessageText').value.trim();
-      const encoded = encodeURIComponent(text);
-      window.open("https://wa.me/" + phone + "?text=" + encoded, '_blank');
-    }
-
-    function sendNotifCloudPush() {
-      if (!curNotifCustomer) return;
-      const text = document.getElementById('notifMessageText').value.trim();
-      const notifObj = {
-        id: "NOTIF_" + Date.now(),
-        device_id: curNotifCustomer.devId,
-        title: "Smart Worker Pro Notice",
-        message: text,
-        date: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        timestamp: Date.now()
-      };
-
-      // Save to localStorage
-      try {
-        localStorage.setItem('sw_client_notification_' + curNotifCustomer.devId, JSON.stringify(notifObj));
-      } catch(e){}
-
-      // Save to Firebase
-      try {
-        if (window.fbDb) {
-          fbDb.collection('notifications').doc(curNotifCustomer.devId).set(notifObj, { merge: true }).catch(()=>{});
-        }
-        if (window.fbRtdb) {
-          fbRtdb.ref('notifications/' + curNotifCustomer.devId).set(notifObj).catch(()=>{});
-        }
-      } catch(e){}
-
-      alert("✅ Notification successfully pushed to Customer App (Device ID: " + curNotifCustomer.devId + ")!");
-      closeNotifModal();
-    }
-
-    // Quick Import from WhatsApp or Device ID
-    function quickImportWhatsAppMessage() {
-      const input = (document.getElementById('waQuickInput').value || '').trim();
-      if (!input) {
-        alert("Please paste the WhatsApp message or enter the 8-character Device ID!");
-        return;
-      }
-
-      // Extract Device ID
-      let devId = "";
-      const devMatch = input.match(/Device\s*ID[:\s]*([A-Za-z0-9]{8})/i);
-      if (devMatch) {
-        devId = devMatch[1].toUpperCase();
-      } else {
-        const clean = input.replace(/[^A-Za-z0-9]/g, '');
-        if (clean.length === 8) {
-          devId = clean.toUpperCase();
-        } else {
-          const words = input.split(/\s+/);
-          for (let w of words) {
-            const c = w.replace(/[^A-Za-z0-9]/g, '');
-            if (c.length === 8) { devId = c.toUpperCase(); break; }
-          }
-        }
-      }
-
-      if (!devId || devId.length !== 8) {
-        alert("Could not detect a valid 8-character Device ID. Please check and try again.");
-        return;
-      }
-
-      // Extract Plan
-      let plan = "KARIGAR_1M";
-      if (input.includes("799") || input.includes("1 Year") || input.includes("1Y") || input.includes("Annual")) {
-        if (input.includes("Workshop") || input.includes("Team")) plan = "TEAM_1Y";
-        elif_corp = input.includes("Corporate");
-        plan = elif_corp ? "CORP_1Y" : "KARIGAR_1Y";
-      } else if (input.includes("499") || (input.includes("Workshop") && input.includes("Month"))) {
-        plan = "TEAM_1M";
-      } else if (input.includes("1499") || (input.includes("Corporate") && input.includes("Month"))) {
-        plan = "CORP_1M";
-      } else if (input.includes("14999")) {
-        plan = "CORP_1Y";
-      } else if (input.includes("3999")) {
-        plan = "TEAM_1Y";
-      } else if (input.includes("99")) {
-        plan = "KARIGAR_1M";
-      }
-
-      // Check Customer Name if present
-      let custName = "Customer " + devId;
-      const nameMatch = input.match(/Name[:\s]*([^\n\r•]+)/i);
-      if (nameMatch) custName = nameMatch[1].trim();
-
-      // Check Mobile if present
-      let custPhone = "";
-      const phoneMatch = input.match(/(?:Mobile|Phone|Number)[:\s]*([0-9]{10})/i);
-      if (phoneMatch) custPhone = phoneMatch[1].trim();
-
-      const newReq = {
-        id: "REQ_" + devId,
-        device_id: devId,
-        name: custName,
-        shop: "Aluminium Workshop",
-        phone: custPhone || "WhatsApp User",
-        plan: plan,
-        plan_name: PLAN_NAMES[plan] || plan,
-        bill_amount: PLAN_RATES[plan] || 99,
-        paid_amount: PLAN_RATES[plan] || 99,
-        due_amount: 0,
-        status: "Pending",
-        date: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        timestamp: Date.now(),
-        utr: "Received on WhatsApp"
-      };
-
-      // Add to local storage
-      let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
-      reqs = reqs.filter(r => r.device_id !== devId);
-      reqs.unshift(newReq);
-      localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
-
-      // Sync to Firebase
-      try {
-        if (window.fbDb) {
-          fbDb.collection('recharge_requests').doc(devId).set(newReq, { merge: true }).catch(()=>{});
-        }
-        if (window.fbRtdb) {
-          fbRtdb.ref('recharge_requests/' + devId).set(newReq).catch(()=>{});
-        }
-      } catch(e){}
-
-      document.getElementById('waQuickInput').value = "";
-      renderSubscribers();
-      alert("✅ Request for Device ID " + devId + " (" + (PLAN_NAMES[plan] || plan) + ") successfully added to the queue!");
-    }
-
-    // Pre-populate initial default request (Customer 2E9D51B5 from user screenshot)
-    function checkDefaultRequests() {
-      let reqs = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
-      let active = JSON.parse(localStorage.getItem('sw_active_subscribers') || '[]');
-      const has2E9D = reqs.some(r => r.device_id === '2E9D51B5') || active.some(a => a.device_id === '2E9D51B5');
-      if (!has2E9D) {
-        reqs.unshift({
-          id: "REQ_2E9D51B5",
-          device_id: "2E9D51B5",
-          name: "Customer (Saheb Workshop)",
-          shop: "Aluminium Fabrication",
-          phone: "9641405426",
-          plan: "KARIGAR_1Y",
-          plan_name: "Karigar Plan (1 Year)",
-          bill_amount: 799,
-          paid_amount: 799,
-          due_amount: 0,
-          status: "Pending",
-          date: "Today " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-          timestamp: Date.now(),
-          utr: "WhatsApp Request"
-        });
-        localStorage.setItem('sw_recharge_requests', JSON.stringify(reqs));
-      }
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       autoFillPlanCost();
-      checkDefaultRequests();
+      renderPasswordResetQueue();
       renderSubscribers();
       initFirebaseLiveListener();
     });
   </script>
-
-  <!-- Notification Dispatch Modal -->
-  <div class="modal-overlay" id="notifModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
-    <div style="background:#0f172a; border:1.5px solid #38bdf8; border-radius:14px; max-width:480px; width:100%; box-shadow:0 12px 36px rgba(0,0,0,0.6); overflow:hidden;">
-      <div style="background:#1e293b; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155;">
-        <div style="display:flex; align-items:center; gap:8px; font-weight:800; color:#38bdf8; font-size:0.95rem;">
-          <i class="fa-solid fa-bell"></i> Send Customer Notification
-        </div>
-        <button type="button" onclick="closeNotifModal()" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
-      </div>
-      <div style="padding:14px 16px;">
-        <!-- Target Customer Info Banner -->
-        <div style="background:#1e1b4b; border:1px solid #6366f1; border-radius:8px; padding:10px; margin-bottom:12px; font-size:0.78rem;">
-          <div style="color:#fbbf24; font-weight:800; font-size:0.88rem;" id="notifTargetName">Customer Name</div>
-          <div style="color:#c7d2fe; margin-top:2px;">
-            <span>Mobile: <b id="notifTargetPhone">--</b></span> • 
-            <span>Device ID: <b id="notifTargetDevId" style="font-family:monospace; color:#38bdf8;">--</b></span>
-          </div>
-          <div style="color:#e0e7ff; margin-top:4px;" id="notifTargetValidity">Validity: --</div>
-        </div>
-
-        <!-- Notification Template Selector -->
-        <div style="margin-bottom:10px;">
-          <label style="font-size:0.75rem; font-weight:bold; color:#cbd5e1; display:block; margin-bottom:4px;">Notification Type / Template:</label>
-          <select id="notifTemplateSelect" onchange="applyNotifTemplate()" style="width:100%; padding:9px 10px; border-radius:7px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:0.82rem;">
-            <option value="KEY_ACTIVATION">🔑 Pro Key & Activation Instructions</option>
-            <option value="EXPIRY_REMINDER">⏳ Validity & Renewal Reminder (Days Left)</option>
-            <option value="APP_UPDATE">📢 App Update & New Fabrication Tools</option>
-            <option value="CUSTOM">💬 Custom Workshop Notice</option>
-          </select>
-        </div>
-
-        <!-- Notification Message Content -->
-        <div style="margin-bottom:14px;">
-          <label style="font-size:0.75rem; font-weight:bold; color:#cbd5e1; display:block; margin-bottom:4px;">Message Text (Editable):</label>
-          <textarea id="notifMessageText" rows="6" style="width:100%; padding:10px; border-radius:8px; background:#0b1329; border:1px solid #334155; color:#fff; font-size:0.82rem; line-height:1.45; resize:none; font-family:inherit;"></textarea>
-        </div>
-
-        <!-- Action Buttons -->
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-wa" onclick="sendNotifWhatsApp()" style="flex:1.2; padding:10px; font-size:0.82rem;">
-            <i class="fa-brands fa-whatsapp"></i> Send via WhatsApp
-          </button>
-          <button type="button" class="btn" onclick="sendNotifCloudPush()" style="flex:1; background:#6366f1; color:#fff; padding:10px; font-size:0.82rem;">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Push In-App
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </body>
 </html>
