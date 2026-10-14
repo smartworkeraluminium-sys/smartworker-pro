@@ -1017,30 +1017,7 @@ function switchAuthMode(mode) {
     }
   }
   if (!hasItems) return "";
-
-  // PRO FEATURE LOCK: Locked on Free Plan so fabricators subscribe to ₹99 Karigar Plan!
-  if (!isAppActivated()) {
-    if (typeof currentAppLang !== 'undefined' && currentAppLang === 'bn') {
-      return "🔒 প্রিমিয়াম সুবিধা: মেটেরিয়াল কেনাকাটার হিসাব ও কাটিং অপটিমাইজার\n" +
-             "=================================================================\n" +
-             "দোকান থেকে কত পিস অ্যালুমিনিয়াম বার কিনতে হবে এবং জিরো-ওয়েস্ট কাটিং প্ল্যান ফ্রি প্ল্যানে লক করা রয়েছে!\n\n" +
-             "ਕਾਰੀগর প্রো প্ল্যান (মাত্র ₹৯৯ / মাস) নিয়ে আনলক করুন:\n" +
-             " ✔ ডিলার থেকে কত পিস ১২ ফুট / ১৬ ফুট বার কিনতে হবে তার নিখুঁত হিসাব\n" +
-             " ✔ প্রতিটি বারের একুরেট কাটিং সাইজ ও জিরো মেটেরিয়াল অপচয় (১০-১৫% অ্যালুমিনিয়াম সাশ্রয়)\n" +
-             " ✔ মিস্ত্রি ও ডিলারের জন্য ৪টি আলাদা প্রফেশনাল কাটিং ও পারচেজ PDF ডাউনলোড\n\n" +
-             "👉 আনলক করতে এখানে ক্লিক করুন বা 'PRO UPGRADE' বাটনে যান (মাত্র ₹৯৯)!\n" +
-             "(সাপোর্ট ও অ্যাক্টিভেশন হোয়াটসঅ্যাপ: 9239413517)";
-    }
-    return "🔒 PRO EXCLUSIVE: MATERIAL PURCHASE & ZERO-WASTE CUTTING OPTIMIZER\n" +
-           "=================================================================\n" +
-           "Automated Bar Count & Stock Cutting Layout is locked on Free Plan!\n\n" +
-           "Subscribe to Karigar Pro (₹99 / Month) to unlock:\n" +
-           " ✔ Exact number of 12ft / 16ft Aluminium bars to buy from dealer\n" +
-           " ✔ Stick-by-stick cutting sequence with zero material wastage (Saves 10%-15%)\n" +
-           " ✔ 4 Professional Cutting & Procurement PDFs for dealers and karigars\n\n" +
-           "👉 Tap here or click 'PRO UPGRADE' to unlock for ₹99!\n" +
-           "(Support & Activation WhatsApp: 9239413517)";
-  }
+  if (!isAppActivated()) return "";
 
   let resText = `--- ACCUMULATED MATERIAL PURCHASE (AUTO-OPTIMIZED) ---\n\n`;
   for (const name in buckets) {
@@ -1074,9 +1051,12 @@ let keypadDisplay = "";
 
 function openKeypad(targetId) {
   keypadTarget = document.getElementById(targetId);
+  if (keypadTarget && keypadTarget.blur) keypadTarget.blur();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   keypadDisplay = keypadTarget ? (keypadTarget.value || "") : "";
   updateKeypadDisplay();
-  document.getElementById('keypadModal').classList.add('active');
+  const modal = document.getElementById('keypadModal');
+  if (modal) modal.classList.add('active');
 }
 
 function updateKeypadDisplay() {
@@ -1651,7 +1631,7 @@ function keypadEnter() {
   const loc = document.getElementById('dr_loc') ? document.getElementById('dr_loc').value.trim() : "";
   const loc_str = loc ? ` [${loc}]` : "";
   const qty_str = door_qty > 1 ? ` (Qty: ${door_qty} Doors)` : "";
-  const palla_str = palla_qty === 2 ? "Double Leaf (২ পাল্লা / দু পাল্লা ডোর)" : "Single Leaf (১ পাল্লা ডোর)";
+  const palla_str = palla_qty === 2 ? "Double Door" : "Single Door";
 
   let outer_v = h, outer_h = w - 3.0, has_outer = true, has_mid = false;
   let door_v = 0, door_tb = 0;
@@ -1719,8 +1699,8 @@ function keypadEnter() {
 
   if (has_outer) {
     out += `--- OUTER FRAME ---\n`;
-    out += `> Outer Vertical (খাড়া ফ্রেম): ${disp(outer_v)} (${2 * door_qty} pc)\n`;
-    out += `> Outer Top Horizontal (টপ ফ্রেম): ${disp(outer_h)} (${1 * door_qty} pc)\n`;
+    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)\n`;
+    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)\n`;
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
     }
@@ -1732,10 +1712,10 @@ function keypadEnter() {
 
   if (d_type === "Top Hung Door") {
     out += `\n--- DOOR SASH (${palla_str} - Single Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---\n`;
-    out += `> Door Vertical (খাড়া রড): ${disp(door_v)} (${total_verticals} pc)\n`;
-    out += `> Top Rail (টপ পাট্টা): ${disp(door_tb)} (${total_leaves} pc)\n`;
-    out += `> Bottom Rail (বটম পাট্টা): ${disp(door_tb)} (${total_leaves} pc)\n`;
-    out += `> Middle Section (মিডিল পাট্টা): ${disp(door_tb)} (${total_leaves} pc)\n`;
+    out += `> Door Vertical: ${disp(door_v)} (${total_verticals} pc)\n`;
+    out += `> Top Rail: ${disp(door_tb)} (${total_leaves} pc)\n`;
+    out += `> Bottom Rail: ${disp(door_tb)} (${total_leaves} pc)\n`;
+    out += `> Middle Section: ${disp(door_tb)} (${total_leaves} pc)\n`;
     out += `> Top Running Track: ${disp(w * (palla_qty === 2 ? 1.5 : 2.0))} (${1 * door_qty} pc)\n`;
 
     for (let q = 0; q < total_leaves; q++) {
@@ -1759,8 +1739,8 @@ function keypadEnter() {
 
   } else {
     out += `\n--- DOOR SASH (${palla_str} - Single Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---\n`;
-    out += `> Door Vertical (খাড়া রড): ${disp(door_v)} (${total_verticals} pc)\n`;
-    out += `> Door Top / Bottom (টপ ও বটম পাট্টা): ${disp(door_tb)} (${total_tb} pc)\n`;
+    out += `> Door Vertical: ${disp(door_v)} (${total_verticals} pc)\n`;
+    out += `> Door Top / Bottom: ${disp(door_tb)} (${total_tb} pc)\n`;
 
     for (let i = 0; i < total_verticals; i++) dr_buckets["Door Verticals"].push(door_v);
     for (let i = 0; i < total_tb; i++) dr_buckets["Door Horizontals"].push(door_tb);
@@ -2517,10 +2497,10 @@ function clearCustomSeries() {
  const name = parts[0].trim();
  const spec = parts.slice(1).join(':').trim();
 
- let angle = "90° সোজা (Straight)";
+ let angle = "90° Straight";
  if ((winTitle.includes("Domal") || winTitle.includes("Casement") || winTitle.includes("Door")) &&
 (name.includes("Outer") || name.includes("Frame") || name.includes("Sash") || name.includes("Z-Handle"))) {
- angle = "45° কোণ (Miter)";
+ angle = "45° Miter";
  }
 
  // Extract Cut Length vs Quantity
@@ -2553,7 +2533,7 @@ function clearCustomSeries() {
  // 5-Column Cutting Table
  doc.autoTable({
  startY: currentY,
- head: [['Check', 'Section / Profile Name', 'Cut Length (কাটার মাপ)', 'Qty', 'Cut Angle (কোণ)']],
+ head: [['Check', 'Section / Profile Name', 'Cut Length', 'Qty', 'Cut Angle']],
  body: profiles,
  theme: 'grid',
  headStyles: {
@@ -6572,6 +6552,7 @@ function setupDb() {
  sub_casement: "Z-Section & Openable Window",
  sub_partition: "Office Partition & Sheet Cuts",
  sub_door: "Hinged & Bathroom Door",
+ lbl_door_palla: "Door Option:",
  sub_ceiling: "False Ceiling Grid & Perimeter",
  sub_quotation: "Client GST Invoice & PDF Bill",
  sub_customer_khata: "Client Balance & Records",
@@ -6906,30 +6887,132 @@ function updateProfile() {
  }
 
  // ==========================================
- // PWA & APP INSTALLATION MANAGEMENT
+ // PWA & MANDATORY APP INSTALLATION GATE
  // ==========================================
  let deferredPrompt = null;
- window.addEventListener('beforeinstallprompt', (e) => {
- e.preventDefault();
- deferredPrompt = e;
- const installBox = document.getElementById('pwaInstallPrompt');
- if (installBox) installBox.style.display = 'flex';
+
+ function isPwaAppInstalled() {
+   try {
+     if (window.matchMedia && (window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches)) {
+       localStorage.setItem("sw_pwa_installed", "true");
+       return true;
+     }
+     if (window.navigator && window.navigator.standalone === true) {
+       localStorage.setItem("sw_pwa_installed", "true");
+       return true;
+     }
+     if (window.location.search && window.location.search.indexOf("source=pwa") !== -1) {
+       localStorage.setItem("sw_pwa_installed", "true");
+       return true;
+     }
+     if (localStorage.getItem("sw_pwa_installed") === "true") {
+       return true;
+     }
+   } catch (e) {}
+   return false;
+ }
+
+ function checkAndShowMandatoryInstallGate() {
+   var gate = document.getElementById("pwaInstallGateOverlay");
+   if (!gate) return;
+   if (isPwaAppInstalled()) {
+     gate.style.display = "none";
+   } else {
+     gate.style.display = "flex";
+   }
+ }
+
+ window.addEventListener("beforeinstallprompt", function(e) {
+   e.preventDefault();
+   deferredPrompt = e;
+   var installBox = document.getElementById("pwaInstallPrompt");
+   if (installBox) installBox.style.display = "flex";
+   checkAndShowMandatoryInstallGate();
  });
 
- function triggerPwaInstall() {
- if (deferredPrompt) {
- deferredPrompt.prompt();
- deferredPrompt.userChoice.then((choiceResult) => {
- if (choiceResult.outcome === 'accepted') {
- console.log('User installed Smart Worker Pro app');
- }
- deferredPrompt = null;
- const installBox = document.getElementById('pwaInstallPrompt');
- if (installBox) installBox.style.display = 'none';
+ window.addEventListener("appinstalled", function() {
+   try { localStorage.setItem("sw_pwa_installed", "true"); } catch (e) {}
+   deferredPrompt = null;
+   completeInstallGateAndLaunchApp();
  });
- } else {
- alert("মোবাইলে অ্যাপ হিসেবে সেভ করতে:\\n১. ব্রাউজারের ওপরে ৩টি ডটে (⋮) চাপ দিন।\\n২. 'Install app' অথবা 'Add to Home screen' (হোম স্ক্রিনে যোগ করুন) চাপুন!");
+
+ function completeInstallGateAndLaunchApp() {
+   try { localStorage.setItem("sw_pwa_installed", "true"); } catch (e) {}
+   var progBox = document.getElementById("pwaInstallProgressBox");
+   var bar = document.getElementById("pwaInstallProgressBar");
+   var pctTxt = document.getElementById("pwaInstallPercentText");
+   var stTxt = document.getElementById("pwaInstallStatusText");
+   var btn = document.getElementById("btnMandatoryInstall");
+
+   if (progBox) progBox.style.display = "block";
+   if (bar) bar.style.width = "100%";
+   if (pctTxt) pctTxt.textContent = "100%";
+   if (stTxt) stTxt.textContent = "Installation Complete! Launching App...";
+   if (btn) {
+     btn.style.background = "#0284c7";
+     btn.innerHTML = "<i class=\"fa-solid fa-circle-check\"></i> <span>INSTALLED • OPENING APP...</span>";
+   }
+
+   setTimeout(function() {
+     var gate = document.getElementById("pwaInstallGateOverlay");
+     if (gate) gate.style.display = "none";
+   }, 600);
  }
+
+ function runSimulatedPackageInstallAndUnlock() {
+   var progBox = document.getElementById("pwaInstallProgressBox");
+   var bar = document.getElementById("pwaInstallProgressBar");
+   var pctTxt = document.getElementById("pwaInstallPercentText");
+   var stTxt = document.getElementById("pwaInstallStatusText");
+   var btn = document.getElementById("btnMandatoryInstall");
+
+   if (progBox) progBox.style.display = "block";
+   if (btn) {
+     btn.disabled = true;
+     btn.style.opacity = "0.85";
+     btn.innerHTML = "<i class=\"fa-solid fa-spinner fa-spin\"></i> <span>INSTALLING APPLICATION...</span>";
+   }
+
+   var pct = 0;
+   var timer = setInterval(function() {
+     pct += 20;
+     if (pct > 100) pct = 100;
+     if (bar) bar.style.width = pct + "%";
+     if (pctTxt) pctTxt.textContent = pct + "%";
+     if (stTxt) {
+       if (pct < 50) stTxt.textContent = "Downloading App Modules...";
+       else if (pct < 90) stTxt.textContent = "Configuring Offline Database...";
+       else stTxt.textContent = "Finalizing Installation...";
+     }
+     if (pct >= 100) {
+       clearInterval(timer);
+       completeInstallGateAndLaunchApp();
+     }
+   }, 280);
+ }
+
+ function handleMandatoryPwaInstall() {
+   if (deferredPrompt) {
+     deferredPrompt.prompt();
+     deferredPrompt.userChoice.then(function(choiceResult) {
+       deferredPrompt = null;
+       if (choiceResult.outcome === "accepted") {
+         runSimulatedPackageInstallAndUnlock();
+       } else {
+         var hint = document.getElementById("pwaInstallFooterHint");
+         if (hint) {
+           hint.style.color = "#fbbf24";
+           hint.innerHTML = "<b>Installation Required:</b> Please tap <b>INSTALL APP NOW</b> and accept the prompt to start using Smart Worker Pro.";
+         }
+       }
+     });
+   } else {
+     runSimulatedPackageInstallAndUnlock();
+   }
+ }
+
+ function triggerPwaInstall() {
+   handleMandatoryPwaInstall();
  }
 
  if ('serviceWorker' in navigator) {
@@ -7099,6 +7182,9 @@ setInterval(() => {
 
 
 function bootApp() {
+  // 0. Enforce Mandatory App Install Gate when link is clicked
+  try { checkAndShowMandatoryInstallGate(); } catch(e){}
+
   // 1. Check Authentication Status (New visitors get Login/Register screen; no leaked workshop details)
   const savedUser = localStorage.getItem('sw_cloud_user');
   const isGuest = localStorage.getItem('sw_guest_mode');

@@ -255,8 +255,8 @@ body, button, input, select, textarea {
  }
  input:focus, select:focus, textarea:focus { border-color: #2563eb; }
  .keypad-trigger {
- position: absolute; right: 4px; background: #f1f5f9; border: none;
- padding: 5px 7px; border-radius: 6px; cursor: pointer; color: #475569; font-size: 0.75rem;
+ position: absolute; right: 4px; background: #eff6ff; border: 1px solid #bfdbfe;
+ padding: 5px 8px; border-radius: 6px; cursor: pointer; color: #1d4ed8; font-size: 0.82rem; font-weight: 700;
  }
 
  /* Buttons */

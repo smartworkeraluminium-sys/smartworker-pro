@@ -38,11 +38,79 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=11">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
 </head>
 <body>
+
+  <!-- ================= MANDATORY APP INSTALL GATE OVERLAY ================= -->
+  <div id="pwaInstallGateOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; background:linear-gradient(145deg, #090d16 0%, #0f172a 50%, #1e3a8a 100%); color:#fff; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; overflow-y:auto;">
+    <div style="background:rgba(15, 23, 42, 0.92); border:1.5px solid rgba(56, 189, 248, 0.35); border-radius:24px; padding:28px 22px; max-width:390px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.65);">
+      
+      <!-- App Icon & Verified Badge -->
+      <div style="position:relative; display:inline-block; margin-bottom:14px;">
+        <img src="logo.png?v=11" alt="Smart Worker Pro" onerror="this.style.display='none';" style="width:88px; height:88px; border-radius:22px; background:#fff; padding:6px; box-shadow:0 8px 24px rgba(2, 132, 199, 0.45);">
+        <div style="position:absolute; bottom:-4px; right:-4px; background:#16a34a; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; border:2.5px solid #0f172a;">
+          <i class="fa-solid fa-check"></i>
+        </div>
+      </div>
+
+      <div style="font-size:1.35rem; font-weight:800; color:#fff; letter-spacing:0.4px; margin-bottom:4px;">
+        SMART WORKER PRO
+      </div>
+      <div style="font-size:0.8rem; color:#38bdf8; font-weight:700; margin-bottom:14px;">
+        Official Aluminium &amp; UPVC Fabrication App
+      </div>
+
+      <!-- App Store Style Stats Row -->
+      <div style="display:flex; justify-content:space-around; align-items:center; background:#1e293b; border:1px solid #334155; border-radius:14px; padding:10px 8px; margin-bottom:18px; font-size:0.75rem;">
+        <div>
+          <div style="font-weight:800; color:#fbbf24;">4.9 ★</div>
+          <div style="color:#94a3b8; font-size:0.65rem;">Verified</div>
+        </div>
+        <div style="width:1px; height:24px; background:#334155;"></div>
+        <div>
+          <div style="font-weight:800; color:#4ade80;">100%</div>
+          <div style="color:#94a3b8; font-size:0.65rem;">Offline Ready</div>
+        </div>
+        <div style="width:1px; height:24px; background:#334155;"></div>
+        <div>
+          <div style="font-weight:800; color:#38bdf8;">Fast</div>
+          <div style="color:#94a3b8; font-size:0.65rem;">Mobile App</div>
+        </div>
+      </div>
+
+      <!-- Features Checklist -->
+      <div style="text-align:left; background:rgba(30, 41, 59, 0.6); border:1px solid #334155; border-radius:14px; padding:12px 14px; margin-bottom:18px; font-size:0.78rem; color:#e2e8f0; line-height:1.65;">
+        <div><i class="fa-solid fa-circle-check" style="color:#4ade80; margin-right:6px;"></i> Domal, Sliding, Casement &amp; Door Calculator</div>
+        <div><i class="fa-solid fa-circle-check" style="color:#4ade80; margin-right:6px;"></i> Smart Dimension Fraction Keypad</div>
+        <div><i class="fa-solid fa-circle-check" style="color:#4ade80; margin-right:6px;"></i> Digital Site Khata &amp; Client PDF Billing</div>
+      </div>
+
+      <!-- Install Progress Box (Shown during installation) -->
+      <div id="pwaInstallProgressBox" style="display:none; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.76rem; font-weight:700; color:#93c5fd; margin-bottom:6px;">
+          <span id="pwaInstallStatusText">Installing Smart Worker Pro...</span>
+          <span id="pwaInstallPercentText">0%</span>
+        </div>
+        <div style="background:#1e293b; height:10px; border-radius:6px; overflow:hidden; border:1px solid #334155;">
+          <div id="pwaInstallProgressBar" style="background:linear-gradient(90deg, #16a34a, #4ade80); width:0%; height:100%; transition:width 0.25s ease;"></div>
+        </div>
+      </div>
+
+      <!-- Primary Install Action Button -->
+      <button type="button" id="btnMandatoryInstall" onclick="handleMandatoryPwaInstall()" style="width:100%; background:linear-gradient(135deg, #16a34a, #15803d); color:#fff; border:none; border-radius:14px; padding:15px 18px; font-size:1.02rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 22px rgba(22, 163, 74, 0.45); letter-spacing:0.3px;">
+        <i class="fa-solid fa-download" style="font-size:1.15rem;"></i>
+        <span>INSTALL APP NOW</span>
+      </button>
+
+      <div id="pwaInstallFooterHint" style="font-size:0.7rem; color:#94a3b8; margin-top:12px; line-height:1.4;">
+        Please install the application on your device first to unlock and launch all fabrication tools.
+      </div>
+    </div>
+  </div>
+
 
  <!-- Top App Bar -->
  <!-- Top App Bar (Clean Minimalist Google Style) -->
@@ -359,13 +427,13 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'dm_h\')" style="cursor:pointer; background:#fff;" type="text" id="dm_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('dm_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dm_h')" onfocus="this.blur(); openKeypad('dm_h');" style="cursor:pointer; background:#fff;" type="text" id="dm_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('dm_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Width:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'dm_w\')" style="cursor:pointer; background:#fff;" type="text" id="dm_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('dm_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dm_w')" onfocus="this.blur(); openKeypad('dm_w');" style="cursor:pointer; background:#fff;" type="text" id="dm_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('dm_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -410,11 +478,7 @@
 
  <div class="output-label">CUTTING SIZES:</div>
  <div class="output-area" id="dm_alu_out"></div>
- <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
- <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
- <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
- </div>
- <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="dm_mat_out"></div>
+ <div id="dm_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 3. SLIDING WINDOW SCREEN ================= -->
@@ -451,13 +515,13 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'sl_h\')" style="cursor:pointer; background:#fff;" type="text" id="sl_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sl_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sl_h')" onfocus="this.blur(); openKeypad('sl_h');" style="cursor:pointer; background:#fff;" type="text" id="sl_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sl_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Width:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'sl_w\')" style="cursor:pointer; background:#fff;" type="text" id="sl_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sl_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sl_w')" onfocus="this.blur(); openKeypad('sl_w');" style="cursor:pointer; background:#fff;" type="text" id="sl_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('sl_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -502,11 +566,7 @@
 
  <div class="output-label" style="color:#cc661a;">CUTTING SIZES:</div>
  <div class="output-area" id="sl_out"></div>
- <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
- <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
- <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
- </div>
- <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="sl_mat_out"></div>
+ <div id="sl_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 4. CUSTOM CASEMENT SCREEN ================= -->
@@ -530,25 +590,25 @@
  <div class="form-group">
  <label>Total Height (H):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'cc_h\')" style="cursor:pointer; background:#fff;" type="text" id="cc_h"> <button class="keypad-trigger" onclick="openKeypad('cc_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_h')" onfocus="this.blur(); openKeypad('cc_h');" style="cursor:pointer; background:#fff;" type="text" id="cc_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Width (W):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'cc_w\')" style="cursor:pointer; background:#fff;" type="text" id="cc_w"> <button class="keypad-trigger" onclick="openKeypad('cc_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_w')" onfocus="this.blur(); openKeypad('cc_w');" style="cursor:pointer; background:#fff;" type="text" id="cc_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Bottom Part Height:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'cc_bot_h\')" style="cursor:pointer; background:#fff;" type="text" id="cc_bot_h" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_bot_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_bot_h')" onfocus="this.blur(); openKeypad('cc_bot_h');" style="cursor:pointer; background:#fff;" type="text" id="cc_bot_h" value="0"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_bot_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Clear Gap for 1 Leaf:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'cc_mid_w\')" style="cursor:pointer; background:#fff;" type="text" id="cc_mid_w" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_mid_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_mid_w')" onfocus="this.blur(); openKeypad('cc_mid_w');" style="cursor:pointer; background:#fff;" type="text" id="cc_mid_w" value="0"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_mid_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -601,11 +661,7 @@
 
  <div class="output-label" style="color:#cc3366;">CUTTING SIZES:</div>
  <div class="output-area" id="cc_out"></div>
- <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
- <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
- <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
- </div>
- <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="cc_mat_out"></div>
+ <div id="cc_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 5. DOOR OPTION SCREEN ================= -->
@@ -629,10 +685,10 @@
  </select>
  </div>
  <div class="form-group">
- <label><span data-i18n="lbl_door_palla">Door Shutter / Palla:</span></label>
+ <label><span data-i18n="lbl_door_palla">Door Option:</span></label>
  <select id="dr_palla" style="font-weight:700; color:#1e3a8a;">
- <option value="2" selected>Double Leaf (২ পাল্লা / দু পাল্লা ডোর)</option>
- <option value="1">Single Leaf (১ পাল্লা ডোর)</option>
+ <option value="2" selected>Double Door</option>
+ <option value="1">Single Door</option>
  </select>
  </div>
  <div class="form-group">
@@ -642,13 +698,13 @@
  <div class="form-group">
  <label>Total Height (H):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'dr_h\')" style="cursor:pointer; background:#fff;" type="text" id="dr_h"> <button class="keypad-trigger" onclick="openKeypad('dr_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dr_h')" onfocus="this.blur(); openKeypad('dr_h');" style="cursor:pointer; background:#fff;" type="text" id="dr_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('dr_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Width (W):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'dr_w\')" style="cursor:pointer; background:#fff;" type="text" id="dr_w"> <button class="keypad-trigger" onclick="openKeypad('dr_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dr_w')" onfocus="this.blur(); openKeypad('dr_w');" style="cursor:pointer; background:#fff;" type="text" id="dr_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('dr_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group" style="grid-column: 1 / -1;">
@@ -689,11 +745,7 @@
 
  <div class="output-label" style="color:#b34d1a;">CUTTING SIZES:</div>
  <div class="output-area" id="dr_out"></div>
- <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
- <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
- <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
- </div>
- <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="dr_mat_out"></div>
+ <div id="dr_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
@@ -717,25 +769,25 @@
  <div class="form-group">
  <label>Total Wall Height (H):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'pt_h\')" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button class="keypad-trigger" onclick="openKeypad('pt_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_h')" onfocus="this.blur(); openKeypad('pt_h');" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Wall Width (W):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'pt_w\')" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button class="keypad-trigger" onclick="openKeypad('pt_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_w')" onfocus="this.blur(); openKeypad('pt_w');" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Door Height (Optional):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'pt_dh\')" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button class="keypad-trigger" onclick="openKeypad('pt_dh')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_dh')" onfocus="this.blur(); openKeypad('pt_dh');" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dh')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Door Width (Optional):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'pt_dw\')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button class="keypad-trigger" onclick="openKeypad('pt_dw')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_dw')" onfocus="this.blur(); openKeypad('pt_dw');" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dw')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
   <div class="form-group">
@@ -789,11 +841,7 @@
 
  <div class="output-label" style="color:#e64d4d;">CUTTING SIZES:</div>
  <div class="output-area" id="pt_out"></div>
- <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
- <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
- <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
- </div>
- <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="pt_mat_out"></div>
+ <div id="pt_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 7. CEILING ESTIMATOR SCREEN ================= -->
@@ -810,13 +858,13 @@
  <div class="form-group">
  <label>Room Length (Ft):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'ce_l\')" style="cursor:pointer; background:#fff;" type="text" id="ce_l"> <button class="keypad-trigger" onclick="openKeypad('ce_l')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('ce_l')" onfocus="this.blur(); openKeypad('ce_l');" style="cursor:pointer; background:#fff;" type="text" id="ce_l"> <button type="button" class="keypad-trigger" onclick="openKeypad('ce_l')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Room Width (Ft):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'ce_w\')" style="cursor:pointer; background:#fff;" type="text" id="ce_w"> <button class="keypad-trigger" onclick="openKeypad('ce_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('ce_w')" onfocus="this.blur(); openKeypad('ce_w');" style="cursor:pointer; background:#fff;" type="text" id="ce_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('ce_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  </div>
@@ -1016,7 +1064,7 @@
  <div class="form-group">
  <label style="color:#2e7d32; font-weight:bold;">Rate (Rs/Sq.Ft):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'q_rate\')" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button class="keypad-trigger" onclick="openKeypad('q_rate')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_rate')" onfocus="this.blur(); openKeypad('q_rate');" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_rate')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
 
@@ -1028,14 +1076,14 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'q_h\')" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button class="keypad-trigger" onclick="openKeypad('q_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_h')" onfocus="this.blur(); openKeypad('q_h');" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
 
  <div class="form-group" style="grid-column: span 2;">
  <label>Width:</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'q_w\')" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button class="keypad-trigger" onclick="openKeypad('q_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_w')" onfocus="this.blur(); openKeypad('q_w');" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  </div>
@@ -1051,7 +1099,7 @@
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
  <label style="font-size:0.8rem; font-weight:bold; color:#993399; width:35%;">Advance (Rs):</label>
  <div class="input-wrapper" style="width:42%;">
- <input onclick="openKeypad(\'q_advance\')" style="cursor:pointer; background:#fff;" type="text" id="q_advance" value="0" oninput="updateLiveDue()"> <button class="keypad-trigger" onclick="openKeypad('q_advance')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_advance')" onfocus="this.blur(); openKeypad('q_advance');" style="cursor:pointer; background:#fff;" type="text" id="q_advance" value="0" oninput="updateLiveDue()"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_advance')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  <button style="width:23%; background:#0284c7; color:#fff; font-size:0.75rem; font-weight:bold; border:none; padding:8px 0; border-radius:6px; cursor:pointer;" onclick="set50PercentAdvance()">50% Auto</button>
  </div>
@@ -1064,7 +1112,7 @@
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
  <label style="font-size:0.8rem; font-weight:bold; color:#e65100; width:40%;">Transport/Labor (Rs):</label>
  <div class="input-wrapper" style="width:60%;">
- <input onclick="openKeypad(\'q_extra_charge\')" style="cursor:pointer; background:#fff;" type="text" id="q_extra_charge" value="0"> <button class="keypad-trigger" onclick="openKeypad('q_extra_charge')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_extra_charge')" onfocus="this.blur(); openKeypad('q_extra_charge');" style="cursor:pointer; background:#fff;" type="text" id="q_extra_charge" value="0"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_extra_charge')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
 
@@ -1477,14 +1525,14 @@
         <div class="form-col">
           <label><span data-i18n="lbl_height">Height:</span></label>
           <div class="input-with-action">
-            <input type="text" id="cs_h" placeholder="Height e.g. 48 or 48 1/2">
+            <input readonly inputmode="none" onclick="openKeypad('cs_h')" onfocus="this.blur(); openKeypad('cs_h');" style="cursor:pointer; background:#fff;" type="text" id="cs_h" placeholder="Height e.g. 48 or 48 1/2">
             <button type="button" class="field-btn" onclick="openKeypad('cs_h')"><i class="fa-solid fa-keyboard"></i></button>
           </div>
         </div>
         <div class="form-col">
           <label><span data-i18n="lbl_width">Width:</span></label>
           <div class="input-with-action">
-            <input type="text" id="cs_w" placeholder="Width e.g. 60 or 60 3/4">
+            <input readonly inputmode="none" onclick="openKeypad('cs_w')" onfocus="this.blur(); openKeypad('cs_w');" style="cursor:pointer; background:#fff;" type="text" id="cs_w" placeholder="Width e.g. 60 or 60 3/4">
             <button type="button" class="field-btn" onclick="openKeypad('cs_w')"><i class="fa-solid fa-keyboard"></i></button>
           </div>
         </div>
@@ -1533,11 +1581,7 @@
 
       <div class="output-label"><span data-i18n="lbl_cutting_sizes">CUTTING SIZES:</span></div>
       <div class="output-area" id="cs_out"></div>
-      <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
-        <span><span data-i18n="lbl_mat_purchase">MATERIAL PURCHASE & CUTTING OPTIMIZER:</span></span>
-        <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
-      </div>
-      <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="cs_mat_out"></div>
+      <div id="cs_mat_out" style="display:none;"></div>
     </div>
   </div>
 
@@ -1547,7 +1591,7 @@
     <div style="display:flex; gap:8px; margin-bottom:8px;">
       <div style="flex:1; position:relative;">
         <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:11px; color:#94a3b8; font-size:0.85rem;"></i>
-        <input type="text" id="khataSearchInput" placeholder="কাস্টমারের নাম, ফোন বা সাইট খুঁজুন..." oninput="handleKhataSearch(this.value)" style="width:100%; padding:8px 10px 8px 32px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="khataSearchInput" placeholder="Search customer name, phone or site..." oninput="handleKhataSearch(this.value)" style="width:100%; padding:8px 10px 8px 32px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <button type="button" onclick="openAddCustomerModal()" style="background:linear-gradient(135deg, #0284c7, #0369a1); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 2px 6px rgba(2,132,199,0.3);">
         <i class="fa-solid fa-user-plus"></i> + Add Customer
@@ -1587,15 +1631,15 @@
     <form onsubmit="handleSaveNewCustomer(event)">
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Customer Full Name *</label>
-        <input type="text" id="new_cust_name" required placeholder="যেমন: অমিতাভ বাবু" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="new_cust_name" required placeholder="e.g. Amitava Babu" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Mobile Number *</label>
-        <input type="tel" id="new_cust_phone" required placeholder="১০ সংখ্যার মোবাইল নম্বর" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="tel" id="new_cust_phone" required placeholder="10-digit mobile number" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Site / Project Location</label>
-        <input type="text" id="new_cust_site" placeholder="যেমন: আমতা চাঁদনী, ২য় তলা বাড়ি" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="new_cust_site" placeholder="e.g. Amta Chandni, 2nd Floor" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <div style="margin-bottom:14px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Previous Due Balance (Optional)</label>
@@ -1675,7 +1719,7 @@
     <form onsubmit="handleSavePayment(event)">
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Payment Amount (Rs) *</label>
-        <input type="number" id="pay_amount" required placeholder="যেমন: 5000" style="width:100%; padding:8px 10px; border:1.5px solid #16a34a; border-radius:8px; font-size:1rem; font-weight:800; color:#16a34a; outline:none;">
+        <input type="number" id="pay_amount" required placeholder="e.g. 5000" style="width:100%; padding:8px 10px; border:1.5px solid #16a34a; border-radius:8px; font-size:1rem; font-weight:800; color:#16a34a; outline:none;">
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Payment Method</label>
@@ -1692,7 +1736,7 @@
       </div>
       <div style="margin-bottom:14px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Note / Description</label>
-        <input type="text" id="pay_note" placeholder="যেমন: ডমাল উইন্ডো কাজের অ্যাডভান্স" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="pay_note" placeholder="e.g. Domal window work advance" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
 
       <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -1779,13 +1823,13 @@
  <div class="form-group">
  <label>Height (Inches):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'sk_h\')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sk_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sk_h')" onfocus="this.blur(); openKeypad('sk_h');" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Width (Inches):</label>
  <div class="input-wrapper">
- <input onclick="openKeypad(\'sk_w\')" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sk_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sk_w')" onfocus="this.blur(); openKeypad('sk_w');" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -2138,7 +2182,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js"></script>
+  <script src="app.js?v=11"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {

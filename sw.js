@@ -1,5 +1,5 @@
-// Smart Worker Pro - Offline-First Service Worker
-const CACHE_NAME = 'smart-worker-pro-v3';
+// Smart Worker Pro - Network-First Offline-Ready Service Worker
+const CACHE_NAME = 'smart-worker-pro-v11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,7 +36,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // External APIs or Firebase: Network first, never fail offline
+  // External APIs or Firebase: Network first, fallback to offline JSON
   if (url.origin.includes('firebase') || url.origin.includes('googleapis') || url.origin.includes('gstatic') || url.origin.includes('firestore')) {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -48,27 +48,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Local assets: Cache-First with background revalidation
+  // Local assets: Network-First (always fresh when online, 100% available offline)
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Background cache revalidation
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-          }
-        }).catch(() => {});
-        return cachedResponse;
+    fetch(event.request).then((networkResponse) => {
+      if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+        const resClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
       }
-
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-          const resClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Fallback for navigation requests
+      return networkResponse;
+    }).catch(() => {
+      return caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
