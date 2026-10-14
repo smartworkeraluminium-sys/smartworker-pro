@@ -961,6 +961,99 @@ function switchAuthMode(mode) {
 }
 
 // ========================================================
+// 2B. SMART DIMENSION CALCULATOR KEYPAD (NUMBERS + 16 FRACTIONS)
+// ========================================================
+let keypadTarget = null;
+let keypadDisplay = "";
+
+function openKeypad(targetId) {
+  keypadTarget = document.getElementById(targetId);
+  if (keypadTarget && keypadTarget.blur) {
+    try { keypadTarget.blur(); } catch (e) {}
+  }
+  keypadDisplay = keypadTarget ? String(keypadTarget.value || "") : "";
+  updateKeypadDisplay();
+  var modal = document.getElementById("keypadModal");
+  if (modal) {
+    modal.classList.add("active");
+    modal.style.display = "flex";
+  }
+}
+
+function closeKeypadModal() {
+  var modal = document.getElementById("keypadModal");
+  if (modal) {
+    modal.classList.remove("active");
+    modal.style.display = "none";
+  }
+}
+
+function updateKeypadDisplay() {
+  var dispEl = document.getElementById("kDisplay");
+  if (dispEl) dispEl.textContent = keypadDisplay || "0";
+}
+
+function keypadAddDigit(d) {
+  if (keypadDisplay === "0" && d !== ".") {
+    keypadDisplay = String(d);
+  } else {
+    keypadDisplay += String(d);
+  }
+  updateKeypadDisplay();
+}
+
+function keypadAddOp(op) {
+  if (!keypadDisplay) return;
+  if (/[+\-*/\s]$/.test(keypadDisplay)) {
+    keypadDisplay = keypadDisplay.trim().slice(0, -1) + " " + op + " ";
+  } else {
+    keypadDisplay += " " + op + " ";
+  }
+  updateKeypadDisplay();
+}
+
+function keypadAddFraction(frac) {
+  if (!keypadDisplay || keypadDisplay === "0") {
+    keypadDisplay = frac;
+    updateKeypadDisplay();
+    return;
+  }
+  if (/\d+\/\d+$/.test(keypadDisplay)) {
+    keypadDisplay = keypadDisplay.replace(/\d+\/\d+$/, frac);
+  } else if (/\d+$/.test(keypadDisplay)) {
+    keypadDisplay += " " + frac;
+  } else {
+    keypadDisplay += frac;
+  }
+  updateKeypadDisplay();
+}
+
+function keypadClear() {
+  keypadDisplay = "";
+  updateKeypadDisplay();
+}
+
+function keypadBackspace() {
+  if (!keypadDisplay) return;
+  if (/\s+\d+\/\d+$/.test(keypadDisplay)) {
+    keypadDisplay = keypadDisplay.replace(/\s+\d+\/\d+$/, "");
+  } else {
+    keypadDisplay = keypadDisplay.replace(/\s+$/, "");
+    keypadDisplay = keypadDisplay.slice(0, -1);
+  }
+  updateKeypadDisplay();
+}
+
+function keypadEnter() {
+  if (keypadTarget) {
+    keypadTarget.value = keypadDisplay;
+    if (typeof keypadTarget.oninput === "function") keypadTarget.oninput();
+    if (typeof keypadTarget.onchange === "function") keypadTarget.onchange();
+  }
+  closeKeypadModal();
+}
+
+// ========================================================
  // 3. DOMAL WINDOW MODULE
  // ========================================================
  let dm_window_count = 0;
