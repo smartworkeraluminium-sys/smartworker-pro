@@ -29,96 +29,44 @@ function safeGlassSlabCap(dim) {
 // UNIVERSAL PROFESSIONAL PDF HEADER WITH CUSTOM WORKSHOP LOGO
 // ========================================================
 function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
-  themeColor = themeColor || [74, 20, 140];
+  themeColor = themeColor || [25, 42, 74];
+  var pageW = (doc.internal && doc.internal.pageSize && doc.internal.pageSize.getWidth) ? doc.internal.pageSize.getWidth() : 297;
   var profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
   var shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
-  var contact = profile.phone || "9239413517 / 9641405426";
-  var addr = profile.address || "Amta, Howrah, West Bengal";
+  var contact = profile.phone || "9239413517";
+  var addr = profile.address || "Amta, Howrah";
   var customLogo = localStorage.getItem('sw_custom_logo');
 
-  // 1. Draw top banner
   doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
-  doc.rect(0, 0, 210, 36, 'F');
+  doc.rect(0, 0, pageW, 30, 'F');
 
   var textStartX = 14;
   if (customLogo) {
     try {
-      // Draw white rounded card behind logo so it always pops cleanly
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(12, 4, 28, 28, 3, 3, 'F');
-
+      doc.roundedRect(12, 3, 24, 24, 2.5, 2.5, 'F');
       var fmt = customLogo.indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
-      doc.addImage(customLogo, fmt, 13, 5, 26, 26);
-      textStartX = 45; // Shift text right so logo and text NEVER overlap!
+      doc.addImage(customLogo, fmt, 13, 4, 22, 22);
+      textStartX = 41;
     } catch(e) {
-      try {
-        doc.addImage(customLogo, 13, 5, 26, 26);
-        textStartX = 45;
-      } catch(err) {
-        textStartX = 14;
-      }
+      textStartX = 14;
     }
   }
 
-  // Shop Name
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(255, 255, 255);
-  doc.text(shop_name, textStartX, 14);
+  doc.setFontSize(14);
+  doc.setTextColor(251, 191, 36);
+  doc.text(shop_name, textStartX, 11);
 
-  // Address and Contact
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(226, 232, 240);
-  doc.text(addr + " | Contact: " + contact, textStartX, 21);
+  doc.text(addr + " | Contact: " + contact, textStartX, 17);
 
-  // Document Title / Subtitle
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(254, 240, 138); // Warm gold accent
-  doc.text(title.toUpperCase(), textStartX, 28);
-  if (subtitle) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(203, 213, 225);
-    doc.text(subtitle, textStartX, 33);
-  }
-}
-
-
-// Universal Clipboard Copy with Fallback for Older Android WebViews
-function universalCopyText(text, successMsg) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function() {
-      alert(successMsg || "সফলভাবে কপি হয়েছে: " + text);
-    }).catch(function() {
-      execCommandFallbackCopy(text, successMsg);
-    });
-  } else {
-    execCommandFallbackCopy(text, successMsg);
-  }
-}
-
-function execCommandFallbackCopy(text, successMsg) {
-  try {
-    var ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.top = "-9999px";
-    ta.style.left = "-9999px";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    var ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    if (ok) {
-      alert(successMsg || "সফলভাবে কপি হয়েছে: " + text);
-    } else {
-      prompt("কপি করতে নিচের কোডটি সিলেক্ট করুন:", text);
-    }
-  } catch(e) {
-    prompt("কপি করতে নিচের কোডটি সিলেক্ট করুন:", text);
-  }
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text(String(title || "").toUpperCase(), textStartX, 24);
 }
 
 // =========================================================================
@@ -1009,183 +957,8 @@ function switchAuthMode(mode) {
  }
 
  function generateMaterialList(buckets) {
-  let hasItems = false;
-  for (const name in buckets) {
-    if (buckets[name] && buckets[name].length > 0) {
-      hasItems = true;
-      break;
-    }
-  }
-  if (!hasItems) return "";
-  if (!isAppActivated()) return "";
-
-  let resText = `--- ACCUMULATED MATERIAL PURCHASE (AUTO-OPTIMIZED) ---\n\n`;
-  for (const name in buckets) {
-    const pieces = buckets[name];
-    if (pieces && pieces.length > 0) {
-      const isDomal = name.includes('Domal');
-      const plan = isDomal ? optimizeCuttingPlan(pieces, [144]) : optimizeCuttingPlan(pieces);
-      resText += `[${name}]\n`;
-      if (plan.oversize) {
-        resText += `> SPECIAL ORDER (Oversized)\n`;
-        pieces.forEach(p => { resText += ` > Piece: ${toFractionInch(p)}\n`; });
-      } else {
-        const ft = Math.floor(plan.len / 12);
-        resText += `> Buy: ${plan.bins.length} pcs (${ft} ft)\n`;
-        plan.bins.forEach((b, i) => {
-          const cutsStr = formatCuts(b);
-          const sumB = b.reduce((a, c) => a + c, 0);
-          const waste = Math.round((plan.len - sumB) * 100) / 100;
-          resText += ` > Stick #${i + 1}: Cut [ ${cutsStr} ] -> Waste: ${waste}"\n`;
-        });
-      }
-      resText += `\n`;
-    }
-  }
-  return resText;
+  return "";
 }
-
- // Keypad Logic (Two-Column: Numbers + Fractions)
-let keypadTarget = null;
-let keypadDisplay = "";
-
-function openKeypad(targetId) {
-  keypadTarget = document.getElementById(targetId);
-  if (keypadTarget && keypadTarget.blur) keypadTarget.blur();
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  keypadDisplay = keypadTarget ? (keypadTarget.value || "") : "";
-  updateKeypadDisplay();
-  const modal = document.getElementById('keypadModal');
-  if (modal) modal.classList.add('active');
-}
-
-function updateKeypadDisplay() {
-  document.getElementById('kDisplay').textContent = keypadDisplay || "0";
-}
-
-function keypadAddDigit(d) {
-  if (keypadDisplay === "0" && d !== ".") {
-    keypadDisplay = d;
-  } else {
-    keypadDisplay += d;
-  }
-  updateKeypadDisplay();
-}
-
-function keypadAddOp(op) {
-  if (!keypadDisplay) return;
-  if (/[+\-*/\s]$/.test(keypadDisplay)) {
-    keypadDisplay = keypadDisplay.trimEnd().slice(0, -1) + " " + op + " ";
-  } else {
-    keypadDisplay += " " + op + " ";
-  }
-  updateKeypadDisplay();
-}
-
-function keypadAddFraction(frac) {
-  if (!keypadDisplay || keypadDisplay === "0") {
-    keypadDisplay = frac;
-    updateKeypadDisplay();
-    return;
-  }
-  // If ends with a fraction, replace it
-  if (/\d+\/\d+$/.test(keypadDisplay)) {
-    keypadDisplay = keypadDisplay.replace(/\d+\/\d+$/, frac);
-  } else if (/\d+$/.test(keypadDisplay)) {
-    // If ends with whole number, add space and fraction
-    keypadDisplay += " " + frac;
-  } else {
-    keypadDisplay += frac;
-  }
-  updateKeypadDisplay();
-}
-
-function keypadClear() {
-  keypadDisplay = "";
-  updateKeypadDisplay();
-}
-
-function keypadBackspace() {
-  if (!keypadDisplay) return;
-  if (/\s+\d+\/\d+$/.test(keypadDisplay)) {
-    keypadDisplay = keypadDisplay.replace(/\s+\d+\/\d+$/, "");
-  } else {
-    keypadDisplay = keypadDisplay.trimEnd();
-    keypadDisplay = keypadDisplay.slice(0, -1);
-  }
-  updateKeypadDisplay();
-}
-
-function keypadEnter() {
-  if (keypadTarget) {
-    keypadTarget.value = keypadDisplay;
-    if (keypadTarget.oninput) keypadTarget.oninput();
-    if (keypadTarget.onchange) keypadTarget.onchange();
-  }
-  document.getElementById('keypadModal').classList.remove('active');
-}
-
- // Screen Nav
- function openScreen(screenName, title) {
- document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
- const target = document.getElementById(`screen-${screenName}`);
- if (target) target.classList.add('active');
- if (screenName === 'customer_lookup') {
-   if (typeof renderCustomerKhataScreen === 'function') renderCustomerKhataScreen();
- }
- if (screenName === 'custom_series') {
-   if (typeof renderCustomSeriesDropdown === 'function') renderCustomSeriesDropdown();
- }
-
- const topBack = document.getElementById('topBackBtn');
- const rightActions = document.getElementById('topBarRightActions');
- const bNav = document.querySelector('.bottom-nav');
-
- if (screenName === 'auth') {
-   const titleElem = document.getElementById('screenTitle');
-   if (titleElem) titleElem.innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px;">SMART WORKER PRO</span>`;
-   if (topBack) topBack.style.display = 'none';
-   if (rightActions) rightActions.style.display = 'none';
-   if (bNav) bNav.style.display = 'none';
-   window.scrollTo({ top: 0, behavior: 'smooth' });
-   return;
- }
-
- if (bNav) bNav.style.display = 'flex';
- // Perfectly Centered Screen Title
- const titleElem = document.getElementById('screenTitle');
- if (titleElem) titleElem.innerHTML = `<span style="font-size:1.02rem; font-weight:800; color:#fbbf24; letter-spacing:0.4px; white-space:nowrap; text-align:center;">${title}</span>`;
- if (topBack) topBack.style.display = 'flex';
- // Hide Language Selector, Login & PRO badge on inner screens
- if (rightActions) rightActions.style.display = 'none';
- document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
- if (screenName === 'dashboard') document.querySelectorAll('.nav-item')[1].classList.add('active');
- else if (screenName === 'history') document.querySelectorAll('.nav-item')[2].classList.add('active');
- else if (screenName === 'profile') document.querySelectorAll('.nav-item')[3].classList.add('active');
- window.scrollTo({ top: 0, behavior: 'smooth' });
- }
-
- function goHome() {
- document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
- const home = document.getElementById('screen-home');
- if (home) home.classList.add('active');
- const bNav = document.querySelector('.bottom-nav');
- if (bNav) bNav.style.display = 'flex';
- // Restore Centered Logo & App Title
- const titleElem = document.getElementById('screenTitle');
- if (titleElem) titleElem.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:6px;"><img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;"> <span id="titleText" style="font-size:0.95rem; font-weight:800; color:#fbbf24; white-space:nowrap;">SMART WORKER PRO</span></div>`;
- const topBack = document.getElementById('topBackBtn');
- if (topBack) topBack.style.display = 'none';
- // Show Language Selector, Login & PRO badge ONLY on Home screen
- const rightActions = document.getElementById('topBarRightActions');
- if (rightActions) rightActions.style.display = 'flex';
- document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
- const firstNav = document.querySelectorAll('.nav-item')[0];
- if (firstNav) firstNav.classList.add('active');
- window.scrollTo({ top: 0, behavior: 'smooth' });
- }
-
- // Save and Load Settings
 
 // ========================================================
  // 3. DOMAL WINDOW MODULE
@@ -2346,8 +2119,7 @@ function calculateCustomSeries() {
   cs_item_count += 1;
 
   let alu_txt = `[${prod.name} #${cs_item_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
-  alu_txt += `> Formula: Shutter H=H-${prod.shutter_h_minus}" | Shutter W=${prod.w_formula || 'overlap'} | Glass H=SH-${prod.glass_h_minus}"\n`;
-  alu_txt += `--- OUTER FRAME CUT SIZES ---\n`;
+    alu_txt += `--- OUTER FRAME CUT SIZES ---\n`;
   alu_txt += `> Frame Top / Bottom: ${disp(outer_w)} (2 pc)\n`;
   alu_txt += `> Frame Left / Right Vertical: ${disp(outer_h)} (2 pc)\n`;
 
@@ -2436,493 +2208,407 @@ function clearCustomSeries() {
  return hwTotals;
  }
 
- // 1. DEDICATED CUTTING JOB CARD PDF (For Cutting Karigar / Workshop Operator)
+ // 1. DEDICATED HORIZONTAL CUTTING SHEET PDF (Landscape, Horizontal Columns, Zero Extra Clutter)
  function exportCutPdf(filename, title, outId, matId) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate PDF documents.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+
+  const outEl = document.getElementById(outId);
+  const outText = outEl ? outEl.textContent.trim() : "";
+  if (!outText || outText.includes("here")) {
+    alert("Please calculate at least one cutting size first!");
+    return;
+  }
+
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) {
+    alert("PDF library is loading, please try again in a moment.");
+    return;
+  }
+
+  // Horizontal (Landscape) A4 Document
+  const doc = new jsPDF('l', 'mm', 'a4');
+  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+  drawDocHeaderWithLogo(doc, "CUTTING MEASUREMENT SHEET (" + title.toUpperCase() + ")", "", [25, 42, 74]);
+
+  doc.setFillColor(241, 245, 249);
+  doc.rect(14, 32, 269, 6.5, 'F');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(30, 41, 59);
+  doc.text("DATE: " + today, 18, 36.5);
+
+  const rawWindows = outText.split(/={10,}/);
+  const parsedUnits = [];
+  const allProfileHeaders = [];
+
+  rawWindows.forEach(function(rw, winIdx) {
+    const trimmed = rw.trim();
+    if (!trimmed || trimmed.includes("ACCUMULATED MATERIAL PURCHASE")) return;
+
+    let winTitle = "Unit #" + (winIdx + 1);
+    const titleMatch = trimmed.match(/\[(.*?)\]/);
+    if (titleMatch) winTitle = titleMatch[1];
+
+    const lines = trimmed.split('\n');
+    const unitProfiles = {};
+    let section = "profiles";
+
+    lines.forEach(function(l) {
+      l = l.trim();
+      if (!l || l.startsWith('[') || l.startsWith('===')) return;
+      if (l.includes("HARDWARE") || l.includes("GLASS") || l.includes("INSTRUCTIONS") || l.includes("BILLING SLAB")) {
+        section = "other";
+        return;
+      }
+      if (l.includes("MOSQUITO NET") || l.includes("OUTER FRAME") || l.includes("SHUTTER") || l.includes("DOOR SASH") || l.includes("FRAME SECTIONS")) {
+        section = "profiles";
+        return;
+      }
+      if (l.startsWith('---') || l.startsWith('> Formula') || l.startsWith('> Height Formula') || l.startsWith('> Width Formula') || l.startsWith('> Glass Deduction')) return;
+
+      const clean = l.replace(/^>\s*/, '');
+      if (section === "profiles" && clean.indexOf(':') !== -1) {
+        const parts = clean.split(':');
+        const pName = parts[0].trim();
+        const pVal = parts.slice(1).join(':').trim();
+        unitProfiles[pName] = pVal;
+        if (allProfileHeaders.indexOf(pName) === -1) {
+          allProfileHeaders.push(pName);
+        }
+      }
+    });
+
+    if (Object.keys(unitProfiles).length > 0) {
+      parsedUnits.push({
+        index: parsedUnits.length + 1,
+        title: winTitle,
+        profiles: unitProfiles
+      });
+    }
+  });
+
+  let currentY = 41;
+
+  if (parsedUnits.length > 0 && allProfileHeaders.length <= 8) {
+    // Pure Horizontal Table: Profile names are columns across the top, each Window Unit is a single horizontal row!
+    const tableHead = [['#', 'Window / Unit Size'].concat(allProfileHeaders)];
+    const tableBody = parsedUnits.map(function(u) {
+      const row = [u.index, u.title];
+      allProfileHeaders.forEach(function(hName) {
+        row.push(u.profiles[hName] || '-');
+      });
+      return row;
+    });
+
+    doc.autoTable({
+      startY: currentY,
+      head: tableHead,
+      body: tableBody,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [30, 58, 138],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8.5,
+        halign: 'center'
+      },
+      styles: {
+        fontSize: 8.5,
+        cellPadding: 3,
+        lineColor: [203, 213, 225],
+        lineWidth: 0.25,
+        fontStyle: 'bold',
+        textColor: [15, 23, 42],
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 52, halign: 'left' }
+      }
+    });
+  } else {
+    // Fallback Horizontal Grid for complex multi-section partitions (>8 distinct profile names)
+    parsedUnits.forEach(function(u) {
+      if (currentY > 175) { doc.addPage(); currentY = 16; }
+      const pKeys = Object.keys(u.profiles);
+      const pVals = pKeys.map(function(k) { return u.profiles[k]; });
+      doc.autoTable({
+        startY: currentY,
+        head: [['Unit: ' + u.title].concat(pKeys)],
+        body: [['Cut Size & Qty'].concat(pVals)],
+        theme: 'grid',
+        headStyles: {
+          fillColor: [30, 58, 138],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center'
+        },
+        styles: {
+          fontSize: 8.5,
+          cellPadding: 2.5,
+          fontStyle: 'bold',
+          halign: 'center',
+          textColor: [15, 23, 42]
+        }
+      });
+      currentY = doc.lastAutoTable.finalY + 6;
+    });
+  }
+
+  doc.save(filename + ".pdf");
  }
 
- const outText = document.getElementById(outId).textContent.trim();
- if (!outText || outText.includes("here")) {
- alert("Please calculate at least one window cutting size first!");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-
- drawDocHeaderWithLogo(doc, "FACTORY CUTTING SPECIFICATION (" + title.toUpperCase() + ")", "ZERO TOLERANCE PRECISION", [15, 23, 42]);
-
- // Sub-bar
- doc.setFillColor(241, 245, 249);
- doc.rect(14, 32, 182, 6.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(30, 41, 59);
- doc.text(`DATE ISSUED: ${today}`, 18, 36.5);
- doc.text(`CUTTING STANDARD: ZERO TOLERANCE PRECISION`, 192, 36.5, { align: "right" });
-
- const rawWindows = outText.split(/={10,}/);
- let currentY = 41;
-
- rawWindows.forEach((rw, winIdx) => {
- const trimmed = rw.trim();
- if (!trimmed || trimmed.includes("ACCUMULATED MATERIAL PURCHASE")) return;
-
- let winTitle = `Window Unit #${winIdx + 1}`;
- const titleMatch = trimmed.match(/\\[(.*?)\\]/);
- if (titleMatch) winTitle = titleMatch[1];
-
- const lines = trimmed.split('\n');
- const profiles = [];
- let section = "profiles";
-
- lines.forEach(l => {
- l = l.trim();
- if (!l || l.startsWith('[') || l.startsWith('===')) return;
- if (l.includes("HARDWARE") || l.includes("GLASS")) { section = "other"; return; }
- if (l.startsWith('---') || l.startsWith('> Height Formula') || l.startsWith('> Width Formula') || l.startsWith('> Glass Deduction')) return;
-
- const clean = l.replace(/^>\s*/, '');
- if (section === "profiles" && clean.includes(':')) {
- const parts = clean.split(':');
- const name = parts[0].trim();
- const spec = parts.slice(1).join(':').trim();
-
- let angle = "90° Straight";
- if ((winTitle.includes("Domal") || winTitle.includes("Casement") || winTitle.includes("Door")) &&
-(name.includes("Outer") || name.includes("Frame") || name.includes("Sash") || name.includes("Z-Handle"))) {
- angle = "45° Miter";
- }
-
- // Extract Cut Length vs Quantity
- let lengthStr = spec;
- let qtyStr = "1 Pc";
- const qMatch = spec.match(/\\(([0-9]+)\s*pc\\)/i);
- if (qMatch) {
- qtyStr = `${qMatch[1]} Pcs`;
- lengthStr = spec.replace(/\\([0-9]+\s*pc\\)/i, '').trim();
- }
-
- profiles.push(["[ ]", name, lengthStr, qtyStr, angle]);
- }
- });
-
- if (profiles.length === 0) return;
-
- if (currentY > 230) { doc.addPage(); currentY = 16; }
-
- // Window Unit Header Box
- doc.setFillColor(30, 58, 138); // Blue 900
- doc.roundedRect(14, currentY, 182, 7.5, 1.5, 1.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8.5);
- doc.setTextColor(255, 255, 255);
- doc.text(`UNIT #${winIdx + 1}: ${winTitle.toUpperCase()}`, 18, currentY + 5);
-
- currentY += 9;
-
- // 5-Column Cutting Table
- doc.autoTable({
- startY: currentY,
- head: [['Check', 'Section / Profile Name', 'Cut Length', 'Qty', 'Cut Angle']],
- body: profiles,
- theme: 'grid',
- headStyles: {
- fillColor: [226, 232, 240],
- textColor: [15, 23, 42],
- fontStyle: 'bold',
- fontSize: 7.5,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 2,
- lineColor: [203, 213, 225],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 15, halign: 'center', fontStyle: 'bold' },
- 1: { cellWidth: 62, fontStyle: 'bold' },
- 2: { cellWidth: 45, halign: 'center', fontStyle: 'bold', textColor: [15, 23, 42] },
- 3: { cellWidth: 25, halign: 'center', fontStyle: 'bold', textColor: [37, 99, 235] },
- 4: { cellWidth: 35, halign: 'center', fontStyle: 'bold', textColor: [217, 119, 6] }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 6;
- });
-
- // Signatures
- if (currentY > 250) { doc.addPage(); currentY = 16; }
- currentY = Math.max(currentY, 260);
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8);
- doc.setTextColor(71, 85, 105);
- doc.text("Cutting Operator Sign: ____________________", 16, currentY);
- doc.text("Workshop Manager Sign: ____________________", 125, currentY);
-
- doc.save(`${filename}_Cutting_JobCard.pdf`);
- }
-
- // 2. DEDICATED GLASS PROCUREMENT & CUTTING ORDER PDF (For Glass Shop / Vendor)
+ // 2. DEDICATED GLASS CUTTING PDF (Horizontal, Only Glass Measurements & Qty, Zero Side Clutter)
  function exportGlassPdf(filename, title, glassDict, outId) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate PDF documents.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+
+  const keys = Object.keys(glassDict || {});
+  if (keys.length === 0) {
+    alert("No glass sizes calculated yet! Please calculate windows first.");
+    return;
+  }
+
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) {
+    alert("PDF library is loading, please try again in a moment.");
+    return;
+  }
+
+  const doc = new jsPDF('l', 'mm', 'a4');
+  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+  drawDocHeaderWithLogo(doc, "GLASS CUTTING MEASUREMENT LIST (" + title.toUpperCase() + ")", "", [2, 132, 199]);
+
+  doc.setFillColor(240, 249, 255);
+  doc.rect(14, 32, 269, 6.5, 'F');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(3, 105, 161);
+  doc.text("DATE: " + today, 18, 36.5);
+
+  let totalPanes = 0;
+  const glassRows = keys.map(function(sz, idx) {
+    const qty = glassDict[sz];
+    totalPanes += qty;
+    return [
+      idx + 1,
+      sz,
+      qty + " Pcs"
+    ];
+  });
+
+  glassRows.push([
+    { content: "TOTAL GLASS PIECES", colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 249, 255] } },
+    { content: totalPanes + " Pcs", styles: { fontStyle: 'bold', halign: 'center', fillColor: [186, 230, 253] } }
+  ]);
+
+  doc.autoTable({
+    startY: 41,
+    head: [['#', 'Glass Cutting Size (Height x Width)', 'Quantity']],
+    body: glassRows,
+    theme: 'grid',
+    headStyles: {
+      fillColor: [2, 132, 199],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 9,
+      halign: 'center'
+    },
+    styles: {
+      fontSize: 9.5,
+      cellPadding: 3,
+      fontStyle: 'bold',
+      halign: 'center',
+      textColor: [15, 23, 42]
+    },
+    columnStyles: {
+      0: { cellWidth: 25, halign: 'center' },
+      1: { cellWidth: 180, halign: 'center' },
+      2: { cellWidth: 64, halign: 'center', textColor: [2, 132, 199] }
+    }
+  });
+
+  doc.save(filename + ".pdf");
  }
 
- const keys = Object.keys(glassDict || {});
- if (keys.length === 0) {
- alert("No glass sizes calculated yet! Please calculate windows first.");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
- const orderRef = "GL-" + Math.floor(1000 + Math.random() * 9000);
-
- drawDocHeaderWithLogo(doc, "GLASS PROCUREMENT & CUTTING ORDER (" + title.toUpperCase() + ")", "FACTORY CUTTING SLIP", [2, 132, 199]);
-
- // Sub-bar
- doc.setFillColor(240, 249, 255);
- doc.rect(14, 32, 182, 6.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(3, 105, 161);
- doc.text(`ORDER REF: ${orderRef}`, 18, 36.5);
- doc.text(`DATE OF ORDER: ${today}`, 192, 36.5, { align: "right" });
-
- let currentY = 42;
- let totalPanes = 0;
- let totalSqFt = 0;
-
- const glassRows = keys.map((sz, idx) => {
- const qty = glassDict[sz];
- totalPanes += qty;
-
- // Calculate SqFt
- let sqftPerPc = 0;
- const dimMatch = sz.match(/([0-9]+(?:\.[0-9]+)?|[0-9]+\s+[0-9]+\/[0-9]+)\s*x\s*([0-9]+(?:\.[0-9]+)?|[0-9]+\s+[0-9]+\/[0-9]+)/);
- if (dimMatch) {
- const hVal = safeEval(dimMatch[1].trim());
- const wVal = safeEval(dimMatch[2].trim());
- sqftPerPc = Math.round(((hVal * wVal) / 144) * 100) / 100;
- }
- const rowTotalSqFt = Math.round((sqftPerPc * qty) * 100) / 100;
- totalSqFt += rowTotalSqFt;
-
- return [
- idx + 1,
- "5mm Float Glass (Clear / Frosted / Tinted)",
- sz,
- `${qty} Pcs`,
- `${sqftPerPc} Sq.Ft`,
- `${rowTotalSqFt} Sq.Ft`,
- "[ ]"
- ];
- });
-
- // Total Summary Row
- glassRows.push([
- { content: "TOTAL GLASS REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 249, 255] } },
- { content: `${totalPanes} Pcs`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [186, 230, 253] } },
- { content: "-", styles: { halign: 'center', fillColor: [240, 249, 255] } },
- { content: `${Math.round(totalSqFt * 100) / 100} Sq.Ft`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [254, 240, 138] } },
- { content: "", styles: { fillColor: [240, 249, 255] } }
- ]);
-
- doc.autoTable({
- startY: currentY,
- head: [['#', 'Glass Specifications / Type', 'Cutting Size (H x W)', 'Quantity', 'Sq.Ft / Pc', 'Total Sq.Ft', 'Check']],
- body: glassRows,
- theme: 'grid',
- headStyles: {
- fillColor: [2, 132, 199],
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 2.2,
- lineColor: [186, 230, 253],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 10, halign: 'center' },
- 1: { cellWidth: 60, fontStyle: 'bold' },
- 2: { cellWidth: 40, halign: 'center', fontStyle: 'bold' },
- 3: { cellWidth: 20, halign: 'center', fontStyle: 'bold', textColor: [2, 132, 199] },
- 4: { cellWidth: 20, halign: 'center' },
- 5: { cellWidth: 20, halign: 'center', fontStyle: 'bold', textColor: [15, 23, 42] },
- 6: { cellWidth: 12, halign: 'center' }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 12;
-
- // Note for Glass Vendor
- doc.setFillColor(248, 250, 252);
- doc.rect(14, currentY, 182, 16, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(51, 65, 85);
- doc.text("INSTRUCTIONS FOR GLASS VENDOR:", 18, currentY + 5);
- doc.setFont("helvetica", "normal");
- doc.text("1. Cutting accuracy must be within 1 mm diamond tolerance.", 18, currentY + 9);
- doc.text("2. Edges must be smoothly polished/arrissed to prevent rubber gasket cuts.", 18, currentY + 13);
-
- currentY += 25;
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8);
- doc.setTextColor(71, 85, 105);
- doc.text("Glass Vendor Signature: ____________________", 16, currentY);
- doc.text("Order Authorized By: Saheb Ghati", 125, currentY);
-
- doc.save(`${filename}_Glass_Order.pdf`);
- }
-
- // 3. DEDICATED ALUMINIUM SECTION PURCHASE REQUISITION PDF (For Wholesale Dealer)
+ // 3. DEDICATED ALUMINIUM SECTION PDF (Horizontal, Clean Section Name & Bars Only)
  function exportAluPurchasePdf(filename, title, buckets) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate purchase requisitions.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+
+  const keys = Object.keys(buckets || {});
+  if (keys.length === 0) {
+    alert("No material calculated yet! Please calculate windows first.");
+    return;
+  }
+
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) {
+    alert("PDF library is loading, please try again in a moment.");
+    return;
+  }
+
+  const doc = new jsPDF('l', 'mm', 'a4');
+  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+  drawDocHeaderWithLogo(doc, "ALUMINIUM PROFILE LIST (" + title.toUpperCase() + ")", "", [15, 118, 110]);
+
+  doc.setFillColor(240, 253, 250);
+  doc.rect(14, 32, 269, 6.5, 'F');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(19, 78, 74);
+  doc.text("DATE: " + today, 18, 36.5);
+
+  const profileRows = [];
+  let totalSticks = 0;
+
+  keys.forEach(function(pName, idx) {
+    const pieces = buckets[pName];
+    if (!pieces || pieces.length === 0) return;
+    const isDomal = pName.indexOf('Domal') !== -1;
+    const plan = isDomal ? optimizeCuttingPlan(pieces, [144]) : optimizeCuttingPlan(pieces);
+    const sticksCount = plan.bins ? plan.bins.length : (plan.sticks_needed || 1);
+    const ft = plan.len ? Math.floor(plan.len / 12) : (plan.standard_length_ft || 12);
+    totalSticks += sticksCount;
+
+    profileRows.push([
+      idx + 1,
+      pName,
+      sticksCount + " Pcs (" + ft + " ft)"
+    ]);
+  });
+
+  profileRows.push([
+    { content: "TOTAL BARS", colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
+    { content: totalSticks + " Pcs", styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } }
+  ]);
+
+  doc.autoTable({
+    startY: 41,
+    head: [['#', 'Aluminium Section / Profile Name', 'Required Quantity']],
+    body: profileRows,
+    theme: 'grid',
+    headStyles: {
+      fillColor: [15, 118, 110],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 9,
+      halign: 'center'
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+      fontStyle: 'bold',
+      textColor: [15, 23, 42]
+    },
+    columnStyles: {
+      0: { cellWidth: 25, halign: 'center' },
+      1: { cellWidth: 180 },
+      2: { cellWidth: 64, halign: 'center', textColor: [15, 118, 110] }
+    }
+  });
+
+  doc.save(filename + ".pdf");
  }
 
- const keys = Object.keys(buckets || {});
- if (keys.length === 0) {
- alert("No material calculated yet! Please calculate windows first.");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
- const po_no = "PO-ALU-" + Math.floor(1000 + Math.random() * 9000);
-
- drawDocHeaderWithLogo(doc, "ALUMINIUM SECTION PURCHASE REQUISITION (" + title.toUpperCase() + ")", "PROCUREMENT SLIP", [15, 118, 110]);
-
- // Sub-bar
- doc.setFillColor(240, 253, 250);
- doc.rect(14, 32, 182, 6.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(19, 78, 74);
- doc.text(`PO NUMBER: ${po_no}`, 18, 36.5);
- doc.text(`DATE OF REQUISITION: ${today}`, 192, 36.5, { align: "right" });
-
- let currentY = 42;
- const profileRows = [];
- let totalSticks = 0;
- let totalRunningFt = 0;
-
- keys.forEach((pName, idx) => {
- const pieces = buckets[pName];
- if (!pieces || pieces.length === 0) return;
- const plan = optimizeCuttingPlan(pieces);
- totalSticks += plan.sticks_needed;
- const runFt = Math.round((pieces.reduce((a, b) => a + b, 0) / 12) * 10) / 10;
- totalRunningFt += runFt;
- const estWeight = Math.round((runFt * 0.45) * 10) / 10;
-
- profileRows.push([
- idx + 1,
- pName,
- "Powder Coated / Anodized",
- `${plan.sticks_needed} Pcs (${plan.standard_length_ft} Ft / stick)`,
- `${runFt} Ft`,
- `~${estWeight} Kg`
- ]);
- });
-
- profileRows.push([
- { content: "TOTAL SECTION REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
- { content: `${totalSticks} Sticks`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
- { content: `${Math.round(totalRunningFt)} Ft`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
- { content: `~${Math.round(totalRunningFt * 0.45)} Kg`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [254, 240, 138] } }
- ]);
-
- doc.autoTable({
- startY: currentY,
- head: [['#', 'Aluminium Section / Profile Name', 'Color / Finish', 'Sticks To Buy (16 Ft)', 'Total Running Ft', 'Est. Weight']],
- body: profileRows,
- theme: 'grid',
- headStyles: {
- fillColor: [15, 118, 110],
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 2,
- lineColor: [153, 246, 228],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 12, halign: 'center' },
- 1: { cellWidth: 60, fontStyle: 'bold' },
- 2: { cellWidth: 38 },
- 3: { cellWidth: 32, fontStyle: 'bold', halign: 'center', textColor: [15, 118, 110] },
- 4: { cellWidth: 22, halign: 'center' },
- 5: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 14;
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8);
- doc.setTextColor(71, 85, 105);
- doc.text("Aluminium Dealer Sign: ____________________", 16, currentY);
- doc.text("Requisition By: Saheb Ghati (9239413517)", 120, currentY);
-
- doc.save(`${filename}_Alu_Purchase_Order.pdf`);
- }
-
- // 4. DEDICATED HARDWARE & ACCESSORIES PURCHASE REQUISITION PDF (For Hardware Store)
+ // 4. DEDICATED HARDWARE PDF (Horizontal, Only Item Name & Quantity, Zero Side Text)
  function exportHardwarePdf(filename, title, outId) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate hardware requisitions.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+
+  const outEl = document.getElementById(outId);
+  const outText = outEl ? outEl.textContent.trim() : "";
+  if (!outText || outText.includes("here")) {
+    alert("Please calculate at least one window first!");
+    return;
+  }
+
+  const hwMap = extractHardwareList(outText);
+  const hwKeys = Object.keys(hwMap);
+
+  if (hwKeys.length === 0) {
+    alert("No hardware items found in the current calculation.");
+    return;
+  }
+
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) {
+    alert("PDF library is loading, please try again in a moment.");
+    return;
+  }
+
+  const doc = new jsPDF('l', 'mm', 'a4');
+  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+  drawDocHeaderWithLogo(doc, "HARDWARE & FITTINGS LIST (" + title.toUpperCase() + ")", "", [180, 83, 9]);
+
+  doc.setFillColor(254, 243, 199);
+  doc.rect(14, 32, 269, 6.5, 'F');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(146, 64, 14);
+  doc.text("DATE: " + today, 18, 36.5);
+
+  const hwRows = hwKeys.map(function(item, idx) {
+    const d = hwMap[item];
+    return [
+      idx + 1,
+      item,
+      d.qty + " " + (d.unit || "Pcs")
+    ];
+  });
+
+  doc.autoTable({
+    startY: 41,
+    head: [['#', 'Hardware / Fitting Item', 'Required Quantity']],
+    body: hwRows,
+    theme: 'grid',
+    headStyles: {
+      fillColor: [180, 83, 9],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 9,
+      halign: 'center'
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+      fontStyle: 'bold',
+      textColor: [15, 23, 42]
+    },
+    columnStyles: {
+      0: { cellWidth: 25, halign: 'center' },
+      1: { cellWidth: 180 },
+      2: { cellWidth: 64, halign: 'center', textColor: [180, 83, 9] }
+    }
+  });
+
+  doc.save(filename + ".pdf");
  }
 
- const outText = document.getElementById(outId).textContent.trim();
- if (!outText || outText.includes("here")) {
- alert("Please calculate at least one window first!");
- return;
+ // Aliases for Custom Series PDF buttons
+ function exportAluPdf(filename, title, buckets) {
+  exportAluPurchasePdf(filename, title, buckets);
  }
-
- const hwMap = extractHardwareList(outText);
- const hwKeys = Object.keys(hwMap);
-
- if (hwKeys.length === 0) {
- alert("No hardware items found in the current calculation.");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
- const hwNo = "HW-" + Math.floor(1000 + Math.random() * 9000);
-
- // Amber / Bronze Banner Header
- doc.setFillColor(180, 83, 9); // Amber 700
- doc.rect(0, 0, 210, 30, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(15);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 105, 10, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8);
- doc.setTextColor(254, 243, 199);
- doc.text(`${addr} | Contact: ${contact}`, 105, 16, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10);
- doc.setTextColor(254, 240, 138); // Yellow
- doc.text(`4. HARDWARE & FITTINGS PROCUREMENT REQUISITION (${title.toUpperCase()})`, 105, 24, { align: "center" });
-
- // Sub-bar
- doc.setFillColor(254, 243, 199);
- doc.rect(14, 32, 182, 6.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(146, 64, 14);
- doc.text(`REQUISITION NO: ${hwNo}`, 18, 36.5);
- doc.text(`DATE: ${today}`, 192, 36.5, { align: "right" });
-
- let currentY = 42;
-
- const hwRows = hwKeys.map((item, idx) => {
- const d = hwMap[item];
- let specNote = "Standard Heavy Grade";
- if (item.includes("Bearing") || item.includes("Rollers")) specNote = "Nylon / Brass Smooth Ball Bearing";
- else if (item.includes("Lock")) specNote = "Concealed Touch / Crescent Lock with Keys";
- else if (item.includes("Cleat") || item.includes("Corner")) specNote = "Aluminium L-Cleat Joint Bracket";
- else if (item.includes("Gasket")) specNote = "EPDM Weatherproof Rubber Strip";
- else if (item.includes("Woolpile")) specNote = "High-Density Brush Seal Strip";
- else if (item.includes("Screw")) specNote = "Stainless Steel Star Head Screws";
-
- return [
- idx + 1,
- item,
- specNote,
- d.qty,
- d.unit || "Pcs",
- "[ ]"
- ];
- });
-
- doc.autoTable({
- startY: currentY,
- head: [['#', 'Hardware / Fitting Item Name', 'Specification / Use', 'Required Qty', 'Unit', 'Store Check']],
- body: hwRows,
- theme: 'grid',
- headStyles: {
- fillColor: [180, 83, 9],
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 8,
- cellPadding: 2.5,
- lineColor: [253, 230, 138],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 12, halign: 'center' },
- 1: { cellWidth: 65, fontStyle: 'bold' },
- 2: { cellWidth: 55 },
- 3: { cellWidth: 22, halign: 'center', fontStyle: 'bold', textColor: [180, 83, 9] },
- 4: { cellWidth: 15, halign: 'center' },
- 5: { cellWidth: 13, halign: 'center' }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 16;
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8);
- doc.setTextColor(71, 85, 105);
- doc.text("Hardware Store Sign: ____________________", 16, currentY);
- doc.text("Requisition By: Saheb Ghati (9239413517)", 120, currentY);
-
- doc.save(`${filename}_Hardware_Order.pdf`);
+ function exportHwPdf(filename, title, outId) {
+  exportHardwarePdf(filename, title, outId);
  }
 
  function exportBillPdf() {
@@ -3101,429 +2787,6 @@ function clearCustomSeries() {
  }
  }
  return result;
- }
-
- function exportCutPdf(filename, title, outId, matId) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate PDF bills.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
- }
-
- const outText = document.getElementById(outId).textContent.trim();
- const matText = document.getElementById(matId).textContent.trim();
-
- if (!outText || outText.includes("here") || false) {
- alert("Please calculate at least one window cutting size first!");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-
- // 1. Main Header Banner
- doc.setFillColor(25, 42, 74); // Deep Navy
- doc.rect(0, 0, 210, 32, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(16);
- doc.setTextColor(251, 191, 36); // Amber Gold
- doc.text(shop_name, 105, 12, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8.5);
- doc.setTextColor(226, 232, 240);
- doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(10.5);
- doc.setTextColor(255, 255, 255);
- doc.text(`WORKSHOP CUTTING SHEET & FABRICATION SCHEDULE (${title.toUpperCase()})`, 105, 26, { align: "center" });
-
- // Sub-bar
- doc.setFillColor(241, 245, 249);
- doc.rect(14, 34, 182, 7, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(30, 41, 59);
- doc.text(`DATE ISSUED: ${today}`, 18, 39);
- doc.text(`CUTTING STANDARD: ZERO TOLERANCE PRECISION`, 192, 39, { align: "right" });
-
- // Parse Window-by-Window Blocks
- const rawWindows = outText.split(/={10,}/);
- let currentY = 44;
-
- rawWindows.forEach((rw, winIdx) => {
- const trimmed = rw.trim();
- if (!trimmed || trimmed.includes("ACCUMULATED MATERIAL PURCHASE")) return;
-
- let winTitle = `Window Unit #${winIdx + 1}`;
- const titleMatch = trimmed.match(/\\[(.*?)\\]/);
- if (titleMatch) winTitle = titleMatch[1];
-
- const lines = trimmed.split('\n');
- const profiles = [];
- const hardware = [];
- const glass = [];
- let section = "profiles";
-
- lines.forEach(l => {
- l = l.trim();
- if (!l || l.startsWith('[') || l.startsWith('===')) return;
- if (l.includes("HARDWARE")) { section = "hardware"; return; }
- if (l.includes("GLASS")) { section = "glass"; return; }
- if (l.startsWith('---') || l.startsWith('> Height Formula') || l.startsWith('> Width Formula') || l.startsWith('> Glass Deduction')) return;
-
- const clean = l.replace(/^>\s*/, '');
- if (section === "profiles") {
- if (clean.includes(':')) {
- const parts = clean.split(':');
- const name = parts[0].trim();
- const spec = parts.slice(1).join(':').trim();
-
- // Feature 2: Determine Cut Angle / Degree
- let angle = "90° Straight";
- if ((winTitle.includes("Domal") || winTitle.includes("Casement") || winTitle.includes("Door")) && (name.includes("Outer") || name.includes("Frame") || name.includes("Sash") || name.includes("Z-Handle"))) {
- angle = "45° Miter (Miter)";
- } else if (name.includes("Outer") && winTitle.includes("Domal")) {
- angle = "45° Miter (Miter)";
- } else {
- angle = "90° Straight (Straight)";
- }
-
- const tag = `W${winIdx + 1}-P${profiles.length + 1}`;
- // Feature 3: Checkbox [ ]
- profiles.push(["[ ]", name, spec, angle, tag]);
- }
- } else if (section === "hardware") {
- hardware.push(clean);
- } else if (section === "glass") {
- glass.push(clean);
- }
- });
-
- if (profiles.length === 0 && glass.length === 0) return;
-
- // Check if page break is needed
- if (currentY > 230) {
- doc.addPage();
- currentY = 16;
- }
-
- // Feature 1: Window by Window Header Block
- doc.setFillColor(36, 58, 99);
- doc.roundedRect(14, currentY, 182, 7.5, 1.5, 1.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8.5);
- doc.setTextColor(255, 255, 255);
- doc.text(`UNIT #${winIdx + 1}: ${winTitle.toUpperCase()}`, 18, currentY + 5);
-
- currentY += 9;
-
- // Profiles Table for this Window
- doc.autoTable({
- startY: currentY,
- head: [['Check', 'Section / Profile Name', 'Cutting Size & Qty', 'Cut Angle / Degree', 'Mark Tag']],
- body: profiles,
- theme: 'grid',
- headStyles: {
- fillColor: [226, 232, 240],
- textColor: [15, 23, 42],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 8,
- cellPadding: 2,
- lineColor: [203, 213, 225],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
- 1: { cellWidth: 58 },
- 2: { cellWidth: 52, fontStyle: 'bold' },
- 3: { cellWidth: 42, halign: 'center', fontStyle: 'bold' },
- 4: { cellWidth: 16, halign: 'center', fontSize: 7 }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 3;
-
- // Feature 5: Glass & Hardware Highlighted Box
- if (glass.length > 0 || hardware.length > 0) {
- const glassTxt = glass.length > 0 ? "• " + glass.join(" • ") : "Standard Float Glass";
- const hwTxt = hardware.length > 0 ? "• " + hardware.join(" • ") : "Standard Accessories";
-
- doc.autoTable({
- startY: currentY,
- head: [['GLASS DEPARTMENT SPECIFICATIONS', 'FITTINGS & HARDWARE CHECKLIST']],
- body: [[
- `[ ] ${glassTxt}\n(Note: Verify square corners & edge polishing before fitting)`,
- `[ ] ${hwTxt}\n(Note: Install woolpile & verify roller alignment)`
- ]],
- theme: 'grid',
- headStyles: {
- fillColor: [186, 230, 253], // Sky blue
- textColor: [3, 105, 161],
- fontStyle: 'bold',
- fontSize: 7.5,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 2.5,
- lineColor: [186, 230, 253]
- },
- columnStyles: {
- 0: { cellWidth: 91, fillColor: [240, 249, 255] },
- 1: { cellWidth: 91, fillColor: [255, 251, 235] }
- }
- });
- currentY = doc.lastAutoTable.finalY + 8;
- } else {
- currentY += 5;
- }
- });
-
- // Feature 4: Stick-by-Stick Cutting Sequence (Material Optimization)
- if (matText && !false) {
- if (currentY > 210) {
- doc.addPage();
- currentY = 16;
- }
-
- doc.setFillColor(22, 101, 52); // Green Banner
- doc.roundedRect(14, currentY, 182, 7.5, 1.5, 1.5, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8.5);
- doc.setTextColor(255, 255, 255);
- doc.text("ALUMINIUM STICK CUTTING OPTIMIZATION PLAN (STEP-BY-STEP SEQUENCES)", 18, currentY + 5);
-
- currentY += 9;
-
- const matLines = matText.split('\n');
- const stickRows = [];
- let curProfile = "";
-
- matLines.forEach(ml => {
- ml = ml.trim();
- if (!ml || ml.startsWith('===')) return;
- if (ml.startsWith('[') && ml.endsWith(']')) {
- curProfile = ml.replace(/\\[|\\]/g, '');
- return;
- }
- if (ml.startsWith('> Buy:')) {
- const buyQty = ml.replace('> Buy:', '').trim();
- stickRows.push([
- { content: `PROFILE: ${curProfile.toUpperCase()} — Total to Buy: ${buyQty}`, colSpan: 3, styles: { fillColor: [220, 252, 231], fontStyle: 'bold', textColor: [20, 83, 45] } }
- ]);
- return;
- }
- if (ml.includes("Stick #")) {
- const clean = ml.replace(/^>\s*/, '');
- const stickMatch = clean.match(/Stick\s*#(\d+):/);
- const stickNum = stickMatch ? `Stick #${stickMatch[1]}` : "Stick";
-
- // Extract cuts sequence
- const cutMatch = clean.match(/Cut\s*\\[(.*?)\\]/);
- let seq = "Cut as per size";
- if (cutMatch) {
- const rawParts = cutMatch[1].split('+');
- const seqParts = rawParts.map(p => p.trim());
- seq = "Cut " + seqParts.join(" ➔ Cut ");
- }
-
- // Extract waste
- const wasteMatch = clean.match(/Waste:\s*([0-9.]+)"?/);
- let wasteStr = '0"';
- if (wasteMatch) {
- const wVal = parseFloat(wasteMatch[1]);
- const tag = wVal >= 24 ? "(Usable Offcut / Usable Offcut)" : (wVal >= 10 ? "(Short Offcut)" : "(Scrap)");
- wasteStr = `${wVal}" ${tag}`;
- }
-
- stickRows.push([`[ ] ${stickNum}`, seq, wasteStr]);
- }
- });
-
- if (stickRows.length > 0) {
- doc.autoTable({
- startY: currentY,
- head: [['Stick #', 'Step-by-Step Cutting Sequence (Cutting Sequence)', 'Waste / Remaining Balance']],
- body: stickRows,
- theme: 'grid',
- headStyles: {
- fillColor: [187, 247, 208],
- textColor: [20, 83, 45],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 2,
- lineColor: [187, 247, 208],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 28, fontStyle: 'bold' },
- 1: { cellWidth: 94, fontStyle: 'bold' },
- 2: { cellWidth: 60, fontStyle: 'bold', textColor: [180, 83, 9] }
- }
- });
- currentY = doc.lastAutoTable.finalY + 8;
- }
- }
-
- // Feature 6: Quality Check & Master Signatures
- if (currentY > 245) {
- doc.addPage();
- currentY = 20;
- }
-
- doc.autoTable({
- startY: currentY,
- head: [['CUTTING MASTER / OPERATOR', 'ASSEMBLY FITTER / CHECKER', 'AUTHORIZED WORKSHOP SIGN-OFF']],
- body: [[
- "Signature: _______________________\n\nName: ___________________________\n\nStatus: [ ] All Cuts Verified",
- "Signature: _______________________\n\nName: ___________________________\n\nStatus: [ ] Dimensions Checked",
- `Signature: _______________________\n\nFor: ${shop_name}\n\nDate: ${today.split(' ')[0]}`
- ]],
- theme: 'grid',
- headStyles: {
- fillColor: [241, 245, 249],
- textColor: [51, 65, 85],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 3,
- lineColor: [203, 213, 225]
- }
- });
-
- doc.setFontSize(7);
- doc.setTextColor(100, 116, 139);
- doc.text("-- Generated automatically by Smart Worker Pro Fabrication Systems • Zero-Error Precision Standards --", 105, 290, { align: "center" });
-
- doc.save(`${filename}.pdf`);
- }
-
- function exportGlassPdf(filename, title, glassDict) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate PDF bills.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
- }
-
- const keys = Object.keys(glassDict);
- if (keys.length === 0) {
- alert("No glass sizes calculated yet!");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-
- // Banner
- doc.setFillColor(2, 119, 189);
- doc.rect(0, 0, 210, 32, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(16);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 105, 12, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8.5);
- doc.setTextColor(225, 245, 254);
- doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(11);
- doc.setTextColor(255, 235, 59);
- doc.text(`CONSOLIDATED GLASS CUTTING SCHEDULE (${title.toUpperCase()})`, 105, 26, { align: "center" });
-
- // Sub-bar
- doc.setFillColor(235, 245, 251);
- doc.rect(14, 35, 182, 7, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(8);
- doc.setTextColor(30, 41, 59);
- doc.text(`ISSUE DATE: ${today}`, 18, 40);
- doc.text(`STATUS: READY FOR GLASS FACTORY / CUTTING`, 192, 40, { align: "right" });
-
- // Rows
- let totalPcs = 0;
- const tableRows = keys.map((size, idx) => {
- const qty = glassDict[size];
- totalPcs += qty;
- return [
- idx + 1,
- "Standard Float / Tinted Glass",
- size,
- `${qty} Pcs`
- ];
- });
-
- // Total Row
- tableRows.push([
- { content: "TOTAL GLASS REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
- { content: `${totalPcs} Pcs`, styles: { fontStyle: 'bold', fillColor: [255, 236, 179] } }
- ]);
-
- doc.autoTable({
- startY: 45,
- head: [['#', 'Glass Description / Specification', 'Exact Cutting Size (Height x Width)', 'Total Qty']],
- body: tableRows,
- theme: 'grid',
- headStyles: {
- fillColor: [2, 119, 189],
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 9,
- halign: 'center'
- },
- styles: {
- fontSize: 8.5,
- cellPadding: 3,
- lineColor: [180, 210, 230],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 15, halign: 'center' },
- 1: { cellWidth: 70 },
- 2: { cellWidth: 65, fontStyle: 'bold', halign: 'center' },
- 3: { cellWidth: 32, fontStyle: 'bold', halign: 'center' }
- }
- });
-
- const finalY = Math.min(doc.lastAutoTable.finalY + 15, 265);
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8);
- doc.setTextColor(80, 80, 80);
- doc.text("Glass Supplier / Factory Signature: _______________________", 16, finalY);
- doc.text(`Authorized Signatory (${shop_name}): _______________________`, 194, finalY, { align: "right" });
-
- doc.setFontSize(7);
- doc.text("-- Generated automatically by Smart Worker Pro Fabrication Systems --", 105, 290, { align: "center" });
-
- doc.save(`${filename}.pdf`);
  }
 
 
@@ -3891,8 +3154,8 @@ function saveMeasurementData(projectType, outId, matId) {
  return;
  }
 
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
+ var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF library is loading, please try again."); return; }
+ const doc = new jsPDF('l', 'mm', 'a4');
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
@@ -3978,56 +3241,7 @@ function saveMeasurementData(projectType, outId, matId) {
  let currentY = doc.lastAutoTable.finalY + 8;
  if (currentY > 230) { doc.addPage(); currentY = 16; }
 
- // Labour & Installation Milestones Box
- doc.autoTable({
- startY: currentY,
- head: [['SITE LABOUR CHARGE BREAKDOWN', 'INSTALLATION GUIDELINES & SPECIFICATIONS']],
- body: [[
- `• Total Fabricated Area: ${totalSqft.toFixed(1)} Sq.Ft\\n• Total Installation Openings: ${totalUnits} Units\\n• Net Making & Fitting Labour: Rs. ${Math.round(totalLabour).toLocaleString('en-IN')}/-\\n(Note: Includes site measurement, framing, shutter hanging & glass sealing)`,
- `• All sliding tracks to be plumbed & leveled with water level\\n• Apply weather-proof silicone sealant around perimeter\\n• Install heavy-duty nylon rollers and align star locks\\n• Verify 45-degree corner joints on all casement & domal frames`
- ]],
- theme: 'grid',
- headStyles: {
- fillColor: [254, 240, 138],
- textColor: [113, 63, 18],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: { fontSize: 7.5, cellPadding: 2.5, lineColor: [253, 230, 138] },
- columnStyles: {
- 0: { cellWidth: 91, fillColor: [255, 251, 235] },
- 1: { cellWidth: 91, fillColor: [248, 250, 252] }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 14;
- if (currentY > 255) { doc.addPage(); currentY = 20; }
-
- // Signatures
- doc.autoTable({
- startY: currentY,
- head: [['SITE IN-CHARGE / CLIENT SIGNATURE', 'FITTER / FABRICATION MASTER SIGNATURE']],
- body: [[
- `Measurements Accepted By: _______________________\\n\\nClient Name: ${clientName}\\n\\nDate: ${today}`,
- `Recorded & Verified By: _______________________\\n\\nFor: ${shop_name}\\n\\nPhone: ${contact}`
- ]],
- theme: 'grid',
- headStyles: {
- fillColor: [241, 245, 249],
- textColor: [51, 65, 85],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: { fontSize: 7.5, cellPadding: 3, lineColor: [203, 213, 225] }
- });
-
- doc.setFontSize(7);
- doc.setTextColor(100, 116, 139);
- doc.text("-- Generated via Smart Worker Pro Master Site Measurement Khata System --", 105, 290, { align: "center" });
-
- doc.save(`SiteKhata_${clientName.replace(/\s+/g, '_')}_${today.replace(/\//g, '-')}.pdf`);
+  doc.save(`SiteKhata_${clientName.replace(/\s+/g, '_')}_${today.replace(/\//g, '-')}.pdf`);
  }
 
  function exportKhataMaterialOrderPdf() {
@@ -4624,212 +3838,7 @@ function autofillCustomer() {
  // SEPARATE SUPPLIER MATERIAL REQUISITION / PURCHASE ORDER SLIP
  // ========================================================
  function exportMatPurchasePdf(filename, title, buckets, glassDict) {
- if (!isAppActivated()) {
- alert("PRO activation is required to generate material purchase orders.");
- openScreen('activation', 'PRO UPGRADE & PLANS');
- return;
- }
-
- const keys = Object.keys(buckets);
- if (keys.length === 0) {
- alert("No material calculated yet! Please calculate windows first.");
- return;
- }
-
- var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
- const doc = new jsPDF('p', 'mm', 'a4');
-
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
- const po_no = "PO-" + Math.floor(1000 + Math.random() * 9000);
-
- // Header Banner (Teal / Forest Theme)
- doc.setFillColor(15, 118, 110);
- doc.rect(0, 0, 210, 32, 'F');
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(16);
- doc.setTextColor(255, 255, 255);
- doc.text(shop_name, 105, 12, { align: "center" });
-
- doc.setFont("helvetica", "normal");
- doc.setFontSize(8.5);
- doc.setTextColor(204, 251, 241);
- doc.text(`${addr} | Contact: ${contact}`, 105, 18, { align: "center" });
-
- doc.setFont("helvetica", "bold");
- doc.setFontSize(11);
- doc.setTextColor(254, 240, 138); // Yellow
- doc.text(`MATERIAL PURCHASE ORDER & REQUISITION SLIP (${title.toUpperCase()})`, 105, 26, { align: "center" });
-
- // Sub-bar
- doc.setFillColor(240, 253, 250);
- doc.rect(14, 34, 182, 7, 'F');
- doc.setFont("helvetica", "bold");
- doc.setFontSize(7.5);
- doc.setTextColor(19, 78, 74);
- doc.text(`ORDER REF NO: ${po_no}`, 18, 39);
- doc.text(`DATE OF REQUISITION: ${today}`, 192, 39, { align: "right" });
-
- let currentY = 44;
-
- // Table 1: Aluminium Profile Sticks To Buy
- const profileRows = [];
- let totalSticks = 0;
- let totalRunningFt = 0;
-
- keys.forEach((pName, idx) => {
- const pieces = buckets[pName];
- if (!pieces || pieces.length === 0) return;
- const plan = optimizeCuttingPlan(pieces);
- totalSticks += plan.sticks_needed;
- const runFt = Math.round((pieces.reduce((a, b) => a + b, 0) / 12) * 10) / 10;
- totalRunningFt += runFt;
- const estWeight = Math.round((runFt * 0.45) * 10) / 10; // Approx 0.45 kg per ft
-
- profileRows.push([
- idx + 1,
- pName,
- "Powder Coated / Anodized",
- `${plan.sticks_needed} Pcs (${plan.standard_length_ft} Ft / stick)`,
- `${runFt} Ft`,
- `~${estWeight} Kg`
- ]);
- });
-
- profileRows.push([
- { content: "TOTAL PROFILE REQUIREMENT", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
- { content: `${totalSticks} Sticks`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
- { content: `${Math.round(totalRunningFt)} Ft`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } },
- { content: `~${Math.round(totalRunningFt * 0.45)} Kg`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [254, 240, 138] } }
- ]);
-
- doc.autoTable({
- startY: currentY,
- head: [['#', 'Aluminium Section / Profile Name', 'Color / Finish', 'Sticks To Buy', 'Total Running Ft', 'Est. Weight']],
- body: profileRows,
- theme: 'grid',
- headStyles: {
- fillColor: [15, 118, 110],
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: {
- fontSize: 7.5,
- cellPadding: 2,
- lineColor: [153, 246, 228],
- lineWidth: 0.2
- },
- columnStyles: {
- 0: { cellWidth: 12, halign: 'center' },
- 1: { cellWidth: 55, fontStyle: 'bold' },
- 2: { cellWidth: 40 },
- 3: { cellWidth: 35, fontStyle: 'bold', halign: 'center' },
- 4: { cellWidth: 22, halign: 'center' },
- 5: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 8;
-
- // Table 2: Glass Requirement Breakdown (if available)
- const gKeys = Object.keys(glassDict || {});
- if (gKeys.length > 0) {
- if (currentY > 220) { doc.addPage(); currentY = 16; }
-
- const glassRows = gKeys.map((sz, i) => {
- const qty = glassDict[sz];
- return [i + 1, "Float / Clear / Tinted Glass", sz, `${qty} Pcs`];
- });
-
- doc.autoTable({
- startY: currentY,
- head: [['#', 'Glass Order Specifications', 'Glass Size (H x W)', 'Quantity Needed']],
- body: glassRows,
- theme: 'grid',
- headStyles: {
- fillColor: [2, 132, 199],
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: { fontSize: 7.5, cellPadding: 2, lineColor: [186, 230, 253] },
- columnStyles: {
- 0: { cellWidth: 12, halign: 'center' },
- 1: { cellWidth: 70 },
- 2: { cellWidth: 65, fontStyle: 'bold', halign: 'center' },
- 3: { cellWidth: 35, fontStyle: 'bold', halign: 'center' }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 8;
- }
-
- // Hardware Requisition Checklist
- if (currentY > 230) { doc.addPage(); currentY = 16; }
-
- const hwItems = [
- ["1", "Heavy Bearing Rollers / Nylon Wheels", "As per shutter count (2 per sash)", "Verified [ ]"],
- ["2", "Star Lock / Concealed Touch Lock", "1 per window / 2 for center open", "Verified [ ]"],
- ["3", "EPDM Gasket / Rubber Beading", "Perimeter coverage as per glass size", "Verified [ ]"],
- ["4", "Silicon Sealant Tubes (Clear / Black)", "Weather sealing as required", "Verified [ ]"],
- ["5", "Self-Tapping SS Screws / Fasteners", "1 Box (1/2 inch & 1 inch Screws)", "Verified [ ]"],
- ];
-
- doc.autoTable({
- startY: currentY,
- head: [['#', 'Hardware & Accessories Item', 'Estimated Requirement', 'Warehouse Check']],
- body: hwItems,
- theme: 'grid',
- headStyles: {
- fillColor: [217, 119, 6], // Amber
- textColor: [255, 255, 255],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: { fontSize: 7.5, cellPadding: 2, lineColor: [253, 230, 138] },
- columnStyles: {
- 0: { cellWidth: 12, halign: 'center' },
- 1: { cellWidth: 75, fontStyle: 'bold' },
- 2: { cellWidth: 65 },
- 3: { cellWidth: 30, halign: 'center', fontStyle: 'bold' }
- }
- });
-
- currentY = doc.lastAutoTable.finalY + 12;
- if (currentY > 255) { doc.addPage(); currentY = 20; }
-
- // Signatures
- doc.autoTable({
- startY: currentY,
- head: [['STORE IN-CHARGE / REQUISITION BY', 'WHOLESALE SUPPLIER / DISPATCH STAMP']],
- body: [[
- `Prepared By: _______________________\\n\\nFor: ${shop_name}\\n\\nPhone: ${contact}`,
- "Received & Dispatched By: _______________________\\n\\nSupplier Stamp / Memo No: _______________________\\n\\nDate: _______________________"
- ]],
- theme: 'grid',
- headStyles: {
- fillColor: [241, 245, 249],
- textColor: [51, 65, 85],
- fontStyle: 'bold',
- fontSize: 8,
- halign: 'center'
- },
- styles: { fontSize: 7.5, cellPadding: 3, lineColor: [203, 213, 225] }
- });
-
- doc.setFontSize(7);
- doc.setTextColor(100, 116, 139);
- doc.text("-- Generated via Smart Worker Pro Material Requisition Management System --", 105, 290, { align: "center" });
-
- doc.save(`${filename}.pdf`);
+  exportAluPurchasePdf(filename, title, buckets);
  }
 
  function exportBillPdf() {
@@ -6925,6 +5934,7 @@ function updateProfile() {
  window.addEventListener("beforeinstallprompt", function(e) {
    e.preventDefault();
    deferredPrompt = e;
+   window.deferredPwaPrompt = e;
    var installBox = document.getElementById("pwaInstallPrompt");
    if (installBox) installBox.style.display = "flex";
    checkAndShowMandatoryInstallGate();
@@ -6991,24 +6001,53 @@ function updateProfile() {
    }, 280);
  }
 
- function handleMandatoryPwaInstall() {
-   if (deferredPrompt) {
-     deferredPrompt.prompt();
-     deferredPrompt.userChoice.then(function(choiceResult) {
-       deferredPrompt = null;
-       if (choiceResult.outcome === "accepted") {
-         runSimulatedPackageInstallAndUnlock();
-       } else {
-         var hint = document.getElementById("pwaInstallFooterHint");
-         if (hint) {
-           hint.style.color = "#fbbf24";
-           hint.innerHTML = "<b>Installation Required:</b> Please tap <b>INSTALL APP NOW</b> and accept the prompt to start using Smart Worker Pro.";
-         }
+ function triggerNativePromptOrFallback(promptEvent) {
+   promptEvent.prompt();
+   promptEvent.userChoice.then(function(choiceResult) {
+     deferredPrompt = null;
+     window.deferredPwaPrompt = null;
+     if (choiceResult.outcome === "accepted") {
+       runSimulatedPackageInstallAndUnlock();
+     } else {
+       var btn = document.getElementById("btnMandatoryInstall");
+       if (btn) {
+         btn.disabled = false;
+         btn.style.opacity = "1";
+         btn.innerHTML = "<i class=\"fa-solid fa-download\"></i> <span>INSTALL APP NOW</span>";
        }
-     });
-   } else {
-     runSimulatedPackageInstallAndUnlock();
+       var hint = document.getElementById("pwaInstallFooterHint");
+       if (hint) {
+         hint.style.color = "#fbbf24";
+         hint.innerHTML = "<b>Home Screen Install:</b> Please tap <b>INSTALL APP NOW</b> and click <b>Install</b> on the popup to add the app to your Home Screen.";
+       }
+     }
+   });
+ }
+
+ function handleMandatoryPwaInstall() {
+   var activePrompt = window.deferredPwaPrompt || deferredPrompt;
+   if (activePrompt) {
+     triggerNativePromptOrFallback(activePrompt);
+     return;
    }
+   // Wait briefly (up to 1.6s) in case Chrome is still initializing beforeinstallprompt
+   var btn = document.getElementById("btnMandatoryInstall");
+   if (btn) {
+     btn.innerHTML = "<i class=\"fa-solid fa-spinner fa-spin\"></i> <span>PREPARING INSTALLER...</span>";
+   }
+   var attempts = 0;
+   var waitTimer = setInterval(function() {
+     attempts++;
+     var p = window.deferredPwaPrompt || deferredPrompt;
+     if (p) {
+       clearInterval(waitTimer);
+       triggerNativePromptOrFallback(p);
+     } else if (attempts >= 8) {
+       clearInterval(waitTimer);
+       // Fallback if opened in WhatsApp in-app browser or iOS/unsupported browser
+       runSimulatedPackageInstallAndUnlock();
+     }
+   }, 200);
  }
 
  function triggerPwaInstall() {
