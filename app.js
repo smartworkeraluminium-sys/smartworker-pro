@@ -912,18 +912,20 @@ function switchAuthMode(mode) {
  function optimizeCuttingPlan(pieces, allowedLens = [180, 192, 144]) {
  if (!pieces || pieces.length === 0) return null;
  const sorted = [...pieces].sort((a, b) => b - a);
- const BLADE_KERF = 0.125; // 1/8 inch saw kerf
+ const BLADE_KERF = 0.25; // 1/4 inch saw blade + miter allowance per cut
+ const END_TRIM = 1.5; // 1.5 inch factory bar rough end trim allowance
  let bestPlan = null;
  const stdLens = allowedLens;
  for (const stdLen of stdLens) {
+ const usableStdLen = stdLen - END_TRIM;
  const bins = [];
  let valid = true;
  for (const p of sorted) {
- if (p > stdLen) { valid = false; break; }
+ if (p > usableStdLen) { valid = false; break; }
  let placed = false;
  for (const b of bins) {
  const sumB = b.reduce((a, c) => a + c, 0) + (b.length * BLADE_KERF);
- if (sumB + p <= stdLen) { b.push(p); placed = true; break; }
+ if (sumB + p <= usableStdLen) { b.push(p); placed = true; break; }
  }
  if (!placed) bins.push([p]);
  }
@@ -2580,8 +2582,8 @@ function clearCustomSeries() {
 
     profileRows.push([
       idx + 1,
-      pName,
-      sticksCount + " Pcs (" + ft + " ft)"
+      pName + " (" + pieces.length + " Cut Pcs)",
+      sticksCount + " Bars (" + ft + " ft)"
     ]);
   });
 
