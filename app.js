@@ -179,6 +179,41 @@ function execCommandFallbackCopy(text, successMsg) {
  currentCloudUser = user;
  updateCloudUserUI(user);
  syncAllDataFromCloud(user.uid);
+
+ // Listen to Custom Products and Formula Overrides Live
+ try {
+   if (fbDb) {
+     fbDb.collection('custom_products').onSnapshot(snap => {
+       const prods = [];
+       snap.forEach(d => { const dt = d.data(); if (dt) prods.push(dt); });
+       if (prods.length > 0) {
+         localStorage.setItem('sw_custom_products', JSON.stringify(prods));
+         if (typeof renderCustomSeriesDropdown === 'function') renderCustomSeriesDropdown();
+       }
+     }, err => console.warn("Cloud custom_products sync notice", err));
+
+     fbDb.collection('settings').doc('formula_overrides').onSnapshot(doc => {
+       if (doc.exists) {
+         const data = doc.data();
+         if (data) localStorage.setItem('sw_formula_overrides', JSON.stringify(data));
+       }
+     }, err => console.warn("Cloud formula_overrides sync notice", err));
+   }
+   if (fbRtdb) {
+     fbRtdb.ref('custom_products').on('value', snap => {
+       const val = snap.val();
+       if (val) {
+         localStorage.setItem('sw_custom_products', JSON.stringify(Object.values(val)));
+         if (typeof renderCustomSeriesDropdown === 'function') renderCustomSeriesDropdown();
+       }
+     });
+     fbRtdb.ref('formula_overrides').on('value', snap => {
+       const val = snap.val();
+       if (val) localStorage.setItem('sw_formula_overrides', JSON.stringify(val));
+     });
+   }
+ } catch(e) { console.warn("Dynamic formulas cloud sync setup:", e); }
+
  } else {
  currentCloudUser = null;
  updateCloudUserUI(null);
@@ -527,7 +562,18 @@ function switchAuthMode(mode) {
  localStorage.setItem('sw_registered_users', JSON.stringify(users));
 
  localStorage.setItem('sw_profile', JSON.stringify(profile));
- localStorage.setItem('sw_cloud_user', cleanPhone);
+ 
+  // New workshops start on Free Plan so they subscribe to the ₹99 Karigar Pro Plan!
+  const defaultLicense = {
+    key: "",
+    plan: "Free Plan",
+    start_date: new Date().toLocaleDateString('en-GB'),
+    expiry_date: "Pending Activation",
+    status: "FREE_PLAN"
+  };
+  localStorage.setItem('sw_license', JSON.stringify(defaultLicense));
+
+  localStorage.setItem('sw_cloud_user', cleanPhone);
  localStorage.setItem('sw_user_password', pass);
  localStorage.removeItem('sw_guest_mode');
 
@@ -963,41 +1009,63 @@ function switchAuthMode(mode) {
  }
 
  function generateMaterialList(buckets) {
-  let resText = `--- ACCUMULATED MATERIAL PURCHASE ---
-
-`;
   let hasItems = false;
+  for (const name in buckets) {
+    if (buckets[name] && buckets[name].length > 0) {
+      hasItems = true;
+      break;
+    }
+  }
+  if (!hasItems) return "";
+
+  // PRO FEATURE LOCK: Locked on Free Plan so fabricators subscribe to ₹99 Karigar Plan!
+  if (!isAppActivated()) {
+    if (typeof currentAppLang !== 'undefined' && currentAppLang === 'bn') {
+      return "🔒 প্রিমিয়াম সুবিধা: মেটেরিয়াল কেনাকাটার হিসাব ও কাটিং অপটিমাইজার\n" +
+             "=================================================================\n" +
+             "দোকান থেকে কত পিস অ্যালুমিনিয়াম বার কিনতে হবে এবং জিরো-ওয়েস্ট কাটিং প্ল্যান ফ্রি প্ল্যানে লক করা রয়েছে!\n\n" +
+             "ਕਾਰੀগর প্রো প্ল্যান (মাত্র ₹৯৯ / মাস) নিয়ে আনলক করুন:\n" +
+             " ✔ ডিলার থেকে কত পিস ১২ ফুট / ১৬ ফুট বার কিনতে হবে তার নিখুঁত হিসাব\n" +
+             " ✔ প্রতিটি বারের একুরেট কাটিং সাইজ ও জিরো মেটেরিয়াল অপচয় (১০-১৫% অ্যালুমিনিয়াম সাশ্রয়)\n" +
+             " ✔ মিস্ত্রি ও ডিলারের জন্য ৪টি আলাদা প্রফেশনাল কাটিং ও পারচেজ PDF ডাউনলোড\n\n" +
+             "👉 আনলক করতে এখানে ক্লিক করুন বা 'PRO UPGRADE' বাটনে যান (মাত্র ₹৯৯)!\n" +
+             "(সাপোর্ট ও অ্যাক্টিভেশন হোয়াটসঅ্যাপ: 9239413517)";
+    }
+    return "🔒 PRO EXCLUSIVE: MATERIAL PURCHASE & ZERO-WASTE CUTTING OPTIMIZER\n" +
+           "=================================================================\n" +
+           "Automated Bar Count & Stock Cutting Layout is locked on Free Plan!\n\n" +
+           "Subscribe to Karigar Pro (₹99 / Month) to unlock:\n" +
+           " ✔ Exact number of 12ft / 16ft Aluminium bars to buy from dealer\n" +
+           " ✔ Stick-by-stick cutting sequence with zero material wastage (Saves 10%-15%)\n" +
+           " ✔ 4 Professional Cutting & Procurement PDFs for dealers and karigars\n\n" +
+           "👉 Tap here or click 'PRO UPGRADE' to unlock for ₹99!\n" +
+           "(Support & Activation WhatsApp: 9239413517)";
+  }
+
+  let resText = `--- ACCUMULATED MATERIAL PURCHASE (AUTO-OPTIMIZED) ---\n\n`;
   for (const name in buckets) {
     const pieces = buckets[name];
     if (pieces && pieces.length > 0) {
-      hasItems = true;
-      // Domal materials ONLY come in 12 ft (144 inches)
       const isDomal = name.includes('Domal');
       const plan = isDomal ? optimizeCuttingPlan(pieces, [144]) : optimizeCuttingPlan(pieces);
-      resText += `[${name}]
-`;
+      resText += `[${name}]\n`;
       if (plan.oversize) {
-        resText += `> SPECIAL ORDER (Oversized)
-`;
-        pieces.forEach(p => { resText += ` > Piece: ${toFractionInch(p)}
-`; });
+        resText += `> SPECIAL ORDER (Oversized)\n`;
+        pieces.forEach(p => { resText += ` > Piece: ${toFractionInch(p)}\n`; });
       } else {
         const ft = Math.floor(plan.len / 12);
-        resText += `> Buy: ${plan.bins.length} pcs (${ft} ft)
-`;
+        resText += `> Buy: ${plan.bins.length} pcs (${ft} ft)\n`;
         plan.bins.forEach((b, i) => {
           const cutsStr = formatCuts(b);
           const sumB = b.reduce((a, c) => a + c, 0);
           const waste = Math.round((plan.len - sumB) * 100) / 100;
-          resText += ` > Stick #${i + 1}: Cut [ ${cutsStr} ] -> Waste: ${waste}"
-`;
+          resText += ` > Stick #${i + 1}: Cut [ ${cutsStr} ] -> Waste: ${waste}"\n`;
         });
       }
-      resText += `
-`;
+      resText += `\n`;
     }
   }
-  return hasItems ? resText : "";
+  return resText;
 }
 
  // Keypad Logic (Two-Column: Numbers + Fractions)
@@ -1085,6 +1153,9 @@ function keypadEnter() {
  if (screenName === 'customer_lookup') {
    if (typeof renderCustomerKhataScreen === 'function') renderCustomerKhataScreen();
  }
+ if (screenName === 'custom_series') {
+   if (typeof renderCustomSeriesDropdown === 'function') renderCustomSeriesDropdown();
+ }
 
  const topBack = document.getElementById('topBackBtn');
  const rightActions = document.getElementById('topBarRightActions');
@@ -1164,8 +1235,10 @@ function keypadEnter() {
  handle_w = parseFloat(hwMatch[1]);
  }
 
- const v_cut_mm = h_mm - (track_h * 2.0) + 22.0;
- const h_deduct_mm = (track_h * 2.0) - 22.0;
+ const ovr_dm = (typeof getFormulaOverrides === 'function') ? getFormulaOverrides() : {};
+ const custom_dm_h_deduct = (ovr_dm && ovr_dm.dm_sash_h_deduct != null && parseFloat(ovr_dm.dm_sash_h_deduct) !== 44.0) ? parseFloat(ovr_dm.dm_sash_h_deduct) : ((track_h * 2.0) - 22.0);
+ const v_cut_mm = h_mm - custom_dm_h_deduct;
+ const h_deduct_mm = custom_dm_h_deduct;
  const side_clearance = (track_h * 2.0) - 12.0;
 
  let net_w_mod = 0, h_cut_mm = 0, s_c = 2, han_qty = 4, int_qty = 2;
@@ -1193,7 +1266,8 @@ function keypadEnter() {
  s_c = 4; han_qty = 4; int_qty = 4;
  }
 
- const g_deduct_mm = (handle_w * 2.0) - 26.0;
+ const g_deduct_base = (ovr_dm && ovr_dm.dm_glass_deduct != null) ? parseFloat(ovr_dm.dm_glass_deduct) : 26.0;
+ const g_deduct_mm = (handle_w * 2.0) - g_deduct_base;
  const gh_mm = v_cut_mm - g_deduct_mm;
  const gw_mm = h_cut_mm - g_deduct_mm;
 
@@ -1297,14 +1371,21 @@ function keypadEnter() {
  else if (t_type.includes('4-Track')) { div = 4; g_c = 4; han_qty = 2; int_qty = 6; }
  else if (t_type.includes('Center Open')) { div = 4; g_c = 4; han_qty = 4; int_qty = 4; }
 
+ const ovr = (typeof getFormulaOverrides === 'function') ? getFormulaOverrides() : {};
  if (sys_type.includes('18x40')) {
- h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
+ h_minus = (ovr && ovr.sl_18x40_h_minus != null) ? parseFloat(ovr.sl_18x40_h_minus) : 1.625;
+ g_h_minus = (ovr && ovr.sl_18x40_g_h_minus != null) ? parseFloat(ovr.sl_18x40_g_h_minus) : 2.75;
+ g_w_mod = (ovr && ovr.sl_18x40_w_mod != null) ? parseFloat(ovr.sl_18x40_w_mod) : 0.625;
  w_mod = (div === 2) ? -6.0 : (div === 3 ? -8.0 : -11.0);
  } else if (sys_type.includes('18x50')) {
- h_minus = 1.625; g_h_minus = 2.75; g_w_mod = 0.625;
+ h_minus = (ovr && ovr.sl_18x50_h_minus != null) ? parseFloat(ovr.sl_18x50_h_minus) : 1.75;
+ g_h_minus = (ovr && ovr.sl_18x50_g_h_minus != null) ? parseFloat(ovr.sl_18x50_g_h_minus) : 3.0;
+ g_w_mod = (ovr && ovr.sl_18x50_w_mod != null) ? parseFloat(ovr.sl_18x50_w_mod) : 0.75;
  w_mod = (div === 2) ? -7.0 : (div === 3 ? -9.5 : -12.5);
  } else if (sys_type.includes('18x60')) {
- h_minus = 1.5; g_h_minus = 4.125; g_w_mod = -4.125;
+ h_minus = (ovr && ovr.sl_18x60_h_minus != null) ? parseFloat(ovr.sl_18x60_h_minus) : 1.875;
+ g_h_minus = (ovr && ovr.sl_18x60_g_h_minus != null) ? parseFloat(ovr.sl_18x60_g_h_minus) : 3.125;
+ g_w_mod = (ovr && ovr.sl_18x60_w_mod != null) ? parseFloat(ovr.sl_18x60_w_mod) : 0.875;
  w_mod = (div === 2) ? 0.625 : (div === 3 ? 2.75 : 5.125);
  } else if (sys_type.includes('25x50')) {
  h_minus = 1.125; g_h_minus = 4.125; g_w_mod = 0.75;
@@ -1554,128 +1635,178 @@ function keypadEnter() {
  let dr_glass_dict = {};
 
  function calculateDoor() {
- const raw_h = safeEval(document.getElementById('dr_h').value);
- const raw_w = safeEval(document.getElementById('dr_w').value);
- if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
+  const raw_h = safeEval(document.getElementById('dr_h').value);
+  const raw_w = safeEval(document.getElementById('dr_w').value);
+  if (raw_h === 0 || raw_w === 0) {
+    alert(typeof currentAppLang !== 'undefined' && currentAppLang === 'bn' ? "অনুগ্রহ করে উচ্চতা এবং চওড়া লিখুন।" : "Please enter Height and Width.");
+    return;
+  }
 
- const is_mm = document.getElementById('dr_unit').value.includes('Millimeter');
- const h = is_mm ? raw_h / 25.4 : raw_h;
- const w = is_mm ? raw_w / 25.4 : raw_w;
- const d_type = document.getElementById('dr_type').value;
+  const is_mm = document.getElementById('dr_unit').value.includes('Millimeter');
+  const h = is_mm ? raw_h / 25.4 : raw_h;
+  const w = is_mm ? raw_w / 25.4 : raw_w;
+  const d_type = document.getElementById('dr_type').value;
+  const palla_qty = document.getElementById('dr_palla') ? (parseInt(document.getElementById('dr_palla').value) || 2) : 2;
+  const door_qty = document.getElementById('dr_qty') ? Math.max(1, parseInt(document.getElementById('dr_qty').value) || 1) : 1;
+  const loc = document.getElementById('dr_loc') ? document.getElementById('dr_loc').value.trim() : "";
+  const loc_str = loc ? ` [${loc}]` : "";
+  const qty_str = door_qty > 1 ? ` (Qty: ${door_qty} Doors)` : "";
+  const palla_str = palla_qty === 2 ? "Double Leaf (২ পাল্লা / দু পাল্লা ডোর)" : "Single Leaf (১ পাল্লা ডোর)";
 
- let outer_v = h, outer_h = w - 3.0, has_outer = true, has_mid = false;
- let door_v = 0, door_tb = 0, palla_qty = 1;
- let leaf_w = w;
+  let outer_v = h, outer_h = w - 3.0, has_outer = true, has_mid = false;
+  let door_v = 0, door_tb = 0;
+  let leaf_w = 0;
 
- if (d_type === "Standard Door") {
-   door_v = h - 1.75; door_tb = w - 6.75; palla_qty = 1;
- } else if (d_type === "Floor Spring Door") {
-   door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
- } else if (d_type === "Top Hung Door") {
-   // User Formula: হাইটে মাইনাস ২ ইঞ্চি, চওড়ায় প্লাস ৪ ইঞ্চি
-   door_v = h - 2.0; 
-   leaf_w = w + 4.0; 
-   door_tb = leaf_w - 3.5; // দুই পাশের খাড়া সেকশন বাদ দিয়ে টপ, বটম ও মিডিল পাট্টা
-   palla_qty = 1; 
-   has_outer = false;
-   has_mid = true;
- } else if (d_type === "Domal System Door") {
-   door_v = h - (25.0 / 25.4); door_tb = (w - (38.0 / 25.4)) - 3.5; palla_qty = 1;
- } else {
-   door_v = h - 2.0; door_tb = w - 6.75; palla_qty = 1;
- }
+  const ovr_dr = (typeof getFormulaOverrides === 'function') ? getFormulaOverrides() : {};
+  const std_h_deduct = (ovr_dr && ovr_dr.dr_v_deduct != null && parseFloat(ovr_dr.dr_v_deduct) !== 0.375) ? parseFloat(ovr_dr.dr_v_deduct) : 1.75;
+  if (d_type === "Standard Door") {
+    door_v = h - std_h_deduct;
+    if (palla_qty === 2) {
+      // 2 Palla: Inside opening is w - 3.0". Center meeting gap is 0.25".
+      leaf_w = (w - 3.25) / 2.0;
+      door_tb = leaf_w - 3.5; // Two vertical styles (1.75" + 1.75" = 3.5")
+    } else {
+      leaf_w = w - 3.25;
+      door_tb = w - 6.75;
+    }
+  } else if (d_type === "Floor Spring Door") {
+    door_v = h - 2.0;
+    if (palla_qty === 2) {
+      leaf_w = (w - 3.5) / 2.0;
+      door_tb = leaf_w - 3.5;
+    } else {
+      leaf_w = w - 3.25;
+      door_tb = w - 6.75;
+    }
+  } else if (d_type === "Top Hung Door") {
+    // Top Hung Door Formula
+    door_v = h - 2.0;
+    has_outer = false;
+    has_mid = true;
+    if (palla_qty === 2) {
+      // 2 Palla bi-parting
+      leaf_w = (w + 4.0) / 2.0;
+      door_tb = leaf_w - 3.5;
+    } else {
+      leaf_w = w + 4.0;
+      door_tb = leaf_w - 3.5;
+    }
+  } else if (d_type === "Domal System Door") {
+    door_v = h - (25.0 / 25.4);
+    if (palla_qty === 2) {
+      leaf_w = ((w - (38.0 / 25.4)) - 0.25) / 2.0;
+      door_tb = leaf_w - 3.5;
+    } else {
+      leaf_w = w - (38.0 / 25.4);
+      door_tb = leaf_w - 3.5;
+    }
+  } else {
+    door_v = h - 2.0;
+    if (palla_qty === 2) {
+      leaf_w = (w - 3.5) / 2.0;
+      door_tb = leaf_w - 3.5;
+    } else {
+      leaf_w = w - 3.25;
+      door_tb = w - 6.75;
+    }
+  }
 
- const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
- const unit_str = is_mm ? "mm" : "Inch";
- dr_door_count += 1;
+  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+  const unit_str = is_mm ? "mm" : "Inch";
+  dr_door_count += 1;
 
- let out = `[Door #${dr_door_count} - ${d_type} (${raw_h} x ${raw_w} ${unit_str})]
-`;
+  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${raw_h} x ${raw_w} ${unit_str})${qty_str}]\n`;
 
- if (has_outer) {
-   out += `--- OUTER FRAME ---
-> Outer Vertical: ${disp(outer_v)} (2 pc)
-> Outer Top Horizontal: ${disp(outer_h)} (1 pc)
-`;
-   dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
- }
+  if (has_outer) {
+    out += `--- OUTER FRAME ---\n`;
+    out += `> Outer Vertical (খাড়া ফ্রেম): ${disp(outer_v)} (${2 * door_qty} pc)\n`;
+    out += `> Outer Top Horizontal (টপ ফ্রেম): ${disp(outer_h)} (${1 * door_qty} pc)\n`;
+    for (let q = 0; q < door_qty; q++) {
+      dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
+    }
+  }
 
- if (d_type === "Top Hung Door") {
-   out += `--- DOOR SASH (Top Hung Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---
-`;
-   out += `> Door Vertical (খাড়া রড): ${disp(door_v)} (2 pc)
-`;
-   out += `> Top Rail (টপ পাট্টা): ${disp(door_tb)} (1 pc)
-`;
-   out += `> Bottom Rail (বটম পাট্টা): ${disp(door_tb)} (1 pc)
-`;
-   out += `> Middle Section (মিডিল পাট্টা): ${disp(door_tb)} (1 pc)
-`;
-   out += `> Top Running Track: ${disp(w * 2)} (1 pc)
-`;
+  const total_leaves = palla_qty * door_qty;
+  const total_verticals = total_leaves * 2;
+  const total_tb = total_leaves * 2;
 
-   dr_buckets["Door Verticals"].push(door_v, door_v);
-   dr_buckets["Door Horizontals"].push(door_tb, door_tb, door_tb);
+  if (d_type === "Top Hung Door") {
+    out += `\n--- DOOR SASH (${palla_str} - Single Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---\n`;
+    out += `> Door Vertical (খাড়া রড): ${disp(door_v)} (${total_verticals} pc)\n`;
+    out += `> Top Rail (টপ পাট্টা): ${disp(door_tb)} (${total_leaves} pc)\n`;
+    out += `> Bottom Rail (বটম পাট্টা): ${disp(door_tb)} (${total_leaves} pc)\n`;
+    out += `> Middle Section (মিডিল পাট্টা): ${disp(door_tb)} (${total_leaves} pc)\n`;
+    out += `> Top Running Track: ${disp(w * (palla_qty === 2 ? 1.5 : 2.0))} (${1 * door_qty} pc)\n`;
 
-   out += `--- HARDWARE & ACCESSORIES ---
-`;
-   out += `> Top Hung Heavy Rollers: 1 Set (2 pc)
-`;
-   out += `> Bottom Floor Guide: 1 pc
-`;
-   out += `> Door Handle: 1 Set
-`;
-   out += `> Concealed Hook Lock: 1 Set
-`;
+    for (let q = 0; q < total_leaves; q++) {
+      dr_buckets["Door Verticals"].push(door_v, door_v);
+      dr_buckets["Door Horizontals"].push(door_tb, door_tb, door_tb);
+    }
 
-   const mid_g_h = ((door_v - 7.75) / 2.0) - 0.25;
-   const mid_g_w = door_tb - 0.25;
-   out += `--- GLASS / BOARD ---
-> Panel Glass / Board: ${disp(mid_g_h)} x ${disp(mid_g_w)} (2 pc)
-`;
-   const gKey = `${disp(mid_g_h)} x ${disp(mid_g_w)}`;
-   dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + 2;
+    out += `\n--- HARDWARE & ACCESSORIES (${palla_str}) ---\n`;
+    out += `> Top Hung Heavy Rollers: ${palla_qty === 2 ? (2 * door_qty) + " Sets (4 pc/door)" : (1 * door_qty) + " Set (2 pc)"}\n`;
+    out += `> Bottom Floor Guide: ${total_leaves} pc\n`;
+    out += `> Door Handles: ${total_leaves} Sets\n`;
+    out += `> Concealed Hook Lock / Flush Bolts: ${palla_qty === 2 ? "1 Hook Lock + 2 Flush Bolts" : "1 Set"}\n`;
 
- } else {
-   out += `--- DOOR SASH (${palla_qty} Palla) ---\n> Door Vertical: ${disp(door_v)} (${palla_qty * 2} pc)\n> Door Top/Bottom: ${disp(door_tb)} (${palla_qty * 2} pc)\n`;
-   for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Verticals"].push(door_v);
-   for (let i = 0; i < palla_qty * 2; i++) dr_buckets["Door Horizontals"].push(door_tb);
+    const mid_g_h = ((door_v - 7.75) / 2.0) - 0.25;
+    const mid_g_w = door_tb - 0.25;
+    const total_glass_pcs = total_leaves * 2;
+    out += `\n--- GLASS / BOARD ---\n`;
+    out += `> Panel Glass / Board: ${disp(mid_g_h)} x ${disp(mid_g_w)} (${total_glass_pcs} pc)\n`;
+    const gKey = `${disp(mid_g_h)} x ${disp(mid_g_w)}`;
+    dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + total_glass_pcs;
 
-   let hw_txt = `--- HARDWARE & ACCESSORIES ---
-`;
-   hw_txt += `> Door Hinges / Pivot: 3 pc (Per Leaf)
-> Door Handle: 1 Set
-> Door Lock: 1 Set
-`;
-   if (d_type === "Standard Door" || d_type === "Floor Spring Door") {
-     hw_txt += `> Door Closer / Floor Spring: 1 pc
-`;
-   }
-   out += hw_txt;
+  } else {
+    out += `\n--- DOOR SASH (${palla_str} - Single Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---\n`;
+    out += `> Door Vertical (খাড়া রড): ${disp(door_v)} (${total_verticals} pc)\n`;
+    out += `> Door Top / Bottom (টপ ও বটম পাট্টা): ${disp(door_tb)} (${total_tb} pc)\n`;
 
-   const glass_h = door_v - 5.875 - 0.25;
-   const glass_w = door_tb - 0.25;
-   out += `--- GLASS / BOARD ---
-> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${palla_qty} pc)
-`;
-   const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
-   dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + palla_qty;
- }
+    for (let i = 0; i < total_verticals; i++) dr_buckets["Door Verticals"].push(door_v);
+    for (let i = 0; i < total_tb; i++) dr_buckets["Door Horizontals"].push(door_tb);
 
- const prevOut = document.getElementById('dr_out').textContent;
- document.getElementById('dr_out').textContent = out +  + prevOut;
- document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
+    out += `\n--- HARDWARE & ACCESSORIES (${palla_str}) ---\n`;
+    if (d_type === "Floor Spring Door") {
+      out += `> Hydraulic Floor Spring: ${total_leaves} Sets\n`;
+      out += `> Top Pivot & Bottom Strap: ${total_leaves} Sets\n`;
+      out += `> Centre Lock / Corner Lock: ${1 * door_qty} Set\n`;
+      out += `> Door Pull Handles: ${total_leaves} Pairs\n`;
+    } else if (d_type === "Domal System Door") {
+      out += `> Domal Heavy Hinges: ${3 * total_leaves} pc\n`;
+      if (palla_qty === 2) out += `> Domal Flush Bolts: ${2 * door_qty} pc (Top & Bot for inactive leaf)\n`;
+      out += `> Domal Door Lock: ${1 * door_qty} Set\n`;
+      out += `> Door Handles: ${total_leaves} Sets\n`;
+    } else {
+      out += `> Door Hinges: ${3 * total_leaves} pc (3 pc per leaf)\n`;
+      if (palla_qty === 2) out += `> Tower Bolt / Flush Bolt: ${2 * door_qty} pc (Top & Bot for inactive leaf)\n`;
+      out += `> Door Lock: ${1 * door_qty} Set (Mortise / Cylinder Lock)\n`;
+      out += `> Door Handles: ${total_leaves} Sets\n`;
+      out += `> Door Closer: ${total_leaves} pc (Optional)\n`;
+    }
+
+    const glass_h = door_v - 5.875 - 0.25;
+    const glass_w = door_tb - 0.25;
+    out += `\n--- GLASS / BOARD ---\n`;
+    out += `> Glass / Board Size: ${disp(glass_h)} x ${disp(glass_w)} (${total_leaves} pc)\n`;
+    const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
+    dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + total_leaves;
+  }
+
+  const prevOut = document.getElementById('dr_out').textContent;
+  document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
+  document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
 }
 
- function clearDoor() {
- dr_door_count = 0;
- dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
- dr_glass_dict = {};
- document.getElementById('dr_h').value = "";
- document.getElementById('dr_w').value = "";
- document.getElementById('dr_out').textContent = "";
- document.getElementById('dr_mat_out').textContent = "";
- }
+function clearDoor() {
+  dr_door_count = 0;
+  dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
+  dr_glass_dict = {};
+  document.getElementById('dr_h').value = "";
+  document.getElementById('dr_w').value = "";
+  if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = "";
+  document.getElementById('dr_out').textContent = "";
+  document.getElementById('dr_mat_out').textContent = "";
+}
 
  // ========================================================
  // 7. PARTITION MODULE
@@ -2041,6 +2172,254 @@ function keypadEnter() {
  }
 
 
+
+// ========================================================
+// 8. DYNAMIC & CUSTOM SERIES MODULE (ADMIN-MANAGED FORMULAS)
+// ========================================================
+const DEFAULT_CUSTOM_PRODUCTS = [
+  {
+    id: "prod_jasmine_25x50",
+    name: "Jasmine Series Sliding (25x50)",
+    category: "Sliding Window",
+    panels: 2,
+    w_formula: "overlap",
+    shutter_h_minus: 1.875,
+    shutter_w_mod: 0.75,
+    glass_h_minus: 3.0,
+    glass_w_minus: 3.0,
+    frame_h_minus: 0.0,
+    frame_w_minus: 0.0,
+    hardware: "Jasmine Heavy Rollers (2/shutter), Concealed Touch Lock (1 pc), Woolpile (15m)",
+    notes: "Outer frame 45 deg mitre cut. Shutter top/bottom 90 deg straight. Interlock 90 deg."
+  },
+  {
+    id: "prod_bifold_door",
+    name: "Bi-Fold / Folding Door & Window",
+    category: "Bi-Fold / Folding Door",
+    panels: 4,
+    w_formula: "clearance",
+    shutter_h_minus: 2.25,
+    shutter_w_mod: 1.5,
+    glass_h_minus: 3.5,
+    glass_w_minus: 3.5,
+    frame_h_minus: 0.0,
+    frame_w_minus: 0.0,
+    hardware: "Top Hanging Heavy Roller Carrier (2 sets), Bottom Guide Rollers (2 sets), SS Folding Butt Hinges (9 pcs), Flush Bolts (2 pcs), Cylinder Mortise Lock (1 set)",
+    notes: "Heavy top track required. Maintain 12mm bottom clearance above floor level."
+  },
+  {
+    id: "prod_glass_door_patch",
+    name: "Toughened Glass Door (Patch Fitting)",
+    category: "Toughened Glass Door",
+    panels: 1,
+    w_formula: "clearance",
+    shutter_h_minus: 2.5,
+    shutter_w_mod: 0.5,
+    glass_h_minus: 0.0,
+    glass_w_minus: 0.0,
+    frame_h_minus: 0.0,
+    frame_w_minus: 0.0,
+    hardware: "Hydraulic Floor Spring (Heavy 120kg), Top Patch Fitting (PT-20), Bottom Patch Fitting (PT-10), Corner Lock (US-10), 450mm S-Handle / D-Handle (SS 304)",
+    notes: "Cut 10mm/12mm toughened glass with corner cutouts for patch fittings before tempering."
+  }
+];
+
+const DEFAULT_FORMULA_OVERRIDES = {
+  sl_18x40_h_minus: 1.625,
+  sl_18x40_w_mod: 0.625,
+  sl_18x40_g_h_minus: 2.75,
+  sl_18x50_h_minus: 1.75,
+  sl_18x50_w_mod: 0.75,
+  sl_18x50_g_h_minus: 3.0,
+  sl_18x60_h_minus: 1.875,
+  sl_18x60_w_mod: 0.875,
+  sl_18x60_g_h_minus: 3.125,
+  dm_sash_h_deduct: 44.0,
+  dm_glass_deduct: 26.0,
+  dm_clearance: 1.5,
+  dr_v_deduct: 0.375,
+  dr_tb_deduct: 5.0,
+  cc_shutter_deduct: 1.5
+};
+
+function getCustomProducts() {
+  try {
+    const raw = localStorage.getItem('sw_custom_products');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("getCustomProducts error", e);
+  }
+  localStorage.setItem('sw_custom_products', JSON.stringify(DEFAULT_CUSTOM_PRODUCTS));
+  return DEFAULT_CUSTOM_PRODUCTS;
+}
+
+function getFormulaOverrides() {
+  try {
+    const raw = localStorage.getItem('sw_formula_overrides');
+    if (raw) return Object.assign({}, DEFAULT_FORMULA_OVERRIDES, JSON.parse(raw));
+  } catch (e) {
+    console.warn("getFormulaOverrides error", e);
+  }
+  return DEFAULT_FORMULA_OVERRIDES;
+}
+
+let cs_item_count = 0;
+let cs_buckets = {};
+let cs_glass_dict = {};
+
+function onCustomSeriesSelected() {
+  const sel = document.getElementById('cs_product_select');
+  if (!sel) return;
+  const prodId = sel.value;
+  const products = getCustomProducts();
+  const prod = products.find(p => p.id === prodId) || products[0];
+  if (!prod) return;
+
+  const panelsInput = document.getElementById('cs_panels');
+  if (panelsInput) panelsInput.value = prod.panels || 2;
+
+  const preview = document.getElementById('cs_formula_preview');
+  if (preview) {
+    let formDesc = `<b>Category:</b> ${prod.category} | <b>Panels:</b> ${prod.panels || 2}<br>` +
+      `<b>Shutter Cut:</b> Height [H - ${prod.shutter_h_minus}"] | Width [${prod.w_formula === 'clearance' ? '(W - ' + prod.shutter_w_mod + '") / Panels' : '(W + ' + prod.shutter_w_mod + '") / Panels'}]<br>` +
+      `<b>Glass Cut:</b> [Shutter H - ${prod.glass_h_minus}"] x [Shutter W - ${prod.glass_w_minus}"]`;
+    if (prod.hardware) {
+      formDesc += `<br><span style="color:#64748b;"><b>Accessories:</b> ${prod.hardware}</span>`;
+    }
+    if (prod.notes) {
+      formDesc += `<br><span style="color:#059669;"><b>Workshop Note:</b> ${prod.notes}</span>`;
+    }
+    preview.innerHTML = formDesc;
+  }
+}
+
+function renderCustomSeriesDropdown() {
+  const sel = document.getElementById('cs_product_select');
+  if (!sel) return;
+  const products = getCustomProducts();
+  const currentVal = sel.value;
+  let html = '';
+  products.forEach(p => {
+    html += `<option value="${p.id}">${p.name} (${p.category})</option>`;
+  });
+  sel.innerHTML = html;
+  if (currentVal && products.some(p => p.id === currentVal)) {
+    sel.value = currentVal;
+  }
+  onCustomSeriesSelected();
+}
+
+function calculateCustomSeries() {
+  const sel = document.getElementById('cs_product_select');
+  if (!sel) return;
+  const prodId = sel.value;
+  const products = getCustomProducts();
+  const prod = products.find(p => p.id === prodId) || products[0];
+  if (!prod) { alert("Please select a valid series."); return; }
+
+  const raw_h = safeEval(document.getElementById('cs_h').value);
+  const raw_w = safeEval(document.getElementById('cs_w').value);
+  if (raw_h === 0 || raw_w === 0) {
+    alert(typeof currentAppLang !== 'undefined' && currentAppLang === 'bn' ? "অনুগ্রহ করে উচ্চতা এবং চওড়া লিখুন।" : "Please enter Height and Width.");
+    return;
+  }
+
+  const is_mm = document.getElementById('cs_unit').value.includes('Millimeter');
+  const h_in = is_mm ? raw_h / 25.4 : raw_h;
+  const w_in = is_mm ? raw_w / 25.4 : raw_w;
+  const panels = Math.max(1, parseInt(document.getElementById('cs_panels').value) || prod.panels || 2);
+  const qty = Math.max(1, parseInt(document.getElementById('cs_qty').value) || 1);
+  const loc = document.getElementById('cs_loc') ? document.getElementById('cs_loc').value.trim() : "";
+  const loc_str = loc ? ` [${loc}]` : "";
+  const qty_str = qty > 1 ? ` (Qty: ${qty} Pcs)` : "";
+
+  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+  const unit_str = is_mm ? "mm" : "Inch";
+
+  // Calculations
+  const outer_h = Math.max(0, h_in - (prod.frame_h_minus || 0));
+  const outer_w = Math.max(0, w_in - (prod.frame_w_minus || 0));
+
+  const shutter_h = Math.max(0, h_in - (prod.shutter_h_minus || 0));
+  let shutter_w = 0;
+  if (prod.w_formula === 'clearance') {
+    shutter_w = Math.max(0, (w_in - (prod.shutter_w_mod || 0)) / panels);
+  } else if (prod.w_formula === 'equal') {
+    shutter_w = Math.max(0, w_in / panels);
+  } else {
+    // Default overlap
+    shutter_w = Math.max(0, (w_in + (prod.shutter_w_mod || 0) * (panels - 1)) / panels);
+  }
+
+  let glass_h = 0, glass_w = 0;
+  if (prod.category.includes('Glass Door') || (prod.glass_h_minus === 0 && prod.glass_w_minus === 0)) {
+    glass_h = shutter_h;
+    glass_w = shutter_w;
+  } else {
+    glass_h = Math.max(0, shutter_h - (prod.glass_h_minus || 0));
+    glass_w = Math.max(0, shutter_w - (prod.glass_w_minus || 0));
+  }
+
+  cs_item_count += 1;
+
+  let alu_txt = `[${prod.name} #${cs_item_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
+  alu_txt += `> Formula: Shutter H=H-${prod.shutter_h_minus}" | Shutter W=${prod.w_formula || 'overlap'} | Glass H=SH-${prod.glass_h_minus}"\n`;
+  alu_txt += `--- OUTER FRAME CUT SIZES ---\n`;
+  alu_txt += `> Frame Top / Bottom: ${disp(outer_w)} (2 pc)\n`;
+  alu_txt += `> Frame Left / Right Vertical: ${disp(outer_h)} (2 pc)\n`;
+
+  alu_txt += `\n--- SHUTTER / LEAF PROFILE CUT SIZES ---\n`;
+  alu_txt += `> Shutter Verticals (Handle/Style): ${disp(shutter_h)} (${panels * 2} pc)\n`;
+  alu_txt += `> Shutter Top / Bottom (Horizontal): ${disp(shutter_w)} (${panels * 2} pc)\n`;
+
+  alu_txt += `\n--- GLASS CUTTING SIZES ---\n`;
+  alu_txt += `> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${panels} pc)\n`;
+
+  if (prod.hardware) {
+    alu_txt += `\n--- HARDWARE & ACCESSORIES ---\n`;
+    const hwItems = prod.hardware.split(',');
+    hwItems.forEach(hi => {
+      alu_txt += `> ${hi.trim()}\n`;
+    });
+  }
+
+  if (prod.notes) {
+    alu_txt += `\n--- WORKSHOP / KARIGAR INSTRUCTIONS ---\n> ${prod.notes}\n`;
+  }
+
+  // Material Buckets for Optimizing & Bar count
+  const frameKey = `${prod.name} Outer Frame`;
+  const sashKey = `${prod.name} Shutter Profile`;
+  if (!cs_buckets[frameKey]) cs_buckets[frameKey] = [];
+  if (!cs_buckets[sashKey]) cs_buckets[sashKey] = [];
+
+  for (let q = 0; q < qty; q++) {
+    cs_buckets[frameKey].push(outer_w, outer_w, outer_h, outer_h);
+    for (let p = 0; p < panels * 2; p++) cs_buckets[sashKey].push(shutter_h);
+    for (let p = 0; p < panels * 2; p++) cs_buckets[sashKey].push(shutter_w);
+  }
+
+  const glassKey = `${disp(glass_h)} x ${disp(glass_w)}`;
+  cs_glass_dict[glassKey] = (cs_glass_dict[glassKey] || 0) + (panels * qty);
+
+  const prev = document.getElementById('cs_out').textContent;
+  document.getElementById('cs_out').textContent = alu_txt + "===================================\n\n" + prev;
+  document.getElementById('cs_mat_out').textContent = generateMaterialList(cs_buckets);
+}
+
+function clearCustomSeries() {
+  cs_item_count = 0;
+  cs_buckets = {};
+  cs_glass_dict = {};
+  document.getElementById('cs_h').value = '';
+  document.getElementById('cs_w').value = '';
+  document.getElementById('cs_out').textContent = '';
+  document.getElementById('cs_mat_out').textContent = '';
+}
+
 // ================================================================
  // 4 DEDICATED WORKSHOP PDF GENERATORS (CUTTING, GLASS, ALU, HARDWARE)
  // ================================================================
@@ -2100,7 +2479,7 @@ function keypadEnter() {
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
- drawDocHeaderWithLogo(doc, "FACTORY CUTTING JOB CARD (" + title.toUpperCase() + ")", "ZERO TOLERANCE PRECISION", [15, 23, 42]);
+ drawDocHeaderWithLogo(doc, "FACTORY CUTTING SPECIFICATION (" + title.toUpperCase() + ")", "ZERO TOLERANCE PRECISION", [15, 23, 42]);
 
  // Sub-bar
  doc.setFillColor(241, 245, 249);
@@ -2587,7 +2966,18 @@ function keypadEnter() {
   const today = new Date().toLocaleDateString('en-GB');
 
   // Draw Header with Customer's Exact Logo (Never overlaps!)
-  drawDocHeaderWithLogo(doc, "JOB CARD / ESTIMATION BILL", "Stage: " + bill_stage, [74, 20, 140]);
+    // Professional Client Document Title: Strictly NO 'JOB CARD' on Estimates/Bills!
+  let pdfTitle = "ESTIMATION & COST QUOTATION";
+  if (bill_stage.includes("Final")) {
+    pdfTitle = "FINAL BILL & TAX INVOICE";
+  } else if (bill_stage.includes("First")) {
+    pdfTitle = "PROJECT BILL & INVOICE";
+  } else if (bill_stage.includes("Second") || bill_stage.includes("Third")) {
+    pdfTitle = "RUNNING BILL & INVOICE";
+  } else {
+    pdfTitle = "ESTIMATION & COST QUOTATION";
+  }
+  drawDocHeaderWithLogo(doc, pdfTitle, "Stage: " + bill_stage, [74, 20, 140]);
 
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
@@ -2640,9 +3030,23 @@ function keypadEnter() {
   doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
   doc.setFont("helvetica", "normal");
   doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
+  const incPrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
+  const pDue = incPrev ? (activeCustomerPreviousDue || 0) : 0;
+  const netPayableDue = due_amount + pDue;
+
   doc.setFont("helvetica", "bold");
   doc.setTextColor(200, 0, 0);
-  doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+
+  if (pDue > 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(180, 0, 0);
+    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 140, finalY + 40);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(200, 0, 0);
+    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 140, finalY + 47);
+  }
 
   // Render UPI QR Code if uploaded
   const customQr = localStorage.getItem('sw_custom_qr');
@@ -2760,7 +3164,7 @@ function keypadEnter() {
  doc.setFont("helvetica", "bold");
  doc.setFontSize(10.5);
  doc.setTextColor(255, 255, 255);
- doc.text(`WORKSHOP CUTTING JOB CARD & FABRICATION SCHEDULE (${title.toUpperCase()})`, 105, 26, { align: "center" });
+ doc.text(`WORKSHOP CUTTING SHEET & FABRICATION SCHEDULE (${title.toUpperCase()})`, 105, 26, { align: "center" });
 
  // Sub-bar
  doc.setFillColor(241, 245, 249);
@@ -3866,20 +4270,104 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('q_rate').value = rate;
  }
 
- function autofillCustomer() {
- const phoneInput = document.getElementById('q_phone').value.trim();
- if (!phoneInput) { alert("Please enter Phone or PIN (last 4 digits) first."); return; }
- const customers = JSON.parse(localStorage.getItem('sw_customers') || '{}');
- for (const p in customers) {
- if (p.endsWith(phoneInput)) {
- document.getElementById('q_name').value = customers[p].name || "";
- document.getElementById('q_phone').value = p;
- document.getElementById('q_addr').value = customers[p].address || "";
- return;
- }
- }
- alert("No customer found with this number.");
- }
+ 
+// =========================================================================
+// CUSTOMER KHATA HISTORY & PREVIOUS DUE AUTO-SYNC
+// =========================================================================
+let activeCustomerPreviousDue = 0;
+let activeCustomerKhataObj = null;
+
+function handleCustomerPhoneAutoLookup(inputVal) {
+  if (!inputVal) {
+    resetCustomerKhataStatusBox();
+    return;
+  }
+  const clean = String(inputVal).replace(/\D/g, '');
+  if (clean.length >= 4) {
+    lookupCustomerByPhone(clean);
+  } else {
+    resetCustomerKhataStatusBox();
+  }
+}
+
+function lookupCustomerByPhone(searchDigits) {
+  const customers = JSON.parse(localStorage.getItem('sw_customers') || '{}');
+  for (const phone in customers) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone === searchDigits || cleanPhone.endsWith(searchDigits)) {
+      populateFoundCustomer(customers[phone], phone);
+      return true;
+    }
+  }
+  return false;
+}
+
+function populateFoundCustomer(cust, phoneKey) {
+  activeCustomerKhataObj = cust;
+  activeCustomerPreviousDue = Math.max(0, Number(cust.total_due) || 0);
+
+  const nameInput = document.getElementById('q_name');
+  const phoneInput = document.getElementById('q_phone');
+  const addrInput = document.getElementById('q_addr');
+
+  if (nameInput && (!nameInput.value || nameInput.value === 'Customer')) {
+    nameInput.value = cust.name || "";
+  }
+  if (phoneInput && phoneInput.value !== phoneKey) {
+    phoneInput.value = phoneKey;
+  }
+  if (addrInput && !addrInput.value) {
+    addrInput.value = cust.address || "";
+  }
+
+  // Display Khata Box
+  const box = document.getElementById('custKhataAlertBox');
+  if (box) {
+    box.style.display = 'block';
+    const billed = Number(cust.total_billed) || 0;
+    const paid = Number(cust.total_paid) || 0;
+    const due = activeCustomerPreviousDue;
+
+    const titleEl = document.getElementById('ckb_client_title');
+    if (titleEl) titleEl.textContent = `${cust.name || 'Customer'} • Khata History Found`;
+    const badgeEl = document.getElementById('ckb_due_badge');
+    if (badgeEl) badgeEl.textContent = `₹${due.toLocaleString('en-IN')} Due`;
+    const billedEl = document.getElementById('ckb_total_billed');
+    if (billedEl) billedEl.textContent = `₹${billed.toLocaleString('en-IN')}`;
+    const paidEl = document.getElementById('ckb_total_paid');
+    if (paidEl) paidEl.textContent = `₹${paid.toLocaleString('en-IN')}`;
+    const dueEl = document.getElementById('ckb_total_due');
+    if (dueEl) dueEl.textContent = `₹${due.toLocaleString('en-IN')}`;
+    const includeTextEl = document.getElementById('ckb_include_due_text');
+    if (includeTextEl) includeTextEl.textContent = `₹${due.toLocaleString('en-IN')}`;
+  }
+
+  // Immediately update live due calculation
+  updateLiveDue();
+}
+
+function resetCustomerKhataStatusBox() {
+  activeCustomerPreviousDue = 0;
+  activeCustomerKhataObj = null;
+  const box = document.getElementById('custKhataAlertBox');
+  if (box) box.style.display = 'none';
+  updateLiveDue();
+}
+
+function autofillCustomer() {
+  const phoneInput = document.getElementById('q_phone').value.trim();
+  if (!phoneInput) {
+    alert("Please enter Customer Mobile Number or last 4 digits first.");
+    return;
+  }
+  const clean = phoneInput.replace(/\D/g, '');
+  const found = lookupCustomerByPhone(clean || phoneInput);
+  if (!found) {
+    alert("No existing customer record found with this number (" + phoneInput + "). A new customer profile will be created upon saving.");
+    resetCustomerKhataStatusBox();
+  }
+}
+
 
  function addBillItem() {
  const h = safeEval(document.getElementById('q_h').value);
@@ -3976,8 +4464,20 @@ function saveMeasurementData(projectType, outId, matId) {
  const net_total = grand_total - discount;
  const final_total = net_total + (net_total * (gst_pct / 100)) + extra_charge;
  const adv = safeEval(document.getElementById('q_advance').value);
- const due = final_total - adv;
- document.getElementById('q_due_label').textContent = `Rs. ${due.toFixed(2)} (Total: Rs. ${final_total.toFixed(2)})`;
+ const current_due = Math.max(0, final_total - adv);
+
+ const includePrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
+ const prevDueToAdd = includePrev ? (activeCustomerPreviousDue || 0) : 0;
+ const total_payable_due = current_due + prevDueToAdd;
+
+ const dueLabel = document.getElementById('q_due_label');
+ if (dueLabel) {
+   if (prevDueToAdd > 0) {
+     dueLabel.innerHTML = `<span style="color:#0284c7;">Current Due: ₹${current_due.toFixed(2)}</span> + <span style="color:#b91c1c; font-weight:800;">Previous Due: ₹${prevDueToAdd.toFixed(2)}</span> = <b style="font-size:1.05rem; color:#dc2626;">TOTAL DUE: ₹${total_payable_due.toFixed(2)}</b>`;
+   } else {
+     dueLabel.innerHTML = `Rs. ${current_due.toFixed(2)} (Total Work: Rs. ${final_total.toFixed(2)})`;
+   }
+ }
  }
 
  function generateBillText() {
@@ -4373,7 +4873,18 @@ function saveMeasurementData(projectType, outId, matId) {
   const today = new Date().toLocaleDateString('en-GB');
 
   // Draw Header with Customer's Exact Logo (Never overlaps!)
-  drawDocHeaderWithLogo(doc, "JOB CARD / ESTIMATION BILL", "Stage: " + bill_stage, [74, 20, 140]);
+    // Professional Client Document Title: Strictly NO 'JOB CARD' on Estimates/Bills!
+  let pdfTitle = "ESTIMATION & COST QUOTATION";
+  if (bill_stage.includes("Final")) {
+    pdfTitle = "FINAL BILL & TAX INVOICE";
+  } else if (bill_stage.includes("First")) {
+    pdfTitle = "PROJECT BILL & INVOICE";
+  } else if (bill_stage.includes("Second") || bill_stage.includes("Third")) {
+    pdfTitle = "RUNNING BILL & INVOICE";
+  } else {
+    pdfTitle = "ESTIMATION & COST QUOTATION";
+  }
+  drawDocHeaderWithLogo(doc, pdfTitle, "Stage: " + bill_stage, [74, 20, 140]);
 
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
@@ -4426,9 +4937,23 @@ function saveMeasurementData(projectType, outId, matId) {
   doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
   doc.setFont("helvetica", "normal");
   doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
+  const incPrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
+  const pDue = incPrev ? (activeCustomerPreviousDue || 0) : 0;
+  const netPayableDue = due_amount + pDue;
+
   doc.setFont("helvetica", "bold");
   doc.setTextColor(200, 0, 0);
-  doc.text(`DUE AMOUNT: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+
+  if (pDue > 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(180, 0, 0);
+    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 140, finalY + 40);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(200, 0, 0);
+    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 140, finalY + 47);
+  }
 
   // Render UPI QR Code if uploaded
   const customQr = localStorage.getItem('sw_custom_qr');
@@ -4975,6 +5500,9 @@ function saveMeasurementData(projectType, outId, matId) {
  if (screenName === 'customer_lookup') {
    if (typeof renderCustomerKhataScreen === 'function') renderCustomerKhataScreen();
  }
+ if (screenName === 'custom_series') {
+   if (typeof renderCustomSeriesDropdown === 'function') renderCustomSeriesDropdown();
+ }
 
  const topBack = document.getElementById('topBackBtn');
  const rightActions = document.getElementById('topBarRightActions');
@@ -5073,6 +5601,8 @@ function saveMeasurementData(projectType, outId, matId) {
  const ADMIN_WHATSAPP_NUMBER = "919239413517";
  const SALTS = {
  "KARIGAR_1M": "SAHEB_1M_PRO",
+ "KARIGAR_3M": "SAHEB_3M_PRO",
+ "KARIGAR_6M": "SAHEB_6M_PRO",
  "KARIGAR_1Y": "SAHEB_1Y_PRO",
  "TEAM_1M": "SAHEB_TEAM_1M_PRO",
  "TEAM_1Y": "SAHEB_TEAM_1Y_PRO",
@@ -5143,6 +5673,7 @@ function addTeamMember() {
 
  function checkActivationType(deviceId, inputKey) {
   inputKey = String(inputKey || '').trim().toUpperCase();
+  deviceId = String(deviceId || '').trim().toUpperCase();
   if (!inputKey || !deviceId) return null;
   if (inputKey === SPECIAL_PROMO_CODE) return "LIFETIME";
 
@@ -5150,7 +5681,7 @@ function addTeamMember() {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
 
-  // 1. Check current month dynamic rotating key
+  // 1. Check current month dynamic rotating key (matches Admin computeKey)
   for (const duration in SALTS) {
     const baseSalt = SALTS[duration];
     let dynSalt = baseSalt;
@@ -5170,7 +5701,7 @@ function addTeamMember() {
     if (inputKey === expectedKey) return duration;
   }
 
-  // 3. Check previous/next month transition window (allows activation if recharged early)
+  // 3. Check previous/next month transition window
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const pY = prevMonth.getFullYear(), pM = String(prevMonth.getMonth() + 1).padStart(2, '0');
@@ -5183,73 +5714,174 @@ function addTeamMember() {
     if (inputKey === keyPrev || inputKey === keyNext) return duration;
   }
 
+  // 4. Also support legacy Admin computeKey format for backward compatibility
+  for (const duration in SALTS) {
+    const raw = deviceId + "_SMARTWORKER_PRO_SECRET_SALT_2026_" + duration;
+    const hash = sha256(raw);
+    let legacyKey = "";
+    for (let i = 0; i < 8; i++) {
+      legacyKey += hash[(i * 7) % hash.length];
+    }
+    if (inputKey === legacyKey.toUpperCase()) return duration;
+  }
+
   return null;
+}
+
+ function parseLicenseExpiryTimestamp(lic) {
+  if (!lic) return 0;
+  if (lic.key === SPECIAL_PROMO_CODE || lic.plan === "LIFETIME") return Date.now() + (36500 * 86400000);
+  if (lic.expiry_date && typeof lic.expiry_date === 'string' && lic.expiry_date.toLowerCase().includes('lifetime')) {
+    return Date.now() + (36500 * 86400000);
+  }
+  if (lic.expiry_timestamp && !isNaN(Number(lic.expiry_timestamp))) {
+    return Number(lic.expiry_timestamp);
+  }
+  if (lic.expiry_date) {
+    let exp = null;
+    if (lic.expiry_date.includes('/')) {
+      const parts = lic.expiry_date.split('/');
+      exp = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 23, 59, 59);
+    } else if (lic.expiry_date.includes('-')) {
+      const parts = lic.expiry_date.split('-');
+      if (parts[0].length === 4) {
+        exp = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 23, 59, 59);
+      } else {
+        exp = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 23, 59, 59);
+      }
+    } else {
+      exp = new Date(lic.expiry_date);
+    }
+    if (exp && !isNaN(exp.getTime())) return exp.getTime();
+  }
+  return 0;
 }
 
  function isAppActivated() {
   const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
   if (!lic || !lic.key) return false;
-  if (lic.key === SPECIAL_PROMO_CODE) return true;
-  if (lic.expiry_date) {
-    if (typeof lic.expiry_date === 'string' && lic.expiry_date.toLowerCase().includes('lifetime')) return true;
-    const now = new Date();
-    let exp = null;
-    if (lic.expiry_date.includes('/')) {
-      const parts = lic.expiry_date.split('/');
-      exp = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
-    } else if (lic.expiry_date.includes('-')) {
-      const parts = lic.expiry_date.split('-');
-      if (parts[0].length === 4) {
-        exp = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59);
-      } else {
-        exp = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 23, 59, 59);
-      }
-    } else {
-      exp = new Date(lic.expiry_date);
-    }
-    if (exp && !isNaN(exp.getTime())) {
-      return exp >= now;
-    }
+  if (lic.key === SPECIAL_PROMO_CODE || lic.plan === "LIFETIME") return true;
+  const expMs = parseLicenseExpiryTimestamp(lic);
+  if (expMs > 0) {
+    return Date.now() <= expMs;
   }
   return false;
 }
 
+ function getTelecomLicenseStatus() {
+  const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
+  if (!lic || !lic.key) {
+    return { hasKey: false, active: false, expired: false, daysLeft: 0, totalDays: 30, startDate: '--', expiryDate: '--', plan: 'FREE_PLAN' };
+  }
+  const expMs = parseLicenseExpiryTimestamp(lic);
+  const nowMs = Date.now();
+  const active = expMs > nowMs;
+  const diffDays = Math.max(0, Math.ceil((expMs - nowMs) / (24 * 60 * 60 * 1000)));
+  const totalDays = Number(lic.validity_days) || (String(lic.plan || '').includes('1Y') ? 365 : (String(lic.plan || '').includes('6M') ? 180 : (String(lic.plan || '').includes('3M') ? 90 : 30)));
+  const startDate = lic.start_date || (lic.activated_at ? new Date(lic.activated_at).toLocaleDateString('en-GB') : '--');
+  const expiryDate = lic.expiry_date || (expMs > 0 ? new Date(expMs).toLocaleDateString('en-GB') : '--');
+  return {
+    hasKey: true,
+    active: active,
+    expired: !active,
+    daysLeft: diffDays,
+    totalDays: totalDays,
+    startDate: startDate,
+    expiryDate: expiryDate,
+    plan: lic.plan || 'KARIGAR_1M',
+    planCategory: lic.plan_category || 'KARIGAR'
+  };
+}
+
  function updateActivationScreenUI() {
- const devId = getDeviceId();
- const dIdElem = document.getElementById('actDeviceId');
- if (dIdElem) dIdElem.value = devId;
+  const devId = getDeviceId();
+  const dIdElem = document.getElementById('actDeviceId');
+  if (dIdElem) dIdElem.value = devId;
 
- const banner = document.getElementById('actStatusBanner');
- if (banner) {
- if (isAppActivated()) {
- banner.style.background = "#2e7d32";
- const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
- const expStr = lic.key === SPECIAL_PROMO_CODE ? "Lifetime" : lic.expiry_date;
- const cat = lic.plan_category || (lic.is_corp ? "CORPORATE" : "KARIGAR");
- const maxU = lic.max_users || 1;
- const teamSec = document.getElementById('corporateTeamSection');
+  const st = getTelecomLicenseStatus();
+  const banner = document.getElementById('actStatusBanner');
+  const tvCard = document.getElementById('telecomValidityCard');
+  const teamSec = document.getElementById('corporateTeamSection');
 
- if (cat === "CORPORATE" || cat === "LIFETIME") {
- banner.style.background = "#7c3aed";
- banner.textContent = `Status: CORPORATE PRO (50 USERS) - Active till ${expStr}`;
- if (teamSec) teamSec.style.display = 'block';
- renderTeamMembers();
- } else if (cat === "WORKSHOP_TEAM") {
- banner.style.background = "#16a34a";
- banner.textContent = `Status: WORKSHOP TEAM PRO (10 USERS) - Active till ${expStr}`;
- if (teamSec) teamSec.style.display = 'block';
- renderTeamMembers();
- } else {
- banner.style.background = "#0284c7";
- banner.textContent = `Status: KARIGAR PRO (Single User) - Active till ${expStr}`;
- if (teamSec) teamSec.style.display = 'none';
- }
- } else {
- banner.style.background = "#37474f";
- banner.textContent = "Status: FREE PLAN (Limited Features)";
- }
- }
- }
+  if (banner) {
+    if (st.active) {
+      const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
+      const expStr = lic.key === SPECIAL_PROMO_CODE ? "Lifetime" : st.expiryDate;
+      const cat = st.planCategory;
+
+      if (cat === "CORPORATE" || cat === "LIFETIME") {
+        banner.style.background = "#7c3aed";
+        banner.textContent = "Status: CORPORATE PRO (50 USERS) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
+        if (teamSec) teamSec.style.display = 'block';
+        renderTeamMembers();
+      } else if (cat === "WORKSHOP_TEAM") {
+        banner.style.background = "#16a34a";
+        banner.textContent = "Status: WORKSHOP TEAM PRO (10 USERS) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
+        if (teamSec) teamSec.style.display = 'block';
+        renderTeamMembers();
+      } else {
+        banner.style.background = "#0284c7";
+        banner.textContent = "Status: KARIGAR PRO (" + st.totalDays + " Days Pack) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
+        if (teamSec) teamSec.style.display = 'none';
+      }
+
+      if (tvCard) {
+        tvCard.style.display = 'block';
+        tvCard.style.borderColor = '#38bdf8';
+        const pTitle = document.getElementById('tvPlanTitle');
+        const pBadge = document.getElementById('tvDaysBadge');
+        const pStart = document.getElementById('tvStartDate');
+        const pExp = document.getElementById('tvExpiryDate');
+        const pBar = document.getElementById('tvProgressBar');
+        const pNote = document.getElementById('tvSubNote');
+        if (pTitle) pTitle.textContent = "ACTIVE RECHARGE (" + st.totalDays + " DAYS PACK)";
+        if (pBadge) {
+          pBadge.style.background = "#16a34a";
+          pBadge.textContent = st.daysLeft + " / " + st.totalDays + " Days Left";
+        }
+        if (pStart) pStart.textContent = st.startDate;
+        if (pExp) { pExp.style.color = "#4ade80"; pExp.textContent = st.expiryDate; }
+        if (pBar) {
+          const pct = Math.min(100, Math.max(5, Math.round((st.daysLeft / st.totalDays) * 100)));
+          pBar.style.width = pct + "%";
+          pBar.style.background = "linear-gradient(90deg, #22c55e, #38bdf8)";
+        }
+        if (pNote) pNote.textContent = "Recharge started on " + st.startDate + " and auto-expires after " + st.totalDays + " days on " + st.expiryDate + ".";
+      }
+    } else if (st.expired) {
+      banner.style.background = "#dc2626";
+      banner.textContent = "🔴 RECHARGE EXPIRED (0 Days Left) — মেয়াদ শেষ! অনুগ্রহ করে পুনরায় রিচার্জ করুন।";
+      if (teamSec) teamSec.style.display = 'none';
+      if (tvCard) {
+        tvCard.style.display = 'block';
+        tvCard.style.borderColor = '#ef4444';
+        const pTitle = document.getElementById('tvPlanTitle');
+        const pBadge = document.getElementById('tvDaysBadge');
+        const pStart = document.getElementById('tvStartDate');
+        const pExp = document.getElementById('tvExpiryDate');
+        const pBar = document.getElementById('tvProgressBar');
+        const pNote = document.getElementById('tvSubNote');
+        if (pTitle) { pTitle.style.color = "#f87171"; pTitle.textContent = "RECHARGE PACK EXPIRED (" + st.totalDays + " DAYS COMPLETED)"; }
+        if (pBadge) {
+          pBadge.style.background = "#dc2626";
+          pBadge.textContent = "0 Days Left (Expired)";
+        }
+        if (pStart) pStart.textContent = st.startDate;
+        if (pExp) { pExp.style.color = "#f87171"; pExp.textContent = st.expiryDate + " (Ended)"; }
+        if (pBar) {
+          pBar.style.width = "100%";
+          pBar.style.background = "#ef4444";
+        }
+        if (pNote) pNote.textContent = "আপনার " + st.totalDays + " দিনের রিচার্জের মেয়াদ শেষ হয়ে গেছে। নতুন রিচার্জ করলে আজ থেকে আবার ৩০/৩৬৫ দিন চালু হবে।";
+      }
+    } else {
+      banner.style.background = "#37474f";
+      banner.textContent = "Status: FREE PLAN (Limited Features • Recharge ₹99 for 30 Days)";
+      if (teamSec) teamSec.style.display = 'none';
+      if (tvCard) tvCard.style.display = 'none';
+    }
+  }
+}
 
  function copyDeviceId() {
   var dId = getDeviceId();
@@ -5265,13 +5897,11 @@ function addTeamMember() {
     return;
   }
 
-  // Anti-Reuse Protection: check if this key was already used previously on this device
   let usedKeys = JSON.parse(localStorage.getItem('sw_used_keys') || '[]');
   const currentLic = JSON.parse(localStorage.getItem('sw_license') || '{}');
 
-  // If the key was already used and the license is either expired or a new activation attempt
   if (usedKeys.includes(inputKey) && currentLic.key === inputKey && !isAppActivated()) {
-    alert("❌ এই অ্যাক্টিভেশন কি-টি পূর্বে ব্যবহার করা হয়েছে এবং এর মেয়াদ শেষ হয়ে গেছে!\n\nপুরনো কি দিয়ে পুনরায় আনলক করা সম্ভব নয়। দয়া করে পরবর্তী মাসের জন্য নতুন রিচার্জ কি সংগ্রহ করুন।");
+    alert("❌ এই অ্যাক্টিভেশন কি-টি পূর্বে ব্যবহার করা হয়েছে এবং এর ৩০/৩৬৫ দিনের মেয়াদ শেষ হয়ে গেছে!\n\nপুরনো কি দিয়ে পুনরায় আনলক করা সম্ভব নয়। দয়া করে নতুন মাসের রিচার্জ কি সংগ্রহ করুন।");
     return;
   }
   if (usedKeys.includes(inputKey) && currentLic.key !== inputKey) {
@@ -5285,35 +5915,74 @@ function addTeamMember() {
     let daysToAdd = 30;
     let planCategory = "KARIGAR";
     let maxUsers = 1;
+    let billAmt = 99;
 
-    if (durationType === "KARIGAR_1M" || durationType === "1M") { daysToAdd = 30; maxUsers = 1; planCategory = "KARIGAR"; }
-    else if (durationType === "KARIGAR_1Y" || durationType === "1Y") { daysToAdd = 365; maxUsers = 1; planCategory = "KARIGAR"; }
-    else if (durationType === "TEAM_1M") { daysToAdd = 30; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
-    else if (durationType === "TEAM_1Y") { daysToAdd = 365; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; }
-    else if (durationType === "CORP_1M") { daysToAdd = 30; maxUsers = 50; planCategory = "CORPORATE"; }
-    else if (durationType === "CORP_1Y") { daysToAdd = 365; maxUsers = 50; planCategory = "CORPORATE"; }
-    else if (durationType === "LIFETIME") { daysToAdd = 36500; maxUsers = 50; planCategory = "LIFETIME"; }
+    if (durationType === "KARIGAR_1M" || durationType === "1M") { daysToAdd = 30; maxUsers = 1; planCategory = "KARIGAR"; billAmt = 99; }
+    else if (durationType === "KARIGAR_3M") { daysToAdd = 90; maxUsers = 1; planCategory = "KARIGAR"; billAmt = 280; }
+    else if (durationType === "KARIGAR_6M") { daysToAdd = 180; maxUsers = 1; planCategory = "KARIGAR"; billAmt = 550; }
+    else if (durationType === "KARIGAR_1Y" || durationType === "1Y") { daysToAdd = 365; maxUsers = 1; planCategory = "KARIGAR"; billAmt = 799; }
+    else if (durationType === "TEAM_1M") { daysToAdd = 30; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; billAmt = 499; }
+    else if (durationType === "TEAM_1Y") { daysToAdd = 365; maxUsers = 10; planCategory = "WORKSHOP_TEAM"; billAmt = 3999; }
+    else if (durationType === "CORP_1M") { daysToAdd = 30; maxUsers = 50; planCategory = "CORPORATE"; billAmt = 1499; }
+    else if (durationType === "CORP_1Y") { daysToAdd = 365; maxUsers = 50; planCategory = "CORPORATE"; billAmt = 14999; }
+    else if (durationType === "LIFETIME") { daysToAdd = 36500; maxUsers = 50; planCategory = "LIFETIME"; billAmt = 19999; }
 
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + daysToAdd);
-    const expiryStr = expiry.toISOString().split('T')[0];
+    // Exact Telecom Start & Expiry Calculation (Starts today, runs for exact daysToAdd)
+    const startMs = Date.now();
+    const expiryMs = startMs + (daysToAdd * 24 * 60 * 60 * 1000);
+    const startDateStr = new Date(startMs).toLocaleDateString('en-GB');
+    const expiryStr = durationType === "LIFETIME" ? "Lifetime" : new Date(expiryMs).toLocaleDateString('en-GB');
 
-    localStorage.setItem('sw_license', JSON.stringify({
+    const newLicObj = {
       key: inputKey,
       plan: durationType,
       plan_category: planCategory,
       max_users: maxUsers,
-      activated_at: new Date().toISOString(),
+      validity_days: daysToAdd,
+      start_date: startDateStr,
+      activated_at: new Date(startMs).toISOString(),
+      start_timestamp: startMs,
+      expiry_timestamp: expiryMs,
       expiry_date: expiryStr
-    }));
+    };
 
-    // Record key in usedKeys list so it can NEVER be reused after its expiry
+    localStorage.setItem('sw_license', JSON.stringify(newLicObj));
+
     if (!usedKeys.includes(inputKey) && inputKey !== SPECIAL_PROMO_CODE) {
       usedKeys.push(inputKey);
       localStorage.setItem('sw_used_keys', JSON.stringify(usedKeys));
     }
 
-    alert("✅ PRO সফলভাবে অ্যাক্টিভেট হয়েছে!\n\nমেয়াদ: " + (durationType === 'LIFETIME' ? 'লাইফটাইম' : expiryStr + ' (' + daysToAdd + ' দিন)'));
+    // Sync exact telecom activation to Cloud for Admin Portal
+    try {
+      const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      const subRecord = {
+        device_id: deviceId,
+        name: profile.name || "Workshop Owner",
+        shop: profile.shop_name || "Aluminium Workshop",
+        phone: profile.phone || "N/A",
+        plan: durationType,
+        validity_days: daysToAdd,
+        bill_amount: billAmt,
+        paid_amount: billAmt,
+        due_amount: 0,
+        activation_key: inputKey,
+        status: "ACTIVE",
+        start_date: startDateStr,
+        expiry_date: expiryStr,
+        start_timestamp: startMs,
+        expiry_timestamp: expiryMs,
+        timestamp: startMs
+      };
+      if (window.fbDb) {
+        window.fbDb.collection('subscribers').doc(deviceId).set(subRecord, { merge: true }).catch(function(){});
+      }
+      if (window.fbRtdb) {
+        window.fbRtdb.ref('subscribers/' + deviceId).set(subRecord).catch(function(){});
+      }
+    } catch (e) {}
+
+    alert("✅ রিচার্জ সফলভাবে চালু হয়েছে!\n\nশুরু: " + startDateStr + "\nমেয়াদ: " + (durationType === 'LIFETIME' ? 'লাইফটাইম' : expiryStr + ' (পুরো ' + daysToAdd + ' দিন চলবে, তারপর স্বয়ংক্রিয়ভাবে বন্ধ হবে)'));
     updateActivationScreenUI();
     goHome();
   } else {
@@ -5324,36 +5993,44 @@ function addTeamMember() {
 function subscribeViaWhatsApp(plan) {
   const deviceId = getDeviceId();
   let planKey = "KARIGAR_1M";
-  let planStr = "Karigar Plan (Single User - Rs. 99/Month)";
+  let planStr = "Karigar Plan (Single User - Rs. 99 / 30 Days)";
   let amount = 99;
 
   if (plan === "Karigar_Monthly") {
     planKey = "KARIGAR_1M";
-    planStr = "Karigar Plan (Single User - Rs. 99/Month)";
+    planStr = "Karigar Plan (Single User - Rs. 99 / 30 Days)";
     amount = 99;
+  } else if (plan === "Karigar_3M") {
+    planKey = "KARIGAR_3M";
+    planStr = "Karigar Plan (Single User - Rs. 280 / 90 Days)";
+    amount = 280;
+  } else if (plan === "Karigar_6M") {
+    planKey = "KARIGAR_6M";
+    planStr = "Karigar Plan (Single User - Rs. 550 / 180 Days)";
+    amount = 550;
   } else if (plan === "Karigar_Annual") {
     planKey = "KARIGAR_1Y";
-    planStr = "Karigar Plan (Single User - Rs. 799/Year)";
+    planStr = "Karigar Plan (Single User - Rs. 799 / 365 Days)";
     amount = 799;
   } else if (plan === "Workshop_Monthly") {
     planKey = "TEAM_1M";
-    planStr = "Workshop Team Plan (10 Users - Rs. 499/Month)";
+    planStr = "Workshop Team Plan (10 Users - Rs. 499 / 30 Days)";
     amount = 499;
   } else if (plan === "Workshop_Annual") {
     planKey = "TEAM_1Y";
-    planStr = "Workshop Team Plan (10 Users - Rs. 3,999/Year)";
+    planStr = "Workshop Team Plan (10 Users - Rs. 3,999 / 365 Days)";
     amount = 3999;
   } else if (plan === "Corporate_Monthly") {
     planKey = "CORP_1M";
-    planStr = "Corporate Enterprise Plan (50 Users - Rs. 1,499/Month)";
+    planStr = "Corporate Enterprise Plan (50 Users - Rs. 1,499 / 30 Days)";
     amount = 1499;
   } else if (plan === "Corporate_Annual") {
     planKey = "CORP_1Y";
-    planStr = "Corporate Enterprise Plan (50 Users - Rs. 14,999/Year)";
+    planStr = "Corporate Enterprise Plan (50 Users - Rs. 14,999 / 365 Days)";
     amount = 14999;
   } else {
     planKey = "KARIGAR_1M";
-    planStr = "Smart Worker PRO Membership (Rs. 99/Month)";
+    planStr = "Smart Worker PRO Membership (Rs. 99 / 30 Days)";
     amount = 99;
   }
 
@@ -5978,6 +6655,11 @@ function setupDb() {
  sub_quotation: "ক্লায়েন্ট জিএসটি ইনভয়েস ও পিডিএফ বিল",
  sub_customer_khata: "ক্লায়েন্ট ব্যালেন্স ও রেকর্ডস",
  mod_customer_khata: "কাস্টমার খাতা",
+ mod_custom_series: "কাস্টম ও নতুন সিরিজ",
+ sub_custom_series: "ফোল্ডিং, গ্লাস ডোর, জেসমিন ও নতুন প্রোফাইল",
+ lbl_select_series: "প্রোডাক্ট / সিরিজ নির্বাচন করুন:",
+ lbl_panels: "পাল্লা / প্যানেল সংখ্যা:",
+ lbl_door_palla: "দরজার পাল্লা (Shutter/Palla):",
  btn_clear: "ক্লিয়ার",
  btn_calculate: "+ হিসাব করুন",
  btn_save: "সেভ করুন",
@@ -6390,7 +7072,23 @@ window.addEventListener('offline', () => {
   updateOfflineStatusBadge();
 });
 
+function enforceTelecomExpiryAutoLock() {
+  try {
+    if (typeof updateActivationScreenUI === 'function') updateActivationScreenUI();
+    if (!isAppActivated()) {
+      var matAreas = ['dm_mat_out', 'sl_mat_out', 'cc_mat_out', 'dr_mat_out', 'pt_mat_out', 'cs_mat_out'];
+      matAreas.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.textContent && el.textContent.indexOf('ACCUMULATED MATERIAL PURCHASE') !== -1) {
+          el.textContent = generateMaterialList({ 'Expired': [12] });
+        }
+      });
+    }
+  } catch (e) {}
+}
+
 setInterval(() => {
+  enforceTelecomExpiryAutoLock();
   if (navigator.onLine) {
     const queue = getOfflineQueue();
     if (queue && queue.length > 0) {
@@ -6427,6 +7125,7 @@ function bootApp() {
   try { loadBillSettings(); } catch(e){}
   try { updateSuggestedRate(); } catch(e){}
   try { updateOfflineStatusBadge(); } catch(e){}
+  try { if (typeof renderCustomSeriesDropdown === "function") renderCustomSeriesDropdown(); } catch(e){}
 
   // 2. Background Asynchronous Cloud Sync (Non-blocking for 4G devices)
   setTimeout(() => {
@@ -6738,13 +7437,19 @@ function syncUserActivityToCloud() {
     const isPro = (typeof isAppActivated === 'function') ? isAppActivated() : false;
     const lic = JSON.parse(localStorage.getItem('sw_license') || '{}');
 
+    const st = (typeof getTelecomLicenseStatus === 'function') ? getTelecomLicenseStatus() : { active: isPro, expired: false, startDate: '--', expiryDate: '--' };
     const userObj = {
       device_id: devId,
       name: profile.name || "Customer Workshop",
       shop: profile.shop_name || "Aluminium Workshop",
       phone: profile.phone || "N/A",
-      plan: lic.plan_category || "FREE_TRIAL",
-      status: isPro ? "ACTIVE" : "PENDING_ACTIVATION",
+      plan: lic.plan || lic.plan_category || "KARIGAR_1M",
+      status: st.active ? "ACTIVE" : (st.expired ? "EXPIRED" : "PENDING_ACTIVATION"),
+      start_date: lic.start_date || st.startDate,
+      expiry_date: lic.expiry_date || st.expiryDate,
+      start_timestamp: lic.start_timestamp || 0,
+      expiry_timestamp: lic.expiry_timestamp || 0,
+      validity_days: lic.validity_days || 30,
       timestamp: Date.now(),
       last_active: new Date().toLocaleString('en-US')
     };

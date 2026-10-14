@@ -266,6 +266,19 @@
  <div class="pro-card-title" data-i18n="mod_ceiling">Ceiling Estimator</div>
  <div class="pro-card-sub" data-i18n="sub_ceiling">False Ceiling Grid & Perimeter</div>
  </div>
+
+      <!-- 7. Dynamic & Custom Series -->
+      <div class="pro-card" onclick="openScreen('custom_series', 'CUSTOM & DYNAMIC SERIES')" style="border: 1.5px solid #818cf8; background: linear-gradient(135deg, #1e1b4b, #312e81);">
+        <div class="pro-card-header">
+          <div class="pro-card-icon" style="background:rgba(255,255,255,0.18); color:#a5b4fc;">
+            <i class="fa-solid fa-shapes"></i>
+          </div>
+          <span style="font-size:0.65rem; background:#4f46e5; color:#fff; font-weight:800; padding:2px 7px; border-radius:10px;">PRO / NEW</span>
+        </div>
+        <div class="pro-card-title" style="color:#fff;" data-i18n="mod_custom_series">Dynamic & Custom Series</div>
+        <div class="pro-card-sub" style="color:#c7d2fe;" data-i18n="sub_custom_series">Folding, Glass Door, Jasmine & Custom</div>
+      </div>
+
  </div>
 
  <!-- Section 2: Business & Billing (Balanced 2-Card Grid) -->
@@ -346,13 +359,13 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dm_h')" style="cursor:pointer; background:#fff;" type="text" id="dm_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('dm_h')">⌨️</button>
+ <input onclick="openKeypad(\'dm_h\')" style="cursor:pointer; background:#fff;" type="text" id="dm_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('dm_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Width:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dm_w')" style="cursor:pointer; background:#fff;" type="text" id="dm_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('dm_w')">⌨️</button>
+ <input onclick="openKeypad(\'dm_w\')" style="cursor:pointer; background:#fff;" type="text" id="dm_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('dm_w')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
@@ -397,8 +410,11 @@
 
  <div class="output-label">CUTTING SIZES:</div>
  <div class="output-area" id="dm_alu_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="dm_mat_out"></div>
+ <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
+ <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
+ <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
+ </div>
+ <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="dm_mat_out"></div>
  </div>
 
  <!-- ================= 3. SLIDING WINDOW SCREEN ================= -->
@@ -435,13 +451,13 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sl_h')" style="cursor:pointer; background:#fff;" type="text" id="sl_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sl_h')">⌨️</button>
+ <input onclick="openKeypad(\'sl_h\')" style="cursor:pointer; background:#fff;" type="text" id="sl_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sl_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Width:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sl_w')" style="cursor:pointer; background:#fff;" type="text" id="sl_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sl_w')">⌨️</button>
+ <input onclick="openKeypad(\'sl_w\')" style="cursor:pointer; background:#fff;" type="text" id="sl_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sl_w')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
@@ -486,8 +502,11 @@
 
  <div class="output-label" style="color:#cc661a;">CUTTING SIZES:</div>
  <div class="output-area" id="sl_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="sl_mat_out"></div>
+ <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
+ <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
+ <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
+ </div>
+ <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="sl_mat_out"></div>
  </div>
 
  <!-- ================= 4. CUSTOM CASEMENT SCREEN ================= -->
@@ -511,25 +530,25 @@
  <div class="form-group">
  <label>Total Height (H):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_h')" style="cursor:pointer; background:#fff;" type="text" id="cc_h"> <button class="keypad-trigger" onclick="openKeypad('cc_h')">⌨️</button>
+ <input onclick="openKeypad(\'cc_h\')" style="cursor:pointer; background:#fff;" type="text" id="cc_h"> <button class="keypad-trigger" onclick="openKeypad('cc_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Width (W):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_w')" style="cursor:pointer; background:#fff;" type="text" id="cc_w"> <button class="keypad-trigger" onclick="openKeypad('cc_w')">⌨️</button>
+ <input onclick="openKeypad(\'cc_w\')" style="cursor:pointer; background:#fff;" type="text" id="cc_w"> <button class="keypad-trigger" onclick="openKeypad('cc_w')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Bottom Part Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_bot_h')" style="cursor:pointer; background:#fff;" type="text" id="cc_bot_h" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_bot_h')">⌨️</button>
+ <input onclick="openKeypad(\'cc_bot_h\')" style="cursor:pointer; background:#fff;" type="text" id="cc_bot_h" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_bot_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Clear Gap for 1 Leaf:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_mid_w')" style="cursor:pointer; background:#fff;" type="text" id="cc_mid_w" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_mid_w')">⌨️</button>
+ <input onclick="openKeypad(\'cc_mid_w\')" style="cursor:pointer; background:#fff;" type="text" id="cc_mid_w" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_mid_w')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
@@ -582,8 +601,11 @@
 
  <div class="output-label" style="color:#cc3366;">CUTTING SIZES:</div>
  <div class="output-area" id="cc_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="cc_mat_out"></div>
+ <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
+ <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
+ <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
+ </div>
+ <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="cc_mat_out"></div>
  </div>
 
  <!-- ================= 5. DOOR OPTION SCREEN ================= -->
@@ -607,16 +629,31 @@
  </select>
  </div>
  <div class="form-group">
+ <label><span data-i18n="lbl_door_palla">Door Shutter / Palla:</span></label>
+ <select id="dr_palla" style="font-weight:700; color:#1e3a8a;">
+ <option value="2" selected>Double Leaf (২ পাল্লা / দু পাল্লা ডোর)</option>
+ <option value="1">Single Leaf (১ পাল্লা ডোর)</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label><span data-i18n="lbl_qty">Door Quantity (Pcs):</span></label>
+ <input type="number" id="dr_qty" value="1" min="1">
+ </div>
+ <div class="form-group">
  <label>Total Height (H):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dr_h')" style="cursor:pointer; background:#fff;" type="text" id="dr_h"> <button class="keypad-trigger" onclick="openKeypad('dr_h')">⌨️</button>
+ <input onclick="openKeypad(\'dr_h\')" style="cursor:pointer; background:#fff;" type="text" id="dr_h"> <button class="keypad-trigger" onclick="openKeypad('dr_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Width (W):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dr_w')" style="cursor:pointer; background:#fff;" type="text" id="dr_w"> <button class="keypad-trigger" onclick="openKeypad('dr_w')">⌨️</button>
+ <input onclick="openKeypad(\'dr_w\')" style="cursor:pointer; background:#fff;" type="text" id="dr_w"> <button class="keypad-trigger" onclick="openKeypad('dr_w')">⌨️</button>
  </div>
+ </div>
+ <div class="form-group" style="grid-column: 1 / -1;">
+ <label><span data-i18n="lbl_room_tag">Location Tag:</span></label>
+ <input type="text" id="dr_loc" placeholder="e.g. Main Entrance, Office, Balcony">
  </div>
  </div>
 
@@ -652,8 +689,11 @@
 
  <div class="output-label" style="color:#b34d1a;">CUTTING SIZES:</div>
  <div class="output-area" id="dr_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="dr_mat_out"></div>
+ <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
+ <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
+ <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
+ </div>
+ <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="dr_mat_out"></div>
  </div>
 
  <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
@@ -677,25 +717,25 @@
  <div class="form-group">
  <label>Total Wall Height (H):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_h')" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button class="keypad-trigger" onclick="openKeypad('pt_h')">⌨️</button>
+ <input onclick="openKeypad(\'pt_h\')" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button class="keypad-trigger" onclick="openKeypad('pt_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Wall Width (W):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_w')" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button class="keypad-trigger" onclick="openKeypad('pt_w')">⌨️</button>
+ <input onclick="openKeypad(\'pt_w\')" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button class="keypad-trigger" onclick="openKeypad('pt_w')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Door Height (Optional):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_dh')" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button class="keypad-trigger" onclick="openKeypad('pt_dh')">⌨️</button>
+ <input onclick="openKeypad(\'pt_dh\')" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button class="keypad-trigger" onclick="openKeypad('pt_dh')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Door Width (Optional):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_dw')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button class="keypad-trigger" onclick="openKeypad('pt_dw')">⌨️</button>
+ <input onclick="openKeypad(\'pt_dw\')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button class="keypad-trigger" onclick="openKeypad('pt_dw')">⌨️</button>
  </div>
  </div>
   <div class="form-group">
@@ -749,8 +789,11 @@
 
  <div class="output-label" style="color:#e64d4d;">CUTTING SIZES:</div>
  <div class="output-area" id="pt_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="pt_mat_out"></div>
+ <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
+ <span>MATERIAL PURCHASE & CUTTING OPTIMIZER:</span>
+ <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
+ </div>
+ <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="pt_mat_out"></div>
  </div>
 
  <!-- ================= 7. CEILING ESTIMATOR SCREEN ================= -->
@@ -767,13 +810,13 @@
  <div class="form-group">
  <label>Room Length (Ft):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('ce_l')" style="cursor:pointer; background:#fff;" type="text" id="ce_l"> <button class="keypad-trigger" onclick="openKeypad('ce_l')">⌨️</button>
+ <input onclick="openKeypad(\'ce_l\')" style="cursor:pointer; background:#fff;" type="text" id="ce_l"> <button class="keypad-trigger" onclick="openKeypad('ce_l')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Room Width (Ft):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('ce_w')" style="cursor:pointer; background:#fff;" type="text" id="ce_w"> <button class="keypad-trigger" onclick="openKeypad('ce_w')">⌨️</button>
+ <input onclick="openKeypad(\'ce_w\')" style="cursor:pointer; background:#fff;" type="text" id="ce_w"> <button class="keypad-trigger" onclick="openKeypad('ce_w')">⌨️</button>
  </div>
  </div>
  </div>
@@ -810,7 +853,7 @@
  <div class="form-group">
  <label>Phone / PIN:</label>
  <div style="display:flex; gap:4px;">
- <input type="text" id="q_phone">
+ <input type="text" id="q_phone" oninput="handleCustomerPhoneAutoLookup(this.value)" placeholder="10-digit mobile number">
  <button onclick="autofillCustomer()" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:0 8px; cursor:pointer;"><i class="fa-solid fa-magnifying-glass"></i></button>
  </div>
  </div>
@@ -835,6 +878,26 @@
  <option value="Commercial Credit: 15 Days Net Payment after Handover">Commercial Credit: 15 Days Net Payment after Handover</option>
  </select>
  </div>
+ </div>
+
+ <!-- Live Customer Khata Balance & History Alert Box -->
+ <div id="custKhataAlertBox" style="display:none; background:#fef2f2; border:1.5px solid #f87171; border-radius:12px; padding:12px; margin-top:10px; margin-bottom:12px; box-shadow:0 2px 8px rgba(239,68,68,0.1);">
+   <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+     <div style="font-size:0.84rem; font-weight:800; color:#991b1b; display:flex; align-items:center; gap:6px;">
+       <i class="fa-solid fa-address-book" style="color:#ef4444;"></i>
+       <span id="ckb_client_title">Client Khata History Found</span>
+     </div>
+     <span id="ckb_due_badge" style="background:#ef4444; color:#fff; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:12px;">₹0 Due</span>
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:0.75rem; color:#475569; background:#fff; padding:8px; border-radius:8px; border:1px solid #fee2e2; margin-bottom:8px; text-align:center;">
+     <div><span>Total Billed:</span> <b id="ckb_total_billed" style="display:block; color:#0284c7; font-size:0.85rem;">₹0</b></div>
+     <div><span>Total Paid:</span> <b id="ckb_total_paid" style="display:block; color:#16a34a; font-size:0.85rem;">₹0</b></div>
+     <div><span>Previous Due:</span> <b id="ckb_total_due" style="display:block; color:#dc2626; font-size:0.85rem;">₹0</b></div>
+   </div>
+   <label style="display:flex; align-items:center; gap:8px; font-size:0.78rem; font-weight:700; color:#991b1b; cursor:pointer;">
+     <input type="checkbox" id="q_include_prev_due" checked onchange="updateLiveDue()" style="width:16px; height:16px; accent-color:#dc2626; cursor:pointer;">
+     <span>Auto-include Previous Due (<b id="ckb_include_due_text">₹0</b>) in Total Bill Due</span>
+   </label>
  </div>
 
  <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin:12px 0 6px 0;">ADD BILL ITEM</div>
@@ -953,7 +1016,7 @@
  <div class="form-group">
  <label style="color:#2e7d32; font-weight:bold;">Rate (Rs/Sq.Ft):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('q_rate')" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button class="keypad-trigger" onclick="openKeypad('q_rate')">⌨️</button>
+ <input onclick="openKeypad(\'q_rate\')" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button class="keypad-trigger" onclick="openKeypad('q_rate')">⌨️</button>
  </div>
  </div>
 
@@ -965,14 +1028,14 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('q_h')" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button class="keypad-trigger" onclick="openKeypad('q_h')">⌨️</button>
+ <input onclick="openKeypad(\'q_h\')" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button class="keypad-trigger" onclick="openKeypad('q_h')">⌨️</button>
  </div>
  </div>
 
  <div class="form-group" style="grid-column: span 2;">
  <label>Width:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('q_w')" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button class="keypad-trigger" onclick="openKeypad('q_w')">⌨️</button>
+ <input onclick="openKeypad(\'q_w\')" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button class="keypad-trigger" onclick="openKeypad('q_w')">⌨️</button>
  </div>
  </div>
  </div>
@@ -988,7 +1051,7 @@
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
  <label style="font-size:0.8rem; font-weight:bold; color:#993399; width:35%;">Advance (Rs):</label>
  <div class="input-wrapper" style="width:42%;">
- <input readonly onclick="openKeypad('q_advance')" style="cursor:pointer; background:#fff;" type="text" id="q_advance" value="0" oninput="updateLiveDue()"> <button class="keypad-trigger" onclick="openKeypad('q_advance')">⌨️</button>
+ <input onclick="openKeypad(\'q_advance\')" style="cursor:pointer; background:#fff;" type="text" id="q_advance" value="0" oninput="updateLiveDue()"> <button class="keypad-trigger" onclick="openKeypad('q_advance')">⌨️</button>
  </div>
  <button style="width:23%; background:#0284c7; color:#fff; font-size:0.75rem; font-weight:bold; border:none; padding:8px 0; border-radius:6px; cursor:pointer;" onclick="set50PercentAdvance()">50% Auto</button>
  </div>
@@ -1001,7 +1064,7 @@
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
  <label style="font-size:0.8rem; font-weight:bold; color:#e65100; width:40%;">Transport/Labor (Rs):</label>
  <div class="input-wrapper" style="width:60%;">
- <input readonly onclick="openKeypad('q_extra_charge')" style="cursor:pointer; background:#fff;" type="text" id="q_extra_charge" value="0"> <button class="keypad-trigger" onclick="openKeypad('q_extra_charge')">⌨️</button>
+ <input onclick="openKeypad(\'q_extra_charge\')" style="cursor:pointer; background:#fff;" type="text" id="q_extra_charge" value="0"> <button class="keypad-trigger" onclick="openKeypad('q_extra_charge')">⌨️</button>
  </div>
  </div>
 
@@ -1379,6 +1442,106 @@
     </div>
   </div>
 
+  <!-- ================= 8. DYNAMIC & CUSTOM SERIES SCREEN ================= -->
+  <div id="screen-custom_series" class="screen">
+    <div class="form-box">
+      <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:10px; padding:10px; margin-bottom:12px;">
+        <div style="font-size:0.75rem; font-weight:800; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-shapes" style="color:#4f46e5;"></i>
+          <span data-i18n="lbl_select_series">SELECT FABRICATION SERIES / PRODUCT:</span>
+        </div>
+        <select id="cs_product_select" onchange="onCustomSeriesSelected()" style="font-weight:700; color:#1e3a8a; width:100%; padding:9px; border-radius:8px; border:1px solid #94a3b8; background:#fff;">
+          <!-- Injected dynamically via app.js -->
+        </select>
+        <!-- Live Formula Specification Banner -->
+        <div id="cs_formula_preview" style="margin-top:8px; background:#fff; border:1px dashed #94a3b8; border-radius:8px; padding:8px; font-size:0.72rem; color:#475569; line-height:1.45;">
+          Loading formula specification...
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col">
+          <label><span data-i18n="lbl_unit">Measurement Unit:</span></label>
+          <select id="cs_unit">
+            <option value="Inch">Inch (Fraction 1/16")</option>
+            <option value="Millimeter">Millimeter (mm)</option>
+          </select>
+        </div>
+        <div class="form-col">
+          <label><span data-i18n="lbl_panels">Panels / Shutters:</span></label>
+          <input type="number" id="cs_panels" value="2" min="1" max="10">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col">
+          <label><span data-i18n="lbl_height">Height:</span></label>
+          <div class="input-with-action">
+            <input type="text" id="cs_h" placeholder="Height e.g. 48 or 48 1/2">
+            <button type="button" class="field-btn" onclick="openKeypad('cs_h')"><i class="fa-solid fa-keyboard"></i></button>
+          </div>
+        </div>
+        <div class="form-col">
+          <label><span data-i18n="lbl_width">Width:</span></label>
+          <div class="input-with-action">
+            <input type="text" id="cs_w" placeholder="Width e.g. 60 or 60 3/4">
+            <button type="button" class="field-btn" onclick="openKeypad('cs_w')"><i class="fa-solid fa-keyboard"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col">
+          <label><span data-i18n="lbl_qty">Quantity (Pcs):</span></label>
+          <input type="number" id="cs_qty" value="1" min="1">
+        </div>
+        <div class="form-col">
+          <label><span data-i18n="lbl_room_tag">Location / Room Tag:</span></label>
+          <input type="text" id="cs_loc" placeholder="e.g. Master Bed, Hall">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="action-btn btn-calc" onclick="calculateCustomSeries()"><i class="fa-solid fa-calculator"></i> <span data-i18n="btn_calculate">CALCULATE</span></button>
+        <button class="action-btn btn-clear" onclick="clearCustomSeries()"><i class="fa-solid fa-trash-can"></i> <span data-i18n="btn_clear">CLEAR</span></button>
+      </div>
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button class="action-btn btn-save" style="flex:1;" onclick="saveMeasurementData('Dynamic Series', 'cs_out', 'cs_mat_out')"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save">SAVE</span></button>
+      </div>
+
+      <!-- 4 Dedicated Professional PDFs Export Panel -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:12px;">
+        <div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+          <i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i>
+          <span>DEDICATED WORKSHOP PRINT DOCUMENTS (4 PDFS):</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
+          <button class="action-btn" style="background:#1e3a8a; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportCutPdf('Custom_Cutting', 'Dynamic Series', 'cs_out', 'cs_mat_out')">
+            <i class="fa-solid fa-scissors"></i> <span>1. CUTTING PDF</span>
+          </button>
+          <button class="action-btn" style="background:#0284c7; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportGlassPdf('Custom_Glass', 'Dynamic Series', cs_glass_dict, 'cs_out')">
+            <i class="fa-solid fa-square-full"></i> <span>2. GLASS PDF</span>
+          </button>
+          <button class="action-btn" style="background:#047857; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportAluPdf('Custom_Alu', 'Dynamic Series', cs_buckets)">
+            <i class="fa-solid fa-cubes"></i> <span>3. ALU PROFILE PDF</span>
+          </button>
+          <button class="action-btn" style="background:#4338ca; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportHwPdf('Custom_Hardware', 'Dynamic Series', 'cs_out')">
+            <i class="fa-solid fa-toolbox"></i> <span>4. HARDWARE PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="output-label"><span data-i18n="lbl_cutting_sizes">CUTTING SIZES:</span></div>
+      <div class="output-area" id="cs_out"></div>
+      <div class="output-label" style="color:#2e7d32; display:flex; justify-content:space-between; align-items:center;">
+        <span><span data-i18n="lbl_mat_purchase">MATERIAL PURCHASE & CUTTING OPTIMIZER:</span></span>
+        <span style="font-size:0.7rem; font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:12px; cursor:pointer;" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')">🔒 PRO (₹99/Mo)</span>
+      </div>
+      <div class="output-area mat-area" onclick="if(!isAppActivated()) openScreen('activation', 'PRO UPGRADE')" style="cursor:pointer;" id="cs_mat_out"></div>
+    </div>
+  </div>
+
+
   <!-- Search & Add Bar -->
   <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
     <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -1616,13 +1779,13 @@
  <div class="form-group">
  <label>Height (Inches):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sk_h')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sk_h')">⌨️</button>
+ <input onclick="openKeypad(\'sk_h\')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sk_h')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
  <label>Width (Inches):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sk_w')" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sk_w')">⌨️</button>
+ <input onclick="openKeypad(\'sk_w\')" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sk_w')">⌨️</button>
  </div>
  </div>
  <div class="form-group">
@@ -1701,8 +1864,26 @@
  <!-- ================= 15. ACTIVATION SCREEN ================= -->
  <div id="screen-activation" class="screen">
  <div class="form-box" style="background:#1e293b; color:#fff; border: 1px solid #334155;">
- <div id="actStatusBanner" style="background:#334155; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:0.95rem; margin-bottom:14px;">
+ <div id="actStatusBanner" style="background:#334155; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:0.95rem; margin-bottom:10px;">
  Status: FREE PLAN (Limited Features)
+ </div>
+
+ <!-- Jio / Telecom Style Live Recharge Validity Card -->
+ <div id="telecomValidityCard" style="display:none; background:#0f172a; border:1.5px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:14px;">
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+     <span id="tvPlanTitle" style="font-size:0.82rem; font-weight:800; color:#38bdf8;">ACTIVE RECHARGE PACK</span>
+     <span id="tvDaysBadge" style="background:#16a34a; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">30 Days Left</span>
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.74rem; color:#cbd5e1; margin-bottom:8px; background:#1e293b; padding:8px; border-radius:8px;">
+     <div><span style="color:#94a3b8;">Start Date:</span> <b id="tvStartDate" style="color:#fff;">--</b></div>
+     <div><span style="color:#94a3b8;">Valid Until:</span> <b id="tvExpiryDate" style="color:#4ade80;">--</b></div>
+   </div>
+   <div style="background:#334155; height:7px; border-radius:4px; overflow:hidden;">
+     <div id="tvProgressBar" style="background:linear-gradient(90deg, #22c55e, #38bdf8); width:100%; height:100%; transition:width 0.3s;"></div>
+   </div>
+   <div id="tvSubNote" style="font-size:0.68rem; color:#94a3b8; margin-top:5px; text-align:center;">
+     Auto-locks automatically when validity days are completed.
+   </div>
  </div>
 
  <!-- 50-User Team Members Management Section (Unlocked for Corporate Pro) -->
@@ -1736,16 +1917,18 @@
  <div style="background:#0f172a; border:1.5px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:12px;">
  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
  <div style="color:#38bdf8; font-weight:800; font-size:0.9rem;"><i class="fa-solid fa-screwdriver-wrench"></i> 1. KARIGAR PLAN (Solo Fabricator)</div>
- <div style="background:#0284c7; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">1 User (Single)</div>
+ <div style="background:#0284c7; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">1 User • Telecom Validity</div>
  </div>
- <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For individual solo fabricators & small local workshops</div>
+ <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">Starts from the day of activation (30 Days Monthly / 365 Days Yearly)</div>
  <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
- <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹99 / Mo</span>
- <span style="color:#4ade80; font-weight:bold; font-size:0.85rem;">Annual: ₹799 / Yr (Save 33%)</span>
+ <span style="color:#fff; font-weight:bold; font-size:0.82rem;">30 Days: ₹99</span>
+ <span style="color:#4ade80; font-weight:bold; font-size:0.82rem;">365 Days: ₹799 (Save 33%)</span>
  </div>
- <div style="display:flex; gap:6px;">
- <button class="action-btn" style="background:#0284c7; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Karigar_Monthly')">Choose ₹99 / Month</button>
- <button class="action-btn" style="background:#f59e0b; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Karigar_Annual')">Choose ₹799 / Year</button>
+ <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+ <button class="action-btn" style="background:#0284c7; padding:8px; font-size:0.76rem;" onclick="subscribeViaWhatsApp('Karigar_Monthly')">₹99 (30 Days)</button>
+ <button class="action-btn" style="background:#0369a1; padding:8px; font-size:0.76rem;" onclick="subscribeViaWhatsApp('Karigar_3M')">₹280 (90 Days)</button>
+ <button class="action-btn" style="background:#0f766e; padding:8px; font-size:0.76rem;" onclick="subscribeViaWhatsApp('Karigar_6M')">₹550 (180 Days)</button>
+ <button class="action-btn" style="background:#f59e0b; color:#000; font-weight:800; padding:8px; font-size:0.76rem;" onclick="subscribeViaWhatsApp('Karigar_Annual')">₹799 (365 Days)</button>
  </div>
  </div>
 
@@ -1757,12 +1940,12 @@
  </div>
  <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For medium workshops handling 2-3 ongoing sites simultaneously</div>
  <div style="display:flex; justify-content:space-between; align-items:center; background:#14532d; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
- <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹499 / Mo</span>
- <span style="color:#fde047; font-weight:bold; font-size:0.85rem;">Annual: ₹3,999 / Yr (Save 33%)</span>
+ <span style="color:#fff; font-weight:bold; font-size:0.85rem;">30 Days: ₹499</span>
+ <span style="color:#fde047; font-weight:bold; font-size:0.85rem;">365 Days: ₹3,999 (Save 33%)</span>
  </div>
  <div style="display:flex; gap:6px;">
- <button class="action-btn" style="background:#16a34a; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Monthly')">Choose ₹499 / Month</button>
- <button class="action-btn" style="background:#22c55e; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Annual')">Choose ₹3,999 / Year</button>
+ <button class="action-btn" style="background:#16a34a; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Monthly')">₹499 (30 Days)</button>
+ <button class="action-btn" style="background:#22c55e; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Annual')">₹3,999 (365 Days)</button>
  </div>
  </div>
 
@@ -1774,12 +1957,12 @@
  </div>
  <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For large contractors, promoters & multi-branch fabrication factories</div>
  <div style="display:flex; justify-content:space-between; align-items:center; background:#2e1065; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
- <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹1,499 / Mo</span>
- <span style="color:#38bdf8; font-weight:bold; font-size:0.85rem;">Annual: ₹14,999 / Yr</span>
+ <span style="color:#fff; font-weight:bold; font-size:0.85rem;">30 Days: ₹1,499</span>
+ <span style="color:#38bdf8; font-weight:bold; font-size:0.85rem;">365 Days: ₹14,999</span>
  </div>
  <div style="display:flex; gap:6px;">
- <button class="action-btn" style="background:#8b5cf6; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Monthly')">Choose ₹1,499 / Month</button>
- <button class="action-btn" style="background:#a855f7; color:#fff; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Annual')">Choose ₹14,999 / Year</button>
+ <button class="action-btn" style="background:#8b5cf6; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Monthly')">₹1,499 (30 Days)</button>
+ <button class="action-btn" style="background:#a855f7; color:#fff; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Annual')">₹14,999 (365 Days)</button>
  </div>
  </div>
 
@@ -1921,11 +2104,6 @@
       </div>
     </div>
   </div>
-    </div>
-  </div>
- </div>
- 
- </div>
 
  <!-- Expense Modal -->
  <div class="modal-overlay" id="expenseModal">

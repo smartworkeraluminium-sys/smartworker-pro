@@ -326,6 +326,198 @@
       color: #fff;
       border-color: #38bdf8;
     }
+
+    /* Multi-Screen Navigation Architecture */
+    .admin-screen {
+      display: none;
+      animation: adminFadeIn 0.2s ease-out;
+    }
+    .admin-screen.active {
+      display: block;
+    }
+    @keyframes adminFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dashboard Hero Banner */
+    .admin-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 18px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    .admin-hero-title {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+    .admin-hero-sub {
+      font-size: 0.75rem;
+      color: #93c5fd;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Section Header Label */
+    .admin-sec-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin: 16px 0 10px 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Modular Option Grid (Matches Customer App Pro Cards) */
+    .admin-menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .admin-mod-card {
+      background: linear-gradient(145deg, #131b2e, #0f172a);
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 16px 14px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 126px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .admin-mod-card:hover {
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+    }
+    .admin-mod-card:active {
+      transform: scale(0.98);
+    }
+    .admin-mod-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .admin-mod-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    .admin-mod-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+      line-height: 1.25;
+    }
+    .admin-mod-sub {
+      font-size: 0.71rem;
+      color: #94a3b8;
+      line-height: 1.35;
+    }
+
+    /* Inner Screen Header Bar */
+    .screen-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+    .screen-back-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fbbf24;
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .screen-back-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Status Card Clickable */
+    .status-card {
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .status-card:hover {
+      transform: translateY(-2px);
+      border-color: #475569;
+    }
+
+    /* Bottom Navigation Bar */
+    .admin-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #0b1120;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6px 4px 8px 4px;
+      z-index: 200;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+    }
+    .admin-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: #64748b;
+      font-size: 0.64rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 5px 2px;
+      border-radius: 8px;
+      transition: all 0.15s;
+      background: transparent;
+      border: none;
+    }
+    .admin-nav-item i {
+      font-size: 1.05rem;
+    }
+    .admin-nav-item.active {
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.08);
+    }
+    body {
+      padding-bottom: 78px;
+    }
+
   </style>
 </head>
 <body>
@@ -333,206 +525,728 @@
   <!-- Top Header Bar -->
   <div class="top-bar">
     <div class="brand">
+      <button type="button" id="topAdminBackBtn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')" style="display:none; background:#1e293b; border:1px solid #334155; color:#fbbf24; width:34px; height:34px; border-radius:8px; cursor:pointer; align-items:center; justify-content:center; font-size:0.95rem;">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
       <img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:32px; width:auto; border-radius:6px; background:#fff; padding:2px;">
       <div>
-        <div class="title">SMART WORKER PRO • ADMIN</div>
-        <div class="sub">Owner Security Console & Account Manager</div>
+        <div class="title" id="adminTopTitle">SMART WORKER PRO • ADMIN</div>
+        <div class="sub" id="adminTopSub">Owner Security Console & Cloud Control</div>
       </div>
     </div>
-    <a href="index.html" class="back-btn">
-      <i class="fa-solid fa-arrow-left"></i> Customer App
-    </a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" id="topHomeShortcutBtn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')" class="back-btn" style="display:none; background:#1e3a8a; border-color:#3b82f6; color:#fff;">
+        <i class="fa-solid fa-table-cells-large"></i> Menu
+      </button>
+      <a href="index.html" class="back-btn">
+        <i class="fa-solid fa-mobile-screen"></i> App
+      </a>
+    </div>
   </div>
 
   <div class="container">
 
-    <!-- Metric Status Cards -->
-    <div class="status-grid">
-      <div class="status-card red-alert">
-        <div class="status-label">
-          <span class="status-dot dot-red"></span>
-          <span>Password Resets</span>
+    <!-- ======================================================== -->
+    <!-- SCREEN 0: ADMIN HOME DASHBOARD (ORGANIZED MODULE GRID)   -->
+    <!-- ======================================================== -->
+    <div id="admin-screen-home" class="admin-screen active">
+
+      <!-- Workshop Admin Identity Banner -->
+      <div class="admin-hero">
+        <div>
+          <div style="font-size:0.7rem; font-weight:800; color:#fbbf24; text-transform:uppercase; letter-spacing:0.6px;">MASTER CONTROL PANEL</div>
+          <div class="admin-hero-title">Smart Worker Pro • Admin</div>
+          <div class="admin-hero-sub">
+            <i class="fa-solid fa-circle-check" style="color:#4ade80;"></i>
+            <span>Realtime Firebase Sync • Owner Verification</span>
+          </div>
         </div>
-        <div class="status-val" id="statResetCount" style="color:#f87171;">0</div>
+        <button type="button" onclick="refreshAllAdminData()" class="btn-sm" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:8px 12px; border-radius:10px;">
+          <i class="fa-solid fa-arrows-rotate"></i> Sync
+        </button>
       </div>
-      <div class="status-card yellow-alert">
-        <div class="status-label">
-          <span class="status-dot dot-yellow"></span>
-          <span>Pending License</span>
+
+      <!-- Live Metric Status Cards (Tap any card to open its section) -->
+      <div class="status-grid">
+        <div class="status-card red-alert" onclick="openAdminScreen('resets', 'PASSWORD RESET QUEUE')">
+          <div class="status-label">
+            <span class="status-dot dot-red"></span>
+            <span>Password Resets</span>
+          </div>
+          <div class="status-val" id="statResetCount" style="color:#f87171;">0</div>
+          <div style="font-size:0.64rem; color:#fca5a5; margin-top:3px;">Tap to Verify &rarr;</div>
         </div>
-        <div class="status-val" id="statPendingCount" style="color:#fbbf24;">0</div>
+        <div class="status-card yellow-alert" onclick="openSubscribersWithFilter('pending')">
+          <div class="status-label">
+            <span class="status-dot dot-yellow"></span>
+            <span>Pending License</span>
+          </div>
+          <div class="status-val" id="statPendingCount" style="color:#fbbf24;">0</div>
+          <div style="font-size:0.64rem; color:#fde68a; margin-top:3px;">Tap to Approve &rarr;</div>
+        </div>
+        <div class="status-card green-alert" onclick="openSubscribersWithFilter('active')">
+          <div class="status-label">
+            <span class="status-dot dot-green"></span>
+            <span>Active Pro</span>
+          </div>
+          <div class="status-val" id="statActiveCount" style="color:#4ade80;">0</div>
+          <div style="font-size:0.64rem; color:#bbf7d0; margin-top:3px;">View Active &rarr;</div>
+        </div>
+        <div class="status-card blue-alert" onclick="openSubscribersWithFilter('all')">
+          <div class="status-label">
+            <span class="status-dot dot-blue"></span>
+            <span>Total Workshops</span>
+          </div>
+          <div class="status-val" id="statTotalUsers" style="color:#60a5fa;">0</div>
+          <div style="font-size:0.64rem; color:#bfdbfe; margin-top:3px;">All Directory &rarr;</div>
+        </div>
       </div>
-      <div class="status-card green-alert">
-        <div class="status-label">
-          <span class="status-dot dot-green"></span>
-          <span>Active Pro</span>
-        </div>
-        <div class="status-val" id="statActiveCount" style="color:#4ade80;">0</div>
+
+      <!-- Section 1: User Security & Licensing Modules -->
+      <div class="admin-sec-label">
+        <i class="fa-solid fa-shield-halved" style="color:#fbbf24;"></i>
+        <span>ACCOUNT SECURITY & SUBSCRIPTION MANAGEMENT</span>
       </div>
-      <div class="status-card blue-alert">
-        <div class="status-label">
-          <span class="status-dot dot-blue"></span>
-          <span>Total Workshops</span>
+
+      <div class="admin-menu-grid">
+        <!-- Module 1: Password Reset Queue -->
+        <div class="admin-mod-card" style="border-color:#7f1d1d; background:linear-gradient(145deg, #1f121b, #131b2e);" onclick="openAdminScreen('resets', 'PASSWORD RESET QUEUE')">
+          <div class="admin-mod-top">
+            <div class="admin-mod-icon" style="background:rgba(239, 68, 68, 0.18); color:#f87171;">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <span id="homeResetBadge" class="badge badge-red">0 Pending</span>
+          </div>
+          <div>
+            <div class="admin-mod-title">Password Reset & Verification</div>
+            <div class="admin-mod-sub">Call Owner, Verify Identity & Send Password</div>
+          </div>
         </div>
-        <div class="status-val" id="statTotalUsers" style="color:#60a5fa;">0</div>
+
+        <!-- Module 2: Registered Workshops Directory -->
+        <div class="admin-mod-card" style="border-color:#1e3a8a;" onclick="openAdminScreen('subscribers', 'WORKSHOP DIRECTORY')">
+          <div class="admin-mod-top">
+            <div class="admin-mod-icon" style="background:rgba(56, 189, 248, 0.16); color:#38bdf8;">
+              <i class="fa-solid fa-address-book"></i>
+            </div>
+            <span id="homeSubBadge" class="badge badge-green">0 Workshops</span>
+          </div>
+          <div>
+            <div class="admin-mod-title">Registered Workshops</div>
+            <div class="admin-mod-sub">Subscriber Directory, 1-Tap Pro Approve & Search</div>
+          </div>
+        </div>
+
+        <!-- Module 3: Create License & Billing Memo -->
+        <div class="admin-mod-card" style="border-color:#78350f;" onclick="openAdminScreen('create_key', 'CREATE LICENSE & BILLING')">
+          <div class="admin-mod-top">
+            <div class="admin-mod-icon" style="background:rgba(245, 158, 11, 0.18); color:#fbbf24;">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <span class="badge badge-yellow">Key Generator</span>
+          </div>
+          <div>
+            <div class="admin-mod-title">Create License & Billing</div>
+            <div class="admin-mod-sub">Generate 8-Digit Activation Key & WhatsApp Memo</div>
+          </div>
+        </div>
+
+        <!-- Module 4: Dynamic Product & Series Manager -->
+        <div class="admin-mod-card" style="border-color:#4338ca; background:linear-gradient(145deg, #1e1b4b, #131b2e);" onclick="openAdminScreen('products', 'PRODUCT & SERIES MANAGER')">
+          <div class="admin-mod-top">
+            <div class="admin-mod-icon" style="background:rgba(129, 140, 248, 0.2); color:#a5b4fc;">
+              <i class="fa-solid fa-shapes"></i>
+            </div>
+            <span id="homeProdBadge" class="badge" style="background:rgba(99,102,241,0.25); color:#c7d2fe; border:1px solid #6366f1;">3 Series</span>
+          </div>
+          <div>
+            <div class="admin-mod-title">Product & Series Manager</div>
+            <div class="admin-mod-sub">Add Bi-Fold, Glass Door, Jasmine & Custom Series</div>
+          </div>
+        </div>
+
+        <!-- Module 5: Master Formula & Deduction Tuner -->
+        <div class="admin-mod-card" style="border-color:#155e75; background:linear-gradient(145deg, #083344, #131b2e);" onclick="openAdminScreen('formulas', 'MASTER FORMULA TUNER')">
+          <div class="admin-mod-top">
+            <div class="admin-mod-icon" style="background:rgba(6, 182, 212, 0.2); color:#67e8f9;">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <span class="badge badge-green">Live Tuner</span>
+          </div>
+          <div>
+            <div class="admin-mod-title">Master Formula Tuner</div>
+            <div class="admin-mod-sub">Edit Minus & Plus Deductions for All Profiles</div>
+          </div>
+        </div>
+
+        <!-- Module 6: Switch to Customer App -->
+        <div class="admin-mod-card" style="border-color:#065f46;" onclick="window.location.href='index.html'">
+          <div class="admin-mod-top">
+            <div class="admin-mod-icon" style="background:rgba(16, 185, 129, 0.18); color:#34d399;">
+              <i class="fa-solid fa-calculator"></i>
+            </div>
+            <span class="badge badge-green">Open App &rarr;</span>
+          </div>
+          <div>
+            <div class="admin-mod-title">Customer Fabrication App</div>
+            <div class="admin-mod-sub">Return to Main Window Calculator & Digital Khata</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 1: PASSWORD RESET & OWNER VERIFICATION QUEUE      -->
+    <!-- ======================================================== -->
+    <div id="admin-screen-resets" class="admin-screen">
+      <div class="screen-nav-bar">
+        <button type="button" class="screen-back-btn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <span style="font-size:0.75rem; font-weight:800; color:#f87171;">OWNER VERIFICATION</span>
+      </div>
+
+      <div class="admin-card" style="border: 1.5px solid #ef4444; background: linear-gradient(135deg, #181119, #131b2e);">
+        <div class="card-title" style="color:#f87171; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-user-shield" style="color:#ef4444;"></i>
+            <span>Password Reset & Workshop Owner Verification Queue</span>
+          </div>
+          <span id="resetQueueBadge" class="badge badge-red" style="font-size:0.72rem;">0 Pending</span>
+        </div>
+
+        <div style="background:#271422; border:1px solid #7f1d1d; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.76rem; color:#fca5a5; line-height:1.45;">
+          <i class="fa-solid fa-phone" style="color:#f87171;"></i>
+          <b>Strict Owner Verification Protocol:</b> Anyone can claim to have forgotten their password. To prevent unauthorized account takeover, tap <b>Call Owner</b> to phone the workshop owner directly, verify their genuine identity, and then click <b>WhatsApp Password</b> or <b>Set New Password</b>.
+        </div>
+
+        <!-- Password Reset Requests List Container -->
+        <div id="passwordResetListContainer" style="display:flex; flex-direction:column; gap:10px;">
+          <!-- Injected via JavaScript -->
+        </div>
       </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- SECTION 1: PASSWORD RESET & OWNER VERIFICATION QUEUE     -->
+    <!-- SCREEN 2: LIVE REGISTERED WORKSHOPS & SUBSCRIBER QUEUE   -->
     <!-- ======================================================== -->
-    <div class="admin-card" style="border: 1.5px solid #ef4444; background: linear-gradient(135deg, #181119, #131b2e);">
-      <div class="card-title" style="color:#f87171; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <i class="fa-solid fa-user-shield" style="color:#ef4444;"></i>
-          <span>Password Reset & Workshop Owner Verification Queue</span>
+    <div id="admin-screen-subscribers" class="admin-screen">
+      <div class="screen-nav-bar">
+        <button type="button" class="screen-back-btn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <button type="button" class="btn-sm" style="background:#f59e0b; color:#0f172a; font-weight:800;" onclick="openAdminScreen('create_key', 'CREATE LICENSE & BILLING')">
+          <i class="fa-solid fa-key"></i> + New License Key
+        </button>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-title" style="justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-address-book" style="color:#38bdf8;"></i>
+            <span>Registered Workshops & Subscriber Directory</span>
+          </div>
+          <span id="queueTotalBadge" class="badge badge-green" style="font-size:0.72rem;">0 Total</span>
         </div>
-        <span id="resetQueueBadge" class="badge badge-red" style="font-size:0.72rem;">0 Pending</span>
-      </div>
 
-      <div style="background:#271422; border:1px solid #7f1d1d; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.76rem; color:#fca5a5; line-height:1.45;">
-        <i class="fa-solid fa-phone" style="color:#f87171;"></i>
-        <b>Strict Owner Verification Protocol:</b> Anyone can claim to have forgotten their password. To prevent unauthorized account takeover, tap <b>Call Mobile</b> to phone the workshop owner directly, verify their genuine identity, and then click <b>WhatsApp Password</b> or <b>Set New Password</b>.
-      </div>
+        <!-- Search Box -->
+        <div style="margin-bottom:12px;">
+          <input type="text" id="subscriberSearchInput" placeholder="Search by Workshop Name, Mobile, or Device ID..." oninput="filterSubscribers()" style="width:100%;">
+        </div>
 
-      <!-- Password Reset Requests List Container -->
-      <div id="passwordResetListContainer" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;">
-        <!-- Injected via JavaScript -->
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <button type="button" id="subTabAll" class="tab-btn active" onclick="setFilterTab('all', this)">All Accounts</button>
+          <button type="button" id="subTabPending" class="tab-btn" onclick="setFilterTab('pending', this)">Pending Activation</button>
+          <button type="button" id="subTabActive" class="tab-btn" onclick="setFilterTab('active', this)">Active Pro</button>
+        </div>
+
+        <!-- Subscriber List Container -->
+        <div id="subscribersListContainer">
+          <!-- Injected via JavaScript -->
+        </div>
       </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- SECTION 2: LIVE REGISTERED WORKSHOPS & SUBSCRIBER QUEUE -->
+    <!-- SCREEN 3: CREATE LICENSE & RECHARGE BILLING MEMO         -->
     <!-- ======================================================== -->
-    <div class="admin-card">
-      <div class="card-title" style="justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <i class="fa-solid fa-address-book" style="color:#38bdf8;"></i>
-          <span>Registered Workshops & Subscriber Directory</span>
+    <div id="admin-screen-create_key" class="admin-screen">
+      <div class="screen-nav-bar">
+        <button type="button" class="screen-back-btn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <button type="button" class="btn-sm" style="background:#0284c7; color:#fff;" onclick="openAdminScreen('subscribers', 'WORKSHOP DIRECTORY')">
+          <i class="fa-solid fa-users"></i> View Subscribers
+        </button>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-title">
+          <i class="fa-solid fa-key" style="color:#f59e0b;"></i>
+          <span>Create Subscription & Billing Memo</span>
         </div>
-        <span id="queueTotalBadge" class="badge badge-green" style="font-size:0.72rem;">0 Total</span>
-      </div>
 
-      <!-- Search Box -->
-      <div style="margin-bottom:12px;">
-        <input type="text" id="subscriberSearchInput" placeholder="Search by Workshop Name, Mobile, or Device ID..." oninput="filterSubscribers()" style="width:100%;">
-      </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Customer Full Name *</label>
+            <input type="text" id="in_name" placeholder="e.g. Saheb Ghanti">
+          </div>
+          <div class="form-group">
+            <label>Workshop / Business Name</label>
+            <input type="text" id="in_shop" placeholder="e.g. Apex Fabrication Works">
+          </div>
+        </div>
 
-      <!-- Filter Tabs -->
-      <div class="filter-tabs">
-        <button type="button" class="tab-btn active" onclick="setFilterTab('all', this)">All Accounts</button>
-        <button type="button" class="tab-btn" onclick="setFilterTab('pending', this)">🔴 Pending Activation</button>
-        <button type="button" class="tab-btn" onclick="setFilterTab('active', this)">🟢 Active Pro</button>
-      </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>WhatsApp Mobile Number *</label>
+            <input type="text" id="in_phone" placeholder="e.g. 9876543210">
+          </div>
+          <div class="form-group">
+            <label>Customer Device ID * (8 Characters)</label>
+            <input type="text" id="in_dev_id" placeholder="e.g. 2E9D51B5" maxlength="8" style="text-transform:uppercase; font-weight:800; font-family:'JetBrains Mono', monospace; color:#38bdf8;">
+          </div>
+        </div>
 
-      <!-- Subscriber List Container -->
-      <div id="subscribersListContainer" style="max-height:420px; overflow-y:auto;">
-        <!-- Injected via JavaScript -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Select Duration & Plan *</label>
+            <select id="in_plan" onchange="autoFillPlanCost()">
+              <option value="KARIGAR_1M">Karigar Plan - 30 Days / 1 Month (Rs.99)</option>
+              <option value="KARIGAR_3M">Karigar Plan - 90 Days / 3 Months (Rs.280)</option>
+              <option value="KARIGAR_6M">Karigar Plan - 180 Days / 6 Months (Rs.550)</option>
+              <option value="KARIGAR_1Y">Karigar Plan - 365 Days / 1 Year (Rs.799)</option>
+              <option value="TEAM_1M">Workshop Team (10 Users) - 30 Days / 1 Month (Rs.499)</option>
+              <option value="TEAM_1Y">Workshop Team (10 Users) - 365 Days / 1 Year (Rs.3,999)</option>
+              <option value="CORP_1M">Corporate Enterprise (50 Users) - 30 Days / 1 Month (Rs.1,499)</option>
+              <option value="CORP_1Y">Corporate Enterprise (50 Users) - 365 Days / 1 Year (Rs.14,999)</option>
+              <option value="LIFETIME">Lifetime VIP Pro License (Rs.19,999)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Billing Amount (Rs.)</label>
+            <input type="number" id="in_bill" value="99" oninput="calculateBalanceDue()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Amount Received (Paid Rs.)</label>
+            <input type="number" id="in_paid" value="99" oninput="calculateBalanceDue()">
+          </div>
+          <div class="form-group">
+            <label>Balance Due (Rs.)</label>
+            <input type="number" id="in_due" value="0" readonly style="color:#f87171; font-weight:800;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="in_pay_mode">
+              <option value="Google Pay / PhonePe (UPI)">Google Pay / PhonePe (UPI)</option>
+              <option value="Paytm Wallet / UPI">Paytm Wallet / UPI</option>
+              <option value="Direct Bank Transfer (IMPS/NEFT)">Direct Bank Transfer (IMPS/NEFT)</option>
+              <option value="Cash Payment">Cash Payment</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Transaction ID / UTR Number</label>
+            <input type="text" id="in_utr" placeholder="e.g. 423156789012">
+          </div>
+        </div>
+
+        <button type="button" class="btn" style="width:100%; margin-top:6px; padding:12px; font-size:0.92rem;" onclick="generateAndSaveKey()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Activation Key & Save Memo
+        </button>
+
+        <!-- Key Result Display Box -->
+        <div id="keyBoxResult" style="display:none; margin-top:14px; background:#0b1329; border:1.5px solid #10b981; border-radius:12px; padding:14px; text-align:center;">
+          <div style="font-size:0.74rem; font-weight:800; color:#4ade80;">ACTIVATION KEY GENERATED</div>
+          <div id="displayGeneratedKey" style="font-family:'JetBrains Mono', monospace; font-size:1.6rem; font-weight:800; color:#4ade80; letter-spacing:3px; margin:8px 0;">
+            --------
+          </div>
+          <div id="keyExpiryInfo" style="font-size:0.75rem; color:#94a3b8; margin-bottom:12px;">Valid Until: --</div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-wa" style="flex:1;" onclick="sendInvoiceWhatsAppDirect()">
+              <i class="fa-brands fa-whatsapp"></i> Send Invoice & Key via WhatsApp
+            </button>
+            <button type="button" class="btn" style="flex:0.6; background:#1e293b; border:1px solid #334155; color:#fff;" onclick="copyGeneratedKeyToClipboard()">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- SECTION 3: CREATE LICENSE & RECHARGE BILLING MEMO        -->
+    <!-- SCREEN 4: DYNAMIC PRODUCT & SERIES MANAGER               -->
     <!-- ======================================================== -->
-    <div class="admin-card">
-      <div class="card-title">
-        <i class="fa-solid fa-key" style="color:#f59e0b;"></i>
-        <span>Create Subscription & Billing Memo</span>
+    <div id="admin-screen-products" class="admin-screen">
+      <div class="screen-nav-bar">
+        <button type="button" class="screen-back-btn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <button type="button" class="btn-sm" style="background:#0891b2; color:#fff;" onclick="openAdminScreen('formulas', 'MASTER FORMULA TUNER')">
+          <i class="fa-solid fa-sliders"></i> Formula Tuner &rarr;
+        </button>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Customer Full Name *</label>
-          <input type="text" id="in_name" placeholder="e.g. Saheb Ghanti">
+      <div class="admin-card" style="border: 1.5px solid #6366f1;">
+        <div class="card-title" style="justify-content:space-between; color:#a5b4fc;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-shapes" style="color:#818cf8;"></i>
+            <span>Dynamic Product & Series Manager</span>
+          </div>
+          <span id="customProdCountBadge" class="badge badge-blue" style="font-size:0.72rem;">0 Series</span>
         </div>
-        <div class="form-group">
-          <label>Workshop / Business Name</label>
-          <input type="text" id="in_shop" placeholder="e.g. Apex Fabrication Works">
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>WhatsApp Mobile Number *</label>
-          <input type="text" id="in_phone" placeholder="e.g. 9876543210">
+        <div style="background:#1e1b4b; border:1px solid #4338ca; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.76rem; color:#c7d2fe; line-height:1.45;">
+          <i class="fa-solid fa-circle-info" style="color:#818cf8;"></i>
+          <b>Add & Control Fabrication Systems:</b> Create and publish new products dynamically (e.g. Bi-Fold Folding Doors, Toughened Glass Doors, Jasmine Series, Slim Line). Define minus/plus cutting formulas and glass deductions. These sync instantly to all workshop devices!
         </div>
-        <div class="form-group">
-          <label>Customer Device ID * (8 Characters)</label>
-          <input type="text" id="in_dev_id" placeholder="e.g. 2E9D51B5" maxlength="8" style="text-transform:uppercase; font-weight:800; font-family:'JetBrains Mono', monospace; color:#38bdf8;">
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Select Duration & Plan *</label>
-          <select id="in_plan" onchange="autoFillPlanCost()">
-            <option value="KARIGAR_1M">Karigar Plan - 1 Month (₹99)</option>
-            <option value="KARIGAR_3M">Karigar Plan - 3 Months (₹280)</option>
-            <option value="KARIGAR_6M">Karigar Plan - 6 Months (₹550)</option>
-            <option value="KARIGAR_1Y">Karigar Plan - 1 Year (₹799)</option>
-            <option value="TEAM_1M">Workshop Team (10 Users) - 1 Month (₹499)</option>
-            <option value="TEAM_1Y">Workshop Team (10 Users) - 1 Year (₹3,999)</option>
-            <option value="CORP_1M">Corporate Enterprise (50 Users) - 1 Month (₹1,499)</option>
-            <option value="CORP_1Y">Corporate Enterprise (50 Users) - 1 Year (₹14,999)</option>
-            <option value="LIFETIME">Lifetime VIP Pro License (₹19,999)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Billing Amount (₹)</label>
-          <input type="number" id="in_bill" value="99" oninput="calculateBalanceDue()">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Amount Received (Paid ₹)</label>
-          <input type="number" id="in_paid" value="99" oninput="calculateBalanceDue()">
-        </div>
-        <div class="form-group">
-          <label>Balance Due (₹)</label>
-          <input type="number" id="in_due" value="0" readonly style="color:#f87171; font-weight:800;">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Payment Method</label>
-          <select id="in_pay_mode">
-            <option value="Google Pay / PhonePe (UPI)">Google Pay / PhonePe (UPI)</option>
-            <option value="Paytm Wallet / UPI">Paytm Wallet / UPI</option>
-            <option value="Direct Bank Transfer (IMPS/NEFT)">Direct Bank Transfer (IMPS/NEFT)</option>
-            <option value="Cash Payment">Cash Payment</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Transaction ID / UTR Number</label>
-          <input type="text" id="in_utr" placeholder="e.g. 423156789012">
-        </div>
-      </div>
-
-      <button type="button" class="btn" style="width:100%; margin-top:6px; padding:12px; font-size:0.92rem;" onclick="generateAndSaveKey()">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Activation Key & Save Memo
-      </button>
-
-      <!-- Key Result Display Box -->
-      <div id="keyBoxResult" style="display:none; margin-top:14px; background:#0b1329; border:1.5px solid #10b981; border-radius:12px; padding:14px; text-align:center;">
-        <div style="font-size:0.74rem; font-weight:800; color:#4ade80;">ACTIVATION KEY GENERATED</div>
-        <div id="displayGeneratedKey" style="font-family:'JetBrains Mono', monospace; font-size:1.6rem; font-weight:800; color:#4ade80; letter-spacing:3px; margin:8px 0;">
-          --------
-        </div>
-        <div id="keyExpiryInfo" style="font-size:0.75rem; color:#94a3b8; margin-bottom:12px;">Valid Until: --</div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-wa" style="flex:1;" onclick="sendInvoiceWhatsAppDirect()">
-            <i class="fa-brands fa-whatsapp"></i> Send Invoice & Key via WhatsApp
+        <!-- Interactive Sub-Tabs inside Product Manager -->
+        <div class="filter-tabs" style="margin-bottom:14px;">
+          <button type="button" id="prodSubTabList" class="tab-btn active" onclick="switchProductSubTab('list')">
+            <i class="fa-solid fa-layer-group"></i> Active Series List
           </button>
-          <button type="button" class="btn" style="flex:0.6; background:#1e293b; border:1px solid #334155; color:#fff;" onclick="copyGeneratedKeyToClipboard()">
-            <i class="fa-solid fa-copy"></i> Copy
+          <button type="button" id="prodSubTabForm" class="tab-btn" onclick="switchProductSubTab('form')">
+            <i class="fa-solid fa-plus-circle"></i> + Add / Edit Series
+          </button>
+          <button type="button" id="prodSubTabTest" class="tab-btn" onclick="switchProductSubTab('test')">
+            <i class="fa-solid fa-calculator"></i> Live Test Calculator
+          </button>
+        </div>
+
+        <!-- SUB-VIEW A: Add / Edit Product Form -->
+        <div id="prodSubViewForm" style="display:none; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px; margin-bottom:14px;">
+          <div style="font-size:0.8rem; font-weight:800; color:#fbbf24; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span id="prodFormTitle"><i class="fa-solid fa-plus-circle"></i> Add New Product / Profile Series</span>
+            <button type="button" class="btn" style="background:#334155; padding:4px 8px; font-size:0.68rem;" onclick="resetProductForm()">Clear Form</button>
+          </div>
+
+          <input type="hidden" id="cp_id" value="">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Product / Series Name *</label>
+              <input type="text" id="cp_name" placeholder="e.g. Jasmine Series Sliding (25x50)">
+            </div>
+            <div class="form-group">
+              <label>System Category *</label>
+              <select id="cp_category">
+                <option value="Sliding Window">Sliding Window</option>
+                <option value="Bi-Fold / Folding Door">Bi-Fold / Folding Door</option>
+                <option value="Toughened Glass Door">Toughened Glass Door</option>
+                <option value="Casement Window">Casement Window</option>
+                <option value="Office Partition">Office Partition</option>
+                <option value="Custom Series">Custom Series</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Default Panels / Shutters</label>
+              <input type="number" id="cp_panels" value="2" min="1" max="10">
+            </div>
+            <div class="form-group">
+              <label>Shutter Width Formula Mode</label>
+              <select id="cp_w_formula">
+                <option value="overlap">Overlap: (W + Overlap * (Panels - 1)) / Panels</option>
+                <option value="clearance">Clearance: (W - Clearance) / Panels</option>
+                <option value="equal">Equal Division: W / Panels</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Shutter Height Minus (Inches) *</label>
+              <input type="number" step="0.001" id="cp_shutter_h_minus" placeholder="e.g. 1.875 or 2.25">
+            </div>
+            <div class="form-group">
+              <label>Shutter Width Modifier / Overlap (Inches) *</label>
+              <input type="number" step="0.001" id="cp_shutter_w_mod" placeholder="e.g. 0.75 or 1.5">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Glass Height Deduction from Leaf (Inches) *</label>
+              <input type="number" step="0.001" id="cp_glass_h_minus" placeholder="e.g. 3.0 or 0 for Glass Door">
+            </div>
+            <div class="form-group">
+              <label>Glass Width Deduction from Leaf (Inches) *</label>
+              <input type="number" step="0.001" id="cp_glass_w_minus" placeholder="e.g. 3.0 or 0 for Glass Door">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Outer Frame Height Deduction (Inches)</label>
+              <input type="number" step="0.001" id="cp_frame_h_minus" value="0.0">
+            </div>
+            <div class="form-group">
+              <label>Outer Frame Width Deduction (Inches)</label>
+              <input type="number" step="0.001" id="cp_frame_w_minus" value="0.0">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Hardware & Accessories Checklist (Comma separated)</label>
+            <input type="text" id="cp_hardware" placeholder="e.g. Heavy Duty Rollers (2/shutter), Touch Lock (1 pc), Woolpile (12m)">
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Karigar Workshop Instructions / Cutting Notes</label>
+            <input type="text" id="cp_notes" placeholder="e.g. Cut 45 degree mitre. Ensure 3mm clearance for bottom track.">
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn" style="flex:1; background:#4f46e5; padding:10px;" onclick="saveCustomProduct()">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Save & Publish Series to Cloud
+            </button>
+            <button type="button" class="btn" style="background:#1e293b; border:1px solid #334155; padding:10px 14px;" onclick="loadPresetProducts()">
+              <i class="fa-solid fa-rotate-left"></i> Load Presets
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW B: Active Products Directory List -->
+        <div id="prodSubViewList">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="font-size:0.78rem; font-weight:800; color:#93c5fd;">
+              <i class="fa-solid fa-layer-group"></i> Published Series (Tap Edit to Modify)
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-sm" style="background:#4f46e5; color:#fff;" onclick="resetProductForm(); switchProductSubTab('form');">
+                <i class="fa-solid fa-plus"></i> Add Series
+              </button>
+              <button type="button" class="btn-sm" style="background:#1e293b; border:1px solid #334155; color:#cbd5e1;" onclick="loadPresetProducts()">
+                <i class="fa-solid fa-rotate-left"></i> Presets
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Products List Container -->
+          <div id="customProductsListContainer" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+
+        <!-- SUB-VIEW C: Live Formula Test Calculator inside Admin -->
+        <div id="prodSubViewTest" style="display:none; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px;">
+          <div style="font-size:0.8rem; font-weight:800; color:#4ade80; margin-bottom:10px;">
+            <i class="fa-solid fa-vial-circle-check"></i> Test Product Cutting Formula Live
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Select Series to Test</label>
+              <select id="admin_test_series"></select>
+            </div>
+            <div class="form-group">
+              <label>Number of Panels / Shutters</label>
+              <input type="number" id="admin_test_panels" value="2" min="1" max="10">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sample Height (Inches)</label>
+              <input type="number" step="0.125" id="admin_test_h" value="48">
+            </div>
+            <div class="form-group">
+              <label>Sample Width (Inches)</label>
+              <input type="number" step="0.125" id="admin_test_w" value="60">
+            </div>
+          </div>
+          <button type="button" class="btn" style="width:100%; background:#10b981; margin-bottom:10px;" onclick="runAdminFormulaTest()">
+            <i class="fa-solid fa-bolt"></i> Run Live Cutting Test
+          </button>
+          <pre id="adminTestOutputBox" style="background:#090d16; border:1px solid #334155; border-radius:8px; padding:10px; font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:#a7f3d0; white-space:pre-wrap; line-height:1.45;">Tap 'Run Live Cutting Test' to verify formula deductions.</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 5: MASTER FORMULA & MEASUREMENT DEDUCTION TUNER   -->
+    <!-- ======================================================== -->
+    <div id="admin-screen-formulas" class="admin-screen">
+      <div class="screen-nav-bar">
+        <button type="button" class="screen-back-btn" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <button type="button" class="btn-sm" style="background:#4f46e5; color:#fff;" onclick="openAdminScreen('products', 'PRODUCT & SERIES MANAGER')">
+          <i class="fa-solid fa-shapes"></i> Custom Series &rarr;
+        </button>
+      </div>
+
+      <div class="admin-card" style="border: 1.5px solid #0891b2;">
+        <div class="card-title" style="justify-content:space-between; color:#67e8f9;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-sliders" style="color:#06b6d4;"></i>
+            <span>Master Formula & Measurement Deduction Tuner</span>
+          </div>
+          <span class="badge badge-green" style="font-size:0.72rem;">Live Tuner</span>
+        </div>
+
+        <div style="background:#083344; border:1px solid #155e75; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.76rem; color:#a5f3fc; line-height:1.45;">
+          <i class="fa-solid fa-wrench" style="color:#22d3ee;"></i>
+          <b>Zero-Code Formula Adjustments:</b> Select any profile category below to inspect or modify its minus/plus deductions. Hitting Save deploys your updated formulas to all workshop devices immediately!
+        </div>
+
+        <!-- Category Sub-Tabs inside Formula Tuner -->
+        <div class="filter-tabs" style="margin-bottom:14px;">
+          <button type="button" class="tab-btn active" onclick="filterFormulaGroup('all', this)">All Systems</button>
+          <button type="button" class="tab-btn" onclick="filterFormulaGroup('sliding', this)">Sliding (18x40 / 50 / 60)</button>
+          <button type="button" class="tab-btn" onclick="filterFormulaGroup('domal', this)">Domal 27x65</button>
+          <button type="button" class="tab-btn" onclick="filterFormulaGroup('door_casement', this)">Doors & Casement</button>
+        </div>
+
+        <!-- Sliding Window Tuning -->
+        <div id="fgroup-sliding" class="formula-group-box" style="background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:0.8rem; font-weight:800; color:#fbbf24; margin-bottom:8px;">
+            <i class="fa-solid fa-sliders"></i> Standard Sliding Systems (Inches)
+          </div>
+          
+          <!-- 18x40 -->
+          <div style="font-size:0.74rem; font-weight:700; color:#93c5fd; margin-bottom:4px;">18x40 Series</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Height Minus (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x40_h_minus" value="1.625">
+            </div>
+            <div class="form-group">
+              <label>Width Overlap (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x40_w_mod" value="0.625">
+            </div>
+            <div class="form-group">
+              <label>Glass Height Minus (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x40_g_h_minus" value="2.75">
+            </div>
+          </div>
+
+          <!-- 18x50 -->
+          <div style="font-size:0.74rem; font-weight:700; color:#93c5fd; margin-top:8px; margin-bottom:4px;">18x50 Series</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Height Minus (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x50_h_minus" value="1.75">
+            </div>
+            <div class="form-group">
+              <label>Width Overlap (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x50_w_mod" value="0.75">
+            </div>
+            <div class="form-group">
+              <label>Glass Height Minus (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x50_g_h_minus" value="3.0">
+            </div>
+          </div>
+
+          <!-- 18x60 / 20x50 -->
+          <div style="font-size:0.74rem; font-weight:700; color:#93c5fd; margin-top:8px; margin-bottom:4px;">18x60 / 20x50 Series</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Height Minus (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x60_h_minus" value="1.875">
+            </div>
+            <div class="form-group">
+              <label>Width Overlap (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x60_w_mod" value="0.875">
+            </div>
+            <div class="form-group">
+              <label>Glass Height Minus (Inches)</label>
+              <input type="number" step="0.001" id="ovr_sl_18x60_g_h_minus" value="3.125">
+            </div>
+          </div>
+        </div>
+
+        <!-- Domal 27x65 Tuning -->
+        <div id="fgroup-domal" class="formula-group-box" style="background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:0.8rem; font-weight:800; color:#fbbf24; margin-bottom:8px;">
+            <i class="fa-solid fa-table-cells-large"></i> Domal 27x65 System
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sash Height Deduction (mm)</label>
+              <input type="number" step="0.1" id="ovr_dm_sash_h_deduct" value="44.0">
+            </div>
+            <div class="form-group">
+              <label>Glass Height Deduction (mm)</label>
+              <input type="number" step="0.1" id="ovr_dm_glass_deduct" value="26.0">
+            </div>
+            <div class="form-group">
+              <label>Track Clearance (mm)</label>
+              <input type="number" step="0.1" id="ovr_dm_clearance" value="1.5">
+            </div>
+          </div>
+        </div>
+
+        <!-- Casement & Door Tuning -->
+        <div id="fgroup-door_casement" class="formula-group-box" style="background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px; margin-bottom:14px;">
+          <div style="font-size:0.8rem; font-weight:800; color:#fbbf24; margin-bottom:8px;">
+            <i class="fa-solid fa-door-open"></i> Casement & Door Master (Inches)
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Door Vertical Deduction</label>
+              <input type="number" step="0.001" id="ovr_dr_v_deduct" value="0.375">
+            </div>
+            <div class="form-group">
+              <label>Door Top/Bottom Deduction</label>
+              <input type="number" step="0.001" id="ovr_dr_tb_deduct" value="5.0">
+            </div>
+            <div class="form-group">
+              <label>Casement Shutter Deduction</label>
+              <input type="number" step="0.001" id="ovr_cc_shutter_deduct" value="1.5">
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn" style="flex:1; background:#0891b2; padding:10px;" onclick="saveAdminFormulaOverrides()">
+            <i class="fa-solid fa-floppy-disk"></i> Save & Deploy Formula Overrides
+          </button>
+          <button type="button" class="btn" style="background:#1e293b; border:1px solid #334155; padding:10px 14px;" onclick="resetAdminFormulaOverrides()">
+            <i class="fa-solid fa-rotate-left"></i> Reset Defaults
           </button>
         </div>
       </div>
     </div>
 
   </div>
+
+  <!-- Fixed Bottom Navigation Bar (Matches Main Customer App Experience) -->
+  <div class="admin-bottom-nav">
+    <button type="button" class="admin-nav-item active" id="anav-home" onclick="openAdminScreen('home', 'ADMIN DASHBOARD')">
+      <i class="fa-solid fa-table-cells-large"></i>
+      <span>Dashboard</span>
+    </button>
+    <button type="button" class="admin-nav-item" id="anav-resets" onclick="openAdminScreen('resets', 'PASSWORD RESET QUEUE')">
+      <i class="fa-solid fa-user-shield"></i>
+      <span>Resets</span>
+    </button>
+    <button type="button" class="admin-nav-item" id="anav-subscribers" onclick="openAdminScreen('subscribers', 'WORKSHOP DIRECTORY')">
+      <i class="fa-solid fa-users"></i>
+      <span>Workshops</span>
+    </button>
+    <button type="button" class="admin-nav-item" id="anav-create_key" onclick="openAdminScreen('create_key', 'CREATE LICENSE & BILLING')">
+      <i class="fa-solid fa-key"></i>
+      <span>Key Gen</span>
+    </button>
+    <button type="button" class="admin-nav-item" id="anav-products" onclick="openAdminScreen('products', 'PRODUCT & SERIES MANAGER')">
+      <i class="fa-solid fa-shapes"></i>
+      <span>Products</span>
+    </button>
+    <button type="button" class="admin-nav-item" id="anav-formulas" onclick="openAdminScreen('formulas', 'MASTER FORMULA TUNER')">
+      <i class="fa-solid fa-sliders"></i>
+      <span>Formulas</span>
+    </button>
+  </div>
+
 
   <!-- Admin JavaScript Engine -->
   <script>
@@ -549,15 +1263,39 @@
     };
 
     const PLAN_NAMES = {
-      'KARIGAR_1M': 'Karigar Plan (1 Month)',
-      'KARIGAR_3M': 'Karigar Plan (3 Months)',
-      'KARIGAR_6M': 'Karigar Plan (6 Months)',
-      'KARIGAR_1Y': 'Karigar Plan (1 Year)',
-      'TEAM_1M': 'Workshop Team (1 Month)',
-      'TEAM_1Y': 'Workshop Team (1 Year)',
-      'CORP_1M': 'Corporate Enterprise (1 Month)',
-      'CORP_1Y': 'Corporate Enterprise (1 Year)',
-      'LIFETIME': 'Lifetime VIP Pro Access'
+      'KARIGAR_1M': 'Karigar Plan (30 Days - Rs.99)',
+      'KARIGAR_3M': 'Karigar Plan (90 Days - Rs.280)',
+      'KARIGAR_6M': 'Karigar Plan (180 Days - Rs.550)',
+      'KARIGAR_1Y': 'Karigar Plan (365 Days - Rs.799)',
+      'TEAM_1M': 'Workshop Team (30 Days - Rs.499)',
+      'TEAM_1Y': 'Workshop Team (365 Days - Rs.3,999)',
+      'CORP_1M': 'Corporate Enterprise (30 Days - Rs.1,499)',
+      'CORP_1Y': 'Corporate Enterprise (365 Days - Rs.14,999)',
+      'LIFETIME': 'Lifetime VIP Pro Access (Rs.19,999)'
+    };
+
+    const PLAN_VALIDITY_DAYS = {
+      'KARIGAR_1M': 30,
+      'KARIGAR_3M': 90,
+      'KARIGAR_6M': 180,
+      'KARIGAR_1Y': 365,
+      'TEAM_1M': 30,
+      'TEAM_1Y': 365,
+      'CORP_1M': 30,
+      'CORP_1Y': 365,
+      'LIFETIME': 36500
+    };
+
+    const ADMIN_SALTS = {
+      'KARIGAR_1M': 'SAHEB_1M_PRO',
+      'KARIGAR_3M': 'SAHEB_3M_PRO',
+      'KARIGAR_6M': 'SAHEB_6M_PRO',
+      'KARIGAR_1Y': 'SAHEB_1Y_PRO',
+      'TEAM_1M': 'SAHEB_TEAM_1M_PRO',
+      'TEAM_1Y': 'SAHEB_TEAM_1Y_PRO',
+      'CORP_1M': 'SAHEB_CORP_1M_PRO',
+      'CORP_1Y': 'SAHEB_CORP_1Y_PRO',
+      'LIFETIME': 'SMARTWORKER_ADMIN_100'
     };
 
     let currentTabFilter = 'all';
@@ -655,23 +1393,53 @@
     }
 
     function computeKey(devId, plan) {
-      const raw = String(devId).toUpperCase().trim() + "_SMARTWORKER_PRO_SECRET_SALT_2026_" + plan;
-      const hash = sha256(raw);
-      let out = "";
-      for (let i = 0; i < 8; i++) {
-        out += hash[(i * 7) % hash.length];
-      }
-      return out.toUpperCase();
+      devId = String(devId || '').toUpperCase().trim();
+      if (plan === 'LIFETIME') return 'SMARTWORKER_ADMIN_100';
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const baseSalt = ADMIN_SALTS[plan] || ADMIN_SALTS['KARIGAR_1M'];
+      const dynSalt = plan.includes('1Y') ? (baseSalt + '_' + y) : (baseSalt + '_' + y + '_' + m);
+      return sha256(devId + dynSalt).substring(0, 8).toUpperCase();
+    }
+
+    function computeTelecomValidity(plan) {
+      const days = PLAN_VALIDITY_DAYS[plan] || 30;
+      const startMs = Date.now();
+      const expiryMs = startMs + (days * 24 * 60 * 60 * 1000);
+      const startDateStr = new Date(startMs).toLocaleDateString('en-GB');
+      const expiryDateStr = plan === 'LIFETIME' ? 'Lifetime VIP Access' : new Date(expiryMs).toLocaleDateString('en-GB');
+      return {
+        validity_days: days,
+        start_timestamp: startMs,
+        expiry_timestamp: expiryMs,
+        start_date: startDateStr,
+        expiry_date: expiryDateStr
+      };
     }
 
     function computeExpiry(plan) {
-      const now = new Date();
-      if (plan.includes('1M')) now.setMonth(now.getMonth() + 1);
-      else if (plan.includes('3M')) now.setMonth(now.getMonth() + 3);
-      else if (plan.includes('6M')) now.setMonth(now.getMonth() + 6);
-      else if (plan.includes('1Y')) now.setFullYear(now.getFullYear() + 1);
-      else if (plan.includes('LIFETIME')) return "Lifetime VIP Access";
-      return now.toLocaleDateString('en-GB');
+      return computeTelecomValidity(plan).expiry_date;
+    }
+
+    function getSubscriberRemainingDays(sub) {
+      if (!sub) return 0;
+      if (sub.plan === 'LIFETIME' || (sub.expiry_date && String(sub.expiry_date).toLowerCase().includes('lifetime'))) {
+        return 36500;
+      }
+      const nowMs = Date.now();
+      if (sub.expiry_timestamp) {
+        const diff = Number(sub.expiry_timestamp) - nowMs;
+        return Math.max(0, Math.ceil(diff / (24 * 60 * 60 * 1000)));
+      }
+      if (sub.expiry_date && sub.expiry_date.includes('/')) {
+        const parts = sub.expiry_date.split('/');
+        const exp = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), 23, 59, 59);
+        if (!isNaN(exp.getTime())) {
+          return Math.max(0, Math.ceil((exp.getTime() - nowMs) / (24 * 60 * 60 * 1000)));
+        }
+      }
+      return 0;
     }
 
     function autoFillPlanCost() {
@@ -708,8 +1476,7 @@
       }
 
       const key = computeKey(devId, plan);
-      const expDate = computeExpiry(plan);
-      const today = new Date().toLocaleDateString('en-GB');
+      const validityObj = computeTelecomValidity(plan);
 
       activeInvoiceObj = {
         id: "INV_" + Date.now(),
@@ -719,18 +1486,21 @@
         phone: phone,
         plan: plan,
         plan_name: PLAN_NAMES[plan] || plan,
+        validity_days: validityObj.validity_days,
         bill_amount: bill,
         paid_amount: paid,
         due_amount: due,
         activation_key: key,
         status: "ACTIVE",
-        start_date: today,
-        expiry_date: expDate,
+        start_date: validityObj.start_date,
+        expiry_date: validityObj.expiry_date,
+        start_timestamp: validityObj.start_timestamp,
+        expiry_timestamp: validityObj.expiry_timestamp,
         timestamp: Date.now()
       };
 
       document.getElementById('displayGeneratedKey').textContent = key;
-      document.getElementById('keyExpiryInfo').textContent = "Valid Until: " + expDate + " • " + (PLAN_NAMES[plan] || plan);
+      document.getElementById('keyExpiryInfo').textContent = "Starts: " + validityObj.start_date + " -> Valid Until: " + validityObj.expiry_date + " (" + validityObj.validity_days + " Days)";
       document.getElementById('keyBoxResult').style.display = 'block';
 
       // Save into active subscribers
@@ -742,6 +1512,9 @@
 
       if (window.fbDb) {
         fbDb.collection('subscribers').doc(devId).set(activeInvoiceObj, { merge: true }).catch(() => {});
+      }
+      if (window.fbRtdb) {
+        fbRtdb.ref('subscribers/' + devId).set(activeInvoiceObj).catch(() => {});
       }
 
       renderSubscribers();
@@ -1006,10 +1779,10 @@
             bill_amount: 99,
             paid_amount: 99,
             due_amount: 0,
-            activation_key: "ACTIVE",
-            status: "ACTIVE",
-            start_date: "Registered",
-            expiry_date: "Active Account"
+            activation_key: "NOT ISSUED",
+            status: "PENDING_ACTIVATION",
+            start_date: "Not Recharged",
+            expiry_date: "No Active Recharge"
           });
         }
       });
@@ -1054,11 +1827,16 @@
 
       let html = "";
       filtered.forEach((sub) => {
-        const isPending = sub.status === 'PENDING_ACTIVATION' || sub.status === 'Pending';
+        const daysLeft = getSubscriberRemainingDays(sub);
+        const isExpired = (sub.status === 'ACTIVE' && daysLeft <= 0 && sub.expiry_date !== 'Active Account');
+        const isPending = sub.status === 'PENDING_ACTIVATION' || sub.status === 'Pending' || isExpired;
         const cardClass = isPending ? 'pending' : 'active';
-        const badgeMarkup = isPending ?
-          `<span class="badge badge-red"><span class="status-dot dot-red"></span> NEW SUBSCRIBER</span>` :
-          `<span class="badge badge-green"><span class="status-dot dot-green"></span> ACTIVE PRO</span>`;
+        let badgeMarkup = `<span class="badge badge-green"><span class="status-dot dot-green"></span> ACTIVE (${daysLeft} Days Left)</span>`;
+        if (isExpired) {
+          badgeMarkup = `<span class="badge badge-red"><span class="status-dot dot-red"></span> EXPIRED (0 Days Left)</span>`;
+        } else if (isPending) {
+          badgeMarkup = `<span class="badge badge-yellow"><span class="status-dot dot-yellow"></span> PENDING RECHARGE</span>`;
+        }
 
         const savedPass = sub.password || (registeredUsers[sub.phone] ? registeredUsers[sub.phone].password : "123456");
 
@@ -1077,7 +1855,8 @@
               <div><b>Device ID:</b> <span class="sub-code">${sub.device_id}</span></div>
               <div><b>Plan:</b> ${sub.plan_name || sub.plan}</div>
               <div><b>Account Password:</b> <span class="sub-code" style="color:#fbbf24;">${savedPass}</span></div>
-              <div><b>Expiry:</b> ${sub.expiry_date}</div>
+              <div><b>Start Date:</b> ${sub.start_date || 'N/A'}</div>
+              <div><b>Valid Until:</b> <span style="color:${isExpired ? '#f87171' : '#4ade80'}; font-weight:700;">${sub.expiry_date} ${!isPending ? '(' + daysLeft + 'd left)' : ''}</span></div>
               <div><b>Key:</b> <span class="sub-code" style="color:#4ade80;">${sub.activation_key || "NOT ISSUED"}</span></div>
             </div>
 
@@ -1100,9 +1879,9 @@
     }
 
     function activateAndSendWhatsApp(devId, name, phone, plan) {
+      plan = plan && PLAN_RATES[plan] ? plan : 'KARIGAR_1M';
       const key = computeKey(devId, plan);
-      const expDate = computeExpiry(plan);
-      const today = new Date().toLocaleDateString('en-GB');
+      const validityObj = computeTelecomValidity(plan);
 
       const record = {
         id: "SUB_" + Date.now(),
@@ -1112,13 +1891,16 @@
         phone: phone,
         plan: plan,
         plan_name: PLAN_NAMES[plan] || plan,
+        validity_days: validityObj.validity_days,
         bill_amount: PLAN_RATES[plan] || 99,
         paid_amount: PLAN_RATES[plan] || 99,
         due_amount: 0,
         activation_key: key,
         status: "ACTIVE",
-        start_date: today,
-        expiry_date: expDate,
+        start_date: validityObj.start_date,
+        expiry_date: validityObj.expiry_date,
+        start_timestamp: validityObj.start_timestamp,
+        expiry_timestamp: validityObj.expiry_timestamp,
         timestamp: Date.now()
       };
 
@@ -1146,8 +1928,168 @@
       document.getElementById('in_phone').value = phone;
       document.getElementById('in_plan').value = plan;
       autoFillPlanCost();
-      window.scrollTo({ top: 500, behavior: 'smooth' });
+      openAdminScreen('create_key', 'CREATE LICENSE & BILLING');
     }
+
+    // Multi-Screen Navigation Engine for Admin Console
+    function openAdminScreen(screenId, screenTitle) {
+      document.querySelectorAll('.admin-screen').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      var target = document.getElementById('admin-screen-' + screenId);
+      if (target) target.classList.add('active');
+
+      // Update Top Header Bar
+      var backBtn = document.getElementById('topAdminBackBtn');
+      var homeBtn = document.getElementById('topHomeShortcutBtn');
+      var topTitle = document.getElementById('adminTopTitle');
+      var topSub = document.getElementById('adminTopSub');
+
+      if (screenId === 'home') {
+        if (backBtn) backBtn.style.display = 'none';
+        if (homeBtn) homeBtn.style.display = 'none';
+        if (topTitle) topTitle.textContent = 'SMART WORKER PRO • ADMIN';
+        if (topSub) topSub.textContent = 'Owner Security Console & Cloud Control';
+      } else {
+        if (backBtn) backBtn.style.display = 'inline-flex';
+        if (homeBtn) homeBtn.style.display = 'inline-flex';
+        if (topTitle) topTitle.textContent = screenTitle || 'ADMIN MODULE';
+        if (topSub) topSub.textContent = 'Tap Back arrow to return to Admin Dashboard';
+      }
+
+      // Update Bottom Nav Active State
+      document.querySelectorAll('.admin-nav-item').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      var activeNav = document.getElementById('anav-' + screenId);
+      if (activeNav) activeNav.classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openSubscribersWithFilter(filterType) {
+      openAdminScreen('subscribers', 'WORKSHOP DIRECTORY');
+      var btnId = filterType === 'pending' ? 'subTabPending' : (filterType === 'active' ? 'subTabActive' : 'subTabAll');
+      var btnEl = document.getElementById(btnId);
+      if (btnEl) {
+        setFilterTab(filterType, btnEl);
+      }
+    }
+
+    function filterFormulaGroup(group, btnElem) {
+      if (btnElem && btnElem.parentElement) {
+        btnElem.parentElement.querySelectorAll('.tab-btn').forEach(function(b) {
+          b.classList.remove('active');
+        });
+        btnElem.classList.add('active');
+      }
+      var groups = ['sliding', 'domal', 'door_casement'];
+      groups.forEach(function(g) {
+        var el = document.getElementById('fgroup-' + g);
+        if (el) {
+          el.style.display = (group === 'all' || group === g) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function updateDashboardHomeBadges() {
+      var resetBadge = document.getElementById('resetQueueBadge');
+      var homeReset = document.getElementById('homeResetBadge');
+      if (resetBadge && homeReset) {
+        homeReset.textContent = resetBadge.textContent;
+      }
+      var totalUsers = document.getElementById('statTotalUsers');
+      var homeSub = document.getElementById('homeSubBadge');
+      if (totalUsers && homeSub) {
+        homeSub.textContent = totalUsers.textContent + ' Workshops';
+      }
+      var prodBadge = document.getElementById('customProdCountBadge');
+      var homeProd = document.getElementById('homeProdBadge');
+      if (prodBadge && homeProd) {
+        homeProd.textContent = prodBadge.textContent;
+      }
+    }
+
+    
+    function switchProductSubTab(mode) {
+      var vList = document.getElementById('prodSubViewList');
+      var vForm = document.getElementById('prodSubViewForm');
+      var vTest = document.getElementById('prodSubViewTest');
+      var bList = document.getElementById('prodSubTabList');
+      var bForm = document.getElementById('prodSubTabForm');
+      var bTest = document.getElementById('prodSubTabTest');
+
+      if (vList) vList.style.display = (mode === 'list') ? 'block' : 'none';
+      if (vForm) vForm.style.display = (mode === 'form') ? 'block' : 'none';
+      if (vTest) vTest.style.display = (mode === 'test') ? 'block' : 'none';
+
+      [bList, bForm, bTest].forEach(function(b) { if (b) b.classList.remove('active'); });
+      if (mode === 'list' && bList) bList.classList.add('active');
+      if (mode === 'form' && bForm) bForm.classList.add('active');
+      if (mode === 'test' && bTest) {
+        bTest.classList.add('active');
+        populateAdminTestSeriesDropdown();
+      }
+    }
+
+    function populateAdminTestSeriesDropdown() {
+      var sel = document.getElementById('admin_test_series');
+      if (!sel) return;
+      var prods = getAdminCustomProducts();
+      var html = '';
+      prods.forEach(function(p) {
+        html += '<option value="' + p.id + '">' + escapeHtmlAdmin(p.name) + ' (' + escapeHtmlAdmin(p.category) + ')</option>';
+      });
+      sel.innerHTML = html;
+    }
+
+    function runAdminFormulaTest() {
+      var sel = document.getElementById('admin_test_series');
+      var outBox = document.getElementById('adminTestOutputBox');
+      if (!sel || !outBox) return;
+      var prods = getAdminCustomProducts();
+      var p = prods.find(function(x) { return x.id === sel.value; }) || prods[0];
+      if (!p) return;
+
+      var h = parseFloat(document.getElementById('admin_test_h').value) || 48;
+      var w = parseFloat(document.getElementById('admin_test_w').value) || 60;
+      var panels = parseInt(document.getElementById('admin_test_panels').value) || p.panels || 2;
+
+      var outer_h = Math.max(0, h - (p.frame_h_minus || 0));
+      var outer_w = Math.max(0, w - (p.frame_w_minus || 0));
+      var shutter_h = Math.max(0, h - (p.shutter_h_minus || 0));
+      var shutter_w = 0;
+      if (p.w_formula === 'clearance') {
+        shutter_w = Math.max(0, (w - (p.shutter_w_mod || 0)) / panels);
+      } else if (p.w_formula === 'equal') {
+        shutter_w = Math.max(0, w / panels);
+      } else {
+        shutter_w = Math.max(0, (w + (p.shutter_w_mod || 0) * (panels - 1)) / panels);
+      }
+      var glass_h = (p.glass_h_minus === 0 && p.glass_w_minus === 0) ? shutter_h : Math.max(0, shutter_h - (p.glass_h_minus || 0));
+      var glass_w = (p.glass_h_minus === 0 && p.glass_w_minus === 0) ? shutter_w : Math.max(0, shutter_w - (p.glass_w_minus || 0));
+
+      var txt = '=== LIVE FORMULA VERIFICATION ===\n';
+      txt += 'Series: ' + p.name + ' (' + p.category + ')\n';
+      txt += 'Input Size: ' + h + '" H x ' + w + '" W (' + panels + ' Panels)\n';
+      txt += '---------------------------------\n';
+      txt += 'Outer Frame Vertical:   ' + outer_h.toFixed(3) + '" (2 pcs)\n';
+      txt += 'Outer Frame Horizontal: ' + outer_w.toFixed(3) + '" (2 pcs)\n';
+      txt += 'Shutter Height Cut:     ' + shutter_h.toFixed(3) + '" (' + (panels * 2) + ' pcs)\n';
+      txt += 'Shutter Width Cut:      ' + shutter_w.toFixed(3) + '" (' + (panels * 2) + ' pcs)\n';
+      txt += 'Glass Size Cut:         ' + glass_h.toFixed(3) + '" x ' + glass_w.toFixed(3) + '" (' + panels + ' pcs)\n';
+      if (p.hardware) txt += 'Hardware: ' + p.hardware + '\n';
+      outBox.textContent = txt;
+    }
+
+    function refreshAllAdminData() {
+      renderPasswordResetQueue();
+      renderSubscribers();
+      renderAdminCustomProducts();
+      loadAdminFormulaOverridesIntoForm();
+      updateDashboardHomeBadges();
+    }
+
 
     // Live Firebase Realtime Sync
     function initFirebaseLiveListener() {
@@ -1222,6 +2164,31 @@
           }
         }, err => console.warn("Firestore recharge_requests listener note:", err));
 
+
+        // 5. Listen to Custom Products Live
+        db.collection('custom_products').onSnapshot(snap => {
+          const prods = [];
+          snap.forEach(doc => {
+            const data = doc.data();
+            if (data) prods.push(data);
+          });
+          if (prods.length > 0) {
+            localStorage.setItem('sw_custom_products', JSON.stringify(prods));
+            renderAdminCustomProducts();
+          }
+        }, err => console.warn("Firestore custom_products listener note:", err));
+
+        // 6. Listen to Formula Overrides Live
+        db.collection('settings').doc('formula_overrides').onSnapshot(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            if (data) {
+              localStorage.setItem('sw_formula_overrides', JSON.stringify(data));
+              loadAdminFormulaOverridesIntoForm();
+            }
+          }
+        }, err => console.warn("Firestore formula_overrides listener note:", err));
+
       } catch (err) {
         console.warn("Live listener fallback:", err);
       }
@@ -1232,10 +2199,323 @@
       renderSubscribers();
     });
 
+
+    // ========================================================
+    // SECTION 4: DYNAMIC PRODUCT & SERIES MANAGER JAVASCRIPT
+    // ========================================================
+    const DEFAULT_CUSTOM_PRODUCTS = [
+      {
+        id: "prod_jasmine_25x50",
+        name: "Jasmine Series Sliding (25x50)",
+        category: "Sliding Window",
+        panels: 2,
+        w_formula: "overlap",
+        shutter_h_minus: 1.875,
+        shutter_w_mod: 0.75,
+        glass_h_minus: 3.0,
+        glass_w_minus: 3.0,
+        frame_h_minus: 0.0,
+        frame_w_minus: 0.0,
+        hardware: "Jasmine Heavy Rollers (2/shutter), Concealed Touch Lock (1 pc), Woolpile (15m)",
+        notes: "Outer frame 45 deg mitre cut. Shutter top/bottom 90 deg straight. Interlock 90 deg."
+      },
+      {
+        id: "prod_bifold_door",
+        name: "Bi-Fold / Folding Door & Window",
+        category: "Bi-Fold / Folding Door",
+        panels: 4,
+        w_formula: "clearance",
+        shutter_h_minus: 2.25,
+        shutter_w_mod: 1.5,
+        glass_h_minus: 3.5,
+        glass_w_minus: 3.5,
+        frame_h_minus: 0.0,
+        frame_w_minus: 0.0,
+        hardware: "Top Hanging Heavy Roller Carrier (2 sets), Bottom Guide Rollers (2 sets), SS Folding Butt Hinges (9 pcs), Flush Bolts (2 pcs), Cylinder Mortise Lock (1 set)",
+        notes: "Heavy top track required. Maintain 12mm bottom clearance above floor level."
+      },
+      {
+        id: "prod_glass_door_patch",
+        name: "Toughened Glass Door (Patch Fitting)",
+        category: "Toughened Glass Door",
+        panels: 1,
+        w_formula: "clearance",
+        shutter_h_minus: 2.5,
+        shutter_w_mod: 0.5,
+        glass_h_minus: 0.0,
+        glass_w_minus: 0.0,
+        frame_h_minus: 0.0,
+        frame_w_minus: 0.0,
+        hardware: "Hydraulic Floor Spring (Heavy 120kg), Top Patch Fitting (PT-20), Bottom Patch Fitting (PT-10), Corner Lock (US-10), 450mm S-Handle / D-Handle (SS 304)",
+        notes: "Cut 10mm/12mm toughened glass with corner cutouts for patch fittings before tempering."
+      }
+    ];
+
+    function getAdminCustomProducts() {
+      try {
+        const raw = localStorage.getItem('sw_custom_products');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        console.warn("Custom products parse error", e);
+      }
+      localStorage.setItem('sw_custom_products', JSON.stringify(DEFAULT_CUSTOM_PRODUCTS));
+      return DEFAULT_CUSTOM_PRODUCTS;
+    }
+
+    function renderAdminCustomProducts() {
+      const products = getAdminCustomProducts();
+      const container = document.getElementById('customProductsListContainer');
+      const badge = document.getElementById('customProdCountBadge');
+      if (badge) badge.textContent = products.length + " Series";
+      if (typeof updateDashboardHomeBadges === 'function') updateDashboardHomeBadges();
+      if (!container) return;
+
+      if (products.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:16px; color:#64748b; font-size:0.8rem;">No custom series found. Click 'Load Presets' to restore default series.</div>`;
+        return;
+      }
+
+      let html = '';
+      products.forEach((p) => {
+        html += `
+          <div style="background:#131d36; border:1px solid #1e293b; border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-weight:800; font-size:0.85rem; color:#fff;">${escapeHtmlAdmin(p.name)}</span>
+                <span style="font-size:0.65rem; background:#1e3a8a; color:#93c5fd; padding:1px 6px; border-radius:6px; font-weight:700;">${escapeHtmlAdmin(p.category || 'Custom')}</span>
+              </div>
+              <div style="font-size:0.72rem; color:#cbd5e1; line-height:1.4;">
+                <span style="color:#fbbf24; font-weight:700;">Shutter:</span> Height Minus: <b>${p.shutter_h_minus}"</b> | Width Overlap: <b>${p.shutter_w_mod}"</b> | Panels: <b>${p.panels || 2}</b><br>
+                <span style="color:#38bdf8; font-weight:700;">Glass:</span> Height Deduction: <b>${p.glass_h_minus}"</b> | Width Deduction: <b>${p.glass_w_minus}"</b>
+              </div>
+              ${p.hardware ? `<div style="font-size:0.68rem; color:#94a3b8; margin-top:3px;"><i class="fa-solid fa-screwdriver-wrench" style="color:#64748b;"></i> ${escapeHtmlAdmin(p.hardware)}</div>` : ''}
+              ${p.notes ? `<div style="font-size:0.66rem; color:#6ee7b7; margin-top:2px;"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlAdmin(p.notes)}</div>` : ''}
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <button type="button" class="btn" style="background:#2563eb; padding:5px 10px; font-size:0.7rem;" onclick="editCustomProduct('${p.id}')">
+                <i class="fa-solid fa-pen"></i> Edit
+              </button>
+              <button type="button" class="btn" style="background:#ef4444; padding:5px 10px; font-size:0.7rem;" onclick="deleteCustomProduct('${p.id}')">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function resetProductForm() {
+      document.getElementById('cp_id').value = '';
+      document.getElementById('cp_name').value = '';
+      document.getElementById('cp_category').value = 'Sliding Window';
+      document.getElementById('cp_panels').value = '2';
+      document.getElementById('cp_w_formula').value = 'overlap';
+      document.getElementById('cp_shutter_h_minus').value = '';
+      document.getElementById('cp_shutter_w_mod').value = '';
+      document.getElementById('cp_glass_h_minus').value = '';
+      document.getElementById('cp_glass_w_minus').value = '';
+      document.getElementById('cp_frame_h_minus').value = '0.0';
+      document.getElementById('cp_frame_w_minus').value = '0.0';
+      document.getElementById('cp_hardware').value = '';
+      document.getElementById('cp_notes').value = '';
+      const titleElem = document.getElementById('prodFormTitle');
+      if (titleElem) titleElem.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Add New Product / Profile Series`;
+    }
+
+    function editCustomProduct(id) {
+      const products = getAdminCustomProducts();
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('cp_id').value = p.id;
+      document.getElementById('cp_name').value = p.name || '';
+      document.getElementById('cp_category').value = p.category || 'Sliding Window';
+      document.getElementById('cp_panels').value = p.panels || 2;
+      document.getElementById('cp_w_formula').value = p.w_formula || 'overlap';
+      document.getElementById('cp_shutter_h_minus').value = p.shutter_h_minus != null ? p.shutter_h_minus : '';
+      document.getElementById('cp_shutter_w_mod').value = p.shutter_w_mod != null ? p.shutter_w_mod : '';
+      document.getElementById('cp_glass_h_minus').value = p.glass_h_minus != null ? p.glass_h_minus : '';
+      document.getElementById('cp_glass_w_minus').value = p.glass_w_minus != null ? p.glass_w_minus : '';
+      document.getElementById('cp_frame_h_minus').value = p.frame_h_minus != null ? p.frame_h_minus : '0.0';
+      document.getElementById('cp_frame_w_minus').value = p.frame_w_minus != null ? p.frame_w_minus : '0.0';
+      document.getElementById('cp_hardware').value = p.hardware || '';
+      document.getElementById('cp_notes').value = p.notes || '';
+      const titleElem = document.getElementById('prodFormTitle');
+      if (titleElem) titleElem.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit: ${escapeHtmlAdmin(p.name)}`;
+      switchProductSubTab('form');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function saveCustomProduct() {
+      const name = document.getElementById('cp_name').value.trim();
+      if (!name) { alert("Please enter Product / Series Name."); return; }
+      const shutter_h_minus = parseFloat(document.getElementById('cp_shutter_h_minus').value);
+      if (isNaN(shutter_h_minus)) { alert("Please enter valid Shutter Height Minus."); return; }
+      const shutter_w_mod = parseFloat(document.getElementById('cp_shutter_w_mod').value);
+      if (isNaN(shutter_w_mod)) { alert("Please enter valid Shutter Width Modifier."); return; }
+      const glass_h_minus = parseFloat(document.getElementById('cp_glass_h_minus').value) || 0;
+      const glass_w_minus = parseFloat(document.getElementById('cp_glass_w_minus').value) || 0;
+
+      let id = document.getElementById('cp_id').value;
+      if (!id) id = 'prod_' + Date.now();
+
+      const prodObj = {
+        id: id,
+        name: name,
+        category: document.getElementById('cp_category').value,
+        panels: parseInt(document.getElementById('cp_panels').value) || 2,
+        w_formula: document.getElementById('cp_w_formula').value,
+        shutter_h_minus: shutter_h_minus,
+        shutter_w_mod: shutter_w_mod,
+        glass_h_minus: glass_h_minus,
+        glass_w_minus: glass_w_minus,
+        frame_h_minus: parseFloat(document.getElementById('cp_frame_h_minus').value) || 0,
+        frame_w_minus: parseFloat(document.getElementById('cp_frame_w_minus').value) || 0,
+        hardware: document.getElementById('cp_hardware').value.trim(),
+        notes: document.getElementById('cp_notes').value.trim(),
+        updated_at: new Date().toISOString()
+      };
+
+      const products = getAdminCustomProducts();
+      const existingIdx = products.findIndex(x => x.id === id);
+      if (existingIdx >= 0) {
+        products[existingIdx] = prodObj;
+      } else {
+        products.push(prodObj);
+      }
+
+      localStorage.setItem('sw_custom_products', JSON.stringify(products));
+
+      // Sync to Firebase Cloud
+      try {
+        if (window.fbDb) {
+          window.fbDb.collection('custom_products').doc(id).set(prodObj);
+        }
+        if (window.fbRtdb) {
+          window.fbRtdb.ref('custom_products/' + id).set(prodObj);
+        }
+      } catch (err) {
+        console.warn("Cloud sync warning for custom product:", err);
+      }
+
+      alert("Series saved and published successfully: " + name);
+      resetProductForm();
+      renderAdminCustomProducts();
+      switchProductSubTab('list');
+    }
+
+    function deleteCustomProduct(id) {
+      if (!confirm("Are you sure you want to delete this product series?")) return;
+      let products = getAdminCustomProducts();
+      products = products.filter(x => x.id !== id);
+      localStorage.setItem('sw_custom_products', JSON.stringify(products));
+
+      // Remove from Firebase
+      try {
+        if (window.fbDb) window.fbDb.collection('custom_products').doc(id).delete();
+        if (window.fbRtdb) window.fbRtdb.ref('custom_products/' + id).remove();
+      } catch (err) {
+        console.warn("Cloud delete warning:", err);
+      }
+
+      renderAdminCustomProducts();
+    }
+
+    function loadPresetProducts() {
+      if (!confirm("Restore factory default series (Jasmine, Bi-Fold, Glass Door)?")) return;
+      localStorage.setItem('sw_custom_products', JSON.stringify(DEFAULT_CUSTOM_PRODUCTS));
+      // Sync to Cloud
+      try {
+        DEFAULT_CUSTOM_PRODUCTS.forEach(p => {
+          if (window.fbDb) window.fbDb.collection('custom_products').doc(p.id).set(p);
+          if (window.fbRtdb) window.fbRtdb.ref('custom_products/' + p.id).set(p);
+        });
+      } catch (e) { console.warn("Cloud preset sync warning", e); }
+      renderAdminCustomProducts();
+      alert("Factory presets loaded successfully!");
+    }
+
+    // ========================================================
+    // SECTION 5: MASTER FORMULA TUNER JAVASCRIPT
+    // ========================================================
+    const DEFAULT_FORMULA_OVERRIDES = {
+      sl_18x40_h_minus: 1.625,
+      sl_18x40_w_mod: 0.625,
+      sl_18x40_g_h_minus: 2.75,
+      sl_18x50_h_minus: 1.75,
+      sl_18x50_w_mod: 0.75,
+      sl_18x50_g_h_minus: 3.0,
+      sl_18x60_h_minus: 1.875,
+      sl_18x60_w_mod: 0.875,
+      sl_18x60_g_h_minus: 3.125,
+      dm_sash_h_deduct: 44.0,
+      dm_glass_deduct: 26.0,
+      dm_clearance: 1.5,
+      dr_v_deduct: 0.375,
+      dr_tb_deduct: 5.0,
+      cc_shutter_deduct: 1.5
+    };
+
+    function getAdminFormulaOverrides() {
+      try {
+        const raw = localStorage.getItem('sw_formula_overrides');
+        if (raw) return Object.assign({}, DEFAULT_FORMULA_OVERRIDES, JSON.parse(raw));
+      } catch (e) {
+        console.warn("Formula overrides parse error", e);
+      }
+      return DEFAULT_FORMULA_OVERRIDES;
+    }
+
+    function loadAdminFormulaOverridesIntoForm() {
+      const ovr = getAdminFormulaOverrides();
+      for (const k in DEFAULT_FORMULA_OVERRIDES) {
+        const el = document.getElementById('ovr_' + k);
+        if (el && ovr[k] != null) el.value = ovr[k];
+      }
+    }
+
+    function saveAdminFormulaOverrides() {
+      const ovr = {};
+      for (const k in DEFAULT_FORMULA_OVERRIDES) {
+        const el = document.getElementById('ovr_' + k);
+        if (el) {
+          const val = parseFloat(el.value);
+          ovr[k] = isNaN(val) ? DEFAULT_FORMULA_OVERRIDES[k] : val;
+        }
+      }
+      localStorage.setItem('sw_formula_overrides', JSON.stringify(ovr));
+
+      // Sync to Cloud
+      try {
+        if (window.fbDb) {
+          window.fbDb.collection('settings').doc('formula_overrides').set(ovr);
+        }
+        if (window.fbRtdb) {
+          window.fbRtdb.ref('formula_overrides').set(ovr);
+        }
+      } catch (err) {
+        console.warn("Cloud sync warning for formula overrides:", err);
+      }
+
+      alert("Master formula deductions deployed successfully!");
+    }
+
+    function resetAdminFormulaOverrides() {
+      if (!confirm("Reset all formula deductions to factory defaults?")) return;
+      localStorage.setItem('sw_formula_overrides', JSON.stringify(DEFAULT_FORMULA_OVERRIDES));
+      loadAdminFormulaOverridesIntoForm();
+      saveAdminFormulaOverrides();
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       autoFillPlanCost();
       renderPasswordResetQueue();
       renderSubscribers();
+      renderAdminCustomProducts();
+      loadAdminFormulaOverridesIntoForm();
       initFirebaseLiveListener();
     });
   </script>
