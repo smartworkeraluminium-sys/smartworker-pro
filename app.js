@@ -227,8 +227,10 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  }
 
  function handleEmailLogin() {
- const email = document.getElementById('login_email').value.trim();
- const pass = document.getElementById('login_password').value;
+ const emailEl = document.getElementById('login_email') || document.getElementById('auth_login_id');
+ const passEl = document.getElementById('login_password') || document.getElementById('auth_login_pass');
+ const email = emailEl ? emailEl.value.trim() : "";
+ const pass = passEl ? passEl.value : "";
  if (!email || !pass) { alert("জিমেইল এবং পাসওয়ার্ড লিখুন!"); return; }
 
  if (fbAuth) {
@@ -238,7 +240,6 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  closeAuthModal();
  })
  .catch(err => {
- // Local fallback simulation if offline or demo
  simulateLocalAuth(email);
  });
  } else {
@@ -247,11 +248,16 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  }
 
  function handleEmailRegister() {
- const name = document.getElementById('reg_name').value.trim();
- const shop = document.getElementById('reg_shop').value.trim();
- const phone = document.getElementById('reg_phone').value.trim();
- const email = document.getElementById('reg_email').value.trim();
- const pass = document.getElementById('reg_password').value;
+ const nameEl = document.getElementById('reg_name') || document.getElementById('auth_reg_name');
+ const shopEl = document.getElementById('reg_shop') || document.getElementById('auth_reg_shop');
+ const phoneEl = document.getElementById('reg_phone') || document.getElementById('auth_reg_id');
+ const emailEl = document.getElementById('reg_email') || document.getElementById('auth_reg_id');
+ const passEl = document.getElementById('reg_password') || document.getElementById('auth_reg_pass');
+ const name = nameEl ? nameEl.value.trim() : "";
+ const shop = shopEl ? shopEl.value.trim() : "";
+ const phone = phoneEl ? phoneEl.value.trim() : "";
+ const email = emailEl ? emailEl.value.trim() : "";
+ const pass = passEl ? passEl.value : "";
 
  if (!email || !pass || pass.length < 6) {
  alert("সঠিক জিমেইল এবং কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড দিন!");
@@ -305,21 +311,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  }
  }
 
- function handleCloudLogout() {
- if (confirm("আপনি কি সত্যিই ক্লাউড অ্যাকাউন্ট থেকে LOGOUT করতে চান?")) {
- if (fbAuth) fbAuth.signOut();
- currentCloudUser = null;
- updateCloudUserUI(null);
- alert("LOGOUT সম্পন্ন হয়েছে।");
- }
- }
-
- function simulateLocalAuth(email) {
- currentCloudUser = { uid: "local_" + btoa(email).substring(0, 10), email: email };
- updateCloudUserUI(currentCloudUser);
- closeAuthModal();
- alert(`LOGIN সম্পন্ন হয়েছে (${email})! আপনার ডেটা ব্যাকআপের জন্য প্রস্তুত।`);
- }
+// Legacy duplicate auth helpers consolidated into main auth controller below
 
  // Live Sync to Cloud Firestore
  function syncAllDataToCloud(uid) {
@@ -387,16 +379,20 @@ function syncAllDataFromCloud(uid) {
 function openFirebaseConfigModal() {
  closeAuthModal();
  const cur = localStorage.getItem('sw_firebase_config') || "";
- document.getElementById('customFbConfigInput').value = cur;
- document.getElementById('fbConfigModal').classList.add('active');
+ const inp = document.getElementById('customFbConfigInput');
+ if (inp) inp.value = cur;
+ const mod = document.getElementById('fbConfigModal');
+ if (mod) mod.classList.add('active');
  }
 
  function closeFirebaseConfigModal() {
- document.getElementById('fbConfigModal').classList.remove('active');
+ const mod = document.getElementById('fbConfigModal');
+ if (mod) mod.classList.remove('active');
  }
 
  function saveCustomFirebaseConfig() {
- const txt = document.getElementById('customFbConfigInput').value.trim();
+ const inp = document.getElementById('customFbConfigInput');
+ const txt = inp ? inp.value.trim() : "";
  if (txt) {
  try {
  const parsed = JSON.parse(txt);
@@ -912,20 +908,17 @@ function switchAuthMode(mode) {
  function optimizeCuttingPlan(pieces, allowedLens = [180, 192, 144]) {
  if (!pieces || pieces.length === 0) return null;
  const sorted = [...pieces].sort((a, b) => b - a);
- const BLADE_KERF = 0.25; // 1/4 inch saw blade + miter allowance per cut
- const END_TRIM = 1.5; // 1.5 inch factory bar rough end trim allowance
  let bestPlan = null;
  const stdLens = allowedLens;
  for (const stdLen of stdLens) {
- const usableStdLen = stdLen - END_TRIM;
  const bins = [];
  let valid = true;
  for (const p of sorted) {
- if (p > usableStdLen) { valid = false; break; }
+ if (p > stdLen) { valid = false; break; }
  let placed = false;
  for (const b of bins) {
- const sumB = b.reduce((a, c) => a + c, 0) + (b.length * BLADE_KERF);
- if (sumB + p <= usableStdLen) { b.push(p); placed = true; break; }
+ const sumB = b.reduce((a, c) => a + c, 0);
+ if (sumB + p <= stdLen + 0.001) { b.push(p); placed = true; break; }
  }
  if (!placed) bins.push([p]);
  }
@@ -1058,9 +1051,9 @@ function keypadEnter() {
 // ========================================================
  // 3. DOMAL WINDOW MODULE
  // ========================================================
- let dm_window_count = 0;
- let dm_buckets = {};
- let dm_glass_dict = {};
+ var dm_window_count = 0;
+ var dm_buckets = {};
+ var dm_glass_dict = {};
 
  function calculateDomal() {
  const raw_h = safeEval(document.getElementById('dm_h').value);
@@ -1073,11 +1066,11 @@ function keypadEnter() {
  const t_text = document.getElementById('dm_type').value;
 
  let track_h = 45.0;
- const thMatch = document.getElementById('dm_track_h').value.match(/[0-9]+(?:\\.[0-9]+)?/);
+ const thMatch = document.getElementById('dm_track_h').value.match(/[0-9]+(?:\.[0-9]+)?/);
  if (thMatch) track_h = parseFloat(thMatch[0]);
 
  let handle_h = 27.0, handle_w = 65.0;
- const hwMatch = document.getElementById('dm_handle_hw').value.match(/[0-9]+(?:\\.[0-9]+)?/g);
+ const hwMatch = document.getElementById('dm_handle_hw').value.match(/[0-9]+(?:\.[0-9]+)?/g);
  if (hwMatch && hwMatch.length >= 2) {
  handle_h = parseFloat(hwMatch[0]);
  handle_w = parseFloat(hwMatch[1]);
@@ -1144,7 +1137,7 @@ function keypadEnter() {
 
  const w_sign = net_w_mod >= 0 ? `+${Math.round(net_w_mod)}` : `${Math.round(net_w_mod)}`;
  
- let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
+ let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)}${qty_str}]\n`;
  alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (${2 * win_qty} pc)\n`;
  alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (${2 * win_qty} pc)\n`;
  alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2 * win_qty} pc)\n`;
@@ -1162,21 +1155,23 @@ function keypadEnter() {
  let track_type = t_text.split(' ')[0];
  if (t_text.includes("Center")) track_type = "2-Track CO";
 
- const outer_key = `Domal Outer Frame (${track_type})`;
- const sash_handle_key = `Domal Sash Patta & Handle (${track_type})`;
+ const outer_key = `Domal Outer Track (${track_type})`;
+ const sash_tb_key = `Domal Sash Top/Bottom (${track_type})`;
+ const sash_handle_key = `Domal Sash Handle (${track_type})`;
  const interlock_key = `Domal Interlock Clip (${track_type})`;
 
- [outer_key, sash_handle_key, interlock_key].forEach(k => {
+ [outer_key, sash_tb_key, sash_handle_key, interlock_key].forEach(k => {
  if (!dm_buckets[k]) dm_buckets[k] = [];
  });
 
  for (let q = 0; q < win_qty; q++) {
    dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
-   for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_handle_key].push(h_cut_in);
+   for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_tb_key].push(h_cut_in);
    for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in);
    for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in);
    if (has_mesh) {
-     dm_buckets[sash_handle_key].push(mesh_w_in, mesh_w_in, v_cut_in, v_cut_in);
+     dm_buckets[sash_tb_key].push(mesh_w_in, mesh_w_in);
+     dm_buckets[sash_handle_key].push(v_cut_in, v_cut_in);
      dm_buckets[interlock_key].push(v_cut_in);
    }
  }
@@ -1199,9 +1194,9 @@ function keypadEnter() {
  // ========================================================
  // 4. SLIDING WINDOW MODULE
  // ========================================================
- let sl_window_count = 0;
- let sl_buckets = {};
- let sl_glass_dict = {};
+ var sl_window_count = 0;
+ var sl_buckets = {};
+ var sl_glass_dict = {};
 
  function calculateSliding() {
  const raw_h = safeEval(document.getElementById('sl_h').value);
@@ -1265,18 +1260,18 @@ function keypadEnter() {
  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
 
  let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
- hw_txt += `> Sliding Roller / Bearing: ${g_c * 2} pc\n`;
- hw_txt += `> Star Lock: ${g_c >= 3 ? 2 : 1} pc\n> Rubber & Woolpile: Required\n`;
+ hw_txt += `> Sliding Roller / Bearing: ${g_c * 2 * win_qty} pc\n`;
+ hw_txt += `> Star Lock: ${(g_c >= 3 ? 2 : 1) * win_qty} pc\n> Rubber & Woolpile: Required\n`;
 
- let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${raw_h} x W:${raw_w} (${sys_type.split(' ')[0]})${qty_str}]\n`;
- alu_txt += `> Track Top: ${disp(w_in)} (1 pc)\n`;
- alu_txt += `> Track Bottom: ${disp(w_in)} (1 pc)\n`;
- alu_txt += `> Track Vertical: ${disp(h_in)} (2 pc)\n`;
- alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${g_c * 2} pc)\n`;
- alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty} pc)\n`;
- alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty} pc)\n`;
+ let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)} (${sys_type.split(' ')[0]})${qty_str}]\n`;
+ alu_txt += `> Track Top: ${disp(w_in)} (${1 * win_qty} pc)\n`;
+ alu_txt += `> Track Bottom: ${disp(w_in)} (${1 * win_qty} pc)\n`;
+ alu_txt += `> Track Vertical: ${disp(h_in)} (${2 * win_qty} pc)\n`;
+ alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${g_c * 2 * win_qty} pc)\n`;
+ alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty * win_qty} pc)\n`;
+ alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty * win_qty} pc)\n`;
 
- const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c} pc)\n`;
+ const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c * win_qty} pc)\n`;
  const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
  sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + (g_c * win_qty);
 
@@ -1315,9 +1310,9 @@ function keypadEnter() {
  // ========================================================
  // 5. CUSTOM CASEMENT MODULE
  // ========================================================
- let cc_window_count = 0;
- let cc_buckets = { "Casement Outer": [], "Casement Mullion": [], "Casement Z Handle": [], "Square Clip (Beading)": [] };
- let cc_glass_dict = {};
+ var cc_window_count = 0;
+ var cc_buckets = { "Casement Outer": [], "Casement Mullion": [], "Casement Z Handle": [], "Square Clip (Beading)": [] };
+ var cc_glass_dict = {};
 
  function calculateCasement() {
  const raw_h = safeEval(document.getElementById('cc_h').value);
@@ -1378,7 +1373,7 @@ function keypadEnter() {
  const unit_str = is_mm ? "mm" : "Inch";
  const total_sash_qty = top_open + bot_open;
 
- let out_txt = `[${series} Win #${cc_window_count} | Size: ${raw_h} x ${raw_w} ${unit_str}]\n`;
+ let out_txt = `[${series} Win #${cc_window_count} | Size: ${disp(h_mm)} x ${disp(w_mm)}]\n`;
  out_txt += "--- 1. OUTER FRAME & MULLIONS ---\n";
  out_txt += `> Outer Vertical: ${disp(h_mm)} (2 pc)\n> Outer Horizontal: ${disp(w_mm)} (2 pc)\n`;
  cc_buckets["Casement Outer"].push(h_mm / 25.4, h_mm / 25.4, w_mm / 25.4, w_mm / 25.4);
@@ -1481,9 +1476,9 @@ function keypadEnter() {
  // ========================================================
  // 6. DOOR MASTER MODULE
  // ========================================================
- let dr_door_count = 0;
- let dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
- let dr_glass_dict = {};
+ var dr_door_count = 0;
+ var dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
+ var dr_glass_dict = {};
 
  function calculateDoor() {
   const raw_h = safeEval(document.getElementById('dr_h').value);
@@ -1566,7 +1561,7 @@ function keypadEnter() {
   const unit_str = is_mm ? "mm" : "Inch";
   dr_door_count += 1;
 
-  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${raw_h} x ${raw_w} ${unit_str})${qty_str}]\n`;
+  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${disp(h)} x ${disp(w)})${qty_str}]\n`;
 
   if (has_outer) {
     out += `--- OUTER FRAME ---\n`;
@@ -1662,9 +1657,9 @@ function clearDoor() {
  // ========================================================
  // 7. PARTITION MODULE
  // ========================================================
- let pt_part_count = 0;
- let pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
- let pt_glass_dict = {};
+ var pt_part_count = 0;
+ var pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
+ var pt_glass_dict = {};
 
  function calculatePartition() {
  const raw_h = safeEval(document.getElementById('pt_h').value);
@@ -1728,14 +1723,14 @@ function clearDoor() {
  }
 
  if (p_type === "Fixed Partition") {
-   out = `[Partition #${pt_part_count} - ${p_type} (${raw_h} x ${raw_w} ${unit_str})]\n`;
+   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n`;
    const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
    const inner_h = (w - ((cols + 1) * 1.5)) / cols;
 
    // 1. FRAME SECTIONS
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? "🔨 অ্যালুমিনিয়াম ফ্রেম কাটিং মাপ (FRAME SECTIONS)\n" : "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? `> আউটার খাঁড়া পাইপ (Outer Verticals): ${disp(outer_v)} (2 pc)\n` : `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
    out += isBn ? `> আউটার টপ ও বটম পাইপ (Outer Horizontals): ${disp(outer_h)} (2 pc)\n` : `> Outer Horizontals (Top/Bottom): ${disp(outer_h)} (2 pc)\n`;
    pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
@@ -1755,9 +1750,9 @@ function clearDoor() {
    const mark_bottom_transom = bottom_h + 1.5;
    const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
 
-   out += "\n===================================\n";
+   out += "\n-----------------------------------\n";
    out += isBn ? "📐 ফ্রেমের ভেতরের খোপ ও খাঁড়া পাইপ মার্কিং চার্ট\n" : "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? `• তলার খোপের ক্লিয়ার সাইজ: ${disp(bottom_h)} x ${disp(inner_h)} [তলা ACP]\n` : `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP Board]\n`;
    out += isBn ? `• মিডিল খোপের ক্লিয়ার সাইজ: ${disp(mid_h)} x ${disp(inner_h)} [মিডিল গ্লাস - সেম সাইজ]\n` : `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
    out += isBn ? `• মাথার খাপের ক্লিয়ার সাইজ: ${disp(top_h)} x ${disp(inner_h)} [মাথার ছোট গ্লাস]\n\n` : `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
@@ -1779,9 +1774,9 @@ function clearDoor() {
    const top_cut_h = top_guard.cut;
 
    if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
-     out += "\n===================================\n";
+     out += "\n-----------------------------------\n";
      out += isBn ? "🪟 গ্লাস ও এসিপি বোর্ড কাটিং মাপ (GLASS & ACP)\n" : "🪟 4'x8' SHEET OPTIMIZED PANELS (ACP & GLASS)\n";
-     out += "===================================\n";
+     out += "-----------------------------------\n";
      out += isBn ? `> [তলা] Bottom ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Bottom] ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += isBn ? `> [মিডিল] Middle Glass (সেম মাপ): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Middle] Glass (Identical Size): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += isBn ? `> [মাথার খাপ] Top Header Glass (ছোট): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Top] Header Glass (Smaller Box): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
@@ -1835,14 +1830,14 @@ function clearDoor() {
    const dh = is_mm ? raw_dh / 25.4 : raw_dh;
    const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
-   out = `[Partition #${pt_part_count} - Door + Partition (${raw_h} x ${raw_w} ${unit_str})]\n`;
+   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n`;
    const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
    const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
    const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
 
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? "🔨 অ্যালুমিনিয়াম ফ্রেম কাটিং মাপ (FRAME SECTIONS)\n" : "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? `> আউটার খাঁড়া পাইপ (Outer Verticals): ${disp(outer_v)} (2 pc)\n` : `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
    out += isBn ? `> ডোর সাইড খাঁড়া পাইপ (Door Post Vertical): ${disp(door_side_v)} (1 pc)\n` : `> Door Post Vertical: ${disp(door_side_v)} (1 pc)\n`;
    pt_buckets["Single Glazing"].push(outer_v, outer_v);
@@ -1880,9 +1875,9 @@ function clearDoor() {
    const mark_bottom_transom = bottom_h + 1.5;
    const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
 
-   out += "\n===================================\n";
+   out += "\n-----------------------------------\n";
    out += isBn ? "📐 সাইড ফ্রেমের খোপ ও মার্কিং চার্ট (FRAME MARKING)\n" : "📐 FRAME OPENINGS & MARKING GUIDE\n";
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? `• তলার খোপের ক্লিয়ার সাইজ: ${disp(bottom_h)} x ${disp(inner_h)} [তলা ACP]\n` : `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP]\n`;
    out += isBn ? `• মিডিল খোপের ক্লিয়ার সাইজ: ${disp(mid_h)} x ${disp(inner_h)} [মিডিল গ্লাস - সেম সাইজ]\n` : `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
    out += isBn ? `• মাথার খাপের ক্লিয়ার সাইজ: ${disp(top_h)} x ${disp(inner_h)} [মাথার ছোট গ্লাস]\n\n` : `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
@@ -1902,9 +1897,9 @@ function clearDoor() {
    const top_guard = safeGlassSlabCap(top_h - 0.25);
    const top_cut_h = top_guard.cut;
 
-   out += "\n===================================\n";
+   out += "\n-----------------------------------\n";
    out += isBn ? "🪟 গ্লাস ও এসিপি কাটিং মাপ (GLASS & ACP CUTTING)\n" : "🪟 GLASS & ACP CUTTING SIZES\n";
-   out += "===================================\n";
+   out += "-----------------------------------\n";
    out += isBn ? `> ডোর মাথার ফ্যানলাইট গ্লাস: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n` : `> Door Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
 
    if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE") && cols > 0) {
@@ -2117,9 +2112,9 @@ function getFormulaOverrides() {
   return DEFAULT_FORMULA_OVERRIDES;
 }
 
-let cs_item_count = 0;
-let cs_buckets = {};
-let cs_glass_dict = {};
+var cs_item_count = 0;
+var cs_buckets = {};
+var cs_glass_dict = {};
 
 function onCustomSeriesSelected() {
   const sel = document.getElementById('cs_product_select');
@@ -2216,7 +2211,7 @@ function calculateCustomSeries() {
 
   cs_item_count += 1;
 
-  let alu_txt = `[${prod.name} #${cs_item_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
+  let alu_txt = `[${prod.name} #${cs_item_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)}${qty_str}]\n`;
     alu_txt += `--- OUTER FRAME CUT SIZES ---\n`;
   alu_txt += `> Frame Top / Bottom: ${disp(outer_w)} (2 pc)\n`;
   alu_txt += `> Frame Left / Right Vertical: ${disp(outer_h)} (2 pc)\n`;
@@ -2290,8 +2285,8 @@ function clearCustomSeries() {
  const parts = itemLine.split(':');
  const name = parts[0].trim();
  const valStr = parts.slice(1).join(':').trim();
- const numMatch = valStr.match(/[0-9]+(?:\\.[0-9]+)?/);
- const unit = valStr.replace(/[0-9]+(?:\\.[0-9]+)?/, '').trim() || 'Pcs';
+ const numMatch = valStr.match(/[0-9]+(?:\.[0-9]+)?/);
+ const unit = valStr.replace(/[0-9]+(?:\.[0-9]+)?/, '').trim() || 'Pcs';
  if (numMatch) {
  const qty = parseFloat(numMatch[0]);
  if (!hwTotals[name]) hwTotals[name] = { qty: 0, unit: unit };
@@ -2359,21 +2354,23 @@ function clearCustomSeries() {
     lines.forEach(function(l) {
       l = l.trim();
       if (!l || l.startsWith('[') || l.startsWith('===')) return;
-      if (l.includes("HARDWARE") || l.includes("GLASS") || l.includes("INSTRUCTIONS") || l.includes("BILLING SLAB")) {
+      if (l.includes("HARDWARE") || l.includes("GLASS") || l.includes("INSTRUCTIONS") || l.includes("BILLING SLAB") || l.includes("MARKING") || l.includes("OPENINGS") || l.includes("SHEET CUTTING") || l.includes("খোপ ও")) {
         section = "other";
         return;
       }
-      if (l.includes("MOSQUITO NET") || l.includes("OUTER FRAME") || l.includes("SHUTTER") || l.includes("DOOR SASH") || l.includes("FRAME SECTIONS")) {
+      if (l.includes("MOSQUITO NET") || l.includes("OUTER FRAME") || l.includes("SHUTTER") || l.includes("DOOR SASH") || l.includes("FRAME SECTIONS") || l.includes("TOP ROW DETAILS") || l.includes("BOTTOM ROW DETAILS")) {
         section = "profiles";
         return;
       }
-      if (l.startsWith('---') || l.startsWith('> Formula') || l.startsWith('> Height Formula') || l.startsWith('> Width Formula') || l.startsWith('> Glass Deduction')) return;
+      if (l.startsWith('---') || !l.startsWith('>')) return;
+      if (l.startsWith('> Formula') || l.startsWith('> Height Formula') || l.startsWith('> Width Formula') || l.startsWith('> Glass Deduction')) return;
 
       const clean = l.replace(/^>\s*/, '');
       if (section === "profiles" && clean.indexOf(':') !== -1) {
         const parts = clean.split(':');
         const pName = parts[0].trim();
         const pVal = parts.slice(1).join(':').trim();
+        if (/glass|board|beading/i.test(pName) || pName.indexOf("গ্লাস") !== -1) return;
         unitProfiles[pName] = pVal;
         if (allProfileHeaders.indexOf(pName) === -1) {
           allProfileHeaders.push(pName);
@@ -2709,184 +2706,6 @@ function clearCustomSeries() {
   exportHardwarePdf(filename, title, outId);
  }
 
- function exportBillPdf() {
-  if (!isAppActivated()) {
-    alert("PRO activation is required to generate PDF bills.");
-    openScreen('activation', 'PRO UPGRADE & PLANS');
-    return;
-  }
-
-  if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
-  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
-  if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
-  const doc = new jsPDF();
-
-  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
-  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
-  const c_name = document.getElementById('q_name').value || 'Customer';
-  const c_phone = document.getElementById('q_phone').value || 'N/A';
-  const c_addr = document.getElementById('q_addr').value || 'N/A';
-  const bill_stage = document.getElementById('q_stage').value;
-  const today = new Date().toLocaleDateString('en-GB');
-
-  // Draw Header with Customer's Exact Logo (Never overlaps!)
-    // Professional Client Document Title: Strictly NO 'JOB CARD' on Estimates/Bills!
-  let pdfTitle = "ESTIMATION & COST QUOTATION";
-  if (bill_stage.includes("Final")) {
-    pdfTitle = "FINAL BILL & TAX INVOICE";
-  } else if (bill_stage.includes("First")) {
-    pdfTitle = "PROJECT BILL & INVOICE";
-  } else if (bill_stage.includes("Second") || bill_stage.includes("Third")) {
-    pdfTitle = "RUNNING BILL & INVOICE";
-  } else {
-    pdfTitle = "ESTIMATION & COST QUOTATION";
-  }
-  drawDocHeaderWithLogo(doc, pdfTitle, "Stage: " + bill_stage, [74, 20, 140]);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("Bill To:", 14, 46);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Name: ${c_name}`, 14, 52);
-  doc.text(`Phone: ${c_phone}`, 14, 57);
-  doc.text(`Address: ${c_addr}`, 14, 62);
-
-  doc.text(`Date: ${today}`, 150, 46);
-  doc.text(`Stage: ${bill_stage}`, 150, 52);
-  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
-
-  const tableData = billItems.map((itm, i) => [
-    i + 1,
-    `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
-    itm.qty,
-    itm.area.toFixed(1),
-    `Rs ${itm.rate}`,
-    `Rs ${itm.price.toFixed(2)}`
-  ]);
-
-  const grand_total = billItems.reduce((a, b) => a + b.price, 0);
-  const [discount, gst_pct] = getDiscountAndGst();
-  const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
-  const net_total = grand_total - discount;
-  const gst_amount = net_total * (gst_pct / 100);
-  const final_total = net_total + gst_amount + extra_charge;
-  const advance_paid = safeEval(document.getElementById('q_advance').value);
-  const due_amount = final_total - advance_paid;
-
-  doc.autoTable({
-    startY: 68,
-    head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
-    body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
-    styles: { fontSize: 8.5 }
-  });
-
-  const finalY = doc.lastAutoTable.finalY + 8;
-  doc.setFontSize(9);
-  doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
-  if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
-  if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
-  if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
-
-  doc.setFont("helvetica", "bold");
-  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
-  const incPrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
-  const pDue = incPrev ? (activeCustomerPreviousDue || 0) : 0;
-  const netPayableDue = due_amount + pDue;
-
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(200, 0, 0);
-  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
-
-  if (pDue > 0) {
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(180, 0, 0);
-    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 140, finalY + 40);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
-    doc.setTextColor(200, 0, 0);
-    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 140, finalY + 47);
-  }
-
-  // Render UPI QR Code if uploaded
-  const customQr = localStorage.getItem('sw_custom_qr');
-  if (customQr) {
-    try {
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(14, finalY + 2, 28, 28, 2, 2, 'FD');
-      var qrFmt = customQr.indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
-      doc.addImage(customQr, qrFmt, 15, finalY + 3, 26, 26);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
-      doc.setTextColor(74, 20, 140);
-      doc.text("SCAN TO PAY (UPI)", 14, finalY + 33);
-    } catch(e){}
-  }
-
-  doc.setTextColor(120, 120, 120);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 40);
-  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, finalY + 48);
-
-  doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
-}
-
- // ========================================================
- // 10. PDF EXPORTS FOR CUT SIZES & GLASS LIST
- // ========================================================
-
-// ========================================================
- // PURE JS SHA256 & ACTIVATION LICENSING CORE (100% PYTHON EQUIVALENT)
- // ========================================================
- function sha256(ascii) {
- function rightRotate(value, amount) { return (value>>>amount) | (value<<(32 - amount)); }
- var mathPow = Math.pow, maxWord = mathPow(2, 32), lengthProperty = 'length', i, j, result = '', words = [];
- var asciiBitLength = ascii[lengthProperty]*8, hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [];
- var primeCounter = k[lengthProperty], isComposite = {};
- for (var candidate = 2; primeCounter < 64; candidate++) {
- if (!isComposite[candidate]) {
- for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
- hash[primeCounter] = (mathPow(candidate, .5)*maxWord)|0;
- k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
- }
- }
- ascii += '\\x80';
- while (ascii[lengthProperty]%64 - 56) ascii += '\\x00';
- for (i = 0; i < ascii[lengthProperty]; i++) {
- j = ascii.charCodeAt(i);
- if (j>>8) return;
- words[i>>2] |= j << ((3 - i)%4)*8;
- }
- words[words[lengthProperty]] = ((asciiBitLength/maxWord)|0);
- words[words[lengthProperty]] = (asciiBitLength);
- for (j = 0; j < words[lengthProperty];) {
- var w = words.slice(j, j += 16), oldHash = hash;
- hash = hash.slice(0, 8);
- for (i = 0; i < 64; i++) {
- var i2 = i + j;
- var w15 = w[i - 15], w2 = w[i - 2];
- var a = hash[0], e = hash[4];
- var temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e&hash[5])^((~e)&hash[6])) + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15>>>3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2>>>10)))|0);
- var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
- hash = [(temp1 + temp2)|0].concat(hash);
- hash[4] = (hash[4] + temp1)|0;
- }
- for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i])|0;
- }
- for (i = 0; i < 8; i++) {
- for (j = 3; j + 1; j--) {
- var b = (hash[i]>>(j*8))&255;
- result += ((b < 16) ? 0 : '') + b.toString(16);
- }
- }
- return result;
- }
-
 
 function saveMeasurementData(projectType, outId, matId) {
  const text = document.getElementById(outId).textContent + "\n" + document.getElementById(matId).textContent;
@@ -3065,7 +2884,7 @@ function saveMeasurementData(projectType, outId, matId) {
  // Transfer into Quotation
  convertKhataToQuotation();
 
- const summary = `SUCCESSFULLY PROCESSED ALL SITE PRODUCTS!\\n----------------------------------------\\n• Casement 40mm/34mm: ${casementCount} Windows\\n• Partitions (Fixed/Door): ${partitionCount} Grids\\n• Domal Windows: ${domalCount} Windows\\n• Sliding Windows: ${slidingCount} Windows\\n• Doors: ${doorCount} Doors\\n\\nAll cutting sizes, profile purchase sticks, glass lists, and client billing have been generated!`;
+ const summary = `SUCCESSFULLY PROCESSED ALL SITE PRODUCTS!\n----------------------------------------\n• Casement 40mm/34mm: ${casementCount} Windows\n• Partitions (Fixed/Door): ${partitionCount} Grids\n• Domal Windows: ${domalCount} Windows\n• Sliding Windows: ${slidingCount} Windows\n• Doors: ${doorCount} Doors\n\nAll cutting sizes, profile purchase sticks, glass lists, and client billing have been generated!`;
  alert(summary);
  }
 
@@ -3285,7 +3104,7 @@ function saveMeasurementData(projectType, outId, matId) {
  itm.room,
  itm.tag,
  itm.category,
- `${itm.h}\\" x ${itm.w}\\"`,
+ `${itm.h}" x ${itm.w}"`,
  `${itm.qty} Pcs`,
  `${itm.total_sqft.toFixed(1)}`,
  `Rs ${Math.round(itm.labour_cost)}`,
@@ -3365,7 +3184,7 @@ function saveMeasurementData(projectType, outId, matId) {
  const runFt = ((itm.h + itm.w) * 2 / 12) * itm.qty;
  siteBuckets[catKey].push(runFt * 12);
 
- const gKey = `${itm.h - 4}\\" x ${Math.round(itm.w / 2)}\\" (${itm.glass})`;
+ const gKey = `${itm.h - 4}" x ${Math.round(itm.w / 2)}" (${itm.glass})`;
  siteGlass[gKey] = (siteGlass[gKey] || 0) + (itm.qty * 2);
  });
 
@@ -3385,20 +3204,20 @@ function saveMeasurementData(projectType, outId, matId) {
  const totalLabour = siteKhataItems.reduce((a, b) => a + b.labour_cost, 0);
  const totalAmount = siteKhataItems.reduce((a, b) => a + b.est_price, 0);
 
- let msg = `*SMART WORKER PRO - SITE MEASUREMENT KHATA*\\n`;
- msg += `Client: ${clientName}\\nSite: ${siteLoc}\\n`;
- msg += `------------------------------------\\n`;
- msg += `Total Units: ${totalUnits} Pcs\\nTotal Area: ${totalSqft.toFixed(1)} Sq.Ft\\n`;
- msg += `Total Labour: Rs ${Math.round(totalLabour).toLocaleString('en-IN')}\\n`;
- msg += `Est. Total: Rs ${Math.round(totalAmount).toLocaleString('en-IN')}\\n`;
- msg += `------------------------------------\\n`;
- msg += `*ROOM-WISE OPENINGS:*\\n`;
+ let msg = `*SMART WORKER PRO - SITE MEASUREMENT KHATA*\n`;
+ msg += `Client: ${clientName}\nSite: ${siteLoc}\n`;
+ msg += `------------------------------------\n`;
+ msg += `Total Units: ${totalUnits} Pcs\nTotal Area: ${totalSqft.toFixed(1)} Sq.Ft\n`;
+ msg += `Total Labour: Rs ${Math.round(totalLabour).toLocaleString('en-IN')}\n`;
+ msg += `Est. Total: Rs ${Math.round(totalAmount).toLocaleString('en-IN')}\n`;
+ msg += `------------------------------------\n`;
+ msg += `*ROOM-WISE OPENINGS:*\n`;
 
  siteKhataItems.forEach((itm, i) => {
- msg += `${i + 1}. [${itm.room} - ${itm.tag}] ${itm.category}\\n Size: ${itm.h}\\"x${itm.w}\\" | Qty: ${itm.qty} | ${itm.total_sqft.toFixed(1)} Sq.Ft\\n`;
+ msg += `${i + 1}. [${itm.room} - ${itm.tag}] ${itm.category}\n Size: ${itm.h}"x${itm.w}" | Qty: ${itm.qty} | ${itm.total_sqft.toFixed(1)} Sq.Ft\n`;
  });
 
- msg += `\\n-- Powered by Smart Worker Pro Fabrication Systems --`;
+ msg += `\n-- Powered by Smart Worker Pro Fabrication Systems --`;
  const encoded = encodeURIComponent(msg);
  window.open(`https://wa.me/?text=${encoded}`, '_blank');
  }
@@ -3724,7 +3543,7 @@ function autofillCustomer() {
  const loc_lbl = itm.location ? `[${itm.location}] ` : "";
  lines.push(`[${i + 1}] ${loc_lbl}${itm.type} | ${itm.h}x${itm.w} ${itm.unit} | Qty:${itm.qty} @ Rs.${itm.rate.toFixed(0)} | Rs:${itm.price.toFixed(2)}`);
  });
- document.getElementById('bill_queue_text').textContent = lines.join('\\n');
+ document.getElementById('bill_queue_text').textContent = lines.join('\n');
  }
 
  function getDiscountAndGst() {
@@ -3779,8 +3598,8 @@ function autofillCustomer() {
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
  const contact_info = profile.phone || "9239413517 / 9641405426";
  const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const email_info = profile.email ? `\\n Email: ${profile.email}` : "";
- const gst_info = profile.gst ? `\\n GST No: ${profile.gst}` : "";
+ const email_info = profile.email ? `\n Email: ${profile.email}` : "";
+ const gst_info = profile.gst ? `\n GST No: ${profile.gst}` : "";
 
  const bill_stage = document.getElementById('q_stage').value;
  const c_name = document.getElementById('q_name').value || 'Customer';
@@ -3792,16 +3611,16 @@ function autofillCustomer() {
  const advance_paid = safeEval(document.getElementById('q_advance').value);
  const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
 
- let bill = "=================================================\\n";
- bill += ` ${shop_name}\\n`;
- bill += ` ${addr}\\n`;
- bill += ` Mob: ${contact_info}${email_info}${gst_info}\\n`;
- bill += "=================================================\\n";
- bill += `Invoice Type: ${bill_stage}\\nDate: ${today}\\n\\n`;
- bill += `Bill To:\\nName: ${c_name}\\nPhone: ${c_phone}\\nAddress: ${c_addr}\\n`;
- bill += "-------------------------------------------------\\n";
- bill += "SN. Description Qty Sq.Ft Amount\\n";
- bill += "-------------------------------------------------\\n";
+ let bill = "=================================================\n";
+ bill += ` ${shop_name}\n`;
+ bill += ` ${addr}\n`;
+ bill += ` Mob: ${contact_info}${email_info}${gst_info}\n`;
+ bill += "=================================================\n";
+ bill += `Invoice Type: ${bill_stage}\nDate: ${today}\n\n`;
+ bill += `Bill To:\nName: ${c_name}\nPhone: ${c_phone}\nAddress: ${c_addr}\n`;
+ bill += "-------------------------------------------------\n";
+ bill += "SN. Description Qty Sq.Ft Amount\n";
+ bill += "-------------------------------------------------\n";
 
  let grand_total = 0.0;
  billItems.forEach((item, i) => {
@@ -3811,8 +3630,8 @@ function autofillCustomer() {
  const g_type = item.glass_type || 'Clear Float';
  const tough_txt = item.toughened ? " [TOUGHENED: YES]" : "";
  const loc_txt = item.location ? `[${item.location}] ` : "";
- const desc = `${loc_txt}${item.type}\\n Specs: ${color} (${thick}) | ${g_thick} ${g_type}${tough_txt}\\n Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}`;
- bill += `${i + 1}. ${desc}\\n ${item.qty} ${item.area.toFixed(1)} ${item.price.toFixed(2)}\\n`;
+ const desc = `${loc_txt}${item.type}\n Specs: ${color} (${thick}) | ${g_thick} ${g_type}${tough_txt}\n Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}`;
+ bill += `${i + 1}. ${desc}\n ${item.qty} ${item.area.toFixed(1)} ${item.price.toFixed(2)}\n`;
  grand_total += item.price;
  });
 
@@ -3821,27 +3640,27 @@ function autofillCustomer() {
  const final_total = net_total + gst_amount + extra_charge;
  const due_amount = final_total - advance_paid;
 
- bill += "-------------------------------------------------\\n";
- bill += ` Sub Total: Rs ${grand_total.toFixed(2)}\\n`;
- if (discount > 0) bill += ` Discount: -Rs ${discount.toFixed(2)}\\n`;
- if (gst_pct > 0) bill += ` GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}\\n`;
- if (extra_charge > 0) bill += ` Transport/Labor: +Rs ${extra_charge.toFixed(2)}\\n`;
+ bill += "-------------------------------------------------\n";
+ bill += ` Sub Total: Rs ${grand_total.toFixed(2)}\n`;
+ if (discount > 0) bill += ` Discount: -Rs ${discount.toFixed(2)}\n`;
+ if (gst_pct > 0) bill += ` GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}\n`;
+ if (extra_charge > 0) bill += ` Transport/Labor: +Rs ${extra_charge.toFixed(2)}\n`;
 
- bill += ` GRAND TOTAL: Rs ${final_total.toFixed(2)}\\n`;
- bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\\n`;
- bill += ` DUE AMOUNT: Rs ${due_amount.toFixed(2)}\\n`;
- bill += "-------------------------------------------------\\n";
- bill += "TERMS & CONDITIONS:\\n";
- bill += "1. 50% Advance with official work order.\\n";
- bill += "2. Balance payment must be cleared on delivery / fitting.\\n";
- bill += "3. Quotation is valid for 15 days from issue date.\\n";
- bill += "4. Glass & cut sections cannot be returned once processed.\\n";
- bill += "-------------------------------------------------\\n\\n";
- bill += "Customer Signature: Authorized Signature:\\n";
- bill += "___________________ _____________________\\n";
- bill += ` (${shop_name})\\n`;
- bill += "=================================================\\n";
- bill += "Thank you for your business!\\n -- App by Smart worker --\\n";
+ bill += ` GRAND TOTAL: Rs ${final_total.toFixed(2)}\n`;
+ bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\n`;
+ bill += ` DUE AMOUNT: Rs ${due_amount.toFixed(2)}\n`;
+ bill += "-------------------------------------------------\n";
+ bill += "TERMS & CONDITIONS:\n";
+ bill += "1. 50% Advance with official work order.\n";
+ bill += "2. Balance payment must be cleared on delivery / fitting.\n";
+ bill += "3. Quotation is valid for 15 days from issue date.\n";
+ bill += "4. Glass & cut sections cannot be returned once processed.\n";
+ bill += "-------------------------------------------------\n\n";
+ bill += "Customer Signature: Authorized Signature:\n";
+ bill += "___________________ _____________________\n";
+ bill += ` (${shop_name})\n`;
+ bill += "=================================================\n";
+ bill += "Thank you for your business!\n -- App by Smart worker --\n";
 
  document.getElementById('bill_output').textContent = bill;
  }
@@ -4653,11 +4472,10 @@ function autofillCustomer() {
  k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
  }
  }
- ascii += '\\x80';
- while (ascii[lengthProperty]%64 - 56) ascii += '\\x00';
+ ascii += '\x80';
+ while (ascii[lengthProperty]%64 - 56) ascii += '\x00';
  for (i = 0; i < ascii[lengthProperty]; i++) {
- j = ascii.charCodeAt(i);
- if (j>>8) return;
+ j = ascii.charCodeAt(i) & 255;
  words[i>>2] |= j << ((3 - i)%4)*8;
  }
  words[words[lengthProperty]] = ((asciiBitLength/maxWord)|0);
@@ -5369,16 +5187,16 @@ function removePaymentQr() {
  const expenses = JSON.parse(localStorage.getItem('sw_expenses') || '[]');
 
  let sales_sum = 0.0, exp_sum = 0.0;
- let details_txt = `--- DETAILS FOR ${targetMonth} ---\\n\\n>> CUSTOMER BILLS (INCOME):\\n`;
+ let details_txt = `--- DETAILS FOR ${targetMonth} ---\n\n>> CUSTOMER BILLS (INCOME):\n`;
 
  invoices.forEach(inv => {
- details_txt += `- ${inv.date} | ${inv.client} | Rs ${parseFloat(inv.amount).toFixed(2)}\\n`;
+ details_txt += `- ${inv.date} | ${inv.client} | Rs ${parseFloat(inv.amount).toFixed(2)}\n`;
  sales_sum += parseFloat(inv.amount) || 0;
  });
 
- details_txt += `\\n>> MATERIAL PURCHASES (EXPENSE):\\n`;
+ details_txt += `\n>> MATERIAL PURCHASES (EXPENSE):\n`;
  expenses.forEach(exp => {
- details_txt += `- ${exp.date} | ${exp.category} | ${exp.supplier} (Memo:${exp.memo_no}) | Rs ${parseFloat(exp.amount).toFixed(2)}\\n`;
+ details_txt += `- ${exp.date} | ${exp.category} | ${exp.supplier} (Memo:${exp.memo_no}) | Rs ${parseFloat(exp.amount).toFixed(2)}\n`;
  exp_sum += parseFloat(exp.amount) || 0;
  });
 
@@ -5423,13 +5241,13 @@ function removePaymentQr() {
  const rows = JSON.parse(localStorage.getItem('sw_measurements') || '[]');
  if (rows.length === 0) out_text = "No saved measurements found.";
  rows.forEach(row => {
- out_text += `Project ID #${row.id} | Date: ${row.date} | Type: ${row.project_type}\\n---------------------------------------------\\n${row.details}\\n=============================================\\n\\n`;
+ out_text += `Project ID #${row.id} | Date: ${row.date} | Type: ${row.project_type}\n---------------------------------------------\n${row.details}\n=============================================\n\n`;
  });
  } else {
  const rows = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
  if (rows.length === 0) out_text = "No saved bills found.";
  rows.forEach(row => {
- out_text += `Invoice #${row.id} | Date: ${row.date} | Client: ${row.client} | Total: Rs ${parseFloat(row.amount).toFixed(2)}\\n---------------------------------------------\\n${row.bill_text}\\n=============================================\\n\\n`;
+ out_text += `Invoice #${row.id} | Date: ${row.date} | Client: ${row.client} | Total: Rs ${parseFloat(row.amount).toFixed(2)}\n---------------------------------------------\n${row.bill_text}\n=============================================\n\n`;
  });
  }
  document.getElementById('history_out').textContent = out_text;
@@ -5461,7 +5279,8 @@ function removePaymentQr() {
  }
 
  function searchCustomer() {
- const pin = document.getElementById('lookup_pin').value.trim();
+ const pinEl = document.getElementById('lookup_pin');
+ const pin = pinEl ? pinEl.value.trim() : "";
  if (!pin || pin.length < 4) { alert("Please enter at least a 4-digit PIN."); return; }
  const customers = JSON.parse(localStorage.getItem('sw_customers') || '{}');
  const invoices = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
@@ -5472,19 +5291,19 @@ function removePaymentQr() {
  if (phone.endsWith(pin)) {
  found = true;
  const cust = customers[phone];
- out_text += `--- CUSTOMER DETAILS ---\\nName: ${cust.name}\\nPhone: ${phone}\\nAddress: ${cust.address}\\n\\n--- PREVIOUS BILLS ---\\n`;
+ out_text += `--- CUSTOMER DETAILS ---\nName: ${cust.name}\nPhone: ${phone}\nAddress: ${cust.address}\n\n--- PREVIOUS BILLS ---\n`;
  const custBills = invoices.filter(inv => inv.phone === phone);
  if (custBills.length > 0) {
  custBills.forEach(b => {
- out_text += `Date: ${b.date} | Total: Rs ${parseFloat(b.amount).toFixed(2)}\\n${b.bill_text}\\n========================================\\n\\n`;
+ out_text += `Date: ${b.date} | Total: Rs ${parseFloat(b.amount).toFixed(2)}\n${b.bill_text}\n========================================\n\n`;
  });
  } else {
- out_text += "No saved bills found for this customer.\\n\\n";
+ out_text += "No saved bills found for this customer.\n\n";
  }
  }
  }
  if (!found) out_text = "No customer found with this PIN.";
- document.getElementById('lookup_results').textContent = out_text;
+ const lrEl = document.getElementById('lookup_results'); if (lrEl) lrEl.textContent = out_text;
  }
 
  
@@ -6413,7 +6232,7 @@ function adminChangePinPrompt() {
   const newPin = prompt("নতুন ৪-সংখ্যার পিন লিখুন:");
   if (!newPin || newPin.trim().length < 4) { alert("❌ কমপক্ষে ৪ সংখ্যার পিন দিন!"); return; }
   localStorage.setItem('sw_admin_pin', newPin.trim());
-  document.getElementById('admCurrentPinDisplay').textContent = newPin.trim();
+  const pinDisp = document.getElementById('admCurrentPinDisplay'); if (pinDisp) pinDisp.textContent = newPin.trim();
   alert("✅ অ্যাডমিন পিন সফলভাবে পরিবর্তন করা হয়েছে!");
 }
 
@@ -6422,16 +6241,24 @@ function generateActivationKey(deviceId, planType) {
   deviceId = String(deviceId || '').trim().toUpperCase();
   if (!deviceId) return null;
   if (planType === "LIFETIME") return SPECIAL_PROMO_CODE;
-  const salt = SALTS[planType] || SALTS["KARIGAR_1M"];
-  return sha256(deviceId + salt).substring(0, 8).toUpperCase();
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const baseSalt = SALTS[planType] || SALTS["KARIGAR_1M"];
+  const dynSalt = String(planType).indexOf("1Y") !== -1 ? (baseSalt + "_" + y) : (baseSalt + "_" + y + "_" + m);
+  return sha256(deviceId + dynSalt).substring(0, 8).toUpperCase();
 }
 
 // Customer submits online recharge request
 function submitCustomerRechargeRequest() {
-  const name = document.getElementById('req_cust_name').value.trim();
-  const phone = document.getElementById('req_cust_phone').value.trim();
-  const plan = document.getElementById('req_cust_plan').value;
-  const utr = document.getElementById('req_cust_utr').value.trim();
+  const nameEl = document.getElementById('req_cust_name');
+  const phoneEl = document.getElementById('req_cust_phone');
+  const planEl = document.getElementById('req_cust_plan');
+  const utrEl = document.getElementById('req_cust_utr');
+  const name = nameEl ? nameEl.value.trim() : "";
+  const phone = phoneEl ? phoneEl.value.trim() : "";
+  const plan = planEl ? planEl.value : "KARIGAR_1M";
+  const utr = utrEl ? utrEl.value.trim() : "";
   const devId = getDeviceId();
 
   if (!name || !phone) {
@@ -6462,9 +6289,9 @@ function submitCustomerRechargeRequest() {
   } catch(e){}
 
   alert("✅ আপনার রিচার্জ রিকোয়েস্ট সফলভাবে জমা হয়েছে!\n\nঅ্যাডমিন খুব শীঘ্রই ভেরিফাই করে আপনার নম্বরে অ্যাক্টিভেশন কি পাঠিয়ে দেবে।");
-  document.getElementById('req_cust_name').value = "";
-  document.getElementById('req_cust_phone').value = "";
-  document.getElementById('req_cust_utr').value = "";
+  if (nameEl) nameEl.value = "";
+  if (phoneEl) phoneEl.value = "";
+  if (utrEl) utrEl.value = "";
 }
 
 // Render Admin Portal UI
@@ -6587,8 +6414,10 @@ function adminDeleteRequest(reqId) {
 
 // Manual Key Generator
 function adminGenerateManualKey() {
-  const devId = document.getElementById('adm_target_device').value.trim().toUpperCase();
-  const plan = document.getElementById('adm_target_plan').value;
+  const devEl = document.getElementById('adm_target_device');
+  const planEl = document.getElementById('adm_target_plan');
+  const devId = devEl ? devEl.value.trim().toUpperCase() : "";
+  const plan = planEl ? planEl.value : "KARIGAR_1M";
 
   if (!devId || devId.length !== 8) {
     alert("অনুগ্রহ করে সঠিক ৮-অক্ষরের Device ID দিন!");
@@ -6599,20 +6428,24 @@ function adminGenerateManualKey() {
   lastGeneratedAdminKey = key;
   lastTargetPlan = plan;
 
-  document.getElementById('admGeneratedKeyDisplay').value = key;
-  document.getElementById('admGeneratedResultBox').style.display = "block";
+  const dispEl = document.getElementById('admGeneratedKeyDisplay');
+  if (dispEl) dispEl.value = key;
+  const boxEl = document.getElementById('admGeneratedResultBox');
+  if (boxEl) boxEl.style.display = "block";
 }
 
 function adminCopyGeneratedKey() {
   if (!lastGeneratedAdminKey) return;
   navigator.clipboard.writeText(lastGeneratedAdminKey).then(() => {
     const btn = document.getElementById('admCopyKeyBtn');
-    btn.textContent = "COPIED!";
-    btn.style.background = "#0284c7";
-    setTimeout(() => {
-      btn.textContent = "COPY";
-      btn.style.background = "#16a34a";
-    }, 2000);
+    if (btn) {
+      btn.textContent = "COPIED!";
+      btn.style.background = "#0284c7";
+      setTimeout(() => {
+        btn.textContent = "COPY";
+        btn.style.background = "#16a34a";
+      }, 2000);
+    }
   }).catch(() => {
     alert("Key: " + lastGeneratedAdminKey);
   });
@@ -6620,8 +6453,10 @@ function adminCopyGeneratedKey() {
 
 function adminShareKeyWhatsApp() {
   if (!lastGeneratedAdminKey) return;
-  const devId = document.getElementById('adm_target_device').value.trim().toUpperCase();
-  const plan = document.getElementById('adm_target_plan').value;
+  const devEl = document.getElementById('adm_target_device');
+  const planEl = document.getElementById('adm_target_plan');
+  const devId = devEl ? devEl.value.trim().toUpperCase() : "";
+  const plan = planEl ? planEl.value : "KARIGAR_1M";
   const msg = `নমস্কার, Smart Worker Pro-তে আপনার সাবস্ক্রিপশন কি:\n👉 *${lastGeneratedAdminKey}*\nDevice ID: ${devId}\nPlan: ${plan}\n\nঅ্যাপে এই কোডটি দিয়ে Activate করলেই সমস্ত ফিচার চালু হয়ে যাবে। ধন্যবাদ!`;
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
 }
