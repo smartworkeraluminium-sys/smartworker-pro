@@ -19,7 +19,16 @@
       }
     });
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(function(){});
+      if (window.caches) {
+        caches.keys().then(function(keys) {
+          keys.forEach(function(k) {
+            if (k !== 'smart-worker-pro-v17') caches.delete(k);
+          });
+        });
+      }
+      navigator.serviceWorker.register('./sw.js?v=17').then(function(reg) {
+        if (reg && reg.update) reg.update();
+      }).catch(function(){});
     }
   </script>
   <meta name="mobile-web-app-capable" content="yes">
@@ -53,7 +62,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=17">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
 </head>
@@ -2197,7 +2206,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=17"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {

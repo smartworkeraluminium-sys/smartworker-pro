@@ -1095,23 +1095,23 @@ function keypadEnter() {
  if (t_text.includes('2-Track (2-Sash)')) {
  net_w_mod = handle_w - side_clearance;
  h_cut_mm = (w_mm + net_w_mod) / 2.0;
- s_c = 2; han_qty = 2; int_qty = 2;
+ s_c = 2; han_qty = 4; int_qty = 2;
  } else if (t_text.includes('3-Track (3-Sash)')) {
  net_w_mod = (handle_w * 2.0) - side_clearance;
  h_cut_mm = (w_mm + net_w_mod) / 3.0;
- s_c = 3; han_qty = 2; int_qty = 4;
+ s_c = 3; han_qty = 6; int_qty = 4;
  has_mesh = true;
  mesh_w_mm = (w_mm - side_clearance + handle_w) / 2.0;
  } else if (t_text.includes('4-Track (4-Sash)')) {
  net_w_mod = (handle_w * 3.0) - side_clearance;
  h_cut_mm = (w_mm + net_w_mod) / 4.0;
- s_c = 4; han_qty = 2; int_qty = 6;
+ s_c = 4; han_qty = 8; int_qty = 6;
  has_mesh = true;
  mesh_w_mm = (w_mm + net_w_mod) / 4.0;
  } else {
  net_w_mod = (handle_w * 2.0) - side_clearance;
  h_cut_mm = (w_mm + net_w_mod) / 4.0;
- s_c = 4; han_qty = 4; int_qty = 4;
+ s_c = 4; han_qty = 8; int_qty = 4;
  }
 
  const g_deduct_base = (ovr_dm && ovr_dm.dm_glass_deduct != null) ? parseFloat(ovr_dm.dm_glass_deduct) : 26.0;
@@ -1138,24 +1138,24 @@ function keypadEnter() {
 
  const total_sash_for_hw = s_c + (has_mesh ? 1 : 0);
  let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
- hw_txt += `> Domal Bearing / Rollers: ${total_sash_for_hw * 2} pc\n`;
- hw_txt += `> Touch Lock / Star Lock: ${s_c >= 3 ? 2 : 1} pc\n`;
- hw_txt += `> L-Cleat (Corner Angle): ${total_sash_for_hw * 4} pc\n> EPDM Gasket / Seal: Required\n`;
+ hw_txt += `> Domal Bearing / Rollers: ${total_sash_for_hw * 2 * win_qty} pc\n`;
+ hw_txt += `> Touch Lock / Star Lock: ${(s_c >= 3 ? 2 : 1) * win_qty} pc\n`;
+ hw_txt += `> L-Cleat (Corner Angle): ${total_sash_for_hw * 4 * win_qty} pc\n> EPDM Gasket / Seal: Required\n`;
 
  const w_sign = net_w_mod >= 0 ? `+${Math.round(net_w_mod)}` : `${Math.round(net_w_mod)}`;
  
  let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${raw_h} x W:${raw_w} ${unit_str}${qty_str}]\n`;
- alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (2 pc)\n`;
- alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (2 pc)\n`;
- alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2} pc)\n`;
- alu_txt += `> Sash Handle: ${disp(v_cut_in)} (${han_qty} pc)\n`;
- alu_txt += `> Sash Interlock: ${disp(v_cut_in)} (${int_qty} pc)\n`;
+ alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (${2 * win_qty} pc)\n`;
+ alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (${2 * win_qty} pc)\n`;
+ alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2 * win_qty} pc)\n`;
+ alu_txt += `> Sash Handle: ${disp(v_cut_in)} (${han_qty * win_qty} pc)\n`;
+ alu_txt += `> Sash Interlock Clip: ${disp(v_cut_in)} (${int_qty * win_qty} pc)\n`;
 
  if (has_mesh) {
- alu_txt += `\n--- MOSQUITO NET ---\n> Mesh Top/Bot: ${disp(mesh_w_in)} (2 pc)\n> Mesh Handle/Interlock: ${disp(v_cut_in)} (2 pc)\n`;
+ alu_txt += `\n--- MOSQUITO NET ---\n> Mesh Top/Bot: ${disp(mesh_w_in)} (${2 * win_qty} pc)\n> Mesh Handle: ${disp(v_cut_in)} (${2 * win_qty} pc)\n> Mesh Interlock Clip: ${disp(v_cut_in)} (${1 * win_qty} pc)\n`;
  }
 
- const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c} pc)\n`;
+ const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c * win_qty} pc)\n`;
  const glass_key = `${disp(gh_in)} x ${disp(gw_in)}`;
  dm_glass_dict[glass_key] = (dm_glass_dict[glass_key] || 0) + (s_c * win_qty);
 
@@ -1164,19 +1164,22 @@ function keypadEnter() {
 
  const outer_key = `Domal Outer Frame (${track_type})`;
  const sash_handle_key = `Domal Sash Patta & Handle (${track_type})`;
- const interlock_key = `Domal Interlock (${track_type})`;
+ const interlock_key = `Domal Interlock Clip (${track_type})`;
 
  [outer_key, sash_handle_key, interlock_key].forEach(k => {
  if (!dm_buckets[k]) dm_buckets[k] = [];
  });
 
- for(let q=0; q<win_qty; q++) dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
- for (let q=0; q<win_qty; q++) { for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_handle_key].push(h_cut_in); }
- if (has_mesh) dm_buckets[sash_handle_key].push(mesh_w_in, mesh_w_in);
- for (let q=0; q<win_qty; q++) { for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in); }
- if (has_mesh) dm_buckets[sash_handle_key].push(v_cut_in);
- for (let q=0; q<win_qty; q++) { for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in); }
- if (has_mesh) dm_buckets[interlock_key].push(v_cut_in);
+ for (let q = 0; q < win_qty; q++) {
+   dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
+   for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_handle_key].push(h_cut_in);
+   for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in);
+   for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in);
+   if (has_mesh) {
+     dm_buckets[sash_handle_key].push(mesh_w_in, mesh_w_in, v_cut_in, v_cut_in);
+     dm_buckets[interlock_key].push(v_cut_in);
+   }
+ }
 
  const prevOut = document.getElementById('dm_alu_out').textContent;
  document.getElementById('dm_alu_out').textContent = alu_txt + hw_txt + glass_txt + "===================================\n\n" + prevOut;
