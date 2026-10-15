@@ -32,9 +32,12 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
   themeColor = themeColor || [25, 42, 74];
   var pageW = (doc.internal && doc.internal.pageSize && doc.internal.pageSize.getWidth) ? doc.internal.pageSize.getWidth() : 297;
   var profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
-  var shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
-  var contact = profile.phone || "9239413517";
-  var addr = profile.address || "Amta, Howrah";
+  var shop_name = (profile.shop_name || "ALUMINIUM FABRICATION WORKSHOP").toUpperCase();
+  var owner_name = (profile.name && profile.name !== "Fabricator") ? profile.name.trim() : "";
+  var contact = profile.phone ? profile.phone.trim() : "";
+  var email = (profile.email && profile.email.indexOf("@smartworker.app") === -1) ? profile.email.trim() : "";
+  var gst = profile.gst ? profile.gst.trim() : "";
+  var addr = (profile.address && profile.address !== "Fabrication Workshop") ? profile.address.trim() : "";
   var customLogo = localStorage.getItem('sw_custom_logo');
 
   doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
@@ -54,19 +57,34 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
   }
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(13.5);
   doc.setTextColor(251, 191, 36);
-  doc.text(shop_name, textStartX, 11);
+  doc.text(shop_name, textStartX, 10);
+
+  var detailParts = [];
+  if (owner_name) detailParts.push("Prop: " + owner_name);
+  if (addr) detailParts.push(addr);
+  if (contact) detailParts.push("Mob: " + contact);
+  if (email) detailParts.push("Email: " + email);
+  if (gst) detailParts.push("GSTIN: " + gst);
+  var infoLine = detailParts.length > 0 ? detailParts.join(" | ") : "Professional Aluminium, UPVC & Glass Fabrication";
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(226, 232, 240);
-  doc.text(addr + " | Contact: " + contact, textStartX, 17);
+  doc.text(infoLine, textStartX, 16.5);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
   doc.text(String(title || "").toUpperCase(), textStartX, 24);
+
+  if (subtitle) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(253, 224, 71);
+    doc.text(String(subtitle), pageW - 14, 24, { align: "right" });
+  }
 }
 
 // =========================================================================
@@ -313,10 +331,19 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
 
 // Legacy duplicate auth helpers consolidated into main auth controller below
 
- // Live Sync to Cloud Firestore
+ // Strictly Isolated Per-Customer Cloud Document ID (Never shares Logo/QR/Profile across different phones!)
+ function getIsolatedCloudDocId(uid) {
+  if (uid && uid !== 'workshop_primary') return String(uid);
+  if (currentCloudUser && currentCloudUser.uid && currentCloudUser.uid !== 'workshop_primary') return String(currentCloudUser.uid);
+  const saved = localStorage.getItem('sw_cloud_user');
+  if (saved && saved !== 'workshop_primary') return String(saved);
+  return 'user_dev_' + (typeof getDeviceId === 'function' ? getDeviceId() : 'local');
+ }
+
+ // Live Sync to Cloud Firestore (Strictly Isolated Per Customer/Device)
  function syncAllDataToCloud(uid) {
   if (!fbDb) return;
-  const targetId = uid || (currentCloudUser ? currentCloudUser.uid : null) || localStorage.getItem('sw_cloud_user') || 'workshop_primary';
+  const targetId = getIsolatedCloudDocId(uid);
   try {
     const data = {
       profile: JSON.parse(localStorage.getItem('sw_profile') || '{}'),
@@ -351,7 +378,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
 // Restore from Cloud Firestore on New Device / Login
 function syncAllDataFromCloud(uid) {
   if (!fbDb) return;
-  const targetId = uid || (currentCloudUser ? currentCloudUser.uid : null) || localStorage.getItem('sw_cloud_user') || 'workshop_primary';
+  const targetId = getIsolatedCloudDocId(uid);
   fbDb.collection('users').doc(String(targetId)).get().then(doc => {
     if (doc.exists) {
       const d = doc.data();
@@ -572,13 +599,14 @@ function switchAuthMode(mode) {
 
  if (userAccount) {
  if (userAccount.password === pass) {
- localStorage.setItem('sw_profile', JSON.stringify({
- name: userAccount.name,
- shop_name: userAccount.shop_name,
- phone: userAccount.phone,
- email: userAccount.email,
- address: "Fabrication Workshop"
- }));
+ const prevProf = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+ localStorage.setItem('sw_profile', JSON.stringify(Object.assign({}, prevProf, {
+ name: userAccount.name || prevProf.name,
+ shop_name: userAccount.shop_name || prevProf.shop_name,
+ phone: userAccount.phone || prevProf.phone,
+ email: userAccount.email || prevProf.email,
+ address: userAccount.address || prevProf.address || "Fabrication Workshop"
+ })));
  localStorage.setItem('sw_cloud_user', userAccount.phone || cleanUser);
  localStorage.setItem('sw_user_password', pass);
  localStorage.removeItem('sw_guest_mode');
@@ -2326,7 +2354,7 @@ function clearCustomSeries() {
   const doc = new jsPDF('l', 'mm', 'a4');
   const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
-  drawDocHeaderWithLogo(doc, "CUTTING MEASUREMENT SHEET (" + title.toUpperCase() + ")", "", [25, 42, 74]);
+  drawDocHeaderWithLogo(doc, "WORKSHOP JOB CARD - CUTTING SHEET (" + title.toUpperCase() + ")", "", [25, 42, 74]);
 
   doc.setFillColor(241, 245, 249);
   doc.rect(14, 32, 269, 6.5, 'F');
@@ -2482,7 +2510,7 @@ function clearCustomSeries() {
   const doc = new jsPDF('l', 'mm', 'a4');
   const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
-  drawDocHeaderWithLogo(doc, "GLASS CUTTING MEASUREMENT LIST (" + title.toUpperCase() + ")", "", [2, 132, 199]);
+  drawDocHeaderWithLogo(doc, "GLASS CUTTING JOB CARD (" + title.toUpperCase() + ")", "", [2, 132, 199]);
 
   doc.setFillColor(240, 249, 255);
   doc.rect(14, 32, 269, 6.5, 'F');
@@ -2559,7 +2587,7 @@ function clearCustomSeries() {
   const doc = new jsPDF('l', 'mm', 'a4');
   const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
-  drawDocHeaderWithLogo(doc, "ALUMINIUM PROFILE LIST (" + title.toUpperCase() + ")", "", [15, 118, 110]);
+  drawDocHeaderWithLogo(doc, "ALUMINIUM MATERIAL PURCHASE LIST (" + title.toUpperCase() + ")", "", [15, 118, 110]);
 
   doc.setFillColor(240, 253, 250);
   doc.rect(14, 32, 269, 6.5, 'F');
@@ -3076,14 +3104,14 @@ function saveMeasurementData(projectType, outId, matId) {
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
+ const contact = profile.phone || "N/A";
+ const addr = profile.address || "";
  const clientName = document.getElementById('sk_client_name').value.trim() || "Valued Client";
  const clientPhone = document.getElementById('sk_client_phone').value.trim() || "N/A";
  const siteLoc = document.getElementById('sk_site_loc').value.trim() || "Project Site";
  const today = new Date().toLocaleDateString('en-GB');
 
- drawDocHeaderWithLogo(doc, "MASTER SITE MEASUREMENT KHATA BOOK", "Site: " + siteLoc, [30, 58, 138]);
+ drawDocHeaderWithLogo(doc, "MASTER SITE MEASUREMENT & JOB CARD", "Site: " + siteLoc, [30, 58, 138]);
 
  // Client & Site Card
  doc.setFillColor(248, 250, 252);
@@ -3595,11 +3623,13 @@ function autofillCustomer() {
  if (billItems.length === 0) { alert("Please add items to generate bill."); return; }
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
- const contact_info = profile.phone || "9239413517 / 9641405426";
- const addr = profile.address || "Amta (Chandni), Howrah, West Bengal";
- const email_info = profile.email ? `\n Email: ${profile.email}` : "";
- const gst_info = profile.gst ? `\n GST No: ${profile.gst}` : "";
+ const shop_name = (profile.shop_name || "ALUMINIUM FABRICATION WORKSHOP").toUpperCase();
+ const owner_name = (profile.name && profile.name !== "Fabricator") ? profile.name.trim() : "";
+ const contact_info = profile.phone ? profile.phone.trim() : "N/A";
+ const addr = (profile.address && profile.address !== "Fabrication Workshop") ? profile.address.trim() : "";
+ const clean_email = (profile.email && profile.email.indexOf("@smartworker.app") === -1) ? profile.email.trim() : "";
+ const email_info = clean_email ? `\n Email: ${clean_email}` : "";
+ const gst_info = profile.gst ? `\n GSTIN: ${profile.gst.trim()}` : "";
 
  const bill_stage = document.getElementById('q_stage').value;
  const c_name = document.getElementById('q_name').value || 'Customer';
@@ -3613,7 +3643,8 @@ function autofillCustomer() {
 
  let bill = "=================================================\n";
  bill += ` ${shop_name}\n`;
- bill += ` ${addr}\n`;
+ if (owner_name) bill += ` Prop: ${owner_name}\n`;
+ if (addr) bill += ` ${addr}\n`;
  bill += ` Mob: ${contact_info}${email_info}${gst_info}\n`;
  bill += "=================================================\n";
  bill += `Invoice Type: ${bill_stage}\nDate: ${today}\n\n`;
@@ -3650,6 +3681,14 @@ function autofillCustomer() {
  bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\n`;
  bill += ` DUE AMOUNT: Rs ${due_amount.toFixed(2)}\n`;
  bill += "-------------------------------------------------\n";
+ if (profile.bank_name || profile.bank_acc || profile.upi_id) {
+   bill += "BANK & UPI PAYMENT DETAILS:\n";
+   if (profile.bank_name) bill += `Bank: ${profile.bank_name}${profile.bank_branch ? " (" + profile.bank_branch + ")" : ""}\n`;
+   if (profile.bank_holder) bill += `A/C Holder: ${profile.bank_holder}\n`;
+   if (profile.bank_acc) bill += `A/C No: ${profile.bank_acc}${profile.bank_ifsc ? " | IFSC: " + profile.bank_ifsc : ""}\n`;
+   if (profile.upi_id) bill += `UPI ID: ${profile.upi_id}\n`;
+   bill += "-------------------------------------------------\n";
+ }
  bill += "TERMS & CONDITIONS:\n";
  bill += "1. 50% Advance with official work order.\n";
  bill += "2. Balance payment must be cleared on delivery / fitting.\n";
@@ -3801,9 +3840,12 @@ function autofillCustomer() {
   doc.text(`Phone: ${c_phone}`, 14, 57);
   doc.text(`Address: ${c_addr}`, 14, 62);
 
-  doc.text(`Date: ${today}`, 150, 46);
-  doc.text(`Stage: ${bill_stage}`, 150, 52);
-  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 150, 57);
+  doc.text(`Date: ${today}`, 135, 46);
+  doc.text(`Stage: ${bill_stage}`, 135, 51);
+  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 135, 56);
+  let metaY = 61;
+  if (profile.gst) { doc.text(`Workshop GSTIN: ${profile.gst}`, 135, metaY); metaY += 5; }
+  if (profile.email && profile.email.indexOf("@smartworker.app") === -1) { doc.text(`Email: ${profile.email}`, 135, metaY); }
 
   const tableData = billItems.map((itm, i) => [
     i + 1,
@@ -3861,26 +3903,44 @@ function autofillCustomer() {
     doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 140, finalY + 47);
   }
 
-  // Render UPI QR Code if uploaded
+  // Render Optional Bank & UPI Details + Custom Payment QR Code on the Left Side of Footer
   const customQr = localStorage.getItem('sw_custom_qr');
+  let bankStartX = 14;
   if (customQr) {
     try {
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(14, finalY + 2, 28, 28, 2, 2, 'FD');
+      doc.roundedRect(14, finalY, 28, 28, 2, 2, 'FD');
       var qrFmt = customQr.indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
-      doc.addImage(customQr, qrFmt, 15, finalY + 3, 26, 26);
+      doc.addImage(customQr, qrFmt, 15, finalY + 1, 26, 26);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7);
       doc.setTextColor(74, 20, 140);
-      doc.text("SCAN TO PAY (UPI)", 14, finalY + 33);
+      doc.text("SCAN TO PAY (UPI)", 14, finalY + 31.5);
+      bankStartX = 46;
     } catch(e){}
   }
 
-  doc.setTextColor(120, 120, 120);
+  if (profile.bank_name || profile.bank_acc || profile.upi_id) {
+    let by = finalY + 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(30, 58, 138);
+    doc.text("BANK & PAYMENT DETAILS:", bankStartX, by);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 41, 59);
+    if (profile.bank_name) { by += 4.5; doc.text("Bank: " + profile.bank_name + (profile.bank_branch ? " (" + profile.bank_branch + ")" : ""), bankStartX, by); }
+    if (profile.bank_holder) { by += 4.5; doc.text("A/C Holder: " + profile.bank_holder, bankStartX, by); }
+    if (profile.bank_acc) { by += 4.5; doc.text("A/C No: " + profile.bank_acc + (profile.bank_ifsc ? " | IFSC: " + profile.bank_ifsc : ""), bankStartX, by); }
+    if (profile.upi_id) { by += 4.5; doc.text("UPI ID: " + profile.upi_id, bankStartX, by); }
+  }
+
+  const footerY = Math.max(finalY + 42, (pDue > 0 ? finalY + 53 : finalY + 42));
+  doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, finalY + 40);
-  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, finalY + 48);
+  doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, footerY);
+  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, footerY + 8);
 
   doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
 }
@@ -3915,35 +3975,7 @@ function autofillCustomer() {
         }
       } catch(e) {}
       
-      // Default sample customers if completely empty
-      const sample = {
-        '9830123456': {
-          name: 'অমিতাভ চক্রবর্তী',
-          phone: '9830123456',
-          address: 'আমতা চাঁদনী বাজার, হাওড়া',
-          total_billed: 45000,
-          total_paid: 30000,
-          total_due: 15000,
-          transactions: [
-            { id: 1, date: '10/08/2026', type: 'BILL', desc: 'ডমাল উইন্ডো ২৭×৬৫ (৪টি) ও ডোর ফিটিং', debit: 45000, credit: 0, balance: 45000 },
-            { id: 2, date: '12/08/2026', type: 'PAYMENT', desc: 'নগদ অ্যাডভান্স জমা (PhonePe)', debit: 0, credit: 30000, balance: 15000 }
-          ]
-        },
-        '9831987654': {
-          name: 'বিকাশ মণ্ডল',
-          phone: '9831987654',
-          address: 'বাগনান স্টেশন রোড, ৩য় তলা',
-          total_billed: 28000,
-          total_paid: 28000,
-          total_due: 0,
-          transactions: [
-            { id: 1, date: '15/08/2026', type: 'BILL', desc: '৩-ট্র্যাক স্লাইডিং উইন্ডো ও বাথরুম ডোর', debit: 28000, credit: 0, balance: 28000 },
-            { id: 2, date: '18/08/2026', type: 'PAYMENT', desc: 'ক্যাশ পেমেন্ট সম্পন্ন', debit: 0, credit: 28000, balance: 0 }
-          ]
-        }
-      };
-      localStorage.setItem('sw_customers', JSON.stringify(sample));
-      return sample;
+      return {};
     }
 
     function saveKhataCustomers(custs) {
@@ -3955,16 +3987,17 @@ function autofillCustomer() {
       syncCustomersToFirestore(custs);
     }
 
-    // Direct Firebase Cloud Sync for Khata
+    // Direct Firebase Cloud Sync for Khata (Strictly Isolated Per Customer/Device)
     function syncCustomersToFirestore(custs) {
       if (typeof fbDb !== 'undefined' && fbDb) {
         try {
-          const docRef = fbDb.collection('smart_worker_data').doc('customers_ledger');
+          const targetId = getIsolatedCloudDocId();
+          const docRef = fbDb.collection('users').doc(String(targetId));
           docRef.set({
             customers: custs,
             updated_at: new Date().toISOString()
           }, { merge: true }).then(() => {
-            console.log("☁️ Customer Khata synced to Google Cloud Firestore!");
+            console.log("☁️ Customer Khata synced to isolated user cloud doc!");
           }).catch(err => {
             console.warn("Cloud sync notice:", err);
           });
@@ -3977,7 +4010,8 @@ function autofillCustomer() {
     function initCloudKhataSyncListener() {
       if (typeof fbDb !== 'undefined' && fbDb) {
         try {
-          fbDb.collection('smart_worker_data').doc('customers_ledger').onSnapshot(doc => {
+          const targetId = getIsolatedCloudDocId();
+          fbDb.collection('users').doc(String(targetId)).onSnapshot(doc => {
             if (doc.exists) {
               const data = doc.data();
               if (data && data.customers && typeof data.customers === 'object') {
@@ -4313,7 +4347,7 @@ function autofillCustomer() {
 
       const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
       const shop = profile.shop_name || 'SMART WORKER ALUMINIUM';
-      const myPhone = profile.phone || '9239413517';
+      const myPhone = profile.phone || 'N/A';
 
       let msg = `*${shop} - কাস্টমার হিসাব খাতা*\n`;
       msg += `গ্রাহক: *${c.name}*\n`;
@@ -4346,8 +4380,8 @@ function autofillCustomer() {
 
       const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
       const shop = (profile.shop_name || 'SMART WORKER ALUMINIUM').toUpperCase();
-      const myPhone = profile.phone || '9239413517 / 9641405426';
-      const myAddr = profile.address || 'Amta (Chandni), Howrah, West Bengal';
+      const myPhone = profile.phone || 'N/A';
+      const myAddr = profile.address || '';
 
       drawDocHeaderWithLogo(doc, "CUSTOMER KHATA & LEDGER STATEMENT", "Client: " + c.name + " (" + c.phone + ")", [15, 23, 42]);
 
@@ -4358,7 +4392,7 @@ function autofillCustomer() {
       doc.setFont("helvetica", "normal");
       doc.text(`Name: ${c.name}`, 14, 48);
       doc.text(`Phone: ${c.phone}`, 14, 54);
-      doc.text(`Site: ${c.address || 'Amta, Howrah'}`, 14, 60);
+      doc.text(`Site: ${c.address || 'N/A'}`, 14, 60);
 
       doc.text(`Statement Date: ${new Date().toLocaleDateString('en-GB')}`, 140, 48);
       doc.text(`Total Billed: Rs. ${(c.total_billed || 0).toLocaleString('en-IN')}`, 140, 54);
@@ -4714,21 +4748,9 @@ function addTeamMember() {
       const expStr = lic.key === SPECIAL_PROMO_CODE ? "Lifetime" : st.expiryDate;
       const cat = st.planCategory;
 
-      if (cat === "CORPORATE" || cat === "LIFETIME") {
-        banner.style.background = "#7c3aed";
-        banner.textContent = "Status: CORPORATE PRO (50 USERS) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
-        if (teamSec) teamSec.style.display = 'block';
-        renderTeamMembers();
-      } else if (cat === "WORKSHOP_TEAM") {
-        banner.style.background = "#16a34a";
-        banner.textContent = "Status: WORKSHOP TEAM PRO (10 USERS) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
-        if (teamSec) teamSec.style.display = 'block';
-        renderTeamMembers();
-      } else {
-        banner.style.background = "#0284c7";
-        banner.textContent = "Status: KARIGAR PRO (" + st.totalDays + " Days Pack) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
-        if (teamSec) teamSec.style.display = 'none';
-      }
+      banner.style.background = "#0284c7";
+      banner.textContent = "Status: PRO ACTIVE (1 User Only • " + st.totalDays + " Days Pack) • " + st.daysLeft + " Days Left (Till " + expStr + ")";
+      if (teamSec) teamSec.style.display = 'none';
 
       if (tvCard) {
         tvCard.style.display = 'block';
@@ -5077,6 +5099,7 @@ function uploadShopLogo(input) {
           localStorage.setItem('sw_custom_logo', optimized);
           renderBrandingPreviews();
           loadSavedProfile();
+          if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
           alert("✅ আপনার দোকানের লোগো সফলভাবে সেভ হয়েছে! সমস্ত বিলে ও পিডিএফে এই লোগোটিই বের হবে।");
         } catch(err) {
           try {
@@ -5100,8 +5123,10 @@ function uploadShopLogo(input) {
 
 function removeShopLogo() {
   localStorage.removeItem('sw_custom_logo');
+  document.querySelectorAll('img[alt*="Logo"], img[alt="SWA"]').forEach(function(img){ img.src = 'logo.png'; });
   renderBrandingPreviews();
   loadSavedProfile();
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
   alert("Shop logo removed successfully.");
 }
 
@@ -5129,6 +5154,7 @@ function uploadPaymentQr(input) {
           var optimized = canvas.toDataURL('image/png');
           localStorage.setItem('sw_custom_qr', optimized);
           renderBrandingPreviews();
+          if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
           alert("✅ আপনার পেমেন্ট QR কোড সফলভাবে সেভ হয়েছে! সমস্ত বিলে এই QR কোডটি বের হবে।");
         } catch(err) {
           try {
@@ -5152,6 +5178,7 @@ function uploadPaymentQr(input) {
 function removePaymentQr() {
   localStorage.removeItem('sw_custom_qr');
   renderBrandingPreviews();
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
   alert("Payment QR Code removed successfully.");
 }
 
@@ -5796,19 +5823,33 @@ function updateProfile() {
  phone: document.getElementById('set_phone').value.trim(),
  email: document.getElementById('set_email').value.trim(),
  gst: document.getElementById('set_gst').value.trim(),
- address: document.getElementById('set_address').value.trim()
+ address: document.getElementById('set_address').value.trim(),
+ bank_name: document.getElementById('set_bank_name') ? document.getElementById('set_bank_name').value.trim() : "",
+ bank_holder: document.getElementById('set_bank_holder') ? document.getElementById('set_bank_holder').value.trim() : "",
+ bank_acc: document.getElementById('set_bank_acc') ? document.getElementById('set_bank_acc').value.trim() : "",
+ bank_ifsc: document.getElementById('set_bank_ifsc') ? document.getElementById('set_bank_ifsc').value.trim() : "",
+ bank_branch: document.getElementById('set_bank_branch') ? document.getElementById('set_bank_branch').value.trim() : "",
+ upi_id: document.getElementById('set_upi_id') ? document.getElementById('set_upi_id').value.trim() : ""
  };
  if (!profile.name || !profile.shop_name || !profile.phone || !profile.address) {
  alert("Please fill Name, Shop Name, Phone and Address.");
  return;
  }
  localStorage.setItem('sw_profile', JSON.stringify(profile));
+ try {
+   const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+   const cleanPhone = profile.phone.replace(/\D/g, '');
+   if (cleanPhone && users[cleanPhone]) {
+     users[cleanPhone] = Object.assign({}, users[cleanPhone], profile);
+     localStorage.setItem('sw_registered_users', JSON.stringify(users));
+   }
+ } catch(e){}
  if (typeof addToOfflineQueue === 'function') addToOfflineQueue('profile', profile);
  if (typeof syncOfflineQueueToCloud === 'function') syncOfflineQueueToCloud();
- if(currentCloudUser && typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser.uid);
+ if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
  loadSavedProfile();
  updateActivationScreenUI();
- alert("Profile updated successfully! (Saved locally & synced to cloud)");
+ alert("Profile, Optional Details, Logo & QR updated successfully on your device!");
  goHome();
  }
 
@@ -6059,7 +6100,7 @@ function syncOfflineQueueToCloud() {
   }
 
   const queue = getOfflineQueue();
-  const targetId = (currentCloudUser ? currentCloudUser.uid : null) || localStorage.getItem('sw_cloud_user') || 'workshop_primary';
+  const targetId = getIsolatedCloudDocId();
   const fullBackup = {
     settings: JSON.parse(localStorage.getItem('sw_bill_settings') || '{}'),
     profile: JSON.parse(localStorage.getItem('sw_profile') || '{}'),
@@ -6075,13 +6116,7 @@ function syncOfflineQueueToCloud() {
   };
 
   fbDb.collection('users').doc(String(targetId)).set(fullBackup, { merge: true })
-    .then(() => {
-      const custs = JSON.parse(localStorage.getItem('sw_customers') || '{}');
-      return fbDb.collection('smart_worker_data').doc('customers_ledger').set({
-        customers: custs,
-        updated_at: new Date().toISOString()
-      }, { merge: true });
-    })
+
     .then(() => {
       if (window.fbRtdb) {
         try { fbRtdb.ref('nisha_creations/smart_worker/' + String(targetId)).set(fullBackup); } catch(e){}
