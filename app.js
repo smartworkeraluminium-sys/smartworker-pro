@@ -249,12 +249,12 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  const passEl = document.getElementById('login_password') || document.getElementById('auth_login_pass');
  const email = emailEl ? emailEl.value.trim() : "";
  const pass = passEl ? passEl.value : "";
- if (!email || !pass) { alert("জিমেইল এবং পাসওয়ার্ড লিখুন!"); return; }
+ if (!email || !pass) { alert("Please enter your Email and Password!"); return; }
 
  if (fbAuth) {
  fbAuth.signInWithEmailAndPassword(email, pass)
  .then(res => {
- alert("সফলভাবে LOGIN হয়েছে! ক্লাউড ডেটা সিঙ্ক করা হচ্ছে...");
+ alert("Logged in successfully! Syncing cloud data...");
  closeAuthModal();
  })
  .catch(err => {
@@ -278,7 +278,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  const pass = passEl ? passEl.value : "";
 
  if (!email || !pass || pass.length < 6) {
- alert("সঠিক জিমেইল এবং কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড দিন!");
+ alert("Please enter a valid Email and a password of at least 6 characters!");
  return;
  }
 
@@ -290,7 +290,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  if (fbAuth) {
  fbAuth.createUserWithEmailAndPassword(email, pass)
  .then(res => {
- alert("অ্যাকাউন্ট তৈরি সফল হয়েছে! আপনার ডেটা ক্লাউডে সুরক্ষিত থাকবে।");
+ alert("Account created successfully! Your data is secured in the cloud.");
  syncAllDataToCloud(res.user.uid);
  closeAuthModal();
  })
@@ -307,45 +307,127 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
  const provider = new firebase.auth.GoogleAuthProvider();
  fbAuth.signInWithPopup(provider)
  .then(res => {
- alert(`Google দিয়ে LOGIN সফল হয়েছে: ${res.user.displayName || res.user.email}`);
+ alert(`Google Sign-In successful: ${res.user.displayName || res.user.email}`);
  closeAuthModal();
  })
  .catch(err => {
- alert("Google সাইন-ইন সম্পন্ন করতে আপনার নিজস্ব Firebase Config যুক্ত করুন।");
+ alert("Please configure your Firebase credentials to enable Google Sign-In.");
  openFirebaseConfigModal();
  });
  } else {
- alert("Google সাইন-ইন সম্পন্ন করতে আপনার নিজস্ব Firebase Config যুক্ত করুন।");
+ alert("Please configure your Firebase credentials to enable Google Sign-In.");
  openFirebaseConfigModal();
  }
  }
 
  function handleForgotPassword() {
- const email = prompt("পাসওয়ার্ড রিসেট করতে আপনার নিবন্ধিত জিমেইল আইডি দিন:");
+ const email = prompt("Enter your registered Email ID to reset your password:");
  if (email && fbAuth) {
  fbAuth.sendPasswordResetEmail(email.trim())
- .then(() => alert("পাসওয়ার্ড রিসেট লিংক আপনার জিমেইলে পাঠানো হয়েছে!"))
- .catch(err => alert("এরর: " + err.message));
+ .then(() => alert("Password reset link has been sent to your email!"))
+ .catch(err => alert("Error: " + err.message));
  }
  }
 
 // Legacy duplicate auth helpers consolidated into main auth controller below
 
- // Strictly Isolated Per-Customer Cloud Document ID (Never shares Logo/QR/Profile across different phones!)
- function getIsolatedCloudDocId(uid) {
-  if (uid && uid !== 'workshop_primary') return String(uid);
-  if (currentCloudUser && currentCloudUser.uid && currentCloudUser.uid !== 'workshop_primary') return String(currentCloudUser.uid);
-  const saved = localStorage.getItem('sw_cloud_user');
-  if (saved && saved !== 'workshop_primary') return String(saved);
-  return 'user_dev_' + (typeof getDeviceId === 'function' ? getDeviceId() : 'local');
+ // Strictly Isolated Per-Customer Cryptographic Vault ID (Zero Cross-User Data Leakage!)
+ function computeUserVaultId(userId, passPlainOrHash) {
+  const cleanId = String(userId || '').trim().toLowerCase();
+  const pStr = String(passPlainOrHash || '').trim();
+  if (!cleanId) return 'dev_vault_' + (typeof getDeviceId === 'function' ? getDeviceId() : 'local');
+  if (typeof sha256 === 'function' && pStr) {
+    return 'vault_' + sha256(cleanId + '_SW_PRIVATE_VAULT_' + pStr).substring(0, 24);
+  }
+  return 'user_vault_' + cleanId.replace(/[^a-z0-9]/g, '_') + '_' + (typeof getDeviceId === 'function' ? getDeviceId() : 'local');
  }
 
- // Live Sync to Cloud Firestore (Strictly Isolated Per Customer/Device)
+ function getIsolatedCloudDocId(uid) {
+  // Guest mode never syncs to or from shared cloud!
+  if (localStorage.getItem('sw_guest_mode') === 'true') return null;
+  const savedVault = localStorage.getItem('sw_user_vault_id');
+  if (savedVault && (!uid || uid === localStorage.getItem('sw_cloud_user'))) {
+    return savedVault;
+  }
+  const savedUser = uid || (currentCloudUser ? currentCloudUser.uid : null) || localStorage.getItem('sw_cloud_user');
+  const savedPass = localStorage.getItem('sw_user_password') || '';
+  if (savedUser && savedUser !== 'workshop_primary') {
+    return computeUserVaultId(savedUser, savedPass);
+  }
+  return null;
+ }
+
+ // Archive outgoing user's local data & completely wipe active working storage so next user NEVER sees previous user's data!
+ function clearWorkingUserDataForAccountSwitch(incomingUserId) {
+  try {
+    const prevUser = localStorage.getItem('sw_cloud_user');
+    if (prevUser && prevUser !== incomingUserId) {
+      const archiveSnap = {
+        profile: localStorage.getItem('sw_profile'),
+        invoices: localStorage.getItem('sw_invoices'),
+        measurements: localStorage.getItem('sw_measurements'),
+        customers: localStorage.getItem('sw_customers'),
+        site_khata: localStorage.getItem('sw_site_khata'),
+        expenses: localStorage.getItem('sw_expenses'),
+        custom_logo: localStorage.getItem('sw_custom_logo'),
+        custom_qr: localStorage.getItem('sw_custom_qr'),
+        calc_history: localStorage.getItem('sw_calc_history')
+      };
+      localStorage.setItem('sw_local_vault_' + prevUser, JSON.stringify(archiveSnap));
+    }
+  } catch(e){}
+
+  const keysToWipe = [
+    'sw_profile', 'sw_invoices', 'sw_measurements', 'sw_customers',
+    'sw_site_khata', 'sw_expenses', 'sw_custom_logo', 'sw_custom_qr',
+    'sw_calc_history', 'sw_offline_queue', 'sw_user_vault_id'
+  ];
+  keysToWipe.forEach(function(k) { localStorage.removeItem(k); });
+
+  try {
+    if (typeof billItems !== 'undefined') billItems = [];
+    if (typeof siteKhataItems !== 'undefined') siteKhataItems = [];
+    if (typeof clearDomal === 'function') clearDomal();
+    if (typeof clearSliding === 'function') clearSliding();
+    if (typeof clearCasement === 'function') clearCasement();
+    if (typeof clearDoor === 'function') clearDoor();
+    if (typeof clearPartition === 'function') clearPartition();
+    if (typeof clearCustomSeries === 'function') clearCustomSeries();
+    if (typeof clearBillItems === 'function') clearBillItems();
+    document.querySelectorAll('img[alt*="Logo"], img[alt="SWA"]').forEach(function(img){ img.src = 'logo.png'; });
+    if (typeof renderBrandingPreviews === 'function') renderBrandingPreviews();
+  } catch(e){}
+
+  // If incomingUserId has a saved local vault on this phone, restore ONLY their vault
+  if (incomingUserId) {
+    try {
+      const rawVault = localStorage.getItem('sw_local_vault_' + incomingUserId);
+      if (rawVault) {
+        const snap = JSON.parse(rawVault);
+        if (snap.profile) localStorage.setItem('sw_profile', snap.profile);
+        if (snap.invoices) localStorage.setItem('sw_invoices', snap.invoices);
+        if (snap.measurements) localStorage.setItem('sw_measurements', snap.measurements);
+        if (snap.customers) localStorage.setItem('sw_customers', snap.customers);
+        if (snap.site_khata) localStorage.setItem('sw_site_khata', snap.site_khata);
+        if (snap.expenses) localStorage.setItem('sw_expenses', snap.expenses);
+        if (snap.custom_logo) localStorage.setItem('sw_custom_logo', snap.custom_logo);
+        if (snap.custom_qr) localStorage.setItem('sw_custom_qr', snap.custom_qr);
+        if (snap.calc_history) localStorage.setItem('sw_calc_history', snap.calc_history);
+      }
+    } catch(e){}
+  }
+ }
+
+ // Live Sync to Cloud Firestore (Strictly Isolated Per Authenticated Customer Vault)
  function syncAllDataToCloud(uid) {
   if (!fbDb) return;
+  if (localStorage.getItem('sw_guest_mode') === 'true') return;
   const targetId = getIsolatedCloudDocId(uid);
+  if (!targetId) return;
   try {
+    const ownerUser = localStorage.getItem('sw_cloud_user') || '';
     const data = {
+      owner_id: ownerUser,
       profile: JSON.parse(localStorage.getItem('sw_profile') || '{}'),
       invoices: JSON.parse(localStorage.getItem('sw_invoices') || '[]'),
       measurements: JSON.parse(localStorage.getItem('sw_measurements') || '[]'),
@@ -361,11 +443,11 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
       try { fbRtdb.ref('nisha_creations/smart_worker/' + String(targetId)).set(data); } catch(e){}
     }
     fbDb.collection('users').doc(String(targetId)).set(data, { merge: true }).then(() => {
-      console.log("☁️ All Smart Worker data successfully saved to Google Cloud Firestore!");
+      console.log("☁️ All Smart Worker data securely saved to isolated cloud vault!");
       const badge = document.getElementById('cloudUserBadge');
       if (badge) {
         badge.style.display = 'inline-flex';
-        badge.title = "Cloud Synced";
+        badge.title = "Cloud Synced (Private Vault)";
       }
     }).catch(err => {
       console.warn("Cloud write notice:", err);
@@ -375,19 +457,21 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
   }
 }
 
-// Restore from Cloud Firestore on New Device / Login
+// Restore from Cloud Firestore on New Device / Login (Strictly Isolated Vault)
 function syncAllDataFromCloud(uid) {
   if (!fbDb) return;
+  if (localStorage.getItem('sw_guest_mode') === 'true') return;
   const targetId = getIsolatedCloudDocId(uid);
+  if (!targetId) return;
   fbDb.collection('users').doc(String(targetId)).get().then(doc => {
     if (doc.exists) {
       const d = doc.data();
       if (d.profile) localStorage.setItem('sw_profile', JSON.stringify(d.profile));
-      if (d.invoices) localStorage.setItem('sw_invoices', JSON.stringify(d.invoices));
-      if (d.measurements) localStorage.setItem('sw_measurements', JSON.stringify(d.measurements));
-      if (d.customers) localStorage.setItem('sw_customers', JSON.stringify(d.customers));
-      if (d.site_khata) localStorage.setItem('sw_site_khata', JSON.stringify(d.site_khata));
-      if (d.expenses) localStorage.setItem('sw_expenses', JSON.stringify(d.expenses));
+      localStorage.setItem('sw_invoices', JSON.stringify(Array.isArray(d.invoices) ? d.invoices : []));
+      localStorage.setItem('sw_measurements', JSON.stringify(Array.isArray(d.measurements) ? d.measurements : []));
+      localStorage.setItem('sw_customers', JSON.stringify((d.customers && typeof d.customers === 'object') ? d.customers : {}));
+      localStorage.setItem('sw_site_khata', JSON.stringify(Array.isArray(d.site_khata) ? d.site_khata : []));
+      localStorage.setItem('sw_expenses', JSON.stringify(Array.isArray(d.expenses) ? d.expenses : []));
       if (d.license) localStorage.setItem('sw_license', JSON.stringify(d.license));
       if (d.custom_logo) localStorage.setItem('sw_custom_logo', d.custom_logo);
       else localStorage.removeItem('sw_custom_logo');
@@ -426,14 +510,14 @@ function openFirebaseConfigModal() {
  try {
  const parsed = JSON.parse(txt);
  localStorage.setItem('sw_firebase_config', JSON.stringify(parsed));
- alert("Firebase Config সফলভাবে সেভ হয়েছে! পেজটি রিলোড করে কানেক্ট করুন।");
+ alert("Firebase Config saved successfully! Reloading page to connect...");
  location.reload();
  } catch (e) {
- alert('সঠিক JSON ফরম্যাটে কোডটি পেস্ট করুন (যেমন: {"apiKey": "...", "projectId": "..."})');
+ alert('Please paste valid JSON format (e.g. {"apiKey": "...", "projectId": "..."})');
  }
  } else {
  localStorage.removeItem('sw_firebase_config');
- alert("ডিফল্ট কনফিগারেশন রিসেট করা হয়েছে।");
+ alert("Default configuration has been reset.");
  closeFirebaseConfigModal();
  }
  }
@@ -532,10 +616,22 @@ function switchAuthMode(mode) {
  if (email) {
  users[email.toLowerCase()] = users[cleanPhone];
  }
+ // Wipe any previous user's working data on this phone before initializing the new workshop account
+ clearWorkingUserDataForAccountSwitch(cleanPhone);
+
+ const passHash = (typeof sha256 === 'function') ? sha256(pass + "_SW_AUTH_SALT_2026") : pass;
+ const vaultId = computeUserVaultId(cleanPhone, pass);
+ users[cleanPhone].password_hash = passHash;
+ users[cleanPhone].vault_id = vaultId;
  localStorage.setItem('sw_registered_users', JSON.stringify(users));
 
  localStorage.setItem('sw_profile', JSON.stringify(profile));
- 
+ localStorage.setItem('sw_invoices', '[]');
+ localStorage.setItem('sw_measurements', '[]');
+ localStorage.setItem('sw_customers', '{}');
+ localStorage.setItem('sw_site_khata', '[]');
+ localStorage.setItem('sw_expenses', '[]');
+
   // New workshops start on Free Plan so they subscribe to the ₹99 Karigar Pro Plan!
   const defaultLicense = {
     key: "",
@@ -548,15 +644,22 @@ function switchAuthMode(mode) {
 
   localStorage.setItem('sw_cloud_user', cleanPhone);
  localStorage.setItem('sw_user_password', pass);
+ localStorage.setItem('sw_user_vault_id', vaultId);
  localStorage.removeItem('sw_guest_mode');
 
- // 3. Cloud Firestore Synchronization
+ // 3. Cloud Firestore Synchronization (Auth Index + Isolated Vault)
  if (window.fbDb) {
  fbDb.collection('users').doc(cleanPhone).set({
  profile: profile,
- password: pass,
+ password_hash: passHash,
+ vault_id: vaultId,
  updated_at: new Date().toISOString()
  }, { merge: true }).catch(e => console.warn("Firestore sync notice:", e));
+ fbDb.collection('users').doc(vaultId).set({
+ owner_id: cleanPhone,
+ profile: profile,
+ updated_at: new Date().toISOString()
+ }, { merge: true }).catch(e => console.warn("Vault sync notice:", e));
  }
 
  // 4. Firebase Authentication if available
@@ -599,20 +702,26 @@ function switchAuthMode(mode) {
  const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
  const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
 
+ const passHash = (typeof sha256 === 'function') ? sha256(pass + "_SW_AUTH_SALT_2026") : pass;
  if (userAccount) {
- if (userAccount.password === pass) {
- const prevProf = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- localStorage.setItem('sw_profile', JSON.stringify(Object.assign({}, prevProf, {
- name: userAccount.name || prevProf.name,
- shop_name: userAccount.shop_name || prevProf.shop_name,
- phone: userAccount.phone || prevProf.phone,
- email: userAccount.email || prevProf.email,
- address: userAccount.address || prevProf.address || "Fabrication Workshop"
+ if (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash)) {
+ const targetUserKey = userAccount.phone || cleanUser;
+ clearWorkingUserDataForAccountSwitch(targetUserKey);
+ const restoredProf = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+ localStorage.setItem('sw_profile', JSON.stringify(Object.assign({}, restoredProf, {
+ name: userAccount.name || restoredProf.name,
+ shop_name: userAccount.shop_name || restoredProf.shop_name,
+ phone: userAccount.phone || restoredProf.phone,
+ email: userAccount.email || restoredProf.email,
+ address: userAccount.address || restoredProf.address || "Fabrication Workshop"
  })));
- localStorage.setItem('sw_cloud_user', userAccount.phone || cleanUser);
+ const vaultId = userAccount.vault_id || computeUserVaultId(targetUserKey, pass);
+ localStorage.setItem('sw_cloud_user', targetUserKey);
  localStorage.setItem('sw_user_password', pass);
+ localStorage.setItem('sw_user_vault_id', vaultId);
  localStorage.removeItem('sw_guest_mode');
- simulateLocalAuth(userAccount.phone || cleanUser);
+ simulateLocalAuth(targetUserKey);
+ syncAllDataFromCloud(vaultId);
  loadSavedProfile();
  alert("Sign-in successful! Welcome back, " + userAccount.name + " (" + userAccount.shop_name + ")");
  goHome();
@@ -630,11 +739,13 @@ function switchAuthMode(mode) {
  const savedProfile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
 
  if (savedUser && (savedUser === cleanUser || savedProfile.phone === cleanUser || savedProfile.email === userRaw)) {
- if (savedPass && savedPass !== pass) {
+ if (!savedPass || savedPass !== pass) {
  alert("Incorrect password! Please re-check your password.");
  if (passInput) passInput.focus();
  return;
  }
+ const vaultId = computeUserVaultId(savedUser, pass);
+ localStorage.setItem('sw_user_vault_id', vaultId);
  simulateLocalAuth(savedUser);
  loadSavedProfile();
  alert("Sign-in successful! Welcome back.");
@@ -642,22 +753,26 @@ function switchAuthMode(mode) {
  return;
  }
 
- // 3. Check Google Cloud Firestore if registered from another device
+ // 3. Check Google Cloud Firestore if registered from another device (Strict Password Verification Required!)
  if (window.fbDb) {
  fbDb.collection('users').doc(cleanUser).get().then(doc => {
  if (doc.exists) {
  const d = doc.data();
- if (d.password && d.password !== pass) {
- alert("Incorrect password! Please re-check your password.");
+ const validPass = (d.password_hash && d.password_hash === passHash) || (d.password && d.password === pass);
+ if (!validPass) {
+ alert("Incorrect password! Access to this workshop account is strictly protected.");
  if (passInput) passInput.focus();
  } else {
+ clearWorkingUserDataForAccountSwitch(cleanUser);
  if (d.profile) localStorage.setItem('sw_profile', JSON.stringify(d.profile));
+ const vaultId = d.vault_id || computeUserVaultId(cleanUser, pass);
  localStorage.setItem('sw_cloud_user', cleanUser);
  localStorage.setItem('sw_user_password', pass);
+ localStorage.setItem('sw_user_vault_id', vaultId);
  localStorage.removeItem('sw_guest_mode');
  simulateLocalAuth(cleanUser);
- syncAllDataFromCloud(cleanUser);
- alert("Sign-in successful! Restored workshop data from Cloud Database.");
+ syncAllDataFromCloud(vaultId);
+ alert("Sign-in successful! Restored workshop data from your private Cloud Vault.");
  goHome();
  }
  } else {
@@ -851,6 +966,10 @@ function switchAuthMode(mode) {
  }
 
  function skipAuthToGuest() {
+ if (localStorage.getItem('sw_cloud_user')) {
+   clearWorkingUserDataForAccountSwitch('guest_local');
+   localStorage.removeItem('sw_cloud_user');
+ }
  localStorage.setItem('sw_guest_mode', 'true');
  let prof = JSON.parse(localStorage.getItem('sw_profile') || '{}');
  if (!prof.name || !prof.shop_name) {
@@ -868,20 +987,22 @@ function switchAuthMode(mode) {
  }
 
  function handleCloudLogout() {
- if (confirm("Are you sure you want to sign out from this device? (Your cloud data will remain secure)")) {
+ if (confirm("Are you sure you want to sign out from this device? (Your private data is safely backed up and will be cleared from this screen)")) {
  if (fbAuth) {
  try { fbAuth.signOut(); } catch(e){}
  }
+ if (window.khataUnsubscribe && typeof window.khataUnsubscribe === 'function') {
+   try { window.khataUnsubscribe(); window.khataUnsubscribe = null; } catch(e){}
+ }
+ clearWorkingUserDataForAccountSwitch(null);
  currentCloudUser = null;
  localStorage.removeItem('sw_cloud_user');
+ localStorage.removeItem('sw_user_password');
+ localStorage.removeItem('sw_user_vault_id');
  localStorage.removeItem('sw_guest_mode');
- localStorage.removeItem('sw_custom_logo');
- localStorage.removeItem('sw_custom_qr');
- document.querySelectorAll('img[alt*="Logo"], img[alt="SWA"]').forEach(function(img){ img.src = 'logo.png'; });
- renderBrandingPreviews();
  updateCloudUserUI(null);
  openScreen('auth', 'SIGN IN / REGISTER');
- alert("Signed out successfully.");
+ alert("Signed out successfully. Your private workshop data has been locked.");
  }
  }
 
@@ -1526,7 +1647,7 @@ function keypadEnter() {
   const raw_h = safeEval(document.getElementById('dr_h').value);
   const raw_w = safeEval(document.getElementById('dr_w').value);
   if (raw_h === 0 || raw_w === 0) {
-    alert(typeof currentAppLang !== 'undefined' && currentAppLang === 'bn' ? "অনুগ্রহ করে উচ্চতা এবং চওড়া লিখুন।" : "Please enter Height and Width.");
+    alert("Please enter Height and Width.");
     return;
   }
 
@@ -1707,7 +1828,7 @@ function clearDoor() {
  const raw_h = safeEval(document.getElementById('pt_h').value);
  const raw_w = safeEval(document.getElementById('pt_w').value);
  if (raw_h === 0 || raw_w === 0) {
-   alert(currentAppLang === 'bn' ? "অনুগ্রহ করে উচ্চতা এবং চওড়া লিখুন।" : "Please enter Height and Width.");
+   alert("Please enter Height and Width.");
    return;
  }
 
@@ -1771,20 +1892,20 @@ function clearDoor() {
 
    // 1. FRAME SECTIONS
    out += "-----------------------------------\n";
-   out += isBn ? "🔨 অ্যালুমিনিয়াম ফ্রেম কাটিং মাপ (FRAME SECTIONS)\n" : "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
+   out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
    out += "-----------------------------------\n";
-   out += isBn ? `> আউটার খাঁড়া পাইপ (Outer Verticals): ${disp(outer_v)} (2 pc)\n` : `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
-   out += isBn ? `> আউটার টপ ও বটম পাইপ (Outer Horizontals): ${disp(outer_h)} (2 pc)\n` : `> Outer Horizontals (Top/Bottom): ${disp(outer_h)} (2 pc)\n`;
+   out += `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
+   out += `> Outer Horizontals (Top/Bottom): ${disp(outer_h)} (2 pc)\n`;
    pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
 
    if (cols > 1) {
-     out += isBn ? `> ভেতরের খাঁড়া পাইপ (Intermediate Verticals): ${disp(inter_v)} (${cols - 1} pc)\n` : `> Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
+     out += `> Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
      for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
    }
 
    const h_qty = cols * (rows - 1);
    if (h_qty > 0) {
-     out += isBn ? `> ভেতরের মাঝের বাটা/বিট (Transom Divider Tubes): ${disp(inner_h)} (${h_qty} pc)\n` : `> Internal Transom Divider Tubes: ${disp(inner_h)} (${h_qty} pc)\n`;
+     out += `> Internal Transom Divider Tubes: ${disp(inner_h)} (${h_qty} pc)\n`;
      for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
    }
 
@@ -1793,16 +1914,16 @@ function clearDoor() {
    const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
 
    out += "\n-----------------------------------\n";
-   out += isBn ? "📐 ফ্রেমের ভেতরের খোপ ও খাঁড়া পাইপ মার্কিং চার্ট\n" : "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
+   out += "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
    out += "-----------------------------------\n";
-   out += isBn ? `• তলার খোপের ক্লিয়ার সাইজ: ${disp(bottom_h)} x ${disp(inner_h)} [তলা ACP]\n` : `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP Board]\n`;
-   out += isBn ? `• মিডিল খোপের ক্লিয়ার সাইজ: ${disp(mid_h)} x ${disp(inner_h)} [মিডিল গ্লাস - সেম সাইজ]\n` : `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
-   out += isBn ? `• মাথার খাপের ক্লিয়ার সাইজ: ${disp(top_h)} x ${disp(inner_h)} [মাথার ছোট গ্লাস]\n\n` : `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
+   out += `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP Board]\n`;
+   out += `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
+   out += `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
 
-   out += isBn ? "📍 খাঁড়া পাইপে বাটা লাগানোর দাগ/লেভেল (Vertical Marking):\n" : "📍 Vertical Pipe Transom Marking Levels:\n";
-   out += isBn ? `  1. ১ম বাটা (তলার লেভেল): মেঝে থেকে ${disp(bottom_h)} ক্লিয়ার (${disp(mark_bottom_transom)} দাগ)\n` : `  1. First Transom (Bottom Level): Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
-   out += isBn ? `  2. ২য় বাটা (মিডিল লেভেল): ১ম বাটা থেকে ${disp(mid_h)} ক্লিয়ার (${disp(mark_mid_transom)} দাগ)\n` : `  2. Second Transom (Middle Level): First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
-   out += isBn ? `  3. মাথার খাপ: ২য় বাটা থেকে ছাদ পর্যন্ত ক্লিয়ার ${disp(top_h)}\n` : `  3. Top Box (Header Level): Second Transom to Ceiling ${disp(top_h)} clear\n`;
+   out += "📍 Vertical Pipe Transom Marking Levels:\n";
+   out += `  1. First Transom (Bottom Level): Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
+   out += `  2. Second Transom (Middle Level): First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
+   out += `  3. Top Box (Header Level): Second Transom to Ceiling ${disp(top_h)} clear\n`;
 
    // 3. GLASS & ACP CUTTING WITH SLAB SAFE-GUARD
    const raw_cut_w = inner_h - 0.25;
@@ -1817,11 +1938,11 @@ function clearDoor() {
 
    if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
      out += "\n-----------------------------------\n";
-     out += isBn ? "🪟 গ্লাস ও এসিপি বোর্ড কাটিং মাপ (GLASS & ACP)\n" : "🪟 4'x8' SHEET OPTIMIZED PANELS (ACP & GLASS)\n";
+     out += "🪟 4'x8' SHEET OPTIMIZED PANELS (ACP & GLASS)\n";
      out += "-----------------------------------\n";
-     out += isBn ? `> [তলা] Bottom ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Bottom] ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += isBn ? `> [মিডিল] Middle Glass (সেম মাপ): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Middle] Glass (Identical Size): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += isBn ? `> [মাথার খাপ] Top Header Glass (ছোট): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Top] Header Glass (Smaller Box): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `> [Bottom] ACP Board: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `> [Middle] Glass (Identical Size): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `> [Top] Header Glass (Smaller Box): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
 
      pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
      pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
@@ -1835,14 +1956,14 @@ function clearDoor() {
      const glass_per_sheet = Math.max(1, Math.floor(sheet_w / cut_w) * Math.floor(sheet_h / mid_cut_h));
      const glass_sheets = Math.ceil(cols / glass_per_sheet);
 
-     out += "\n" + (isBn ? "--- ৪'×৮' (৪৮ x ৯৬ ইঞ্চি) শিট ও কাটিং চার্ট ---\n" : "--- 4'x8' (48 x 96 Inch) SHEET CUTTING CHART ---\n");
-     out += isBn ? `• তলার এসিপি শিট লাগবে: ${acp_sheets} খানা ৪'×৮' শিট (১ শিটে ${acp_per_sheet} পিস)\n` : `• Bottom ACP Sheets Required: ${acp_sheets} sheets of 4'x8' (${acp_per_sheet} pcs per sheet)\n`;
-     out += isBn ? `• মিডিল গ্লাস লাগবে: ${glass_sheets} খানা ৪'×৮' শিট (১ শিটে ${glass_per_sheet} পিস)\n` : `• Middle Glass Sheets Required: ${glass_sheets} sheets of 4'x8' (${glass_per_sheet} pcs per sheet)\n`;
+     out += "\n" + ("--- 4'x8' (48 x 96 Inch) SHEET CUTTING CHART ---\n");
+     out += `• Bottom ACP Sheets Required: ${acp_sheets} sheets of 4'x8' (${acp_per_sheet} pcs per sheet)\n`;
+     out += `• Middle Glass Sheets Required: ${glass_sheets} sheets of 4'x8' (${glass_per_sheet} pcs per sheet)\n`;
 
-     out += "\n" + (isBn ? "--- 🛡️ গ্লাস দোকান বিলিং স্ল্যাব সেফ গার্ড (ZERO PENALTY) ---\n" : "--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
-     out += isBn ? `• মিডিল গ্লাস বিলিং স্ল্যাব: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/পিস)\n` : `• Middle Glass Billing Slab: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
-     out += isBn ? `• মাথার খাপ বিলিং স্ল্যাব: ${top_guard.slab}" x ${w_guard.slab}" (${((top_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/পিস)\n` : `• Top Header Glass Billing Slab: ${top_guard.slab}" x ${w_guard.slab}" (${((top_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
-     out += isBn ? `✔ নিশ্চিতকরণ: ফ্রেমের সাথে গ্লাস ও এসিপি ১০০% মিলে থাকবে, ১ সুতোও অমিল হবে না!\n` : `✔ Guaranteed: Dimensions strictly capped below 30", 36", 24", 18" slabs. Zero extra 6-inch penalty!\n`;
+     out += "\n" + ("--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
+     out += `• Middle Glass Billing Slab: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
+     out += `• Top Header Glass Billing Slab: ${top_guard.slab}" x ${w_guard.slab}" (${((top_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
+     out += `✔ Guaranteed: Dimensions strictly capped below 30", 36", 24", 18" slabs. Zero extra 6-inch penalty!\n`;
    } else {
      const raw_gap = (h - ((rows + 1) * 1.5)) / rows - 0.25;
      const g_guard = safeGlassSlabCap(raw_gap);
@@ -1855,17 +1976,17 @@ function clearDoor() {
 
    // 4. HARDWARE
    const beading_rft = Math.round(((bottom_h + inner_h)*2 + (mid_h + inner_h)*2 + (top_h + inner_h)*2) * cols / 12);
-   out += "\n" + (isBn ? "--- হার্ডওয়্যার ও এক্সেসরিজ ---\n" : "--- HARDWARE & ACCESSORIES ---\n");
-   out += isBn ? `> স্কয়ার ক্লিপ (Beading): প্রায় ${beading_rft} রানিং ফুট\n` : `> Square Clip (Beading): Approx ${beading_rft} Running Feet\n`;
-   out += isBn ? `> গ্লাস রাবার / সিলিকন পেস্টিং: প্রায় ${beading_rft} ফুট\n` : `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
-   out += isBn ? `> কর্নার ক্লিট ও স্ক্রু সেট\n` : `> Corner Cleats & Screws Set\n`;
+   out += "\n" + ("--- HARDWARE & ACCESSORIES ---\n");
+   out += `> Square Clip (Beading): Approx ${beading_rft} Running Feet\n`;
+   out += `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
+   out += `> Corner Cleats & Screws Set\n`;
 
  } else {
    // Door + Partition Mode
    const raw_dh = safeEval(document.getElementById('pt_dh').value);
    const raw_dw = safeEval(document.getElementById('pt_dw').value);
    if (raw_dh === 0 || raw_dw === 0) {
-     alert(isBn ? "অনুগ্রহ করে দরজার সাইজ লিখুন।" : "Please enter Door Size.");
+     alert("Please enter Door Size.");
      return;
    }
 
@@ -1878,26 +1999,26 @@ function clearDoor() {
    const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
 
    out += "-----------------------------------\n";
-   out += isBn ? "🔨 অ্যালুমিনিয়াম ফ্রেম কাটিং মাপ (FRAME SECTIONS)\n" : "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
+   out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
    out += "-----------------------------------\n";
-   out += isBn ? `> আউটার খাঁড়া পাইপ (Outer Verticals): ${disp(outer_v)} (2 pc)\n` : `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
-   out += isBn ? `> ডোর সাইড খাঁড়া পাইপ (Door Post Vertical): ${disp(door_side_v)} (1 pc)\n` : `> Door Post Vertical: ${disp(door_side_v)} (1 pc)\n`;
+   out += `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
+   out += `> Door Post Vertical: ${disp(door_side_v)} (1 pc)\n`;
    pt_buckets["Single Glazing"].push(outer_v, outer_v);
    pt_buckets["Double Glazing"].push(door_side_v);
 
    if (cols > 1) {
-     out += isBn ? `> সাইড খাঁড়া পাইপ (Intermediate Verticals): ${disp(inter_v)} (${cols - 1} pc)\n` : `> Side Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
+     out += `> Side Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
      for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
    }
 
-   out += isBn ? `> আউটার টপ পাইপ (Outer Top Horizontal): ${disp(outer_h_top)} (1 pc)\n` : `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n`;
-   out += isBn ? `> ডোর টপ ট্রান্সম বাটা (Door Transom Tube): ${disp(rem_w)} (1 pc)\n` : `> Door Top Transom Tube: ${disp(rem_w)} (1 pc)\n`;
+   out += `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n`;
+   out += `> Door Top Transom Tube: ${disp(rem_w)} (1 pc)\n`;
    pt_buckets["Single Glazing"].push(outer_h_top);
    pt_buckets["Double Glazing"].push(rem_w);
 
    const h_qty = cols * (rows - 1);
    if (h_qty > 0) {
-     out += isBn ? `> সাইড মাঝের বাটা/বিট (Partition Transoms): ${disp(inner_h)} (${h_qty} pc)\n` : `> Side Partition Transoms: ${disp(inner_h)} (${h_qty} pc)\n`;
+     out += `> Side Partition Transoms: ${disp(inner_h)} (${h_qty} pc)\n`;
      for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
    }
 
@@ -1905,10 +2026,10 @@ function clearDoor() {
    const door_v = dh - 1.75, door_tb = dw - 6.75;
    const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
 
-   out += "\n" + (isBn ? "--- ডোর পাল্লা ও ফ্রেম (DOOR SASH) ---\n" : "--- DOOR SASH & FRAME ---\n");
-   out += isBn ? `> ডোর পাল্লা খাঁড়া: ${disp(door_v)} (2 pc)\n` : `> Door Sash Verticals: ${disp(door_v)} (2 pc)\n`;
-   out += isBn ? `> ডোর পাল্লা টপ/বটম: ${disp(door_tb)} (2 pc)\n` : `> Door Sash Top/Bottom: ${disp(door_tb)} (2 pc)\n`;
-   out += isBn ? `> ডোরের গ্লাস/বোর্ড মাপ: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n` : `> Door Glass/Board Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
+   out += "\n" + ("--- DOOR SASH & FRAME ---\n");
+   out += `> Door Sash Verticals: ${disp(door_v)} (2 pc)\n`;
+   out += `> Door Sash Top/Bottom: ${disp(door_tb)} (2 pc)\n`;
+   out += `> Door Glass/Board Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
    pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
 
    const transom_g_h = (h - dh - 1.5) - 0.25, transom_g_w = dw - 0.25;
@@ -1918,16 +2039,16 @@ function clearDoor() {
    const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
 
    out += "\n-----------------------------------\n";
-   out += isBn ? "📐 সাইড ফ্রেমের খোপ ও মার্কিং চার্ট (FRAME MARKING)\n" : "📐 FRAME OPENINGS & MARKING GUIDE\n";
+   out += "📐 FRAME OPENINGS & MARKING GUIDE\n";
    out += "-----------------------------------\n";
-   out += isBn ? `• তলার খোপের ক্লিয়ার সাইজ: ${disp(bottom_h)} x ${disp(inner_h)} [তলা ACP]\n` : `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP]\n`;
-   out += isBn ? `• মিডিল খোপের ক্লিয়ার সাইজ: ${disp(mid_h)} x ${disp(inner_h)} [মিডিল গ্লাস - সেম সাইজ]\n` : `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
-   out += isBn ? `• মাথার খাপের ক্লিয়ার সাইজ: ${disp(top_h)} x ${disp(inner_h)} [মাথার ছোট গ্লাস]\n\n` : `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
+   out += `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP]\n`;
+   out += `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
+   out += `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
 
-   out += isBn ? "📍 খাঁড়া পাইপে বাটা লাগানোর মার্কিং:\n" : "📍 Vertical Pipe Marking Levels:\n";
-   out += isBn ? `  1. ডোর হেডার লেভেল: মেঝে থেকে ক্লিয়ার ${disp(dh)}\n` : `  1. Door Header Level: Floor to ${disp(dh)} clear\n`;
-   out += isBn ? `  2. সাইড ১ম বাটা (তলার লেভেল): মেঝে থেকে ${disp(bottom_h)} ক্লিয়ার (${disp(mark_bottom_transom)} দাগ)\n` : `  2. Side First Transom: Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
-   out += isBn ? `  3. সাইড ২য় বাটা (মিডিল লেভেল): ১ম বাটা থেকে ${disp(mid_h)} ক্লিয়ার (${disp(mark_mid_transom)} দাগ)\n` : `  3. Side Second Transom: First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
+   out += "📍 Vertical Pipe Marking Levels:\n";
+   out += `  1. Door Header Level: Floor to ${disp(dh)} clear\n`;
+   out += `  2. Side First Transom: Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
+   out += `  3. Side Second Transom: First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
 
    const raw_cut_w = inner_h - 0.25;
    const w_guard = safeGlassSlabCap(raw_cut_w);
@@ -1940,14 +2061,14 @@ function clearDoor() {
    const top_cut_h = top_guard.cut;
 
    out += "\n-----------------------------------\n";
-   out += isBn ? "🪟 গ্লাস ও এসিপি কাটিং মাপ (GLASS & ACP CUTTING)\n" : "🪟 GLASS & ACP CUTTING SIZES\n";
+   out += "🪟 GLASS & ACP CUTTING SIZES\n";
    out += "-----------------------------------\n";
-   out += isBn ? `> ডোর মাথার ফ্যানলাইট গ্লাস: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n` : `> Door Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
+   out += `> Door Top Transom Glass: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
 
    if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE") && cols > 0) {
-     out += isBn ? `> [তলা] Side Partition Bottom ACP: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Bottom] Side Partition ACP: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += isBn ? `> [মিডিল] Side Partition Middle Glass (সেম মাপ): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Middle] Side Partition Glass (Identical): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += isBn ? `> [মাথার খাপ] Side Partition Top Glass (ছোট): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n` : `> [Top] Side Partition Header Glass (Small): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `> [Bottom] Side Partition ACP: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `> [Middle] Side Partition Glass (Identical): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `> [Top] Side Partition Header Glass (Small): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
 
      pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
      pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)}`] = (pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)}`] || 0) + 1;
@@ -1955,9 +2076,9 @@ function clearDoor() {
      pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
      pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
 
-     out += "\n" + (isBn ? "--- 🛡️ গ্লাস দোকান বিলিং স্ল্যাব সেফ গার্ড (ZERO PENALTY) ---\n" : "--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
-     out += isBn ? `• মিডিল গ্লাস স্ল্যাব: ${mid_guard.slab}" x ${w_guard.slab}" | মাথার খাপ স্ল্যাব: ${top_guard.slab}" x ${w_guard.slab}"\n` : `• Middle Glass Slab: ${mid_guard.slab}" x ${w_guard.slab}" | Top Header Glass Slab: ${top_guard.slab}" x ${w_guard.slab}"\n`;
-     out += isBn ? `✔ নিশ্চিতকরণ: মাপ ৩০", ৩৬", ২৪" বা ১৮" এর থেকে ১ সুতোও বেশি নয়!\n` : `✔ Guaranteed: Dimensions strictly capped below 30", 36", 24", 18" slabs. Zero extra 6-inch penalty!\n`;
+     out += "\n" + ("--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
+     out += `• Middle Glass Slab: ${mid_guard.slab}" x ${w_guard.slab}" | Top Header Glass Slab: ${top_guard.slab}" x ${w_guard.slab}"\n`;
+     out += `✔ Guaranteed: Dimensions strictly capped below 30", 36", 24", 18" slabs. Zero extra 6-inch penalty!\n`;
    } else {
      const raw_part_h = ((h - ((rows + 1) * 1.5)) / rows) - 0.25;
      const part_guard = safeGlassSlabCap(raw_part_h);
@@ -1972,8 +2093,8 @@ function clearDoor() {
      }
    }
 
-   out += "\n" + (isBn ? "--- হার্ডওয়্যার ও ফিটিংস ---\n" : "--- HARDWARE & FITTINGS ---\n");
-   out += isBn ? "> ডোর লক: 1 Set\n> ফ্লোর স্প্রিং / পিভট: 1 Set\n> ডোর হ্যান্ডেল: 1 Set\n" : "> Door Lock: 1 Set\n> Floor Spring / Pivot: 1 Set\n> Door Handle: 1 Set\n";
+   out += "\n" + ("--- HARDWARE & FITTINGS ---\n");
+   out += "> Door Lock: 1 Set\n> Floor Spring / Pivot: 1 Set\n> Door Handle: 1 Set\n";
  }
 
  const prevOut = document.getElementById('pt_out').textContent;
@@ -2211,7 +2332,7 @@ function calculateCustomSeries() {
   const raw_h = safeEval(document.getElementById('cs_h').value);
   const raw_w = safeEval(document.getElementById('cs_w').value);
   if (raw_h === 0 || raw_w === 0) {
-    alert(typeof currentAppLang !== 'undefined' && currentAppLang === 'bn' ? "অনুগ্রহ করে উচ্চতা এবং চওড়া লিখুন।" : "Please enter Height and Width.");
+    alert("Please enter Height and Width.");
     return;
   }
 
@@ -2396,7 +2517,7 @@ function clearCustomSeries() {
     lines.forEach(function(l) {
       l = l.trim();
       if (!l || l.startsWith('[') || l.startsWith('===')) return;
-      if (l.includes("HARDWARE") || l.includes("GLASS") || l.includes("INSTRUCTIONS") || l.includes("BILLING SLAB") || l.includes("MARKING") || l.includes("OPENINGS") || l.includes("SHEET CUTTING") || l.includes("খোপ ও")) {
+      if (l.includes("HARDWARE") || l.includes("GLASS") || l.includes("INSTRUCTIONS") || l.includes("BILLING SLAB") || l.includes("MARKING") || l.includes("OPENINGS") || l.includes("SHEET CUTTING")) {
         section = "other";
         return;
       }
@@ -2412,7 +2533,7 @@ function clearCustomSeries() {
         const parts = clean.split(':');
         const pName = parts[0].trim();
         const pVal = parts.slice(1).join(':').trim();
-        if (/glass|board|beading/i.test(pName) || pName.indexOf("গ্লাস") !== -1) return;
+        if (/glass|board|beading/i.test(pName)) return;
         unitProfiles[pName] = pVal;
         if (allProfileHeaders.indexOf(pName) === -1) {
           allProfileHeaders.push(pName);
@@ -3637,22 +3758,58 @@ function autofillCustomer() {
  }
  }
 
+ // Auto-commit pending item if user typed Height & Width and directly clicked Generate/Save/PDF Bill
+ function autoCommitPendingBillItemIfNeeded() {
+   try {
+     const hEl = document.getElementById('q_h');
+     const wEl = document.getElementById('q_w');
+     const hVal = hEl ? safeEval(hEl.value) : 0;
+     const wVal = wEl ? safeEval(wEl.value) : 0;
+     if (hVal > 0 && wVal > 0) {
+       addBillItem();
+     }
+   } catch(e){}
+ }
+
+ // Get effective bill items (even if user left items incomplete, returns a proper structured item row so Proper Bill always renders!)
+ function getEffectiveProperBillItems() {
+   autoCommitPendingBillItemIfNeeded();
+   if (billItems && billItems.length > 0) return billItems;
+   const w_type = document.getElementById('q_type') ? document.getElementById('q_type').value : "Aluminium & Glass Work";
+   const color = document.getElementById('q_color') ? document.getElementById('q_color').value : "Powder Coated";
+   const thick = document.getElementById('q_thick') ? document.getElementById('q_thick').value : "1.5 mm";
+   const g_thick = document.getElementById('q_g_thick') ? document.getElementById('q_g_thick').value : "5.0 mm Glass";
+   const g_type = document.getElementById('q_g_type') ? document.getElementById('q_g_type').value : "Clear Glass";
+   const toughened = document.getElementById('q_tough') ? document.getElementById('q_tough').value.includes("Toughened") : false;
+   const loc = document.getElementById('q_loc') ? document.getElementById('q_loc').value.trim() : "";
+   const qty = Math.max(1, parseInt(safeEval(document.getElementById('q_qty') ? document.getElementById('q_qty').value : "1")) || 1);
+   const rate = safeEval(document.getElementById('q_rate') ? document.getElementById('q_rate').value : "0") || 0;
+   return [{
+     type: w_type, location: loc, color: color, thickness: thick,
+     glass_thick: g_thick, glass_type: g_type, toughened: toughened,
+     h: "-", w: "-", unit: "ft", qty: qty, rate: rate, area: 1.0, price: rate * qty
+   }];
+ }
+
  function generateBillText() {
- if (billItems.length === 0) { alert("Please add items to generate bill."); return; }
+ const effectiveItems = getEffectiveProperBillItems();
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
  const shop_name = (profile.shop_name || "ALUMINIUM FABRICATION WORKSHOP").toUpperCase();
- const owner_name = (profile.name && profile.name !== "Fabricator") ? profile.name.trim() : "";
- const contact_info = profile.phone ? profile.phone.trim() : "N/A";
- const addr = (profile.address && profile.address !== "Fabrication Workshop") ? profile.address.trim() : "";
+ const owner_name = (profile.name && profile.name !== "Fabricator") ? profile.name.trim() : "____________________";
+ const contact_info = profile.phone ? profile.phone.trim() : "____________________";
+ const addr = (profile.address && profile.address !== "Fabrication Workshop") ? profile.address.trim() : "____________________";
  const clean_email = (profile.email && profile.email.indexOf("@smartworker.app") === -1) ? profile.email.trim() : "";
  const email_info = clean_email ? `\n Email: ${clean_email}` : "";
  const gst_info = profile.gst ? `\n GSTIN: ${profile.gst.trim()}` : "";
 
- const bill_stage = document.getElementById('q_stage').value;
- const c_name = document.getElementById('q_name').value || 'Customer';
- const c_phone = document.getElementById('q_phone').value || 'N/A';
- const c_addr = document.getElementById('q_addr').value || 'N/A';
+ const bill_stage = document.getElementById('q_stage') ? document.getElementById('q_stage').value : "Quotation / Estimate";
+ const raw_c_name = document.getElementById('q_name') ? document.getElementById('q_name').value.trim() : "";
+ const raw_c_phone = document.getElementById('q_phone') ? document.getElementById('q_phone').value.trim() : "";
+ const raw_c_addr = document.getElementById('q_addr') ? document.getElementById('q_addr').value.trim() : "";
+ const c_name = raw_c_name || "Walk-in Customer";
+ const c_phone = raw_c_phone || "____________________";
+ const c_addr = raw_c_addr || "____________________";
  const c_gst = document.getElementById('q_client_gst') ? document.getElementById('q_client_gst').value.trim() : "";
  const c_site = document.getElementById('q_site_addr') ? document.getElementById('q_site_addr').value.trim() : "";
  const pay_terms = document.getElementById('q_payment_terms') ? document.getElementById('q_payment_terms').value.trim() : "";
@@ -3660,13 +3817,13 @@ function autofillCustomer() {
  const today = new Date().toLocaleDateString('en-GB');
 
  const [discount, gst_pct] = getDiscountAndGst();
- const advance_paid = safeEval(document.getElementById('q_advance').value);
- const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
+ const advance_paid = safeEval(document.getElementById('q_advance') ? document.getElementById('q_advance').value : "0");
+ const extra_charge = safeEval(document.getElementById('q_extra_charge') ? document.getElementById('q_extra_charge').value : "0");
 
  let bill = "=================================================\n";
  bill += ` ${shop_name}\n`;
- if (owner_name) bill += ` Prop: ${owner_name}\n`;
- if (addr) bill += ` ${addr}\n`;
+ bill += ` Prop: ${owner_name}\n`;
+ bill += ` Address: ${addr}\n`;
  bill += ` Mob: ${contact_info}${email_info}${gst_info}\n`;
  bill += "=================================================\n";
  bill += `Invoice Type: ${bill_stage}\nDate: ${today}\n\n`;
@@ -3678,7 +3835,7 @@ function autofillCustomer() {
  bill += "-------------------------------------------------\n";
 
  let grand_total = 0.0;
- billItems.forEach((item, i) => {
+ effectiveItems.forEach((item, i) => {
  const color = item.color || 'Jet Black';
  const thick = item.thickness || '1.5 mm';
  const g_thick = item.glass_thick || '5.0 mm';
@@ -3690,10 +3847,13 @@ function autofillCustomer() {
  grand_total += item.price;
  });
 
- const net_total = grand_total - discount;
+ const net_total = Math.max(0, grand_total - discount);
  const gst_amount = net_total * (gst_pct / 100);
  const final_total = net_total + gst_amount + extra_charge;
- const due_amount = final_total - advance_paid;
+ const due_amount = Math.max(0, final_total - advance_paid);
+ const incPrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
+ const prevDue = incPrev ? (activeCustomerPreviousDue || 0) : 0;
+ const totalPayableDue = due_amount + prevDue;
 
  bill += "-------------------------------------------------\n";
  bill += ` Sub Total: Rs ${grand_total.toFixed(2)}\n`;
@@ -3702,17 +3862,22 @@ function autofillCustomer() {
  if (extra_charge > 0) bill += ` Transport/Labor: +Rs ${extra_charge.toFixed(2)}\n`;
 
  bill += ` GRAND TOTAL: Rs ${final_total.toFixed(2)}\n`;
- bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\n`;
- bill += ` DUE AMOUNT: Rs ${due_amount.toFixed(2)}\n`;
- bill += "-------------------------------------------------\n";
- if (profile.bank_name || profile.bank_acc || profile.upi_id) {
-   bill += "BANK & UPI PAYMENT DETAILS:\n";
-   if (profile.bank_name) bill += `Bank: ${profile.bank_name}${profile.bank_branch ? " (" + profile.bank_branch + ")" : ""}\n`;
-   if (profile.bank_holder) bill += `A/C Holder: ${profile.bank_holder}\n`;
-   if (profile.bank_acc) bill += `A/C No: ${profile.bank_acc}${profile.bank_ifsc ? " | IFSC: " + profile.bank_ifsc : ""}\n`;
-   if (profile.upi_id) bill += `UPI ID: ${profile.upi_id}\n`;
-   bill += "-------------------------------------------------\n";
+ if (typeof numberToWordsINR === 'function') {
+   bill += ` In Words: ${numberToWordsINR(final_total)}\n`;
  }
+ bill += ` Advance Received: -Rs ${advance_paid.toFixed(2)}\n`;
+ bill += ` CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}\n`;
+ if (prevDue > 0) {
+   bill += ` Previous Khata Due: +Rs ${prevDue.toFixed(2)}\n`;
+   bill += ` TOTAL NET PAYABLE DUE: Rs ${totalPayableDue.toFixed(2)}\n`;
+ }
+ bill += "-------------------------------------------------\n";
+ bill += "BANK & UPI PAYMENT DETAILS:\n";
+ bill += `Bank: ${profile.bank_name || "____________________"}${profile.bank_branch ? " (" + profile.bank_branch + ")" : ""}\n`;
+ bill += `A/C Holder: ${profile.bank_holder || owner_name}\n`;
+ bill += `A/C No: ${profile.bank_acc || "____________________"} | IFSC: ${profile.bank_ifsc || "____________"}\n`;
+ bill += `UPI ID: ${profile.upi_id || contact_info}\n`;
+ bill += "-------------------------------------------------\n";
  if (remarks_note) {
    bill += `SPECIAL NOTE: ${remarks_note}\n`;
    bill += "-------------------------------------------------\n";
@@ -3734,8 +3899,12 @@ function autofillCustomer() {
  }
 
  function saveBillToDb() {
+ autoCommitPendingBillItemIfNeeded();
+ if (!document.getElementById('bill_output').textContent.trim()) {
+   generateBillText();
+ }
  const bill_text = document.getElementById('bill_output').textContent;
- if (!bill_text.trim()) { alert("Please generate a bill first!"); return; }
+ if (!bill_text.trim()) return;
 
  const c_name = document.getElementById('q_name').value.trim() || 'Customer';
  const c_phone = document.getElementById('q_phone').value.trim();
@@ -3763,7 +3932,7 @@ function autofillCustomer() {
        total_paid: advance_paid,
        total_due: due_amount,
        transactions: [
-         { id: Date.now(), date: today, type: 'BILL', desc: `বিল তৈরি: ${bill_stage}`, debit: final_total, credit: advance_paid, balance: due_amount }
+         { id: Date.now(), date: today, type: 'BILL', desc: `Bill Created: ${bill_stage}`, debit: final_total, credit: advance_paid, balance: due_amount }
        ]
      };
    } else {
@@ -3778,7 +3947,7 @@ function autofillCustomer() {
        id: Date.now(),
        date: today,
        type: 'BILL',
-       desc: `বিল তৈরি: ${bill_stage}`,
+       desc: `Bill Created: ${bill_stage}`,
        debit: final_total,
        credit: advance_paid,
        balance: cust.total_due
@@ -3807,12 +3976,16 @@ function autofillCustomer() {
  if (typeof syncAllDataToCloud === 'function') {
    syncAllDataToCloud();
  }
- alert("🎉 বিল সফলভাবে তৈরি ও কাস্টমার খাতায় সেভ করা হয়েছে!");
+ alert("🎉 Bill generated and saved to Customer Khata successfully!");
 }
 
  function shareToWhatsApp() {
+ autoCommitPendingBillItemIfNeeded();
+ if (!document.getElementById('bill_output').textContent.trim()) {
+   generateBillText();
+ }
  const bill_text = document.getElementById('bill_output').textContent;
- if (!bill_text.trim()) { alert("Please generate a bill first to share."); return; }
+ if (!bill_text.trim()) return;
  const encoded = encodeURIComponent(bill_text);
  window.open(`https://wa.me/?text=${encoded}`, '_blank');
  }
@@ -3833,25 +4006,32 @@ function autofillCustomer() {
     return;
   }
 
-  if (billItems.length === 0) { alert("Please add items to generate a bill first."); return; }
+  const effectiveItems = getEffectiveProperBillItems();
+  if (!document.getElementById('bill_output').textContent.trim()) {
+    generateBillText();
+  }
+
   var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
-  if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
+  if (!jsPDF) { alert("PDF library is loading, please try again in a few seconds."); return; }
   const doc = new jsPDF();
 
   const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
-  const shop_name = (profile.shop_name || "SMART WORKER ALUMINIUM").toUpperCase();
-  const c_name = document.getElementById('q_name').value || 'Customer';
-  const c_phone = document.getElementById('q_phone').value || 'N/A';
-  const c_addr = document.getElementById('q_addr').value || 'N/A';
+  const shop_name = (profile.shop_name || "ALUMINIUM FABRICATION WORKSHOP").toUpperCase();
+  const owner_name = (profile.name && profile.name !== "Fabricator") ? profile.name.trim() : "____________________";
+  const raw_c_name = document.getElementById('q_name') ? document.getElementById('q_name').value.trim() : "";
+  const raw_c_phone = document.getElementById('q_phone') ? document.getElementById('q_phone').value.trim() : "";
+  const raw_c_addr = document.getElementById('q_addr') ? document.getElementById('q_addr').value.trim() : "";
+  const c_name = raw_c_name || "Walk-in Customer";
+  const c_phone = raw_c_phone || "____________________";
+  const c_addr = raw_c_addr || "____________________";
   const c_gst = document.getElementById('q_client_gst') ? document.getElementById('q_client_gst').value.trim() : "";
   const c_site = document.getElementById('q_site_addr') ? document.getElementById('q_site_addr').value.trim() : "";
   const pay_terms = document.getElementById('q_payment_terms') ? document.getElementById('q_payment_terms').value.trim() : "";
   const remarks_note = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value.trim() : "";
-  const bill_stage = document.getElementById('q_stage').value;
+  const bill_stage = document.getElementById('q_stage') ? document.getElementById('q_stage').value : "Quotation / Estimate";
   const today = new Date().toLocaleDateString('en-GB');
 
-  // Draw Header with Customer's Exact Logo (Never overlaps!)
-    // Professional Client Document Title: Strictly NO 'JOB CARD' on Estimates/Bills!
+  // Professional Client Document Title: Strictly NO 'JOB CARD' on Estimates/Bills!
   let pdfTitle = "ESTIMATION & COST QUOTATION";
   if (bill_stage.includes("Final")) {
     pdfTitle = "FINAL BILL & TAX INVOICE";
@@ -3864,24 +4044,38 @@ function autofillCustomer() {
   }
   drawDocHeaderWithLogo(doc, pdfTitle, "Stage: " + bill_stage, [74, 20, 140]);
 
-  doc.setTextColor(0, 0, 0);
+  // Structured Two-Column Proper Bill Info Box (Renders identically whether complete or incomplete!)
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(203, 213, 225);
+  doc.roundedRect(14, 34, 182, 32, 2, 2, 'FD');
+
+  doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("Bill To:", 14, 46);
+  doc.setFontSize(9.5);
+  doc.text("BILL TO (CUSTOMER DETAILS):", 18, 40);
   doc.setFont("helvetica", "normal");
-  doc.text(`Name: ${c_name}`, 14, 51);
-  doc.text(`Phone: ${c_phone}`, 14, 55.5);
-  doc.text(`Address: ${c_addr}${c_site ? " | Site: " + c_site : ""}`, 14, 60);
-  if (c_gst) doc.text(`Client GSTIN: ${c_gst}`, 14, 64.5);
+  doc.setFontSize(8.5);
+  doc.text(`Name: ${c_name}`, 18, 45.5);
+  doc.text(`Phone: ${c_phone}`, 18, 50.5);
+  doc.text(`Address: ${c_addr}${c_site ? " | Site: " + c_site : ""}`, 18, 55.5);
+  doc.text(`Client GSTIN: ${c_gst || "____________________"}`, 18, 60.5);
 
-  doc.text(`Date: ${today}`, 135, 46);
-  doc.text(`Stage: ${bill_stage}`, 135, 51);
-  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 135, 56);
-  let metaY = 61;
-  if (profile.gst) { doc.text(`Workshop GSTIN: ${profile.gst}`, 135, metaY); metaY += 5; }
-  if (profile.email && profile.email.indexOf("@smartworker.app") === -1) { doc.text(`Email: ${profile.email}`, 135, metaY); }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("INVOICE DETAILS:", 125, 40);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.text(`Date: ${today}`, 125, 45.5);
+  doc.text(`Stage: ${bill_stage}`, 125, 50.5);
+  doc.text(`Invoice No: SW-${Math.floor(1000 + Math.random() * 9000)}`, 125, 55.5);
+  const cleanWorkshopEmail = (profile.email && profile.email.indexOf("@smartworker.app") === -1) ? profile.email.trim() : "";
+  doc.text(`Workshop GSTIN: ${profile.gst || "____________________"}`, 125, 60.5);
+  if (cleanWorkshopEmail) {
+    doc.setFontSize(7.5);
+    doc.text(`Email: ${cleanWorkshopEmail}`, 125, 64.5);
+  }
 
-  const tableData = billItems.map((itm, i) => [
+  const tableData = effectiveItems.map((itm, i) => [
     i + 1,
     `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
     itm.qty,
@@ -3890,54 +4084,55 @@ function autofillCustomer() {
     `Rs ${itm.price.toFixed(2)}`
   ]);
 
-  const grand_total = billItems.reduce((a, b) => a + b.price, 0);
+  const grand_total = effectiveItems.reduce((a, b) => a + b.price, 0);
   const [discount, gst_pct] = getDiscountAndGst();
-  const extra_charge = safeEval(document.getElementById('q_extra_charge').value);
-  const net_total = grand_total - discount;
+  const extra_charge = safeEval(document.getElementById('q_extra_charge') ? document.getElementById('q_extra_charge').value : "0");
+  const net_total = Math.max(0, grand_total - discount);
   const gst_amount = net_total * (gst_pct / 100);
   const final_total = net_total + gst_amount + extra_charge;
-  const advance_paid = safeEval(document.getElementById('q_advance').value);
-  const due_amount = final_total - advance_paid;
+  const advance_paid = safeEval(document.getElementById('q_advance') ? document.getElementById('q_advance').value : "0");
+  const due_amount = Math.max(0, final_total - advance_paid);
 
   doc.autoTable({
-    startY: 68,
-    head: [['SN', 'Description', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
+    startY: 69,
+    head: [['SN', 'Description & Specifications', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
     body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [225, 190, 231], textColor: [0, 0, 0], fontStyle: 'bold' },
+    theme: 'grid',
+    headStyles: { fillColor: [74, 20, 140], textColor: [255, 255, 255], fontStyle: 'bold' },
     styles: { fontSize: 8.5 }
   });
 
   const finalY = doc.lastAutoTable.finalY + 8;
+  doc.setTextColor(15, 23, 42);
   doc.setFontSize(9);
-  doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 140, finalY);
-  if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 140, finalY + 5);
-  if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 140, finalY + 10);
-  if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 140, finalY + 15);
+  doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 135, finalY);
+  if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 135, finalY + 5);
+  if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 135, finalY + 10);
+  if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 135, finalY + 15);
 
   doc.setFont("helvetica", "bold");
-  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 140, finalY + 22);
+  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 135, finalY + 21);
   doc.setFont("helvetica", "normal");
-  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 140, finalY + 27);
+  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 135, finalY + 26);
   const incPrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
   const pDue = incPrev ? (activeCustomerPreviousDue || 0) : 0;
   const netPayableDue = due_amount + pDue;
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(200, 0, 0);
-  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 140, finalY + 34);
+  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 135, finalY + 32);
 
   if (pDue > 0) {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(180, 0, 0);
-    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 140, finalY + 40);
+    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 135, finalY + 37.5);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
     doc.setTextColor(200, 0, 0);
-    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 140, finalY + 47);
+    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 135, finalY + 43.5);
   }
 
-  // Render Optional Bank & UPI Details + Custom Payment QR Code on the Left Side of Footer
+  // Render Proper Bank & UPI Box + Custom Payment QR Code on the Left Side of Footer (Always consistent!)
   const customQr = localStorage.getItem('sw_custom_qr');
   let bankStartX = 14;
   if (customQr) {
@@ -3954,22 +4149,29 @@ function autofillCustomer() {
     } catch(e){}
   }
 
-  if (profile.bank_name || profile.bank_acc || profile.upi_id) {
-    let by = finalY + 4;
+  let by = finalY + 3;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(30, 58, 138);
+  doc.text("BANK & PAYMENT DETAILS:", bankStartX, by);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(30, 41, 59);
+  by += 4.5;
+  doc.text("Bank: " + (profile.bank_name || "____________________") + (profile.bank_branch ? " (" + profile.bank_branch + ")" : ""), bankStartX, by);
+  by += 4.5;
+  doc.text("A/C Holder: " + (profile.bank_holder || owner_name), bankStartX, by);
+  by += 4.5;
+  doc.text("A/C No: " + (profile.bank_acc || "____________________") + " | IFSC: " + (profile.bank_ifsc || "____________"), bankStartX, by);
+  by += 4.5;
+  doc.text("UPI ID: " + (profile.upi_id || profile.phone || "____________________"), bankStartX, by);
+  if (typeof numberToWordsINR === 'function') {
+    by += 5;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(30, 58, 138);
-    doc.text("BANK & PAYMENT DETAILS:", bankStartX, by);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(30, 41, 59);
-    if (profile.bank_name) { by += 4.5; doc.text("Bank: " + profile.bank_name + (profile.bank_branch ? " (" + profile.bank_branch + ")" : ""), bankStartX, by); }
-    if (profile.bank_holder) { by += 4.5; doc.text("A/C Holder: " + profile.bank_holder, bankStartX, by); }
-    if (profile.bank_acc) { by += 4.5; doc.text("A/C No: " + profile.bank_acc + (profile.bank_ifsc ? " | IFSC: " + profile.bank_ifsc : ""), bankStartX, by); }
-    if (profile.upi_id) { by += 4.5; doc.text("UPI ID: " + profile.upi_id, bankStartX, by); }
+    doc.text("In Words: " + numberToWordsINR(final_total), bankStartX, by);
   }
 
-  const footerY = Math.max(finalY + 42, (pDue > 0 ? finalY + 53 : finalY + 42));
+  const footerY = Math.max(finalY + 44, (pDue > 0 ? finalY + 52 : finalY + 44));
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
@@ -4027,6 +4229,7 @@ function autofillCustomer() {
       if (typeof fbDb !== 'undefined' && fbDb) {
         try {
           const targetId = getIsolatedCloudDocId();
+          if (!targetId) return;
           const docRef = fbDb.collection('users').doc(String(targetId));
           docRef.set({
             customers: custs,
@@ -4046,7 +4249,11 @@ function autofillCustomer() {
       if (typeof fbDb !== 'undefined' && fbDb) {
         try {
           const targetId = getIsolatedCloudDocId();
-          fbDb.collection('users').doc(String(targetId)).onSnapshot(doc => {
+          if (!targetId) return;
+          if (window.khataUnsubscribe && typeof window.khataUnsubscribe === 'function') {
+            try { window.khataUnsubscribe(); } catch(e){}
+          }
+          window.khataUnsubscribe = fbDb.collection('users').doc(String(targetId)).onSnapshot(doc => {
             if (doc.exists) {
               const data = doc.data();
               if (data && data.customers && typeof data.customers === 'object') {
@@ -4083,7 +4290,7 @@ function autofillCustomer() {
       });
 
       // Update Top Summary Stats
-      document.getElementById('khataTotalClients').textContent = `${totalClients} জন`;
+      document.getElementById('khataTotalClients').textContent = `${totalClients}`;
       document.getElementById('khataTotalBilled').textContent = `₹${totalBilled.toLocaleString('en-IN')}`;
       document.getElementById('khataTotalPaid').textContent = `₹${totalPaid.toLocaleString('en-IN')}`;
       document.getElementById('khataTotalDue').textContent = `₹${totalDue.toLocaleString('en-IN')}`;
@@ -4111,8 +4318,8 @@ function autofillCustomer() {
         listContainer.innerHTML = `
           <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:30px 16px; text-align:center; color:#64748b;">
             <i class="fa-solid fa-folder-open" style="font-size:2.2rem; color:#94a3b8; margin-bottom:8px; display:block;"></i>
-            <div style="font-weight:700; font-size:0.9rem;">কোনো কাস্টমার খাতা পাওয়া যায়নি!</div>
-            <div style="font-size:0.75rem; margin-top:4px;">ওপরে <strong>'+ নতুন খাতা'</strong> বোতামে চাপ দিয়ে কাস্টমার যুক্ত করুন।</div>
+            <div style="font-weight:700; font-size:0.9rem;">No Customer Ledger Found!</div>
+            <div style="font-size:0.75rem; margin-top:4px;">Tap <strong>'+ New Customer'</strong> above to add a client ledger.</div>
           </div>
         `;
         return;
@@ -4138,7 +4345,7 @@ function autofillCustomer() {
                 <div>
                   <h4 style="font-size:1rem; font-weight:800; color:#0f172a; line-height:1.2;">${c.name}</h4>
                   <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
-                    <i class="fa-solid fa-location-dot" style="color:#0284c7;"></i> ${c.address || 'আমতা, হাওড়া'}
+                    <i class="fa-solid fa-location-dot" style="color:#0284c7;"></i> ${c.address || 'West Bengal'}
                   </div>
                 </div>
               </div>
@@ -4146,11 +4353,11 @@ function autofillCustomer() {
               <div>
                 ${hasDue ? `
                   <span style="background:#fef2f2; color:#dc2626; border:1px solid #f87171; padding:3px 8px; border-radius:8px; font-size:0.75rem; font-weight:800;">
-                    🔴 বাকি: ₹${due.toLocaleString('en-IN')}
+                    🔴 Due: ₹${due.toLocaleString('en-IN')}
                   </span>
                 ` : `
                   <span style="background:#f0fdf4; color:#15803d; border:1px solid #86efac; padding:3px 8px; border-radius:8px; font-size:0.75rem; font-weight:800;">
-                    🟢 সব পরিশোধিত
+                    🟢 Fully Paid
                   </span>
                 `}
               </div>
@@ -4159,15 +4366,15 @@ function autofillCustomer() {
             <!-- Financial Summary Bar -->
             <div style="background:#f8fafc; border-radius:8px; padding:8px 12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px; text-align:center;">
               <div>
-                <span style="font-size:0.68rem; color:#64748b; display:block;">মোট কাজ</span>
+                <span style="font-size:0.68rem; color:#64748b; display:block;">Total Work</span>
                 <strong style="font-size:0.85rem; color:#0284c7;">₹${billed.toLocaleString('en-IN')}</strong>
               </div>
               <div>
-                <span style="font-size:0.68rem; color:#64748b; display:block;">জমা পেয়েছেন</span>
+                <span style="font-size:0.68rem; color:#64748b; display:block;">Received</span>
                 <strong style="font-size:0.85rem; color:#16a34a;">₹${paid.toLocaleString('en-IN')}</strong>
               </div>
               <div>
-                <span style="font-size:0.68rem; color:#64748b; display:block;">বাকি আছে</span>
+                <span style="font-size:0.68rem; color:#64748b; display:block;">Balance Due</span>
                 <strong style="font-size:0.85rem; color:${hasDue ? '#dc2626' : '#16a34a'};">₹${due.toLocaleString('en-IN')}</strong>
               </div>
             </div>
@@ -4175,15 +4382,15 @@ function autofillCustomer() {
             <!-- Action Buttons -->
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
               <button type="button" onclick="openCustomerLedger('${phone}')" style="flex:1; background:#0f172a; color:#fff; border:none; padding:8px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">
-                <i class="fa-solid fa-book-open"></i> খাতা খুলুন
+                <i class="fa-solid fa-book-open"></i> Open Ledger
               </button>
               <button type="button" onclick="quickAddPayment('${phone}')" style="background:#16a34a; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                <i class="fa-solid fa-hand-holding-dollar"></i> + জমা
+                <i class="fa-solid fa-hand-holding-dollar"></i> + Payment
               </button>
               <a href="tel:${phone}" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:8px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; text-decoration:none; display:flex; align-items:center; gap:4px;">
-                <i class="fa-solid fa-phone" style="color:#0284c7;"></i> কল
+                <i class="fa-solid fa-phone" style="color:#0284c7;"></i> Call
               </a>
-              <button type="button" onclick="sendKhataWhatsAppDirect('${phone}')" style="background:#25D366; color:#fff; border:none; padding:8px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;" title="WhatsApp-এ তাগাদা পাঠান">
+              <button type="button" onclick="sendKhataWhatsAppDirect('${phone}')" style="background:#25D366; color:#fff; border:none; padding:8px 10px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;" title="Send WhatsApp Reminder">
                 <i class="fa-brands fa-whatsapp"></i>
               </button>
             </div>
@@ -4225,11 +4432,11 @@ function autofillCustomer() {
       e.preventDefault();
       const name = document.getElementById('new_cust_name').value.trim();
       const phone = document.getElementById('new_cust_phone').value.trim();
-      const site = document.getElementById('new_cust_site').value.trim() || 'আমতা, হাওড়া';
+      const site = document.getElementById('new_cust_site').value.trim() || 'Local Site';
       const openDue = parseFloat(document.getElementById('new_cust_opening_due').value) || 0;
 
       if (!name || !phone) {
-        alert("কাস্টমারের নাম এবং মোবাইল নম্বর আবশ্যক!");
+        alert("Customer Name and Mobile Number are required!");
         return;
       }
 
@@ -4243,7 +4450,7 @@ function autofillCustomer() {
           total_paid: 0,
           total_due: openDue,
           transactions: openDue > 0 ? [
-            { id: Date.now(), date: new Date().toLocaleDateString('en-GB'), type: 'OPENING', desc: 'পূর্বের বকেয়া হিসাব (Opening Due)', debit: openDue, credit: 0, balance: openDue }
+            { id: Date.now(), date: new Date().toLocaleDateString('en-GB'), type: 'OPENING', desc: 'Opening Balance Due', debit: openDue, credit: 0, balance: openDue }
           ] : []
         };
       } else {
@@ -4258,7 +4465,7 @@ function autofillCustomer() {
       document.getElementById('new_cust_site').value = '';
       document.getElementById('new_cust_opening_due').value = '0';
       renderCustomerKhataScreen();
-      alert(`🎉 কাস্টমার '${name}'-এর খাতা সফলভাবে তৈরি হয়েছে!`);
+      alert(`🎉 Customer ledger for '${name}' created successfully!`);
     }
 
     // Open Customer Detailed Ledger
@@ -4269,7 +4476,7 @@ function autofillCustomer() {
       if (!c) return;
 
       document.getElementById('ledgerCustName').textContent = c.name;
-      document.getElementById('ledgerCustSub').innerHTML = `📞 ${phone} | 📍 ${c.address || 'আমতা'}`;
+      document.getElementById('ledgerCustSub').innerHTML = `📞 ${phone} | 📍 ${c.address || 'Site'}`;
 
       const billed = Number(c.total_billed) || 0;
       const paid = Number(c.total_paid) || 0;
@@ -4283,17 +4490,17 @@ function autofillCustomer() {
       const txList = c.transactions || [];
 
       if (!txList.length) {
-        txContainer.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px; font-size:0.8rem;">এখনো কোনো লেনদেন রেকর্ড করা হয়নি। ওপরে '+ জমা/পেমেন্ট এন্ট্রি' করুন।</div>`;
+        txContainer.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px; font-size:0.8rem;">No transactions recorded yet. Use '+ Record Payment' above to add an entry.</div>`;
       } else {
         txContainer.innerHTML = `
           <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
             <thead>
               <tr style="background:#f1f5f9; color:#475569; text-align:left; border-bottom:1px solid #cbd5e1;">
-                <th style="padding:6px;">তারিখ</th>
-                <th style="padding:6px;">কাজের বিবরণ</th>
-                <th style="padding:6px; text-align:right;">বিল (+)</th>
-                <th style="padding:6px; text-align:right;">জমা (-)</th>
-                <th style="padding:6px; text-align:right;">বাকি</th>
+                <th style="padding:6px;">Date</th>
+                <th style="padding:6px;">Description</th>
+                <th style="padding:6px; text-align:right;">Bill (+)</th>
+                <th style="padding:6px; text-align:right;">Paid (-)</th>
+                <th style="padding:6px; text-align:right;">Balance</th>
               </tr>
             </thead>
             <tbody>
@@ -4340,14 +4547,14 @@ function autofillCustomer() {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('pay_amount').value);
       if (!amount || amount <= 0) {
-        alert("সঠিক জমার পরিমাণ লিখুন!");
+        alert("Please enter a valid payment amount!");
         return;
       }
 
       const mode = document.getElementById('pay_mode').value;
       const rawDate = document.getElementById('pay_date').value;
       const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
-      const note = document.getElementById('pay_note').value.trim() || `টাকা জমা (${mode})`;
+      const note = document.getElementById('pay_note').value.trim() || `Payment Received (${mode})`;
 
       const customers = getKhataCustomers();
       const c = customers[currentActiveKhataPhone];
@@ -4371,7 +4578,7 @@ function autofillCustomer() {
       closeRecordPaymentModal();
       openCustomerLedger(currentActiveKhataPhone);
       renderCustomerKhataScreen();
-      alert(`✅ ₹${amount.toLocaleString('en-IN')} সফলভাবে জমা এন্ট্রি হয়েছে! বর্তমান বাকি: ₹${c.total_due.toLocaleString('en-IN')}`);
+      alert(`✅ ₹${amount.toLocaleString('en-IN')} payment recorded! Current Balance Due: ₹${c.total_due.toLocaleString('en-IN')}`);
     }
 
     // WhatsApp Reminder / Statement
@@ -4384,15 +4591,15 @@ function autofillCustomer() {
       const shop = profile.shop_name || 'SMART WORKER ALUMINIUM';
       const myPhone = profile.phone || 'N/A';
 
-      let msg = `*${shop} - কাস্টমার হিসাব খাতা*\n`;
-      msg += `গ্রাহক: *${c.name}*\n`;
-      msg += `সাইট: ${c.address || 'আমতা'}\n`;
+      let msg = `*${shop} - CUSTOMER ACCOUNT STATEMENT*\n`;
+      msg += `Client: *${c.name}*\n`;
+      msg += `Site: ${c.address || 'N/A'}\n`;
       msg += `--------------------------------\n`;
-      msg += `মোট কাজের পরিমাণ: ₹${(c.total_billed || 0).toLocaleString('en-IN')}\n`;
-      msg += `মোট জমা দিয়েছেন: ₹${(c.total_paid || 0).toLocaleString('en-IN')}\n`;
-      msg += `*অবশিষ্ট বাকি (Due): ₹${(c.total_due || 0).toLocaleString('en-IN')}*\n`;
+      msg += `Total Billed Amount: ₹${(c.total_billed || 0).toLocaleString('en-IN')}\n`;
+      msg += `Total Paid Amount: ₹${(c.total_paid || 0).toLocaleString('en-IN')}\n`;
+      msg += `*Balance Due: ₹${(c.total_due || 0).toLocaleString('en-IN')}*\n`;
       msg += `--------------------------------\n`;
-      msg += `অনুগ্রহ করে বকেয়া টাকা পরিশোধের ব্যবস্থা করবেন।\nধন্যবাদ!\n*${shop}*, আমতা, হাওড়া (📞 ${myPhone})`;
+      msg += `Kindly arrange payment for the balance due.\nThank you!\n*${shop}* (📞 ${myPhone})`;
 
       window.open(`https://wa.me/91${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
     }
@@ -4410,7 +4617,7 @@ function autofillCustomer() {
       const c = customers[currentActiveKhataPhone];
       if (!c) return;
 
-      var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF লাইব্রেরি লোড হতে সামান্য সময় নিচ্ছে, অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।"); return; }
+      var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null); if (!jsPDF) { alert("PDF library is loading, please try again in a few seconds."); return; }
       const doc = new jsPDF();
 
       const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
@@ -4815,7 +5022,7 @@ function addTeamMember() {
       }
     } else if (st.expired) {
       banner.style.background = "#dc2626";
-      banner.textContent = "🔴 RECHARGE EXPIRED (0 Days Left) — মেয়াদ শেষ! অনুগ্রহ করে পুনরায় রিচার্জ করুন।";
+      banner.textContent = "🔴 RECHARGE EXPIRED (0 Days Left) — Plan expired! Please recharge to continue.";
       if (teamSec) teamSec.style.display = 'none';
       if (tvCard) {
         tvCard.style.display = 'block';
@@ -4837,7 +5044,7 @@ function addTeamMember() {
           pBar.style.width = "100%";
           pBar.style.background = "#ef4444";
         }
-        if (pNote) pNote.textContent = "আপনার " + st.totalDays + " দিনের রিচার্জের মেয়াদ শেষ হয়ে গেছে। নতুন রিচার্জ করলে আজ থেকে আবার ৩০/৩৬৫ দিন চালু হবে।";
+        if (pNote) pNote.textContent = "Your " + st.totalDays + "-day recharge pack has expired. Recharge now to activate a fresh validity cycle from today.";
       }
     } else {
       banner.style.background = "#37474f";
@@ -4850,7 +5057,7 @@ function addTeamMember() {
 
  function copyDeviceId() {
   var dId = getDeviceId();
-  universalCopyText(dId, "Device ID (" + dId + ") সফলভাবে কপি হয়েছে!");
+  universalCopyText(dId, "Device ID (" + dId + ") copied to clipboard!");
 }
 
  function activateAppKey(providedKey) {
@@ -4858,7 +5065,7 @@ function addTeamMember() {
   const deviceId = getDeviceId();
 
   if (!inputKey) {
-    alert("অনুগ্রহ করে ৮-অক্ষরের অ্যাক্টিভেশন কি লিখুন!");
+    alert("Please enter your 8-character Activation Key!");
     return;
   }
 
@@ -4866,11 +5073,11 @@ function addTeamMember() {
   const currentLic = JSON.parse(localStorage.getItem('sw_license') || '{}');
 
   if (usedKeys.includes(inputKey) && currentLic.key === inputKey && !isAppActivated()) {
-    alert("❌ এই অ্যাক্টিভেশন কি-টি পূর্বে ব্যবহার করা হয়েছে এবং এর ৩০/৩৬৫ দিনের মেয়াদ শেষ হয়ে গেছে!\n\nপুরনো কি দিয়ে পুনরায় আনলক করা সম্ভব নয়। দয়া করে নতুন মাসের রিচার্জ কি সংগ্রহ করুন।");
+    alert("❌ This Activation Key was already used and its validity period has expired!\n\nOld keys cannot be reused. Please get a new recharge key.");
     return;
   }
   if (usedKeys.includes(inputKey) && currentLic.key !== inputKey) {
-    alert("❌ এই অ্যাক্টিভেশন কি-টি ইতিমধ্যে ব্যবহার করা হয়েছে!\n\nএকই কি একাধিকবার ব্যবহার করা যায় না। নতুন রিচার্জ কি সংগ্রহ করুন।");
+    alert("❌ This Activation Key has already been used!\n\nEach key can only be used once. Please request a new recharge key.");
     return;
   }
 
@@ -4947,11 +5154,11 @@ function addTeamMember() {
       }
     } catch (e) {}
 
-    alert("✅ রিচার্জ সফলভাবে চালু হয়েছে!\n\nশুরু: " + startDateStr + "\nমেয়াদ: " + (durationType === 'LIFETIME' ? 'লাইফটাইম' : expiryStr + ' (পুরো ' + daysToAdd + ' দিন চলবে, তারপর স্বয়ংক্রিয়ভাবে বন্ধ হবে)'));
+    alert("✅ Subscription Activated Successfully!\n\nStart Date: " + startDateStr + "\nValid Until: " + (durationType === 'LIFETIME' ? 'Lifetime' : expiryStr + ' (Full ' + daysToAdd + ' Days Validity)'));
     updateActivationScreenUI();
     goHome();
   } else {
-    alert("❌ অবৈধ বা মেয়াদোত্তীর্ণ অ্যাক্টিভেশন কি!\n\nঅনুগ্রহ করে বর্তমান মাসের সঠিক রিচার্জ কি লিখুন অথবা Smart Worker Aluminium-এর সাথে যোগাযোগ করুন।");
+    alert("❌ Invalid or Expired Activation Key!\n\nPlease enter a valid current-month Activation Key or contact Smart Worker Support.");
   }
 }
 
@@ -5006,7 +5213,7 @@ function subscribeViaWhatsApp(plan) {
   let customerShop = (profile.shop_name || "Aluminium Workshop").trim();
 
   if (!customerName || customerName === "Saheb Ghanti" || !customerPhone || customerPhone === "9876543210") {
-    const enteredName = prompt("অনুগ্রহ করে আপনার নাম লিখুন (Enter Your Name):", customerName !== "Saheb Ghanti" ? customerName : "");
+    const enteredName = prompt("Please enter your full name:", customerName !== "Saheb Ghanti" ? customerName : "");
     if (enteredName && enteredName.trim()) {
       customerName = enteredName.trim();
       profile.name = customerName;
@@ -5014,7 +5221,7 @@ function subscribeViaWhatsApp(plan) {
       customerName = "Customer " + deviceId;
     }
 
-    const enteredPhone = prompt("আপনার হোয়াটসঅ্যাপ মোবাইল নম্বর লিখুন (WhatsApp Mobile No):", customerPhone !== "9876543210" ? customerPhone : "");
+    const enteredPhone = prompt("Please enter your WhatsApp mobile number:", customerPhone !== "9876543210" ? customerPhone : "");
     if (enteredPhone && enteredPhone.trim()) {
       customerPhone = enteredPhone.trim();
       profile.phone = customerPhone;
@@ -5090,13 +5297,13 @@ Please verify payment and issue my Pro Activation Key!`;
   const encoded = encodeURIComponent(waMsg);
   window.open(`https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encoded}`, '_blank');
 
-  alert(`✅ আপনার রিচার্জ রিকোয়েস্ট সফলভাবে অ্যাডমিন পোর্টালে পাঠানো হয়েছে!
+  alert(`✅ Your recharge request has been sent to the Admin Portal!
 
 📋 Device ID: ${deviceId}
 📦 Plan: ${planStr}
 💰 Amount: ₹${amount}
 
-অ্যাডমিন ভেরিফাই করে আপনার WhatsApp নম্বরে ৮-অক্ষরের অ্যাক্টিভেশন কি পাঠিয়ে দেবেন।`);
+Admin will verify your payment and send your 8-character Activation Key on WhatsApp.`);
 }
 
 
@@ -5138,20 +5345,20 @@ function uploadShopLogo(input) {
           renderBrandingPreviews();
           loadSavedProfile();
           if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
-          alert("✅ আপনার দোকানের লোগো সফলভাবে সেভ হয়েছে! সমস্ত বিলে ও পিডিএফে এই লোগোটিই বের হবে।");
+          alert("✅ Your workshop logo has been saved! It will appear on all your bills and PDFs.");
         } catch(err) {
           try {
             localStorage.setItem('sw_custom_logo', e.target.result);
             renderBrandingPreviews();
             loadSavedProfile();
-            alert("✅ আপনার দোকানের লোগো সফলভাবে সেভ হয়েছে! সমস্ত বিলে ও পিডিএফে এই লোগোটিই বের হবে।");
+            alert("✅ Your workshop logo has been saved! It will appear on all your bills and PDFs.");
           } catch(storageErr) {
-            alert("❌ ছবির সাইজ অতিরিক্ত বড়! দয়া করে ছোট সাইজের ছবি নির্বাচন করুন।");
+            alert("❌ Image size is too large! Please select a smaller image file.");
           }
         }
       };
       img.onerror = function() {
-        alert("❌ ছবি লোড করা সম্ভব হয়নি! সঠিক ইমেজ ফাইল নির্বাচন করুন।");
+        alert("❌ Failed to load image! Please select a valid image file.");
       };
       img.src = e.target.result;
     };
@@ -5193,19 +5400,19 @@ function uploadPaymentQr(input) {
           localStorage.setItem('sw_custom_qr', optimized);
           renderBrandingPreviews();
           if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud();
-          alert("✅ আপনার পেমেন্ট QR কোড সফলভাবে সেভ হয়েছে! সমস্ত বিলে এই QR কোডটি বের হবে।");
+          alert("✅ Your Payment QR Code has been saved! It will appear on all your invoices.");
         } catch(err) {
           try {
             localStorage.setItem('sw_custom_qr', e.target.result);
             renderBrandingPreviews();
-            alert("✅ আপনার পেমেন্ট QR কোড সফলভাবে সেভ হয়েছে!");
+            alert("✅ Your Payment QR Code has been saved successfully!");
           } catch(storageErr) {
-            alert("❌ ছবির সাইজ অতিরিক্ত বড়! দয়া করে ছোট সাইজের ছবি নির্বাচন করুন।");
+            alert("❌ Image size is too large! Please select a smaller image file.");
           }
         }
       };
       img.onerror = function() {
-        alert("❌ QR কোড লোড করা সম্ভব হয়নি! সঠিক ইমেজ ফাইল নির্বাচন করুন।");
+        alert("❌ Failed to load QR Code! Please select a valid image file.");
       };
       img.src = e.target.result;
     };
@@ -5532,333 +5739,141 @@ function setupDb() {
  // 100% Pure Language Segregation - No Mixed Text
  // ========================================================
  const I18N_DICT = {
- en: {
- title_app: "SMART WORKER PRO",
- nav_home: "Home",
- nav_dashboard: "Dashboard",
- nav_records: "Records",
- nav_profile: "Profile",
- nav_login: "LOGIN",
- welcome_prefix: "Welcome,",
- sec_fab_systems: "WINDOW & DOOR SYSTEMS",
- sec_business_billing: "BUSINESS & BILLING",
- mod_khata_title: "Site Measurement Khata",
- mod_khata_sub: "Digital Khata Book: Room Tracking, Auto Labour & Billing",
- mod_domal: "Domal Window",
- mod_sliding: "Sliding Window",
- mod_casement: "Custom Casement",
- mod_partition: "Partition & Door",
- mod_door: "Simple Door Option",
- mod_quotation: "Pro Quotation",
- mod_ceiling: "Ceiling Estimator",
- btn_open: "OPEN", btn_edit: "Edit",
- sub_domal: "27×65 / 45mm Section Cuts",
- sub_sliding: "2, 3, 4 Track & Interlock",
- sub_casement: "Z-Section & Openable Window",
- sub_partition: "Office Partition & Sheet Cuts",
- sub_door: "Hinged & Bathroom Door",
- lbl_door_palla: "Door Option:",
- sub_ceiling: "False Ceiling Grid & Perimeter",
- sub_quotation: "Client GST Invoice & PDF Bill",
- sub_customer_khata: "Client Balance & Records",
- mod_customer_khata: "Customer Khata",
- mod_calculator: "General Calculator",
- sub_calculator: "Money Sum, Discount % & Trig (sin/cos)",
- btn_clear: "CLEAR",
- btn_calculate: "+ CALCULATE",
- btn_save: "SAVE",
- btn_cut_pdf: "CUT PDF",
- btn_glass_pdf: "GLASS PDF",
- btn_order_slip: "ORDER SLIP",
- lbl_cutting_sizes: "CUTTING SIZES:",
- lbl_mat_purchase: "MATERIAL PURCHASE (AUTO-OPTIMIZED):",
- lbl_height: "Height:",
- lbl_width: "Width:",
- lbl_qty: "Quantity (Pcs):",
- lbl_unit: "Input Unit:",
- lbl_room_tag: "Room / Location Tag:",
- btn_add_khata: "ADD TO SITE KHATA",
- btn_process_all: "PROCESS ALL MULTI-PRODUCT CUTS",
- btn_khata_master_pdf: "GENERATE SITE KHATA MASTER PDF",
- btn_client_bill: "CLIENT BILL",
- btn_generate_bill: "GENERATE BILL",
- btn_save_bill: "SAVE BILL",
- btn_pdf_bill: "PDF BILL",
- lbl_client_details: "CUSTOMER & BILL DETAILS",
- lbl_add_item: "ADD BILL ITEM",
- lbl_rate_sqft: "Rate (Rs/Sq.Ft):",
- lbl_advance: "Advance (Rs):",
- lbl_due_balance: "Due Balance:",
- lbl_total_sales: "TOTAL SALES",
- lbl_purchases: "PURCHASES",
- lbl_balance: "BALANCE",
- btn_add_purchase: "+ ADD MATERIAL PURCHASE",
- btn_update_profile: "UPDATE PROFILE",
- btn_save_settings: "SAVE ALL SETTINGS",
- auth_heading: "SMART WORKER PRO",
- auth_subheading: "Aluminium & UPVC Fabrication Management",
- tab_signin: "Sign In",
- tab_register: "Register Workshop",
- btn_signin_acc: "Sign In to Account",
- btn_create_acc: "Create Account & Cloud Sync",
- btn_guest_demo: "Continue as Guest / Demo Mode →",
-   lbl_panel_mode: "Panel Division & 4'x8' Sheet Optimization:",
-   opt_panel_4x8: "✨ 4'x8' Sheet Optimized (Bottom & Middle Equal, Top Small - Zero Waste)",
-   opt_panel_3ft: "Bottom 3ft (36 Inch) ACP, Middle 3ft (36 Inch) Glass, Top Small",
-   opt_panel_2_5ft: "Bottom 2.5ft (30 Inch) ACP, Middle 2.5ft (30 Inch) Glass, Top Small",
-   opt_panel_equal: "Equal 3 Rows Divide",
-   keypad_title: "Smart Dimension Calculator",
-   keypad_ok: "OK Insert",
-   keypad_numbers: "Numbers",
-   keypad_fractions: "Fractions (16 Sizes)",
-   suta_1: "", suta_2: "", suta_3: "", suta_4: "", suta_5: "", suta_6: "", suta_7: "", suta_half: ""
+  en: {
+    title_app: "SMART WORKER PRO",
+    nav_home: "Home",
+    nav_dashboard: "Dashboard",
+    nav_records: "Records",
+    nav_profile: "Profile",
+    nav_login: "Login",
+    welcome_prefix: "Welcome,",
+    sec_fab_systems: "Window & Door Systems",
+    sec_business_billing: "Business & Billing",
+    mod_khata_title: "Site Measurement Khata",
+    mod_khata_sub: "Digital Measurement Book: Room Tracking, Auto Labor & Billing",
+    mod_domal: "Domal Window",
+    mod_sliding: "Sliding Window",
+    mod_casement: "Custom Casement",
+    mod_partition: "Partition & Door",
+    mod_door: "Simple Door Option",
+    mod_quotation: "Pro Quotation",
+    mod_ceiling: "Ceiling Estimator",
+    btn_open: "OPEN", btn_edit: "EDIT",
+    sub_domal: "27x65 / 45mm Section Cutting",
+    sub_sliding: "2, 3, 4 Track & Interlock Cutting",
+    sub_casement: "Z-Section & Openable Window",
+    sub_partition: "Office Partition & Sheet Cutting",
+    sub_door: "Hinge Door & Bathroom Shutter",
+    sub_ceiling: "False Ceiling Grid & Perimeter",
+    sub_quotation: "Client GST Invoice & PDF Bill",
+    sub_customer_khata: "Client Balance & Ledger Records",
+    mod_customer_khata: "Customer Ledger",
+    mod_calculator: "Smart Calculator",
+    sub_calculator: "Standard, Scientific, Unit Converter & Discount",
+    mod_custom_series: "Custom & New Series",
+    sub_custom_series: "Folding, Glass Door, Jasmine & Custom Profiles",
+    lbl_select_series: "Select Product / Series:",
+    lbl_panels: "Number of Shutters / Panels:",
+    lbl_door_palla: "Door Shutter (Palla):",
+    btn_clear: "Clear",
+    btn_calculate: "+ Calculate",
+    btn_save: "Save",
+    btn_cut_pdf: "Cutting PDF",
+    btn_glass_pdf: "Glass PDF",
+    btn_order_slip: "Order Slip",
+    lbl_cutting_sizes: "Cutting Sizes:",
+    lbl_mat_purchase: "Material Purchase (Auto-Optimized):",
+    lbl_height: "Height:",
+    lbl_width: "Width:",
+    lbl_qty: "Quantity (Pcs):",
+    lbl_unit: "Measurement Unit:",
+    lbl_room_tag: "Room / Location Tag:",
+    btn_add_khata: "+ Add to Site Khata",
+    btn_process_all: "⚡ Process All Cutting Together",
+    btn_khata_master_pdf: "📄 Generate Master Site Khata PDF",
+    btn_client_bill: "Client Billing",
+    btn_generate_bill: "Generate Bill",
+    btn_save_bill: "Save Bill",
+    btn_pdf_bill: "Download PDF Bill",
+    lbl_client_details: "Client & Invoice Details",
+    lbl_add_item: "Add Bill Item",
+    lbl_rate_sqft: "Rate (Rs / Sq.Ft):",
+    lbl_advance: "Advance Paid (Rs):",
+    lbl_due_balance: "Balance Due:",
+    lbl_total_sales: "Total Sales",
+    lbl_purchases: "Material Purchases",
+    lbl_balance: "Net Balance",
+    btn_add_purchase: "+ Add Material Purchase",
+    btn_update_profile: "Update Profile",
+    btn_save_settings: "Save All Settings",
+    auth_heading: "Smart Worker Pro",
+    auth_subheading: "Aluminium & uPVC Fabrication Management",
+    tab_signin: "Sign In (Login)",
+    tab_register: "Workshop Registration",
+    btn_signin_acc: "Sign In to Account",
+    btn_create_acc: "Create Account & Sync",
+    btn_guest_demo: "Continue in Guest Mode →",
+    lbl_panel_mode: "Panel Cutting & 4'x8' Optimization:",
+    opt_panel_4x8: "✨ 4'x8' Sheet Optimized (Equal Bottom & Middle, Small Top Header - Zero Waste)",
+    opt_panel_3ft: "Bottom 3 ft (36 in) ACP, Middle 3 ft (36 in) Glass, Top Header",
+    opt_panel_2_5ft: "Bottom 2.5 ft (30 in) ACP, Middle 2.5 ft (30 in) Glass, Top Header",
+    opt_panel_equal: "Standard Equal Divide",
+    keypad_title: "Smart Measurement Keypad",
+    keypad_ok: "Apply OK",
+    keypad_numbers: "Numbers",
+    keypad_fractions: "Fractions (16 Suta Steps)",
+    suta_1: "(1 Suta)", suta_2: "(2 Suta)", suta_3: "(3 Suta)", suta_4: "(4 Suta)", suta_5: "(5 Suta)", suta_6: "(6 Suta)", suta_7: "(7 Suta)"
+  }
+};
+I18N_DICT.bn = I18N_DICT.en;
+I18N_DICT.hi = I18N_DICT.en;
 
- },
- bn: {
- title_app: "SMART WORKER PRO",
- nav_home: "হোম",
- nav_dashboard: "ড্যাশবোর্ড",
- nav_records: "হিস্ট্রি",
- nav_profile: "প্রোফাইল",
- nav_login: "লগইন",
- welcome_prefix: "Welcome,",
- sec_fab_systems: "উইন্ডো ও ডোর সিস্টেম",
- sec_business_billing: "ব্যবসা ও বিলিং",
- mod_khata_title: "সাইট মেজারমেন্ট খাতা",
- mod_khata_sub: "ডিজিটাল খাতা বুক: রুম ট্র্যাকিং, অটো লেবার ও বিলিং",
- mod_domal: "ডমাল উইন্ডো",
- mod_sliding: "স্লাইডিং উইন্ডো",
- mod_casement: "কাস্টম কেসমেন্ট",
- mod_partition: "পার্টিশন ও ডোর",
- mod_door: "সিম্পল ডোর অপশন",
- mod_quotation: "প্রো কোটেশন",
- mod_ceiling: "সিলিং এস্টিমেটর",
- btn_open: "খুলুন", btn_edit: "এডিট",
- sub_domal: "২৭×৬৫ / ৪৫ মিমি সেকশন কাটিং",
- sub_sliding: "২, ৩, ৪ ট্র্যাক ও ইন্টারলক মাপ",
- sub_casement: "জেড-সেকশন ও খোলা পাল্লার জানালা",
- sub_partition: "অফিস পার্টিশন ও শিট কাটিং",
- sub_door: "হিঞ্জ ডোর ও বাথরুম পাল্লা",
- sub_ceiling: "ফলস সিলিং গ্রিড ও পেরিমিটার",
- sub_quotation: "ক্লায়েন্ট জিএসটি ইনভয়েস ও পিডিএফ বিল",
- sub_customer_khata: "ক্লায়েন্ট ব্যালেন্স ও রেকর্ডস",
- mod_customer_khata: "কাস্টমার খাতা",
- mod_calculator: "সাধারণ ক্যালকুলেটর",
- sub_calculator: "টাকা-পয়সা, ডিসকাউন্ট % ও কোণ (sin/cos)",
- mod_custom_series: "কাস্টম ও নতুন সিরিজ",
- sub_custom_series: "ফোল্ডিং, গ্লাস ডোর, জেসমিন ও নতুন প্রোফাইল",
- lbl_select_series: "প্রোডাক্ট / সিরিজ নির্বাচন করুন:",
- lbl_panels: "পাল্লা / প্যানেল সংখ্যা:",
- lbl_door_palla: "দরজার পাল্লা (Shutter/Palla):",
- btn_clear: "ক্লিয়ার",
- btn_calculate: "+ হিসাব করুন",
- btn_save: "সেভ করুন",
- btn_cut_pdf: "কাটিং PDF",
- btn_glass_pdf: "গ্লাস PDF",
- btn_order_slip: "অর্ডার স্লিপ",
- lbl_cutting_sizes: "কাটিং মাপসমূহ:",
- lbl_mat_purchase: "মেটেরিয়াল খরিদ (অটো-অপ্টিমাইজড):",
- lbl_height: "উচ্চতা (Height):",
- lbl_width: "প্রস্থ (Width):",
- lbl_qty: "জানালার সংখ্যা (Pcs):",
- lbl_unit: "মাপের একক (Unit):",
- lbl_room_tag: "রুম / লোকেশন ট্যাগ:",
- btn_add_khata: "+ সাইট খাতায় যোগ করুন",
- btn_process_all: "⚡ সব প্রোডাক্ট একসাথে কাটিং প্রসেস",
- btn_khata_master_pdf: "📄 সাইট খাতা মাস্টার PDF তৈরি করুন",
- btn_client_bill: "ক্লায়েন্ট বিলিং",
- btn_generate_bill: "বিল তৈরি করুন",
- btn_save_bill: "বিল সেভ করুন",
- btn_pdf_bill: "PDF বিল ডাউনলোড",
- lbl_client_details: "গ্রাহক ও বিলের বিবরণ",
- lbl_add_item: "বিলের আইটেম যোগ করুন",
- lbl_rate_sqft: "দর (টাকা / স্কয়ার ফিট):",
- lbl_advance: "অ্যাডভান্স জমা (টাকা):",
- lbl_due_balance: "বকেয়া টাকা:",
- lbl_total_sales: "মোট বিক্রি",
- lbl_purchases: "মাল খরিদ খরচ",
- lbl_balance: "মোট ব্যালেন্স",
- btn_add_purchase: "+ মেটেরিয়াল খরিদ যোগ করুন",
- btn_update_profile: "প্রোফাইল আপডেট করুন",
- btn_save_settings: "সব সেটিংস সেভ করুন",
- auth_heading: "স্মার্ট ওয়ার্কার প্রো",
- auth_subheading: "অ্যালুমিনিয়াম ও ইউপিভিসি ফেব্রیکیشن ম্যানেজমেন্ট",
- tab_signin: "সাইন-ইন (লগইন)",
- tab_register: "ওয়ার্কশপ রেজিস্ট্রেশন",
- btn_signin_acc: "অ্যাকাউন্টে লগইন করুন",
- btn_create_acc: "অ্যাকাউন্ট তৈরি ও সিঙ্ক করুন",
- btn_guest_demo: "লগইন ছাড়া ডেমো ব্যবহার করুন →",
-   lbl_panel_mode: "প্যানেল কাটিং ও ৪'×৮' অপ্টিমাইজেশন:",
-   opt_panel_4x8: "✨ ৪'×৮' শিট অপ্টিমাইজড (তলা ও মিডিল সমান, মাথার খাপ ছোট - Zero Waste)",
-   opt_panel_3ft: "তলা ৩ ফুট (৩৬ ইঞ্চি) ACP, মিডিল ৩ ফুট (৩৬ ইঞ্চি) গ্লাস, মাথা ছোট",
-   opt_panel_2_5ft: "তলা ২.৫ ফুট (৩০ ইঞ্চি) ACP, মিডিল ২.৫ ফুট (৩০ ইঞ্চি) গ্লাস, মাথা ছোট",
-   opt_panel_equal: "সাধারণ সমান ভাগ (Equal Divide)",
-   keypad_title: "স্মার্ট পরিমাপ ক্যালকুলেটর",
-   keypad_ok: "OK বসান",
-   keypad_numbers: "সংখ্যা (Numbers)",
-   keypad_fractions: "ভগ্নাংশ (১৬ খানা মাপ)",
-   suta_1: "(১ সুতো)", suta_2: "(২ সুতো)", suta_3: "(৩ সুতো)", suta_4: "(৪ সুতো)", suta_5: "(৫ সুতো)", suta_6: "(৬ সুতো)", suta_7: "(৭ সুতো)", suta_half: "(হাফ সুতো)"
+let currentAppLang = 'en';
+localStorage.setItem('sw_lang', 'en');
 
- },
- hi: {
- title_app: "स्मार्ट वर्कर प्रो",
- nav_home: "होम",
- nav_dashboard: "डैशबोर्ड",
- nav_records: "रिकॉर्ड्स",
- nav_profile: "प्रोफाइल",
- nav_login: "लॉगिन",
- welcome_prefix: "नमस्ते,",
- sec_fab_systems: "विंडो और डोर सिस्टम",
- sec_business_billing: "बिजनेस और बिलिंग",
- mod_khata_title: "साइट मेजरमेंट खाता",
- mod_khata_sub: "डिजिटल खाता बुक: रूम ट्रैकिंग, ऑटो लेबर और बिलिंग",
- mod_domal: "डोमल विंडो",
- mod_sliding: "स्लाइडिंग विंडो",
- mod_casement: "कस्टम केसमेंट",
- mod_partition: "पार्टीशन और डोर",
- mod_door: "सिंपल डोर विकल्प",
- mod_quotation: "प्रो कोटेशन",
- mod_ceiling: "सीलिंग एस्टीमेटर",
- btn_open: "खोलें", btn_edit: "एडिट",
- sub_domal: "27×65 / 45mm सेक्शन कटिंग",
- sub_sliding: "2, 3, 4 ट्रैक और इंटरलॉक कटिंग",
- sub_casement: "Z-सेक्शन और खुली खिड़की",
- sub_partition: "ऑफिस पार्टीशन और शीट कटिंग",
- sub_door: "कब्जा दरवाजा और बाथरूम डोर",
- sub_ceiling: "फॉल्स सीलिंग ग्रिड और परिमाप",
- sub_quotation: "ग्राहक जीएसटी बिल और चालान",
- sub_customer_khata: "ग्राहक बकाया खाता और बही",
- mod_customer_khata: "ग्राहक खाता बुक",
- btn_clear: "साफ करें",
- btn_calculate: "+ गणना करें",
- btn_save: "सेव करें",
- btn_cut_pdf: "कटिंग PDF",
- btn_glass_pdf: "ग्लास PDF",
- btn_order_slip: "ऑर्डर स्लिप",
- lbl_cutting_sizes: "कटिंग साइज विवरण:",
- lbl_mat_purchase: "मटेरियल खरीद (ऑटो-ऑप्टिमाइज्ड):",
- lbl_height: "ऊंचाई (Height):",
- lbl_width: "चौड़ाई (Width):",
- lbl_qty: "खिड़कियों की संख्या:",
- lbl_unit: "माप इकाई (Unit):",
- lbl_room_tag: "रूम / लोकेशन टैग:",
- btn_add_khata: "+ साइट खाते में जोड़ें",
- btn_process_all: "⚡ सभी प्रोडक्ट एक साथ कटिंग प्रोसेस करें",
- btn_khata_master_pdf: "📄 साइट खाता मास्टर PDF तैयार करें",
- btn_client_bill: "क्लाइंट बिलिंग",
- btn_generate_bill: "बिल जनरेट करें",
- btn_save_bill: "बिल सेव करें",
- btn_pdf_bill: "PDF बिल डाउनलोड",
- lbl_client_details: "ग्राहक और बिल विवरण",
- lbl_add_item: "बिल आइटम जोड़ें",
- lbl_rate_sqft: "दर (रु / वर्ग फीट):",
- lbl_advance: "अग्रिम जमा (रु):",
- lbl_due_balance: "बकाया राशि:",
- lbl_total_sales: "कुल बिक्री",
- lbl_purchases: "मटेरियल खरीद",
- lbl_balance: "नेट बैलेंस",
- btn_add_purchase: "+ मटेरियल खरीद जोड़ें",
- btn_update_profile: "प्रोफाइल अपडेट करें",
- btn_save_settings: "सभी सेटिंग्स सेव करें",
- auth_heading: "स्मार्ट वर्कर प्रो",
- auth_subheading: "एल्यूमिनियम और यूपीवीसी फैब्रिकेशन मैनेजमेंट",
- tab_signin: "साइन-इन (लॉगिन)",
- tab_register: "वर्कशॉप रजिस्ट्रेशन",
- btn_signin_acc: "अकाउंट में लॉगिन करें",
- btn_create_acc: "अकाउंट बनाएं और सिंक करें",
- btn_guest_demo: "बिना लॉगिन डेमो शुरू करें →"
- }
- };
+function changeLanguage(lang) {
+  currentAppLang = 'en';
+  localStorage.setItem('sw_lang', 'en');
+  const selector = document.getElementById('langSelector');
+  if (selector) selector.value = 'en';
+  applyLanguageTranslations('en');
+}
 
- let currentAppLang = localStorage.getItem('sw_lang') || 'en';
+function applyLanguageTranslations(lang) {
+  lang = 'en';
+  currentAppLang = 'en';
+  const sEn = document.getElementById('setLangEn');
+  const badge = document.getElementById('currentLangBadge');
+  if (sEn) sEn.classList.add('active');
+  if (badge) badge.textContent = 'English';
 
- function changeLanguage(lang) {
- if (!I18N_DICT[lang]) lang = 'en';
- currentAppLang = lang;
- localStorage.setItem('sw_lang', lang);
+  const d = I18N_DICT['en'];
 
- const selector = document.getElementById('langSelector');
- if (selector) selector.value = lang;
+  const titleElem = document.getElementById('titleText');
+  if (titleElem) titleElem.textContent = d.title_app;
 
- applyLanguageTranslations(lang);
- }
+  const secHeaders = document.querySelectorAll('.menu-section-title');
+  if (secHeaders.length >= 2) {
+    secHeaders[0].textContent = d.sec_fab_systems;
+    secHeaders[1].textContent = d.sec_business_billing;
+  }
 
- function applyLanguageTranslations(lang) {
- // Update Gemini Settings Language Switcher
- const sEn = document.getElementById('setLangEn');
- const sBn = document.getElementById('setLangBn');
- const sHi = document.getElementById('setLangHi');
- const badge = document.getElementById('currentLangBadge');
- if (sEn && sBn && sHi) {
- [sEn, sBn, sHi].forEach(b => b.classList.remove('active'));
- if (lang === 'en') {
- sEn.classList.add('active');
- if (badge) badge.textContent = 'English';
- } else if (lang === 'bn') {
- sBn.classList.add('active');
- if (badge) badge.textContent = 'বাংলা';
- } else if (lang === 'hi') {
- sHi.classList.add('active');
- if (badge) badge.textContent = 'हिन्दी';
- }
- }
+  const navItems = document.querySelectorAll('.bottom-nav .nav-item span');
+  if (navItems.length >= 4) {
+    navItems[0].textContent = d.nav_home;
+    navItems[1].textContent = d.nav_dashboard;
+    navItems[2].textContent = d.nav_records;
+    navItems[3].textContent = d.nav_profile;
+  }
 
- // Update Language Switcher Pill Active State
- const btnEn = document.getElementById('btnLangEn');
- const btnBn = document.getElementById('btnLangBn');
- const btnHi = document.getElementById('btnLangHi');
- if (btnEn && btnBn && btnHi) {
- [btnEn, btnBn, btnHi].forEach(b => {
- b.style.background = 'transparent';
- b.style.color = '#94a3b8';
- b.style.fontWeight = '700';
- });
- if (lang === 'en') {
- btnEn.style.background = '#f59e0b';
- btnEn.style.color = '#0f172a';
- btnEn.style.fontWeight = '800';
- } else if (lang === 'bn') {
- btnBn.style.background = '#f59e0b';
- btnBn.style.color = '#0f172a';
- btnBn.style.fontWeight = '800';
- } else if (lang === 'hi') {
- btnHi.style.background = '#f59e0b';
- btnHi.style.color = '#0f172a';
- btnHi.style.fontWeight = '800';
- }
- }
+  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+  const greetingElem = document.getElementById('homeGreeting');
+  if (greetingElem) {
+    let pName = profile.name || "Partner";
+    greetingElem.textContent = `${d.welcome_prefix} ${pName}!`;
+  }
 
- const d = I18N_DICT[lang] || I18N_DICT['en'];
-
- // App Title
- const titleElem = document.getElementById('titleText');
- if (titleElem) titleElem.textContent = d.title_app;
-
- // Menu Section Headers
- const secHeaders = document.querySelectorAll('.menu-section-title');
- if (secHeaders.length >= 2) {
- secHeaders[0].textContent = d.sec_fab_systems;
- secHeaders[1].textContent = d.sec_business_billing;
- }
-
- // Bottom Navigation
- const navItems = document.querySelectorAll('.bottom-nav .nav-item span');
- if (navItems.length >= 4) {
- navItems[0].textContent = d.nav_home;
- navItems[1].textContent = d.nav_dashboard;
- navItems[2].textContent = d.nav_records;
- navItems[3].textContent = d.nav_profile;
- }
-
- // Home Header Welcome
- const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- const greetingElem = document.getElementById('homeGreeting');
- if (greetingElem) {
- let pName = profile.name || (lang === 'bn' ? "ভাই" : (lang === 'hi' ? "भाई" : "Brother"));
- greetingElem.textContent = `${d.welcome_prefix} ${pName}!`;
- }
-
- // Translate all data-i18n elements
+  // Translate all data-i18n elements
  document.querySelectorAll('[data-i18n]').forEach(el => {
  const key = el.getAttribute('data-i18n');
  if (d[key]) {
@@ -6157,6 +6172,10 @@ function syncOfflineQueueToCloud() {
 
   const queue = getOfflineQueue();
   const targetId = getIsolatedCloudDocId();
+  if (!targetId) {
+    updateOfflineStatusBadge();
+    return;
+  }
   const fullBackup = {
     settings: JSON.parse(localStorage.getItem('sw_bill_settings') || '{}'),
     profile: JSON.parse(localStorage.getItem('sw_profile') || '{}'),
@@ -6299,32 +6318,32 @@ function getAdminPin() {
 
 function openAdminPortalWithPin() {
   const savedPin = getAdminPin();
-  const entered = prompt("🔑 অ্যাডমিন সিকিউরিটি পিন (Admin PIN) লিখুন:\n(Default PIN: 7860)");
+  const entered = prompt("🔑 Enter Admin Security PIN:\n(Default PIN: 7860)");
   if (entered === null) return;
   if (entered.trim() === savedPin) {
     sessionStorage.setItem('sw_admin_authenticated', 'true');
     openScreen('admin-portal', 'ADMIN PORTAL');
     renderAdminPortal();
   } else {
-    alert("❌ ভুল পিন! অ্যাডমিন পোর্টাল খোলা সম্ভব নয়।");
+    alert("❌ Incorrect PIN! Access denied.");
   }
 }
 
 function lockAdminPortal() {
   sessionStorage.removeItem('sw_admin_authenticated');
-  alert("🔒 অ্যাডমিন পোর্টাল লক করা হয়েছে।");
+  alert("🔒 Admin Portal has been locked.");
   goHome();
 }
 
 function adminChangePinPrompt() {
   const current = getAdminPin();
-  const oldPin = prompt("বর্তমান অ্যাডমিন পিন লিখুন:");
-  if (oldPin !== current) { alert("❌ বর্তমান পিন ভুল!"); return; }
-  const newPin = prompt("নতুন ৪-সংখ্যার পিন লিখুন:");
-  if (!newPin || newPin.trim().length < 4) { alert("❌ কমপক্ষে ৪ সংখ্যার পিন দিন!"); return; }
+  const oldPin = prompt("Enter current Admin PIN:");
+  if (oldPin !== current) { alert("❌ Current PIN is incorrect!"); return; }
+  const newPin = prompt("Enter new 4-digit Admin PIN:");
+  if (!newPin || newPin.trim().length < 4) { alert("❌ PIN must be at least 4 characters!"); return; }
   localStorage.setItem('sw_admin_pin', newPin.trim());
   const pinDisp = document.getElementById('admCurrentPinDisplay'); if (pinDisp) pinDisp.textContent = newPin.trim();
-  alert("✅ অ্যাডমিন পিন সফলভাবে পরিবর্তন করা হয়েছে!");
+  alert("✅ Admin PIN updated successfully!");
 }
 
 // Generate mathematical key matching checkActivationType
@@ -6353,7 +6372,7 @@ function submitCustomerRechargeRequest() {
   const devId = getDeviceId();
 
   if (!name || !phone) {
-    alert("অনুগ্রহ করে আপনার নাম ও মোবাইল নম্বর লিখুন!");
+    alert("Please enter your Name and Mobile Number!");
     return;
   }
 
@@ -6379,7 +6398,7 @@ function submitCustomerRechargeRequest() {
     }
   } catch(e){}
 
-  alert("✅ আপনার রিচার্জ রিকোয়েস্ট সফলভাবে জমা হয়েছে!\n\nঅ্যাডমিন খুব শীঘ্রই ভেরিফাই করে আপনার নম্বরে অ্যাক্টিভেশন কি পাঠিয়ে দেবে।");
+  alert("✅ Your recharge request has been submitted!\n\nAdmin will verify and send your Activation Key shortly.");
   if (nameEl) nameEl.value = "";
   if (phoneEl) phoneEl.value = "";
   if (utrEl) utrEl.value = "";
@@ -6400,13 +6419,13 @@ function renderAdminRechargeRequests() {
   if (!container) return;
 
   let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
-  if (badge) badge.textContent = `${requests.length} টি রিকোয়েস্ট`;
+  if (badge) badge.textContent = `${requests.length} Requests`;
 
   if (requests.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:24px 10px; color:#94a3b8; font-size:0.85rem;">
         <i class="fa-solid fa-inbox" style="font-size:1.8rem; margin-bottom:6px; color:#cbd5e1; display:block;"></i>
-        এখনও কোনো পেন্ডিং রিচার্জ রিকোয়েস্ট নেই।
+        No pending recharge requests found.
       </div>`;
     return;
   }
@@ -6416,13 +6435,13 @@ function renderAdminRechargeRequests() {
     const isPending = req.status === "Pending";
     const statusColor = isPending ? "#f59e0b" : "#16a34a";
     const planLabels = {
-      "KARIGAR_1M": "কারিগর ১ মাস (₹৯৯)",
-      "KARIGAR_1Y": "কারিগর ১ বছর (₹৭৯৯)",
-      "TEAM_1M": "টিম ১ মাস (₹৪৯৯)",
-      "TEAM_1Y": "টিম ১ বছর (₹৩,৯৯৯)",
-      "CORP_1M": "কর্পোরেট ১ মাস (₹১,৪৯৯)",
-      "CORP_1Y": "কর্পোরেট ১ বছর (₹১৪,৯৯৯)",
-      "LIFETIME": "লাইফটাইম ভিআইপি"
+      "KARIGAR_1M": "Single User - 30 Days (₹99)",
+      "KARIGAR_1Y": "Single User VIP - 365 Days (₹799)",
+      "TEAM_1M": "Single User - 90 Days (₹280)",
+      "TEAM_1Y": "Single User - 180 Days (₹550)",
+      "CORP_1M": "Single User - 30 Days (₹99)",
+      "CORP_1Y": "Single User - 365 Days (₹799)",
+      "LIFETIME": "Lifetime VIP"
     };
     const planText = planLabels[req.plan] || req.plan;
 
@@ -6442,15 +6461,15 @@ function renderAdminRechargeRequests() {
           <div><b>Device ID:</b> <span style="font-family:monospace; font-weight:bold; color:#0284c7;">${req.device_id}</span></div>
           <div><b>Plan:</b> ${planText}</div>
           <div><b>Ref / UTR:</b> ${req.utr}</div>
-          <div style="font-size:0.7rem; color:#94a3b8;"><b>তারিখ:</b> ${req.date}</div>
+          <div style="font-size:0.7rem; color:#94a3b8;"><b>Date:</b> ${req.date}</div>
         </div>
 
         <div style="display:flex; gap:6px; margin-top:8px;">
           <button type="button" onclick="adminProcessRequest('${req.id}')" style="flex:2; background:#2563eb; color:#fff; border:none; padding:7px; border-radius:6px; font-size:0.76rem; font-weight:bold; cursor:pointer;">
-            <i class="fa-solid fa-key"></i> কোড বানান ও হোয়াটসঅ্যাপে পাঠান
+            <i class="fa-solid fa-key"></i> Generate Key & Send via WhatsApp
           </button>
           <button type="button" onclick="adminDeleteRequest('${req.id}')" style="flex:1; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; padding:7px; border-radius:6px; font-size:0.76rem; font-weight:bold; cursor:pointer;">
-            মুছুন
+            Delete
           </button>
         </div>
       </div>
@@ -6478,17 +6497,17 @@ function adminProcessRequest(reqId) {
   lastTargetName = req.name;
 
   const planLabels = {
-    "KARIGAR_1M": "কারিগর প্ল্যান (১ মাস)",
-    "KARIGAR_1Y": "কারিগর প্ল্যান (১ বছর)",
-    "TEAM_1M": "ওয়ার্কশপ টিম (১ মাস)",
-    "TEAM_1Y": "ওয়ার্কশপ টিম (১ বছর)",
-    "CORP_1M": "কর্পোরেট প্ল্যান (১ মাস)",
-    "CORP_1Y": "কর্পোরেট প্ল্যান (১ বছর)",
-    "LIFETIME": "লাইফটাইম ভিআইপি"
+    "KARIGAR_1M": "Single User Plan (30 Days)",
+    "KARIGAR_1Y": "Single User VIP Plan (365 Days)",
+    "TEAM_1M": "Single User Plan (90 Days)",
+    "TEAM_1Y": "Single User Plan (180 Days)",
+    "CORP_1M": "Single User Plan (30 Days)",
+    "CORP_1Y": "Single User Plan (365 Days)",
+    "LIFETIME": "Lifetime VIP"
   };
   const planText = planLabels[req.plan] || req.plan;
 
-  const msg = `নমস্কার ${req.name} দা, Smart Worker Pro-তে আপনার ${planText} সফলভাবে সক্রিয় করা হয়েছে!\n\nআপনার অ্যাক্টিভেশন কি:\n👉 *${key}*\n\nঅ্যাপের PRO UPGRADE অপশনে গিয়ে এই কোডটি পেস্ট করে Activate বাটনে ক্লিক করলেই সমস্ত প্রিমিয়াম ফিচার চালু হয়ে যাবে। ধন্যবাদ!\n-- Saheb Ghanti (Smart Worker Pro)`;
+  const msg = `Hello ${req.name}, your ${planText} on Smart Worker Pro has been approved!\n\nYour Activation Key:\n👉 *${key}*\n\nOpen the PRO UPGRADE screen in the app, paste this key, and tap Activate to unlock all Pro features. Thank you!\n-- Saheb Ghanti (Smart Worker Pro)`;
 
   const cleanPhone = req.phone.replace(/[^0-9]/g, '');
   const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
@@ -6496,7 +6515,7 @@ function adminProcessRequest(reqId) {
 }
 
 function adminDeleteRequest(reqId) {
-  if (!confirm("আপনি কি নিশ্চিত এই রিকোয়েস্টটি মুছতে চান?")) return;
+  if (!confirm("Are you sure you want to delete this request?")) return;
   let requests = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
   requests = requests.filter(r => r.id !== reqId);
   localStorage.setItem('sw_recharge_requests', JSON.stringify(requests));
@@ -6511,7 +6530,7 @@ function adminGenerateManualKey() {
   const plan = planEl ? planEl.value : "KARIGAR_1M";
 
   if (!devId || devId.length !== 8) {
-    alert("অনুগ্রহ করে সঠিক ৮-অক্ষরের Device ID দিন!");
+    alert("Please enter a valid 8-character Device ID!");
     return;
   }
 
@@ -6548,7 +6567,7 @@ function adminShareKeyWhatsApp() {
   const planEl = document.getElementById('adm_target_plan');
   const devId = devEl ? devEl.value.trim().toUpperCase() : "";
   const plan = planEl ? planEl.value : "KARIGAR_1M";
-  const msg = `নমস্কার, Smart Worker Pro-তে আপনার সাবস্ক্রিপশন কি:\n👉 *${lastGeneratedAdminKey}*\nDevice ID: ${devId}\nPlan: ${plan}\n\nঅ্যাপে এই কোডটি দিয়ে Activate করলেই সমস্ত ফিচার চালু হয়ে যাবে। ধন্যবাদ!`;
+  const msg = `Hello, here is your Smart Worker Pro Activation Key:\n👉 *${lastGeneratedAdminKey}*\nDevice ID: ${devId}\nPlan: ${plan}\n\nEnter this key in the app to activate all Pro features. Thank you!`;
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -6557,7 +6576,7 @@ function adminDirectSelfApplyKey() {
   if (!lastGeneratedAdminKey) return;
   document.getElementById('activationInput').value = lastGeneratedAdminKey;
   activateAppKey();
-  alert("🎉 অভিনন্দন! এই ডিভাইসে সফলভাবে সাবস্ক্রিপশন সক্রিয় করা হয়েছে!");
+  alert("🎉 Subscription activated successfully on this device!");
   goHome();
 }
 
@@ -6636,7 +6655,7 @@ function showCustomerNotificationPopup(notif) {
   bar.innerHTML = `
     <div style="font-size:1.4rem; color:#fde047;"><i class="fa-solid fa-bell"></i></div>
     <div style="flex:1;">
-      <div style="font-size:0.88rem; font-weight:800; color:#38bdf8;">${notif.title || 'অ্যাডমিন নোটিফিকেশন'}</div>
+      <div style="font-size:0.88rem; font-weight:800; color:#38bdf8;">${notif.title || 'Admin Notification'}</div>
       <div style="font-size:0.78rem; color:#e0e7ff; margin-top:3px; line-height:1.4; white-space:pre-line;">${notif.message}</div>
       <div style="font-size:0.68rem; color:#94a3b8; margin-top:5px;">${notif.date || 'Today'}</div>
     </div>
@@ -6700,88 +6719,193 @@ function checkCustomerInAppNotifications() {
 
 
 // =========================================================================
-// GENERAL PURPOSE & MONEY, DISCOUNT, TRIGONOMETRY CALCULATOR ENGINE
+// GENERAL PURPOSE ANDROID STANDARD, SCIENTIFIC & UNIT CONVERTER CALCULATOR ENGINE (100% ENGLISH)
 // =========================================================================
 
-var calcTabActive = 'money';
 var calcExpr = '';
 var calcCurNum = '0';
-var calcLastOp = null;
 var calcJustEvaled = false;
-var calcShowRupee = true;
+var calcSciMode = false;
+var calcSciInv = false;
+var calcAngleUnit = 'DEG'; // 'DEG' or 'RAD'
+var calcMemoryVal = 0;
+var calcAccentColors = ['#0284c7', '#2563eb', '#059669', '#7c3aed', '#d97706', '#e11d48'];
+var calcAccentIdx = 0;
 var trigAngleMode = 'DEG';
 
-function setCalcTabMode(mode) {
-  calcTabActive = mode;
-  var btnMoney = document.getElementById('calcTabBtnMoney');
-  var btnDisc = document.getElementById('calcTabBtnDisc');
-  var btnTrig = document.getElementById('calcTabBtnTrig');
-  var viewMoney = document.getElementById('calcViewMoney');
-  var viewDisc = document.getElementById('calcViewDiscount');
-  var viewTrig = document.getElementById('calcViewTrig');
+function formatCalcNumberWithCommas(valStr) {
+  if (valStr === null || valStr === undefined) return '0';
+  var s = String(valStr);
+  if (s === 'Error' || s === 'Infinity' || s === 'Undefined') return s;
+  var parts = s.split('.');
+  var intPart = parts[0];
+  var decPart = parts.length > 1 ? '.' + parts[1] : '';
+  var sign = '';
+  if (intPart.startsWith('-')) {
+    sign = '-';
+    intPart = intPart.substring(1);
+  }
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return sign + intPart + decPart;
+}
 
-  if (btnMoney) btnMoney.classList.toggle('active', mode === 'money');
-  if (btnDisc) btnDisc.classList.toggle('active', mode === 'discount');
-  if (btnTrig) btnTrig.classList.toggle('active', mode === 'trig');
+function formatExprWithCommas(exprStr) {
+  if (!exprStr) return '';
+  return String(exprStr).replace(/\d+(?:\.\d+)?/g, function(m) {
+    return formatCalcNumberWithCommas(m);
+  });
+}
 
-  if (viewMoney) viewMoney.style.display = mode === 'money' ? 'block' : 'none';
-  if (viewDisc) viewDisc.style.display = mode === 'discount' ? 'block' : 'none';
-  if (viewTrig) viewTrig.style.display = mode === 'trig' ? 'block' : 'none';
+function evaluateRawMathExpression(rawExpr) {
+  if (!rawExpr) return null;
+  var s = String(rawExpr)
+    .replace(/,/g, '')
+    .replace(/×/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/−/g, '-')
+    .replace(/π/g, '(' + Math.PI + ')')
+    .replace(/\be\b/g, '(' + Math.E + ')')
+    .replace(/\^/g, '**');
 
-  if (mode === 'money') updateCalcDisplay();
-  if (mode === 'discount') calcDiscountLive();
-  if (mode === 'trig') evalTrigInstant();
+  // Balance open parentheses automatically for live evaluation
+  var openCount = (s.match(/\(/g) || []).length;
+  var closeCount = (s.match(/\)/g) || []).length;
+  while (openCount > closeCount) {
+    s += ')';
+    closeCount++;
+  }
+
+  // Strip trailing operator for live preview
+  s = s.replace(/[+\-*/.]+$/, '');
+  if (!s) return null;
+
+  try {
+    var fn = new Function('DEG_MODE', '"use strict"; ' +
+      'var _toRad = function(x){ return DEG_MODE ? (x * Math.PI / 180) : x; }; ' +
+      'var _toDeg = function(x){ return DEG_MODE ? (x * 180 / Math.PI) : x; }; ' +
+      'var sin = function(x){ var r = Math.sin(_toRad(x)); return Math.abs(r) < 1e-12 ? 0 : r; }; ' +
+      'var cos = function(x){ var r = Math.cos(_toRad(x)); return Math.abs(r) < 1e-12 ? 0 : r; }; ' +
+      'var tan = function(x){ if(DEG_MODE && Math.abs((((x % 180) + 180) % 180) - 90) < 1e-9) return NaN; var r = Math.tan(_toRad(x)); return Math.abs(r) < 1e-12 ? 0 : r; }; ' +
+      'var asin = function(x){ return _toDeg(Math.asin(x)); }; ' +
+      'var acos = function(x){ return _toDeg(Math.acos(x)); }; ' +
+      'var atan = function(x){ return _toDeg(Math.atan(x)); }; ' +
+      'var sqrt = function(x){ return Math.sqrt(x); }; ' +
+      'var ln = function(x){ return Math.log(x); }; ' +
+      'var log = function(x){ return Math.log10 ? Math.log10(x) : (Math.log(x)/Math.LN10); }; ' +
+      'var abs = function(x){ return Math.abs(x); }; ' +
+      'return (' + s + ');');
+    var res = fn(calcAngleUnit === 'DEG');
+    if (res === undefined || res === null || isNaN(res)) return NaN;
+    if (!isFinite(res)) return Infinity;
+    return Math.round(res * 100000000) / 100000000;
+  } catch (err) {
+    return null;
+  }
 }
 
 function updateCalcDisplay() {
-  var mainEl = document.getElementById('calcMainDisplay');
-  var exprEl = document.getElementById('calcExprDisplay');
-  if (!mainEl || !exprEl) return;
+  var exprEl = document.getElementById('calcExpressionLine');
+  var mainEl = document.getElementById('calcMainResult');
+  var prevEl = document.getElementById('calcLivePreview');
 
-  var prefix = calcShowRupee ? '₹ ' : '';
-  var formatted = calcCurNum;
-  if (!isNaN(Number(calcCurNum)) && calcCurNum.indexOf('.') === -1 && calcCurNum.length > 3) {
-    formatted = Number(calcCurNum).toLocaleString('en-IN');
+  if (exprEl) {
+    exprEl.textContent = formatExprWithCommas(calcExpr);
   }
-  mainEl.textContent = prefix + formatted;
-  exprEl.textContent = calcExpr;
+  if (mainEl) {
+    mainEl.textContent = formatCalcNumberWithCommas(calcCurNum);
+    if (String(calcCurNum).length > 12) {
+      mainEl.style.fontSize = '1.9rem';
+    } else {
+      mainEl.style.fontSize = '2.65rem';
+    }
+  }
+  if (prevEl) {
+    if (calcExpr && !calcJustEvaled) {
+      var candidate = calcExpr + (calcCurNum !== '0' ? calcCurNum : '');
+      var liveVal = evaluateRawMathExpression(candidate);
+      if (liveVal !== null && !isNaN(liveVal) && isFinite(liveVal)) {
+        prevEl.textContent = '= ' + formatCalcNumberWithCommas(String(liveVal));
+      } else {
+        prevEl.textContent = '';
+      }
+    } else {
+      prevEl.textContent = '';
+    }
+  }
 }
 
-function calcToggleRupeePrefix() {
-  calcShowRupee = !calcShowRupee;
-  var btn = document.getElementById('calcRupeeBtn');
-  if (btn) btn.textContent = calcShowRupee ? '₹ INR' : '123 NUM';
+function calcInputNum(digit) {
+  if (calcJustEvaled) {
+    calcExpr = '';
+    calcCurNum = '0';
+    calcJustEvaled = false;
+  }
+  if (calcCurNum === '0' || calcCurNum === '-0' || calcCurNum === 'Error') {
+    calcCurNum = (calcCurNum === '-0' ? '-' : '') + String(digit);
+  } else {
+    if (calcCurNum.replace(/[^0-9]/g, '').length < 15) {
+      calcCurNum += String(digit);
+    }
+  }
   updateCalcDisplay();
 }
 
-function calcInputDigit(digit) {
+function calcInputMultiZero() {
+  var tripleChk = document.getElementById('chkCalcTripleZero');
+  var zeros = (tripleChk && tripleChk.checked) ? '000' : '00';
   if (calcJustEvaled) {
-    calcCurNum = '0';
     calcExpr = '';
+    calcCurNum = '0';
     calcJustEvaled = false;
   }
-  if (calcCurNum === '0' || calcCurNum === '-0') {
-    calcCurNum = (calcCurNum.startsWith('-') ? '-' : '') + digit;
-  } else {
-    if (calcCurNum.length < 15) calcCurNum += digit;
+  if (calcCurNum === '0' || calcCurNum === 'Error') {
+    calcCurNum = '0';
+  } else if (calcCurNum.replace(/[^0-9]/g, '').length <= 13) {
+    calcCurNum += zeros;
   }
   updateCalcDisplay();
 }
 
 function calcInputDot() {
   if (calcJustEvaled) {
-    calcCurNum = '0';
     calcExpr = '';
+    calcCurNum = '0';
     calcJustEvaled = false;
   }
   if (calcCurNum.indexOf('.') === -1) {
     calcCurNum += '.';
-    updateCalcDisplay();
   }
+  updateCalcDisplay();
+}
+
+function calcInputParen() {
+  if (calcJustEvaled) {
+    calcExpr = '';
+    calcJustEvaled = false;
+  }
+  var full = calcExpr;
+  var openCount = (full.match(/\(/g) || []).length;
+  var closeCount = (full.match(/\)/g) || []).length;
+  if (openCount > closeCount && (calcCurNum !== '0' || full.slice(-1) === ')')) {
+    if (calcCurNum !== '0') {
+      calcExpr += calcCurNum + ')';
+      calcCurNum = '0';
+    } else {
+      calcExpr += ')';
+    }
+  } else {
+    if (calcCurNum !== '0') {
+      calcExpr += calcCurNum + '×(';
+      calcCurNum = '0';
+    } else {
+      calcExpr += '(';
+    }
+  }
+  updateCalcDisplay();
 }
 
 function calcToggleSign() {
-  if (calcCurNum === '0') return;
+  if (calcCurNum === '0' || calcCurNum === 'Error') return;
   if (calcCurNum.startsWith('-')) {
     calcCurNum = calcCurNum.substring(1);
   } else {
@@ -6798,8 +6922,10 @@ function calcBackspace() {
   if (calcCurNum.length > 1) {
     calcCurNum = calcCurNum.slice(0, -1);
     if (calcCurNum === '-' || calcCurNum === '') calcCurNum = '0';
-  } else {
+  } else if (calcCurNum !== '0') {
     calcCurNum = '0';
+  } else if (calcExpr.length > 0) {
+    calcExpr = calcExpr.slice(0, -1);
   }
   updateCalcDisplay();
 }
@@ -6812,14 +6938,14 @@ function calcClearEntry() {
 function calcAllClear() {
   calcCurNum = '0';
   calcExpr = '';
-  calcLastOp = null;
   calcJustEvaled = false;
   updateCalcDisplay();
 }
 
 function calcInputOp(op) {
+  if (calcCurNum === 'Error') calcCurNum = '0';
   if (calcJustEvaled) {
-    calcExpr = calcCurNum + ' ' + op + ' ';
+    calcExpr = calcCurNum + op;
     calcCurNum = '0';
     calcJustEvaled = false;
     updateCalcDisplay();
@@ -6828,34 +6954,190 @@ function calcInputOp(op) {
 
   if (op === '%') {
     var curVal = parseFloat(calcCurNum) || 0;
-    calcCurNum = String(curVal / 100);
+    // If there is a preceding addition/subtraction like "1000−", compute percentage of base
+    var baseMatch = calcExpr.match(/^(\d+(?:\.\d+)?)([+−])$/);
+    if (baseMatch) {
+      var baseVal = parseFloat(baseMatch[1]) || 0;
+      calcCurNum = String(Math.round((baseVal * (curVal / 100)) * 10000) / 10000);
+    } else {
+      calcCurNum = String(Math.round((curVal / 100) * 1000000) / 1000000);
+    }
     updateCalcDisplay();
     return;
   }
 
-  calcExpr += calcCurNum + ' ' + op + ' ';
-  calcCurNum = '0';
+  if (calcCurNum === '0' && /[+−×÷^]$/.test(calcExpr)) {
+    calcExpr = calcExpr.slice(0, -1) + op;
+  } else {
+    calcExpr += calcCurNum + op;
+    calcCurNum = '0';
+  }
   updateCalcDisplay();
 }
 
 function calcEvaluateEqual() {
-  if (!calcExpr && !calcJustEvaled) return;
-  var fullExpr = calcExpr + calcCurNum;
-  var sanitized = fullExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/[^\d.+\-*/() ]/g, '');
-  try {
-    var result = Function('"use strict";return (' + sanitized + ')')();
-    if (!isFinite(result)) {
-      calcCurNum = 'Error';
-    } else {
-      var cleanResult = Math.round(result * 10000) / 10000;
-      calcCurNum = String(cleanResult);
-      addCalcHistory(fullExpr + ' = ' + cleanResult);
-    }
-  } catch(e) {
+  var fullExpr = calcExpr + (calcCurNum !== '0' || !calcExpr ? calcCurNum : '');
+  if (!fullExpr) return;
+  var res = evaluateRawMathExpression(fullExpr);
+  if (res === null || isNaN(res)) {
     calcCurNum = 'Error';
+  } else if (!isFinite(res)) {
+    calcCurNum = 'Infinity';
+  } else {
+    var cleanResult = Math.round(res * 1000000) / 1000000;
+    calcCurNum = String(cleanResult);
+    addCalcHistory(fullExpr, String(cleanResult));
   }
-  calcExpr = fullExpr + ' =';
+  calcExpr = fullExpr;
   calcJustEvaled = true;
+  updateCalcDisplay();
+}
+
+// SCIENTIFIC FUNCTIONS (Screenshot 2)
+function toggleCalcScientificMode() {
+  calcSciMode = !calcSciMode;
+  var stdGrid = document.getElementById('calcGridStandard');
+  var sciGrid = document.getElementById('calcGridScientific');
+  var btnSci = document.getElementById('btnToolScientific');
+  var iconTxt = document.getElementById('sciToggleIconText');
+  var ucPanel = document.getElementById('calcUnitConverterPanel');
+  var keypadArea = document.getElementById('calcKeypadArea');
+
+  if (ucPanel && ucPanel.style.display !== 'none') {
+    ucPanel.style.display = 'none';
+    if (keypadArea) keypadArea.style.display = 'block';
+  }
+
+  if (stdGrid) stdGrid.style.display = calcSciMode ? 'none' : 'grid';
+  if (sciGrid) sciGrid.style.display = calcSciMode ? 'grid' : 'none';
+  if (btnSci) btnSci.classList.toggle('active', calcSciMode);
+  if (iconTxt) iconTxt.innerHTML = calcSciMode ? '+−<br>×÷' : '√π<br>e=';
+}
+
+function toggleSciInverse() {
+  calcSciInv = !calcSciInv;
+  var bSin = document.getElementById('btnSciSin');
+  var bCos = document.getElementById('btnSciCos');
+  var bTan = document.getElementById('btnSciTan');
+  if (bSin) bSin.innerHTML = calcSciInv ? 'sin<sup>-1</sup>' : 'sin';
+  if (bCos) bCos.innerHTML = calcSciInv ? 'cos<sup>-1</sup>' : 'cos';
+  if (bTan) bTan.innerHTML = calcSciInv ? 'tan<sup>-1</sup>' : 'tan';
+}
+
+function toggleSciRadDeg() {
+  calcAngleUnit = (calcAngleUnit === 'DEG') ? 'RAD' : 'DEG';
+  trigAngleMode = calcAngleUnit;
+  var btn = document.getElementById('btnSciRadDeg');
+  if (btn) btn.textContent = (calcAngleUnit === 'DEG') ? 'Rad' : 'Deg';
+  updateCalcDisplay();
+}
+
+function calcSciFunc(fn) {
+  var val = parseFloat(calcCurNum) || 0;
+  var isDeg = (calcAngleUnit === 'DEG');
+  var res = 0;
+  var label = '';
+
+  if (fn === 'pi') {
+    calcCurNum = String(Math.round(Math.PI * 1000000) / 1000000);
+    calcJustEvaled = false;
+    updateCalcDisplay();
+    return;
+  }
+  if (fn === 'e') {
+    calcCurNum = String(Math.round(Math.E * 1000000) / 1000000);
+    calcJustEvaled = false;
+    updateCalcDisplay();
+    return;
+  }
+  if (fn === 'pow') {
+    calcInputOp('^');
+    return;
+  }
+
+  if (fn === 'sin') {
+    if (calcSciInv) {
+      if (val < -1 || val > 1) { calcCurNum = 'Error'; updateCalcDisplay(); return; }
+      res = Math.asin(val);
+      if (isDeg) res = res * 180 / Math.PI;
+      label = 'asin(' + val + ')';
+    } else {
+      var r = isDeg ? (val * Math.PI / 180) : val;
+      res = Math.abs(Math.sin(r)) < 1e-12 ? 0 : Math.sin(r);
+      label = 'sin(' + val + ')';
+    }
+  } else if (fn === 'cos') {
+    if (calcSciInv) {
+      if (val < -1 || val > 1) { calcCurNum = 'Error'; updateCalcDisplay(); return; }
+      res = Math.acos(val);
+      if (isDeg) res = res * 180 / Math.PI;
+      label = 'acos(' + val + ')';
+    } else {
+      var r2 = isDeg ? (val * Math.PI / 180) : val;
+      res = Math.abs(Math.cos(r2)) < 1e-12 ? 0 : Math.cos(r2);
+      label = 'cos(' + val + ')';
+    }
+  } else if (fn === 'tan') {
+    if (calcSciInv) {
+      res = Math.atan(val);
+      if (isDeg) res = res * 180 / Math.PI;
+      label = 'atan(' + val + ')';
+    } else {
+      var norm = isDeg ? (((val % 180) + 180) % 180) : val;
+      if (isDeg && Math.abs(norm - 90) < 1e-6) {
+        calcCurNum = 'Undefined';
+        calcExpr = 'tan(' + val + ')';
+        calcJustEvaled = true;
+        updateCalcDisplay();
+        return;
+      }
+      var r3 = isDeg ? (val * Math.PI / 180) : val;
+      res = Math.abs(Math.tan(r3)) < 1e-12 ? 0 : Math.tan(r3);
+      label = 'tan(' + val + ')';
+    }
+  } else if (fn === 'sqrt') {
+    if (val < 0) { calcCurNum = 'Error'; updateCalcDisplay(); return; }
+    res = Math.sqrt(val);
+    label = '√(' + val + ')';
+  } else if (fn === 'sq') {
+    res = val * val;
+    label = '(' + val + ')²';
+  } else if (fn === 'inv') {
+    if (val === 0) { calcCurNum = 'Infinity'; updateCalcDisplay(); return; }
+    res = 1 / val;
+    label = '1/(' + val + ')';
+  } else if (fn === 'ln') {
+    if (val <= 0) { calcCurNum = 'Error'; updateCalcDisplay(); return; }
+    res = Math.log(val);
+    label = 'ln(' + val + ')';
+  } else if (fn === 'log') {
+    if (val <= 0) { calcCurNum = 'Error'; updateCalcDisplay(); return; }
+    res = Math.log10 ? Math.log10(val) : (Math.log(val) / Math.LN10);
+    label = 'log(' + val + ')';
+  } else if (fn === 'exp') {
+    res = Math.exp(val);
+    label = 'e^(' + val + ')';
+  } else if (fn === 'abs') {
+    res = Math.abs(val);
+    label = '|' + val + '|';
+  }
+
+  var clean = Math.round(res * 1000000) / 1000000;
+  calcExpr = label;
+  calcCurNum = String(clean);
+  calcJustEvaled = true;
+  addCalcHistory(label, String(clean));
+  updateCalcDisplay();
+}
+
+function calcMemoryOp(op) {
+  var cur = parseFloat(calcCurNum) || 0;
+  var badge = document.getElementById('calcMemIndicator');
+  if (op === 'MC') calcMemoryVal = 0;
+  else if (op === 'MR') { calcCurNum = String(calcMemoryVal); calcJustEvaled = false; }
+  else if (op === 'M+') calcMemoryVal += cur;
+  else if (op === 'M-') calcMemoryVal -= cur;
+  if (badge) badge.style.display = calcMemoryVal !== 0 ? 'inline-block' : 'none';
   updateCalcDisplay();
 }
 
@@ -6864,18 +7146,46 @@ function calcQuickGst(pct) {
   if (curVal === 0) return;
   var factor = 1 + (pct / 100);
   var result = Math.round(curVal * factor * 100) / 100;
-  calcExpr = curVal + (pct >= 0 ? ' +' + pct + '% GST =' : ' ' + pct + '% =');
+  var exprLabel = curVal + (pct >= 0 ? '+' + pct + '%' : pct + '%');
+  calcExpr = exprLabel;
   calcCurNum = String(result);
   calcJustEvaled = true;
-  addCalcHistory(calcExpr + ' ' + result);
+  addCalcHistory(exprLabel, String(result));
   updateCalcDisplay();
 }
 
-function addCalcHistory(entry) {
+// =========================================================================
+// HISTORY SCREEN (Screenshot 5)
+// =========================================================================
+function formatHistoryTimestamp() {
+  var d = new Date();
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var mon = months[d.getMonth()];
+  var day = d.getDate();
+  var yr = d.getFullYear();
+  var hr = d.getHours();
+  var min = String(d.getMinutes()).padStart(2, '0');
+  var ampm = hr >= 12 ? 'PM' : 'AM';
+  hr = hr % 12;
+  if (hr === 0) hr = 12;
+  return mon + ' ' + day + ', ' + yr + ' ' + hr + ':' + min + ' ' + ampm;
+}
+
+function addCalcHistory(exprStr, ansStr) {
   try {
     var hist = JSON.parse(localStorage.getItem('sw_calc_history') || '[]');
-    hist.unshift({ text: entry, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-    if (hist.length > 20) hist = hist.slice(0, 20);
+    if (ansStr === undefined && String(exprStr).indexOf('=') !== -1) {
+      var sp = String(exprStr).split('=');
+      exprStr = sp[0].trim();
+      ansStr = sp[1].trim();
+    }
+    hist.unshift({
+      expr: exprStr,
+      ans: ansStr,
+      text: exprStr + ' = ' + ansStr,
+      time: formatHistoryTimestamp()
+    });
+    if (hist.length > 40) hist = hist.slice(0, 40);
     localStorage.setItem('sw_calc_history', JSON.stringify(hist));
     renderCalcHistory();
   } catch(e) {}
@@ -6887,16 +7197,19 @@ function renderCalcHistory() {
   try {
     var hist = JSON.parse(localStorage.getItem('sw_calc_history') || '[]');
     if (hist.length === 0) {
-      tape.innerHTML = '<div style="text-align:center; padding:8px 0; color:#64748b;">কোনো পুরনো হিসাব নেই</div>';
+      tape.innerHTML = '<div style="text-align:center; padding:40px 16px; color:#64748b; font-size:0.95rem;">No calculation history yet</div>';
       return;
     }
     var html = '';
     hist.forEach(function(h) {
-      var parts = h.text.split('=');
-      var ans = parts.length > 1 ? parts[1].trim() : parts[0];
-      html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed #334155;">' +
-        '<span>' + h.text + '</span>' +
-        '<button type="button" onclick="calcUseHistoryVal(\'' + ans + '\')" style="background:#0284c7; color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:0.68rem; cursor:pointer;">Use</button>' +
+      var exprPart = h.expr || (h.text ? h.text.split('=')[0].trim() : '0');
+      var ansPart = h.ans || (h.text && h.text.split('=')[1] ? h.text.split('=')[1].trim() : '0');
+      var dateStr = h.time || 'Today';
+      html += '<div class="android-history-item" onclick="calcUseHistoryVal(\'' + String(ansPart).replace(/[^0-9.-]/g, '') + '\')">' +
+        '<span class="android-history-dots"><i class="fa-solid fa-ellipsis-vertical"></i></span>' +
+        '<div class="android-history-expr">' + formatExprWithCommas(exprPart) + '</div>' +
+        '<div class="android-history-ans">= ' + formatCalcNumberWithCommas(ansPart) + '</div>' +
+        '<div class="android-history-date">' + dateStr + '</div>' +
       '</div>';
     });
     tape.innerHTML = html;
@@ -6907,6 +7220,7 @@ function calcUseHistoryVal(val) {
   calcCurNum = String(val).replace(/[^\d.-]/g, '') || '0';
   calcExpr = '';
   calcJustEvaled = false;
+  openCalcSubScreen('main');
   updateCalcDisplay();
 }
 
@@ -6915,9 +7229,242 @@ function calcClearHistory() {
   renderCalcHistory();
 }
 
+// =========================================================================
+// SUB-SCREEN NAVIGATION & SETTINGS (Screenshot 4)
+// =========================================================================
+function openCalcSubScreen(screenName) {
+  var mainV = document.getElementById('calcMainView');
+  var histV = document.getElementById('calcHistoryView');
+  var setV = document.getElementById('calcSettingsView');
+
+  if (mainV) mainV.style.display = (screenName === 'main') ? 'block' : 'none';
+  if (histV) histV.style.display = (screenName === 'history') ? 'block' : 'none';
+  if (setV) setV.style.display = (screenName === 'settings') ? 'block' : 'none';
+
+  if (screenName === 'history') renderCalcHistory();
+}
+
+function toggleAndroidCalcTheme() {
+  var shell = document.getElementById('androidCalcShell');
+  var chk = document.getElementById('chkCalcNightMode');
+  if (!shell) return;
+  var isDark = shell.classList.toggle('dark-theme');
+  if (chk) chk.checked = isDark;
+}
+
+function cycleCalcAccentColor() {
+  calcAccentIdx = (calcAccentIdx + 1) % calcAccentColors.length;
+  var color = calcAccentColors[calcAccentIdx];
+  var shell = document.getElementById('androidCalcShell');
+  var swatch = document.getElementById('calcColorSwatch');
+  if (shell) shell.style.setProperty('--calc-accent', color);
+  if (swatch) swatch.style.background = color;
+}
+
+function applyCalcSettingsUI(zeroMode) {
+  var shell = document.getElementById('androidCalcShell');
+  var chkRound = document.getElementById('chkCalcRounded');
+  var chkMem = document.getElementById('chkCalcMemory');
+  var chkDbl = document.getElementById('chkCalcDoubleZero');
+  var chkTrp = document.getElementById('chkCalcTripleZero');
+  var memBar = document.getElementById('calcMemoryBar');
+  var btnZStd = document.getElementById('btnMultiZeroStd');
+  var btnZSci = document.getElementById('btnMultiZeroSci');
+
+  if (zeroMode === 'triple' && chkTrp && chkTrp.checked && chkDbl) {
+    chkDbl.checked = false;
+  } else if (zeroMode === 'double' && chkDbl && chkDbl.checked && chkTrp) {
+    chkTrp.checked = false;
+  }
+
+  if (shell && chkRound) {
+    shell.classList.toggle('rounded-keys', chkRound.checked);
+  }
+  if (memBar && chkMem) {
+    memBar.style.display = chkMem.checked ? 'grid' : 'none';
+  }
+  var zLabel = (chkTrp && chkTrp.checked) ? '000' : ((chkDbl && !chkDbl.checked) ? '0' : '00');
+  if (btnZStd) btnZStd.textContent = zLabel;
+  if (btnZSci) btnZSci.textContent = zLabel;
+}
+
+// =========================================================================
+// UNIT CONVERTER SHEET & INTERACTIVE ENGLISH TOOLS (Screenshot 3)
+// =========================================================================
+function toggleUnitConverterPanel() {
+  var ucPanel = document.getElementById('calcUnitConverterPanel');
+  var keypadArea = document.getElementById('calcKeypadArea');
+  var btnConv = document.getElementById('btnToolConverter');
+  if (!ucPanel) return;
+
+  var isOpen = ucPanel.style.display !== 'none';
+  if (isOpen) {
+    ucPanel.style.display = 'none';
+    if (keypadArea) keypadArea.style.display = 'block';
+    if (btnConv) btnConv.classList.remove('active');
+  } else {
+    ucPanel.style.display = 'block';
+    if (keypadArea) keypadArea.style.display = 'none';
+    if (btnConv) btnConv.classList.add('active');
+    openUnitConverterTool('discount');
+  }
+}
+
+function openUnitConverterTool(toolKey) {
+  var ucPanel = document.getElementById('calcUnitConverterPanel');
+  var keypadArea = document.getElementById('calcKeypadArea');
+  var box = document.getElementById('ucActiveToolBox');
+  if (ucPanel && ucPanel.style.display === 'none') {
+    ucPanel.style.display = 'block';
+    if (keypadArea) keypadArea.style.display = 'none';
+  }
+  if (!box) return;
+  box.style.display = 'block';
+
+  if (toolKey === 'discount') {
+    box.innerHTML = '' +
+      '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🏷️ DISCOUNT CALCULATOR</div>' +
+      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
+        '<div><label style="font-size:0.72rem; color:#64748b;">Original Price (₹)</label>' +
+        '<input type="number" id="disc_orig_price" placeholder="e.g. 5000" oninput="calcDiscountLive()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; font-weight:700;"></div>' +
+        '<div><label style="font-size:0.72rem; color:#64748b;">Discount (%)</label>' +
+        '<input type="number" id="disc_pct" placeholder="e.g. 10" oninput="calcDiscountLive()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; font-weight:700;"></div>' +
+      '</div>' +
+      '<div style="margin-bottom:8px;"><label style="font-size:0.72rem; color:#64748b;">Or Direct Flat Discount (₹)</label>' +
+        '<input type="number" id="disc_flat" placeholder="e.g. 500" oninput="calcDiscountFromFlatLive()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px;">' +
+      '</div>' +
+      '<div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">' +
+        '<button type="button" class="calc-preset-chip" style="padding:4px 10px;" onclick="setDiscountPreset(5)">5%</button>' +
+        '<button type="button" class="calc-preset-chip" style="padding:4px 10px;" onclick="setDiscountPreset(10)">10%</button>' +
+        '<button type="button" class="calc-preset-chip" style="padding:4px 10px;" onclick="setDiscountPreset(15)">15%</button>' +
+        '<button type="button" class="calc-preset-chip" style="padding:4px 10px;" onclick="setDiscountPreset(20)">20%</button>' +
+        '<button type="button" class="calc-preset-chip" style="padding:4px 10px;" onclick="setDiscountPreset(25)">25%</button>' +
+      '</div>' +
+      '<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:center;">' +
+        '<div><div style="font-size:0.7rem; color:#64748b;">Amount Saved</div><div id="disc_val_saved" style="font-size:1.05rem; font-weight:800; color:#16a34a;">₹ 0.00</div></div>' +
+        '<div><div style="font-size:0.7rem; color:#64748b;">Final Payable Price</div><div id="disc_val_final" style="font-size:1.05rem; font-weight:800; color:#0284c7;">₹ 0.00</div></div>' +
+      '</div>' +
+      '<div id="disc_val_breakdown" style="font-size:0.75rem; color:#64748b; margin-top:6px; text-align:center;">Enter price and discount % to view breakdown</div>';
+    return;
+  }
+
+  if (toolKey === 'gst') {
+    box.innerHTML = '' +
+      '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🧾 GST TAX CALCULATOR</div>' +
+      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
+        '<div><label style="font-size:0.72rem; color:#64748b;">Base Amount (₹)</label>' +
+        '<input type="number" id="uc_gst_amt" value="1000" oninput="runUcGstCalc()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; font-weight:700;"></div>' +
+        '<div><label style="font-size:0.72rem; color:#64748b;">GST Rate (%)</label>' +
+        '<select id="uc_gst_rate" onchange="runUcGstCalc()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; font-weight:700;">' +
+          '<option value="18" selected>18% GST</option><option value="12">12% GST</option><option value="5">5% GST</option><option value="28">28% GST</option>' +
+        '</select></div>' +
+      '</div>' +
+      '<div id="uc_gst_res" style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:0.82rem;"></div>';
+    runUcGstCalc();
+    return;
+  }
+
+  if (toolKey === 'angle') {
+    box.innerHTML = '' +
+      '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">📐 ANGLE, TRIGONOMETRY & MITRE CUT</div>' +
+      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
+        '<div><label style="font-size:0.72rem; color:#64748b;">Width / Base (Inch)</label>' +
+        '<input type="number" id="mitre_base" placeholder="e.g. 36" oninput="calcMitreLive()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px;"></div>' +
+        '<div><label style="font-size:0.72rem; color:#64748b;">Height / Rise (Inch)</label>' +
+        '<input type="number" id="mitre_height" placeholder="e.g. 36" oninput="calcMitreLive()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px;"></div>' +
+      '</div>' +
+      '<div id="mitre_results_box" style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:0.78rem; color:#334155;">Enter Width and Height to calculate Diagonal Length and Mitre Cut Angles.</div>';
+    return;
+  }
+
+  // Generic Unit Converter for Length, Area, Currency, Temperature, Mass, Volume, Split Bill, Loan, etc.
+  var configs = {
+    length: { title: '📏 LENGTH CONVERTER', u1: 'Feet (ft)', u2: 'Inches (in)', u3: 'Millimeters (mm)', f12: 12, f13: 304.8 },
+    area: { title: '⬛ AREA CONVERTER', u1: 'Sq. Feet (sq.ft)', u2: 'Sq. Meters (sq.m)', u3: 'Sq. Inches (sq.in)', f12: 0.092903, f13: 144 },
+    currency: { title: '💱 CURRENCY CONVERTER', u1: 'Indian Rupee (INR ₹)', u2: 'US Dollar (USD $)', u3: 'Euro (EUR €)', f12: 0.0119, f13: 0.011 },
+    temperature: { title: '🌡️ TEMPERATURE CONVERTER', u1: 'Celsius (°C)', u2: 'Fahrenheit (°F)', u3: 'Kelvin (K)', temp: true },
+    volume: { title: '🧊 VOLUME CONVERTER', u1: 'Liters (L)', u2: 'Milliliters (mL)', u3: 'Cubic Feet (cu.ft)', f12: 1000, f13: 0.035315 },
+    mass: { title: '⚖️ MASS / WEIGHT CONVERTER', u1: 'Kilograms (kg)', u2: 'Grams (g)', u3: 'Pounds (lb)', f12: 1000, f13: 2.20462 },
+    data: { title: '💾 DATA STORAGE CONVERTER', u1: 'Gigabytes (GB)', u2: 'Megabytes (MB)', u3: 'Terabytes (TB)', f12: 1024, f13: 0.00097656 },
+    speed: { title: '🚀 SPEED CONVERTER', u1: 'km/h', u2: 'm/s', u3: 'mph', f12: 0.277778, f13: 0.621371 },
+    time: { title: '⏱️ TIME CONVERTER', u1: 'Hours', u2: 'Minutes', u3: 'Seconds', f12: 60, f13: 3600 },
+    pressure: { title: '🧭 PRESSURE CONVERTER', u1: 'Bar', u2: 'PSI', u3: 'Pascal (Pa)', f12: 14.5038, f13: 100000 },
+    force: { title: '🛠️ FORCE CONVERTER', u1: 'Newton (N)', u2: 'Kilogram-force (kgf)', u3: 'Pound-force (lbf)', f12: 0.10197, f13: 0.22481 },
+    power: { title: '⚡ POWER CONVERTER', u1: 'Kilowatt (kW)', u2: 'Watts (W)', u3: 'Horsepower (HP)', f12: 1000, f13: 1.34102 },
+    energy: { title: '🔥 ENERGY CONVERTER', u1: 'Kilowatt-hour (kWh)', u2: 'Joules (J)', u3: 'Calories (cal)', f12: 3600000, f13: 860421 },
+    frequency: { title: '〰️ FREQUENCY CONVERTER', u1: 'Hertz (Hz)', u2: 'Kilohertz (kHz)', u3: 'RPM', f12: 0.001, f13: 60 },
+    fuel: { title: '⛽ FUEL CONVERTER', u1: 'km / Liter', u2: 'Liters / 100 km', u3: 'Miles / Gallon (MPG)', f12: 100, f13: 2.35215 },
+    split_bill: { title: '🧾 SPLIT BILL CALCULATOR', u1: 'Total Bill Amount (₹)', u2: 'Per Person (2 People)', u3: 'Per Person (4 People)', f12: 0.5, f13: 0.25 },
+    loan: { title: '🏦 LOAN ESTIMATE (1 Yr @ 10%)', u1: 'Loan Principal (₹)', u2: 'Monthly EMI (₹)', u3: 'Total Payable (₹)', f12: 0.087916, f13: 1.055 },
+    savings: { title: '🐷 SAVINGS GROWTH (1 Yr @ 7%)', u1: 'Deposit Amount (₹)', u2: 'Interest Earned (₹)', u3: 'Maturity Value (₹)', f12: 0.07, f13: 1.07 }
+  };
+
+  var cfg = configs[toolKey] || { title: '🔄 ' + String(toolKey).toUpperCase() + ' CALCULATOR', u1: 'Input Value', u2: 'Converted (x12)', u3: 'Converted (x100)', f12: 12, f13: 100 };
+  window._activeUcCfg = cfg;
+
+  box.innerHTML = '' +
+    '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">' + cfg.title + '</div>' +
+    '<div style="margin-bottom:8px;">' +
+      '<label style="font-size:0.72rem; color:#64748b;">' + cfg.u1 + '</label>' +
+      '<input type="number" id="uc_gen_input" value="1" oninput="runGenericUcConvert()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; font-weight:700;">' +
+    '</div>' +
+    '<div id="uc_gen_output" style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:0.82rem;"></div>';
+  runGenericUcConvert();
+}
+
+function runUcGstCalc() {
+  var amtEl = document.getElementById('uc_gst_amt');
+  var rateEl = document.getElementById('uc_gst_rate');
+  var resEl = document.getElementById('uc_gst_res');
+  if (!amtEl || !rateEl || !resEl) return;
+  var amt = parseFloat(amtEl.value) || 0;
+  var rate = parseFloat(rateEl.value) || 18;
+  var gstAmt = Math.round(amt * (rate / 100) * 100) / 100;
+  var total = Math.round((amt + gstAmt) * 100) / 100;
+  resEl.innerHTML = '<div>CGST (' + (rate/2) + '%): <b>₹' + (gstAmt/2).toFixed(2) + '</b> | SGST (' + (rate/2) + '%): <b>₹' + (gstAmt/2).toFixed(2) + '</b></div>' +
+    '<div style="margin-top:4px; color:#0284c7; font-size:0.95rem;">Total GST: <b>₹' + gstAmt.toFixed(2) + '</b> | Total with GST: <b>₹' + total.toFixed(2) + '</b></div>';
+}
+
+function runGenericUcConvert() {
+  var inp = document.getElementById('uc_gen_input');
+  var out = document.getElementById('uc_gen_output');
+  var cfg = window._activeUcCfg;
+  if (!inp || !out || !cfg) return;
+  var v = parseFloat(inp.value) || 0;
+  var r1 = 0, r2 = 0;
+  if (cfg.temp) {
+    r1 = (v * 9 / 5) + 32;
+    r2 = v + 273.15;
+  } else {
+    r1 = v * cfg.f12;
+    r2 = v * cfg.f13;
+  }
+  out.innerHTML = '<div>• ' + cfg.u2 + ': <b style="color:#0284c7;">' + (Math.round(r1 * 10000) / 10000) + '</b></div>' +
+    '<div style="margin-top:4px;">• ' + cfg.u3 + ': <b style="color:#16a34a;">' + (Math.round(r2 * 10000) / 10000) + '</b></div>';
+}
+
 // -------------------------------------------------------------------------
-// DISCOUNT CALCULATOR LOGIC
+// DISCOUNT, TRIGONOMETRY & MITRE HELPERS (100% ENGLISH)
 // -------------------------------------------------------------------------
+function setCalcTabMode(mode) {
+  if (mode === 'discount') {
+    openCalcSubScreen('main');
+    var ucPanel = document.getElementById('calcUnitConverterPanel');
+    if (ucPanel && ucPanel.style.display === 'none') toggleUnitConverterPanel();
+    openUnitConverterTool('discount');
+  } else if (mode === 'trig') {
+    openCalcSubScreen('main');
+    if (!calcSciMode) toggleCalcScientificMode();
+  } else {
+    openCalcSubScreen('main');
+    updateCalcDisplay();
+  }
+}
+
+function switchCalcSubTab(mode) {
+  setCalcTabMode(mode);
+}
+
 function setDiscountPreset(pct) {
   var pInput = document.getElementById('disc_pct');
   if (pInput) pInput.value = pct;
@@ -6942,7 +7489,7 @@ function calcDiscountLive() {
   if (orig <= 0) {
     savedEl.textContent = '₹ 0.00';
     finalEl.textContent = '₹ 0.00';
-    if (bdEl) bdEl.textContent = 'আসল দাম ও ডিসকাউন্টের হিসাব এখানে দেখা যাবে';
+    if (bdEl) bdEl.textContent = 'Enter original price and discount % to view breakdown';
     if (gstEl) gstEl.textContent = '₹ 0.00';
     return;
   }
@@ -6957,7 +7504,7 @@ function calcDiscountLive() {
 
   savedEl.textContent = '₹ ' + savedAmt.toLocaleString('en-IN', {minimumFractionDigits: 2});
   finalEl.textContent = '₹ ' + finalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2});
-  if (bdEl) bdEl.innerHTML = 'আসল দাম: <b>₹' + orig.toLocaleString('en-IN') + '</b> − ছাড় (' + pct + '%): <b style="color:#34d399;">₹' + savedAmt.toLocaleString('en-IN') + '</b> = <b style="color:#fbbf24;">₹' + finalPrice.toLocaleString('en-IN') + '</b>';
+  if (bdEl) bdEl.innerHTML = 'Original Price: <b>₹' + orig.toLocaleString('en-IN') + '</b> − Discount (' + pct + '%): <b style="color:#16a34a;">₹' + savedAmt.toLocaleString('en-IN') + '</b> = <b style="color:#0284c7;">₹' + finalPrice.toLocaleString('en-IN') + '</b>';
   if (gstEl) gstEl.textContent = '₹ ' + withGst.toLocaleString('en-IN', {minimumFractionDigits: 2});
 }
 
@@ -6975,15 +7522,9 @@ function calcDiscountFromFlatLive() {
   calcDiscountLive();
 }
 
-// -------------------------------------------------------------------------
-// TRIGONOMETRY & MITRE ANGLE CALCULATOR LOGIC
-// -------------------------------------------------------------------------
 function setTrigAngleMode(mode) {
   trigAngleMode = mode;
-  var bDeg = document.getElementById('btnAngleDeg');
-  var bRad = document.getElementById('btnAngleRad');
-  if (bDeg) bDeg.classList.toggle('active', mode === 'DEG');
-  if (bRad) bRad.classList.toggle('active', mode === 'RAD');
+  calcAngleUnit = mode;
   evalTrigInstant();
 }
 
@@ -7001,97 +7542,13 @@ function evalTrigInstant() {
 }
 
 function applyTrig(fn) {
-  var inp = document.getElementById('trig_input_val');
-  var pill = document.getElementById('trig_result_pill');
-  if (!inp || !pill) return;
-  var val = parseFloat(inp.value) || 0;
-  var isDeg = trigAngleMode === 'DEG';
-  var res = 0;
-  var title = '';
-
-  if (fn === 'sin') {
-    var rad = isDeg ? (val * Math.PI / 180) : val;
-    res = Math.abs(Math.sin(rad)) < 1e-12 ? 0 : Math.round(Math.sin(rad) * 10000) / 10000;
-    title = 'sin(' + val + (isDeg ? '°' : '') + ') = <b>' + res + '</b>';
-  } else if (fn === 'cos') {
-    var rad = isDeg ? (val * Math.PI / 180) : val;
-    res = Math.abs(Math.cos(rad)) < 1e-12 ? 0 : Math.round(Math.cos(rad) * 10000) / 10000;
-    title = 'cos(' + val + (isDeg ? '°' : '') + ') = <b>' + res + '</b>';
-  } else if (fn === 'tan') {
-    var norm = isDeg ? (((val % 180) + 180) % 180) : val;
-    if (isDeg && Math.abs(norm - 90) < 1e-6) {
-      title = 'tan(' + val + '°) = <b style="color:#f87171;">অসীম (Infinity / Undefined)</b>';
-    } else {
-      var rad = isDeg ? (val * Math.PI / 180) : val;
-      res = Math.abs(Math.tan(rad)) < 1e-12 ? 0 : Math.round(Math.tan(rad) * 10000) / 10000;
-      title = 'tan(' + val + (isDeg ? '°' : '') + ') = <b>' + res + '</b>';
-    }
-  } else if (fn === 'asin') {
-    if (val < -1 || val > 1) {
-      title = 'sin⁻¹(' + val + ') = <b style="color:#f87171;">Domain Error (-1 to 1 only)</b>';
-    } else {
-      var r = Math.asin(val);
-      if (isDeg) r = r * (180 / Math.PI);
-      res = Math.round(r * 10000) / 10000;
-      title = 'sin⁻¹(' + val + ') = <b>' + res + (isDeg ? '°' : '') + '</b>';
-    }
-  } else if (fn === 'acos') {
-    if (val < -1 || val > 1) {
-      title = 'cos⁻¹(' + val + ') = <b style="color:#f87171;">Domain Error (-1 to 1 only)</b>';
-    } else {
-      var r = Math.acos(val);
-      if (isDeg) r = r * (180 / Math.PI);
-      res = Math.round(r * 10000) / 10000;
-      title = 'cos⁻¹(' + val + ') = <b>' + res + (isDeg ? '°' : '') + '</b>';
-    }
-  } else if (fn === 'atan') {
-    var r = Math.atan(val);
-    if (isDeg) r = r * (180 / Math.PI);
-    res = Math.round(r * 10000) / 10000;
-    title = 'tan⁻¹(' + val + ') = <b>' + res + (isDeg ? '°' : '') + '</b>';
-  }
-
-  pill.innerHTML = title;
+  calcSciFunc(fn);
 }
 
 function applySci(op) {
-  var inp = document.getElementById('trig_input_val');
-  var pill = document.getElementById('trig_result_pill');
-  if (!inp || !pill) return;
-  var val = parseFloat(inp.value) || 0;
-  var res = 0;
-  var title = '';
-
-  if (op === 'sqrt') {
-    if (val < 0) {
-      title = '√(' + val + ') = <b style="color:#f87171;">Negative Error</b>';
-    } else {
-      res = Math.round(Math.sqrt(val) * 10000) / 10000;
-      title = '√(' + val + ') = <b>' + res + '</b>';
-      inp.value = res;
-    }
-  } else if (op === 'sq') {
-    res = Math.round(val * val * 10000) / 10000;
-    title = '(' + val + ')² = <b>' + res + '</b>';
-    inp.value = res;
-  } else if (op === 'inv') {
-    if (val === 0) {
-      title = '1/0 = <b style="color:#f87171;">Infinity</b>';
-    } else {
-      res = Math.round((1 / val) * 10000) / 10000;
-      title = '1 / ' + val + ' = <b>' + res + '</b>';
-      inp.value = res;
-    }
-  } else if (op === 'pi') {
-    res = Math.round(Math.PI * 10000) / 10000;
-    title = 'π = <b>' + Math.PI + '</b>';
-    inp.value = res;
-  }
-
-  pill.innerHTML = title;
+  calcSciFunc(op);
 }
 
-// Mitre & Frame Slope / Diagonal Solver
 function calcMitreLive() {
   var bEl = document.getElementById('mitre_base');
   var hEl = document.getElementById('mitre_height');
@@ -7101,7 +7558,7 @@ function calcMitreLive() {
   var h = parseFloat(hEl.value) || 0;
 
   if (b <= 0 || h <= 0) {
-    box.innerHTML = 'উচ্চতা ও চওড়া লিখলে বাঁকা পাইপের <b>কাটিং সাইজ (কর্ণ)</b> এবং কর্নারের <b>ডিগ্রি কোণ (Mitre Angle)</b> নিজে থেকেই হিসাব হবে।';
+    box.innerHTML = 'Enter Width and Height to calculate <b>Diagonal Cutting Size</b> and <b>Mitre Cut Angles</b> automatically.';
     return;
   }
 
@@ -7110,11 +7567,11 @@ function calcMitreLive() {
   var angDeg = Math.round(angRad * (180 / Math.PI) * 100) / 100;
   var compDeg = Math.round((90 - angDeg) * 100) / 100;
 
-  box.innerHTML = '<div style="color:#38bdf8; font-weight:800; font-size:0.82rem; margin-bottom:4px;">✔ হিসাবের ফলাফল (Workshop Angle & Cut):</div>' +
-    '<div>• বাঁকা পাইপ / কর্ণের মোট কাটিং মাপ: <b style="color:#fde047; font-size:0.95rem;">' + hyp + '"</b></div>' +
-    '<div>• নিচের কাটিং কোণ (Base Mitre Cut): <b style="color:#4ade80;">' + angDeg + '°</b></div>' +
-    '<div>• উপরের খাঁড়া কাটিং কোণ (Plumb/Top Cut): <b style="color:#f472b6;">' + compDeg + '°</b></div>' +
-    '<div style="margin-top:4px; font-size:0.7rem; color:#94a3b8;">💡 কাটিং টিপ: কাটিং মেশিনে <b>' + angDeg + '°</b> ডিগ্রিতে সেট করে কাটলে পাইপটি নিখুঁতভাবে মিলে যাবে।</div>';
+  box.innerHTML = '<div style="color:#0284c7; font-weight:800; font-size:0.82rem; margin-bottom:4px;">✔ Workshop Angle & Diagonal Cut Result:</div>' +
+    '<div>• Diagonal Pipe Cutting Length: <b style="color:#d97706; font-size:0.95rem;">' + hyp + '"</b></div>' +
+    '<div>• Base Mitre Cut Angle: <b style="color:#16a34a;">' + angDeg + '°</b></div>' +
+    '<div>• Top Plumb Cut Angle: <b style="color:#7c3aed;">' + compDeg + '°</b></div>' +
+    '<div style="margin-top:4px; font-size:0.72rem; color:#64748b;">💡 Cutting Tip: Set your mitre saw to <b>' + angDeg + '°</b> for an exact corner joint.</div>';
 }
 
 if (typeof renderCalcHistory === 'function') {
