@@ -158,6 +158,9 @@
  <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
  </div>
  <!-- Gemini Style Account / Settings Avatar Icon -->
+ <button onclick="openScreen('calculator', 'CALCULATOR')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.22); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#38bdf8; font-size:1.05rem;" title="General & Money Calculator">
+ <i class="fa-solid fa-calculator"></i>
+ </button>
  <button onclick="openScreen('settings', 'SETTINGS')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.22); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fbbf24; font-size:1.15rem;" title="Settings & Account">
  <i class="fa-solid fa-gear"></i>
  </button>
@@ -398,6 +401,18 @@
  </div>
  <div class="pro-card-title" data-i18n="mod_customer_khata">Customer Khata</div>
  <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
+ </div>
+
+ <!-- 3. General & Money Calculator -->
+ <div class="pro-card" onclick="openScreen('calculator', 'CALCULATOR')" style="border: 1.5px solid #38bdf8; background: linear-gradient(135deg, #0f172a, #1e293b);">
+ <div class="pro-card-header">
+ <div class="pro-card-icon" style="background:rgba(56, 189, 248, 0.18); color:#38bdf8;">
+ <i class="fa-solid fa-calculator"></i>
+ </div>
+ <span style="font-size:0.65rem; background:#0284c7; color:#fff; font-weight:800; padding:2px 7px; border-radius:10px;">PRO TOOL</span>
+ </div>
+ <div class="pro-card-title" style="color:#fff;" data-i18n="mod_calculator">General Calculator</div>
+ <div class="pro-card-sub" style="color:#94a3b8;" data-i18n="sub_calculator">Money Sum, Discount % & Trig (sin/cos)</div>
  </div>
  </div>
  </div>
@@ -650,6 +665,14 @@
  <div class="form-group">
  <label>Bottom Openable (Sash):</label>
  <input type="number" id="cc_bot_open" value="0">
+ </div>
+ <div class="form-group">
+ <label style="color:#2563eb;">Room / Location Tag:</label>
+ <input type="text" id="cc_loc" placeholder="e.g. Bed-1, Balcony">
+ </div>
+ <div class="form-group">
+ <label style="color:#16a34a;">Window Quantity (Pcs):</label>
+ <input type="number" id="cc_qty" value="1" min="1">
  </div>
  </div>
 
@@ -1162,7 +1185,7 @@
  <div class="form-box">
  <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
  <label style="font-weight:bold;">Select Month:</label>
- <input type="text" id="dash_month" value="" style="flex:1;">
+ <input type="text" id="dash_month" value="" placeholder="All Records (or MM/YYYY)" style="flex:1;">
  <button class="action-btn btn-calc" style="flex:0.3; padding:6px;" onclick="loadDashboard()">Load</button>
  </div>
 
@@ -1457,6 +1480,15 @@
  <div class="gemini-row-left">
  <span class="gemini-icon" style="color:#ea580c;"><i class="fa-solid fa-lock"></i></span>
  <span>Customer Khata Book (PIN)</span>
+ </div>
+ <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+ </div>
+
+ <!-- General Calculator Option in Settings -->
+ <div onclick="openScreen('calculator', 'CALCULATOR')" class="gemini-menu-row">
+ <div class="gemini-row-left">
+ <span class="gemini-icon" style="color:#0284c7;"><i class="fa-solid fa-calculator"></i></span>
+ <span>General & Money Calculator</span>
  </div>
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
@@ -2103,7 +2135,215 @@
 
  </div>
 
- <!-- Bottom Nav -->
+ 
+  <!-- ================= 16. GENERAL & MONEY / DISCOUNT / TRIG CALCULATOR SCREEN ================= -->
+  <div id="screen-calculator" class="screen">
+    <div class="form-box" style="padding:12px; background:#0f172a; border:1px solid #334155; border-radius:16px;">
+      
+      <!-- Calculator Tabs / Switcher -->
+      <div class="calc-tab-bar" style="display:flex; gap:6px; background:#1e293b; padding:4px; border-radius:12px; margin-bottom:12px;">
+        <button type="button" id="calcTabBtnMoney" class="calc-tab-btn active" onclick="setCalcTabMode('money')">
+          <i class="fa-solid fa-coins"></i> <span>হিসাব ও টাকা</span>
+        </button>
+        <button type="button" id="calcTabBtnDisc" class="calc-tab-btn" onclick="setCalcTabMode('discount')">
+          <i class="fa-solid fa-tags"></i> <span>ডিসকাউন্ট (%)</span>
+        </button>
+        <button type="button" id="calcTabBtnTrig" class="calc-tab-btn" onclick="setCalcTabMode('trig')">
+          <i class="fa-solid fa-draw-polygon"></i> <span>সাইন-কস (θ)</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: BASIC & MONEY CALCULATOR -->
+      <div id="calcViewMoney" class="calc-view-section">
+        <!-- Dual-Line Display -->
+        <div class="calc-display-box" style="background:#020617; border:1.5px solid #334155; border-radius:14px; padding:12px 14px; margin-bottom:12px; text-align:right;">
+          <div id="calcExprDisplay" style="min-height:20px; font-size:0.85rem; color:#94a3b8; font-family:'JetBrains Mono', monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <button type="button" onclick="calcToggleRupeePrefix()" id="calcRupeeBtn" style="background:#1e293b; border:1px solid #475569; color:#fde047; font-weight:800; font-size:0.8rem; padding:3px 8px; border-radius:6px; cursor:pointer;">₹ INR</button>
+            <div id="calcMainDisplay" style="font-size:1.85rem; font-weight:900; color:#fff; font-family:'JetBrains Mono', monospace; letter-spacing:0.5px; word-break:break-all;">₹ 0</div>
+          </div>
+        </div>
+
+        <!-- Quick GST & Percentage Row -->
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom:10px;">
+          <button type="button" class="calc-fn-btn" onclick="calcQuickGst(18)">+18% GST</button>
+          <button type="button" class="calc-fn-btn" onclick="calcQuickGst(28)">+28% GST</button>
+          <button type="button" class="calc-fn-btn" onclick="calcQuickGst(-10)">-10% Off</button>
+          <button type="button" class="calc-fn-btn" onclick="calcInputOp('%')">%</button>
+        </div>
+
+        <!-- 4x5 Tactile Keypad Grid -->
+        <div class="calc-grid-buttons" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+          <button type="button" class="calc-key calc-key-danger" onclick="calcAllClear()">AC</button>
+          <button type="button" class="calc-key calc-key-secondary" onclick="calcClearEntry()">C</button>
+          <button type="button" class="calc-key calc-key-secondary" onclick="calcBackspace()"><i class="fa-solid fa-delete-left"></i></button>
+          <button type="button" class="calc-key calc-key-op" onclick="calcInputOp('÷')">÷</button>
+
+          <button type="button" class="calc-key" onclick="calcInputDigit('7')">7</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('8')">8</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('9')">9</button>
+          <button type="button" class="calc-key calc-key-op" onclick="calcInputOp('×')">×</button>
+
+          <button type="button" class="calc-key" onclick="calcInputDigit('4')">4</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('5')">5</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('6')">6</button>
+          <button type="button" class="calc-key calc-key-op" onclick="calcInputOp('-')">−</button>
+
+          <button type="button" class="calc-key" onclick="calcInputDigit('1')">1</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('2')">2</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('3')">3</button>
+          <button type="button" class="calc-key calc-key-op" onclick="calcInputOp('+')">+</button>
+
+          <button type="button" class="calc-key calc-key-secondary" onclick="calcToggleSign()">±</button>
+          <button type="button" class="calc-key" onclick="calcInputDigit('0')">0</button>
+          <button type="button" class="calc-key" onclick="calcInputDot()">.</button>
+          <button type="button" class="calc-key calc-key-equal" onclick="calcEvaluateEqual()">=</button>
+        </div>
+
+        <!-- History Tape -->
+        <div style="margin-top:12px; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.75rem; font-weight:700; color:#cbd5e1;"><i class="fa-solid fa-clock-rotate-left"></i> সাম্প্রতিক হিসাব (History)</span>
+            <button type="button" onclick="calcClearHistory()" style="background:transparent; border:none; color:#ef4444; font-size:0.7rem; font-weight:700; cursor:pointer;">মুছুন</button>
+          </div>
+          <div id="calcHistoryTape" style="max-height:110px; overflow-y:auto; margin-top:6px; font-size:0.75rem; color:#94a3b8; font-family:'JetBrains Mono', monospace;">
+            <div style="text-align:center; padding:8px 0; color:#64748b;">কোনো পুরনো হিসাব নেই</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DISCOUNT CALCULATOR -->
+      <div id="calcViewDiscount" class="calc-view-section" style="display:none;">
+        <div style="background:#1e293b; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:0.84rem; font-weight:800; color:#38bdf8; margin-bottom:10px; text-transform:uppercase;">
+            <i class="fa-solid fa-tags"></i> ডিসকাউন্ট ও ছাড়ের হিসাব (Discount Calculator)
+          </div>
+          
+          <div class="form-group" style="margin-bottom:10px;">
+            <label style="color:#e2e8f0; font-size:0.78rem;">আসল দাম / মোট বিলের টাকা (Original Amount ₹):</label>
+            <input type="number" id="disc_orig_price" placeholder="যেমন: 5000" oninput="calcDiscountLive()" style="background:#0f172a; border-color:#475569; color:#fff; font-size:1.1rem; font-weight:800; padding:10px;">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+            <div class="form-group">
+              <label style="color:#e2e8f0; font-size:0.78rem;">ডিসকাউন্ট শতাংশ (%):</label>
+              <input type="number" id="disc_pct" placeholder="যেমন: 10" oninput="calcDiscountLive()" style="background:#0f172a; border-color:#475569; color:#38bdf8; font-size:1.05rem; font-weight:800; padding:10px;">
+            </div>
+            <div class="form-group">
+              <label style="color:#e2e8f0; font-size:0.78rem;">অথবা সরাসরি ছাড় (Flat ₹):</label>
+              <input type="number" id="disc_flat" placeholder="যেমন: 500" oninput="calcDiscountFromFlatLive()" style="background:#0f172a; border-color:#475569; color:#4ade80; font-size:1.05rem; font-weight:800; padding:10px;">
+            </div>
+          </div>
+
+          <!-- Quick Preset Buttons -->
+          <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:4px;">সহজেই বেছে নিন (Quick %):</div>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom:14px;">
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(5)">5%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(10)">10%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(15)">15%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(20)">20%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(25)">25%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(30)">30%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(40)">40%</button>
+            <button type="button" class="calc-preset-chip" onclick="setDiscountPreset(50)">50%</button>
+          </div>
+
+          <!-- Live Breakdown Cards -->
+          <div style="background:#020617; border:1.5px solid #334155; border-radius:12px; padding:14px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+              <div style="background:#064e3b; border:1px solid #10b981; border-radius:10px; padding:10px; text-align:center;">
+                <div style="font-size:0.7rem; color:#a7f3d0; font-weight:700;">কত টাকা ডিসকাউন্ট পেলেন</div>
+                <div id="disc_val_saved" style="font-size:1.3rem; font-weight:900; color:#34d399; margin-top:2px;">₹ 0.00</div>
+              </div>
+              <div style="background:#451a03; border:1px solid #f59e0b; border-radius:10px; padding:10px; text-align:center;">
+                <div style="font-size:0.7rem; color:#fde68a; font-weight:700;">ডিসকাউন্টের পর দিতে হবে</div>
+                <div id="disc_val_final" style="font-size:1.3rem; font-weight:900; color:#fbbf24; margin-top:2px;">₹ 0.00</div>
+              </div>
+            </div>
+
+            <div id="disc_val_breakdown" style="font-size:0.76rem; color:#cbd5e1; background:#0f172a; padding:8px 10px; border-radius:8px; border:1px solid #1e293b; text-align:center; font-family:'JetBrains Mono', monospace;">
+              আসল দাম ও ডিসকাউন্টের হিসাব এখানে দেখা যাবে
+            </div>
+
+            <div id="disc_gst_addon" style="margin-top:8px; font-size:0.74rem; color:#93c5fd; text-align:center;">
+              + ১৮% GST সহ মোট: <b id="disc_val_with_gst">₹ 0.00</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: TRIGONOMETRY & FITTING ANGLES -->
+      <div id="calcViewTrig" class="calc-view-section" style="display:none;">
+        <div style="background:#1e293b; border-radius:12px; padding:12px; margin-bottom:12px;">
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="font-size:0.84rem; font-weight:800; color:#e879f9; text-transform:uppercase;">
+              <i class="fa-solid fa-draw-polygon"></i> সাইন, কস, ট্যান ও কোণ (Trig & Angles)
+            </div>
+            <!-- DEG / RAD Switcher -->
+            <div style="display:flex; gap:4px; background:#0f172a; padding:2px; border-radius:8px; border:1px solid #334155;">
+              <button type="button" id="btnAngleDeg" class="calc-deg-btn active" onclick="setTrigAngleMode('DEG')">DEG (°)</button>
+              <button type="button" id="btnAngleRad" class="calc-deg-btn" onclick="setTrigAngleMode('RAD')">RAD</button>
+            </div>
+          </div>
+
+          <!-- Single Angle Evaluator -->
+          <div style="background:#020617; border:1.5px solid #334155; border-radius:12px; padding:10px 12px; margin-bottom:10px;">
+            <div style="font-size:0.72rem; color:#cbd5e1; margin-bottom:4px;">কোণ বা সংখ্যা লিখুন (Enter Angle θ or Value):</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="number" id="trig_input_val" value="45" placeholder="e.g. 45" oninput="evalTrigInstant()" style="background:#0f172a; border-color:#475569; color:#fde047; font-size:1.15rem; font-weight:900; padding:8px 10px; width:45%;">
+              <div id="trig_result_pill" style="flex:1; background:#1e1b4b; border:1px solid #818cf8; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:800; color:#c7d2fe; text-align:center; font-family:'JetBrains Mono', monospace;">
+                sin(45°) = 0.7071
+              </div>
+            </div>
+
+            <!-- Trig Operation Buttons -->
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-top:10px;">
+              <button type="button" class="calc-fn-btn" onclick="applyTrig('sin')">sin (θ)</button>
+              <button type="button" class="calc-fn-btn" onclick="applyTrig('cos')">cos (θ)</button>
+              <button type="button" class="calc-fn-btn" onclick="applyTrig('tan')">tan (θ)</button>
+              <button type="button" class="calc-fn-btn" onclick="applyTrig('asin')">sin⁻¹ (asin)</button>
+              <button type="button" class="calc-fn-btn" onclick="applyTrig('acos')">cos⁻¹ (acos)</button>
+              <button type="button" class="calc-fn-btn" onclick="applyTrig('atan')">tan⁻¹ (atan)</button>
+            </div>
+
+            <!-- Helper scientific keys -->
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-top:8px;">
+              <button type="button" class="calc-fn-btn" onclick="applySci('sqrt')">√ (Root)</button>
+              <button type="button" class="calc-fn-btn" onclick="applySci('sq')">x² (Square)</button>
+              <button type="button" class="calc-fn-btn" onclick="applySci('inv')">1/x</button>
+              <button type="button" class="calc-fn-btn" onclick="applySci('pi')">π (Pi)</button>
+            </div>
+          </div>
+
+          <!-- Workshop Frame & Triangle Angle / Mitre Solver -->
+          <div style="background:#0f172a; border:1.5px solid #818cf8; border-radius:12px; padding:12px;">
+            <div style="font-size:0.78rem; font-weight:800; color:#a5b4fc; margin-bottom:6px;">
+              📐 অ্যালুমিনিয়াম ফ্রেম কাটিং কোণ ও কর্ণের মাপ (Mitre & Slope Solver):
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+              <div class="form-group">
+                <label style="color:#cbd5e1; font-size:0.72rem;">চওড়া / ভূমি (Width / Base):</label>
+                <input type="number" id="mitre_base" placeholder="যেমন: 36" oninput="calcMitreLive()" style="background:#1e293b; color:#fff; font-size:0.95rem; font-weight:800; padding:7px;">
+              </div>
+              <div class="form-group">
+                <label style="color:#cbd5e1; font-size:0.72rem;">উচ্চতা / লম্ব (Height / Rise):</label>
+                <input type="number" id="mitre_height" placeholder="যেমন: 24" oninput="calcMitreLive()" style="background:#1e293b; color:#fff; font-size:0.95rem; font-weight:800; padding:7px;">
+              </div>
+            </div>
+
+            <div id="mitre_results_box" style="background:#020617; border:1px solid #334155; border-radius:8px; padding:8px 10px; font-size:0.74rem; color:#e2e8f0; line-height:1.5;">
+              উচ্চতা ও চওড়া লিখলে বাঁকা পাইপের <b>কাটিং সাইজ (কর্ণ)</b> এবং কর্নারের <b>ডিগ্রি কোণ (Mitre Angle)</b> নিজে থেকেই হিসাব হবে।
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
  <nav class="bottom-nav">
  <div class="nav-item active" onclick="goHome()"><i class="fa-solid fa-house"></i><span data-i18n="nav_home">Home</span></div>
  <div class="nav-item" onclick="openScreen('dashboard', 'DASHBOARD')"><i class="fa-solid fa-chart-column"></i><span data-i18n="nav_dashboard">Dashboard</span></div>
@@ -2234,7 +2474,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=23"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {

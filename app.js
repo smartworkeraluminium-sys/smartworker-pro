@@ -390,7 +390,9 @@ function syncAllDataFromCloud(uid) {
       if (d.expenses) localStorage.setItem('sw_expenses', JSON.stringify(d.expenses));
       if (d.license) localStorage.setItem('sw_license', JSON.stringify(d.license));
       if (d.custom_logo) localStorage.setItem('sw_custom_logo', d.custom_logo);
+      else localStorage.removeItem('sw_custom_logo');
       if (d.custom_qr) localStorage.setItem('sw_custom_qr', d.custom_qr);
+      else localStorage.removeItem('sw_custom_qr');
 
       if (typeof loadSavedProfile === 'function') loadSavedProfile();
       if (typeof loadBillSettings === 'function') loadBillSettings();
@@ -873,6 +875,10 @@ function switchAuthMode(mode) {
  currentCloudUser = null;
  localStorage.removeItem('sw_cloud_user');
  localStorage.removeItem('sw_guest_mode');
+ localStorage.removeItem('sw_custom_logo');
+ localStorage.removeItem('sw_custom_qr');
+ document.querySelectorAll('img[alt*="Logo"], img[alt="SWA"]').forEach(function(img){ img.src = 'logo.png'; });
+ renderBrandingPreviews();
  updateCloudUserUI(null);
  openScreen('auth', 'SIGN IN / REGISTER');
  alert("Signed out successfully.");
@@ -1399,24 +1405,30 @@ function keypadEnter() {
  cc_window_count += 1;
  const disp = (mmVal) => is_mm ? toMmStr(mmVal / 25.4) : toFractionInch(mmVal / 25.4);
  const unit_str = is_mm ? "mm" : "Inch";
- const total_sash_qty = top_open + bot_open;
+ const win_loc = document.getElementById('cc_loc') ? document.getElementById('cc_loc').value.trim() : "";
+ const win_qty = document.getElementById('cc_qty') ? Math.max(1, parseInt(document.getElementById('cc_qty').value) || 1) : 1;
+ const loc_str = win_loc ? ` [${win_loc}]` : "";
+ const qty_str = win_qty > 1 ? ` (Qty: ${win_qty} Windows)` : "";
+ const total_sash_qty = (top_open + bot_open) * win_qty;
 
- let out_txt = `[${series} Win #${cc_window_count} | Size: ${disp(h_mm)} x ${disp(w_mm)}]\n`;
+ let out_txt = `[${series} Win #${cc_window_count}${loc_str} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty_str}]\n`;
  out_txt += "--- 1. OUTER FRAME & MULLIONS ---\n";
- out_txt += `> Outer Vertical: ${disp(h_mm)} (2 pc)\n> Outer Horizontal: ${disp(w_mm)} (2 pc)\n`;
- cc_buckets["Casement Outer"].push(h_mm / 25.4, h_mm / 25.4, w_mm / 25.4, w_mm / 25.4);
+ out_txt += `> Outer Vertical: ${disp(h_mm)} (${2 * win_qty} pc)\n> Outer Horizontal: ${disp(w_mm)} (${2 * win_qty} pc)\n`;
+ for (let q = 0; q < win_qty; q++) {
+   cc_buckets["Casement Outer"].push(h_mm / 25.4, h_mm / 25.4, w_mm / 25.4, w_mm / 25.4);
+ }
 
  if (h_mullion_qty > 0) {
- out_txt += `> Horizontal Divider: ${disp(w_mm - outer_2)} (${h_mullion_qty} pc)\n`;
- for (let i = 0; i < h_mullion_qty; i++) cc_buckets["Casement Mullion"].push((w_mm - outer_2) / 25.4);
+ out_txt += `> Horizontal Divider: ${disp(w_mm - outer_2)} (${h_mullion_qty * win_qty} pc)\n`;
+ for (let i = 0; i < h_mullion_qty * win_qty; i++) cc_buckets["Casement Mullion"].push((w_mm - outer_2) / 25.4);
  }
  if (top_v_mullion_qty > 0) {
- out_txt += `> Top Vert. Mullions: ${disp(top_gap_h)} (${top_v_mullion_qty} pc)\n`;
- for (let i = 0; i < top_v_mullion_qty; i++) cc_buckets["Casement Mullion"].push(top_gap_h / 25.4);
+ out_txt += `> Top Vert. Mullions: ${disp(top_gap_h)} (${top_v_mullion_qty * win_qty} pc)\n`;
+ for (let i = 0; i < top_v_mullion_qty * win_qty; i++) cc_buckets["Casement Mullion"].push(top_gap_h / 25.4);
  }
  if (bot_v_mullion_qty > 0) {
- out_txt += `> Bot Vert. Mullions: ${disp(bot_gap_h)} (${bot_v_mullion_qty} pc)\n`;
- for (let i = 0; i < bot_v_mullion_qty; i++) cc_buckets["Casement Mullion"].push(bot_gap_h / 25.4);
+ out_txt += `> Bot Vert. Mullions: ${disp(bot_gap_h)} (${bot_v_mullion_qty * win_qty} pc)\n`;
+ for (let i = 0; i < bot_v_mullion_qty * win_qty; i++) cc_buckets["Casement Mullion"].push(bot_gap_h / 25.4);
  }
 
  out_txt += `\n--- 2. TOP ROW DETAILS (${top_cols} SECTIONS) ---\n`;
@@ -1430,44 +1442,44 @@ function keypadEnter() {
  }
 
  if (top_open > 0) {
- out_txt += `[OPENABLE SASH | Qty: ${top_open} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\n`;
+ out_txt += `[OPENABLE SASH | Qty: ${top_open * win_qty} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\n`;
  const s1_h = top_gap_h + overlap, s1_w = w_gap_open + overlap;
  const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
- out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\n > Glass Size: ${disp(g_h)} x ${disp(g_w)}\n`;
+ out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${top_open * win_qty} Sash)\n > Glass Size: ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
- cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + top_open;
- for (let i = 0; i < top_open * 2; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
+ cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (top_open * win_qty);
+ for (let i = 0; i < top_open * 2 * win_qty; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
  }
 
  if (top_fixed > 0) {
- out_txt += `[FIXED GLASS | Qty: ${top_fixed} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_fixed)}]\n`;
+ out_txt += `[FIXED GLASS | Qty: ${top_fixed * win_qty} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_fixed)}]\n`;
  const g_h = top_gap_h - glass_m_fixed, g_w = w_gap_fixed - glass_m_fixed;
- out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\n > Square Clip (Beading): Required\n`;
+ out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)} (${top_fixed * win_qty} pc)\n > Square Clip (Beading): Required\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
- cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + top_fixed;
+ cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (top_fixed * win_qty);
  const beading_length = (top_gap_h + w_gap_fixed) * 2 / 25.4;
- for (let i = 0; i < top_fixed; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
+ for (let i = 0; i < top_fixed * win_qty; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
  }
 
  if (bot_cols > 0 && rows === 2) {
  out_txt += `\n--- 3. BOTTOM ROW DETAILS (${bot_cols} SECTIONS) ---\n`;
  if (bot_open > 0) {
- out_txt += `[OPENABLE SASH | Qty: ${bot_open} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
+ out_txt += `[OPENABLE SASH | Qty: ${bot_open * win_qty} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
  const s1_h = bot_gap_h + overlap, s1_w = bot_gap_w + overlap;
  const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
- out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)}\n > Glass Size: ${disp(g_h)} x ${disp(g_w)}\n`;
+ out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${bot_open * win_qty} Sash)\n > Glass Size: ${disp(g_h)} x ${disp(g_w)} (${bot_open * win_qty} pc)\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
- cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + bot_open;
- for (let i = 0; i < bot_open * 2; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
+ cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (bot_open * win_qty);
+ for (let i = 0; i < bot_open * 2 * win_qty; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
  }
  if (bot_fixed > 0) {
- out_txt += `[FIXED GLASS | Qty: ${bot_fixed} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
+ out_txt += `[FIXED GLASS | Qty: ${bot_fixed * win_qty} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
  const g_h = bot_gap_h - glass_m_fixed, g_w = bot_gap_w - glass_m_fixed;
- out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)}\n > Square Clip (Beading): Required\n`;
+ out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)} (${bot_fixed * win_qty} pc)\n > Square Clip (Beading): Required\n`;
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
- cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + bot_fixed;
+ cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (bot_fixed * win_qty);
  const beading_length = (bot_gap_h + bot_gap_w) * 2 / 25.4;
- for (let i = 0; i < bot_fixed; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
+ for (let i = 0; i < bot_fixed * win_qty; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
  }
  }
 
@@ -1497,6 +1509,8 @@ function keypadEnter() {
  document.getElementById('cc_top_open').value = "1";
  document.getElementById('cc_bot_cols').value = "0";
  document.getElementById('cc_bot_open').value = "0";
+ if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = "";
+ if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = "1";
  document.getElementById('cc_out').textContent = "";
  document.getElementById('cc_mat_out').textContent = "";
  }
@@ -2830,6 +2844,8 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dr_type').value = cat.includes("Floor Spring") ? "Floor Spring Door" : (cat.includes("Domal") ? "Domal System Door" : "Standard Door");
  document.getElementById('dr_h').value = itm.h;
  document.getElementById('dr_w').value = itm.w;
+ if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = `${itm.room} [${itm.tag}]`;
+ if (document.getElementById('dr_qty')) document.getElementById('dr_qty').value = itm.qty;
  calculateDoor();
  alert(`Loaded ${itm.room} into Door Calculator!`);
  } else if (cat.includes("Ceiling")) {
@@ -2879,7 +2895,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('pt_dh').value = "80";
  document.getElementById('pt_dw').value = "32";
  }
- calculatePartition();
+ for (let pq = 0; pq < (itm.qty || 1); pq++) calculatePartition();
  } else if (cat.includes("Domal")) {
  domalCount += itm.qty;
  document.getElementById('dm_unit').value = "Inch";
@@ -2905,6 +2921,8 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dr_type').value = cat.includes("Floor Spring") ? "Floor Spring Door" : (cat.includes("Domal") ? "Domal System Door" : "Standard Door");
  document.getElementById('dr_h').value = itm.h;
  document.getElementById('dr_w').value = itm.w;
+ if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = `${itm.room} [${itm.tag}]`;
+ if (document.getElementById('dr_qty')) document.getElementById('dr_qty').value = itm.qty;
  calculateDoor();
  }
  });
@@ -3635,6 +3653,10 @@ function autofillCustomer() {
  const c_name = document.getElementById('q_name').value || 'Customer';
  const c_phone = document.getElementById('q_phone').value || 'N/A';
  const c_addr = document.getElementById('q_addr').value || 'N/A';
+ const c_gst = document.getElementById('q_client_gst') ? document.getElementById('q_client_gst').value.trim() : "";
+ const c_site = document.getElementById('q_site_addr') ? document.getElementById('q_site_addr').value.trim() : "";
+ const pay_terms = document.getElementById('q_payment_terms') ? document.getElementById('q_payment_terms').value.trim() : "";
+ const remarks_note = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value.trim() : "";
  const today = new Date().toLocaleDateString('en-GB');
 
  const [discount, gst_pct] = getDiscountAndGst();
@@ -3649,6 +3671,8 @@ function autofillCustomer() {
  bill += "=================================================\n";
  bill += `Invoice Type: ${bill_stage}\nDate: ${today}\n\n`;
  bill += `Bill To:\nName: ${c_name}\nPhone: ${c_phone}\nAddress: ${c_addr}\n`;
+ if (c_gst) bill += `Client GSTIN: ${c_gst}\n`;
+ if (c_site) bill += `Site / Delivery: ${c_site}\n`;
  bill += "-------------------------------------------------\n";
  bill += "SN. Description Qty Sq.Ft Amount\n";
  bill += "-------------------------------------------------\n";
@@ -3689,7 +3713,12 @@ function autofillCustomer() {
    if (profile.upi_id) bill += `UPI ID: ${profile.upi_id}\n`;
    bill += "-------------------------------------------------\n";
  }
+ if (remarks_note) {
+   bill += `SPECIAL NOTE: ${remarks_note}\n`;
+   bill += "-------------------------------------------------\n";
+ }
  bill += "TERMS & CONDITIONS:\n";
+ if (pay_terms) bill += `• Payment Terms: ${pay_terms}\n`;
  bill += "1. 50% Advance with official work order.\n";
  bill += "2. Balance payment must be cleared on delivery / fitting.\n";
  bill += "3. Quotation is valid for 15 days from issue date.\n";
@@ -3814,6 +3843,10 @@ function autofillCustomer() {
   const c_name = document.getElementById('q_name').value || 'Customer';
   const c_phone = document.getElementById('q_phone').value || 'N/A';
   const c_addr = document.getElementById('q_addr').value || 'N/A';
+  const c_gst = document.getElementById('q_client_gst') ? document.getElementById('q_client_gst').value.trim() : "";
+  const c_site = document.getElementById('q_site_addr') ? document.getElementById('q_site_addr').value.trim() : "";
+  const pay_terms = document.getElementById('q_payment_terms') ? document.getElementById('q_payment_terms').value.trim() : "";
+  const remarks_note = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value.trim() : "";
   const bill_stage = document.getElementById('q_stage').value;
   const today = new Date().toLocaleDateString('en-GB');
 
@@ -3836,9 +3869,10 @@ function autofillCustomer() {
   doc.setFontSize(10);
   doc.text("Bill To:", 14, 46);
   doc.setFont("helvetica", "normal");
-  doc.text(`Name: ${c_name}`, 14, 52);
-  doc.text(`Phone: ${c_phone}`, 14, 57);
-  doc.text(`Address: ${c_addr}`, 14, 62);
+  doc.text(`Name: ${c_name}`, 14, 51);
+  doc.text(`Phone: ${c_phone}`, 14, 55.5);
+  doc.text(`Address: ${c_addr}${c_site ? " | Site: " + c_site : ""}`, 14, 60);
+  if (c_gst) doc.text(`Client GSTIN: ${c_gst}`, 14, 64.5);
 
   doc.text(`Date: ${today}`, 135, 46);
   doc.text(`Stage: ${bill_stage}`, 135, 51);
@@ -3939,7 +3973,8 @@ function autofillCustomer() {
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.text("TERMS & CONDITIONS: 50% Advance with order. Balance on delivery. Cut materials cannot be returned.", 14, footerY);
+  const termsStr = (remarks_note ? "Note: " + remarks_note + " | " : "") + (pay_terms || "TERMS: 50% Advance with order. Balance on delivery.");
+  doc.text(termsStr, 14, footerY);
   doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, footerY + 8);
 
   doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
@@ -4554,8 +4589,11 @@ function autofillCustomer() {
 
 
 function addTeamMember() {
- const name = document.getElementById('team_member_name').value.trim();
- const phone = document.getElementById('team_member_phone').value.trim();
+ const nEl = document.getElementById('team_member_name');
+ const pEl = document.getElementById('team_member_phone');
+ if (!nEl || !pEl) return;
+ const name = nEl.value.trim();
+ const phone = pEl.value.trim();
  if (!name || !phone) { alert("Please enter member name and phone/gmail."); return; }
 
  let members = JSON.parse(localStorage.getItem('sw_team_members') || '[]');
@@ -4564,8 +4602,8 @@ function addTeamMember() {
  members.push({ name, phone, added_on: new Date().toLocaleDateString('en-GB') });
  localStorage.setItem('sw_team_members', JSON.stringify(members));
 
- document.getElementById('team_member_name').value = "";
- document.getElementById('team_member_phone').value = "";
+ nEl.value = "";
+ pEl.value = "";
  renderTeamMembers();
  alert(`Team member ${name} added successfully! (${members.length}/50)`);
  }
@@ -5209,20 +5247,24 @@ function removePaymentQr() {
  // 11. DASHBOARD, HISTORY & PROFILE MANAGEMENT
  // ========================================================
  function loadDashboard() {
- const targetMonth = document.getElementById('dash_month').value;
+ const dmEl = document.getElementById('dash_month');
+ const targetMonth = dmEl ? dmEl.value.trim() : "";
+ const labelMonth = targetMonth || "ALL RECORDS";
  const invoices = JSON.parse(localStorage.getItem('sw_invoices') || '[]');
  const expenses = JSON.parse(localStorage.getItem('sw_expenses') || '[]');
 
  let sales_sum = 0.0, exp_sum = 0.0;
- let details_txt = `--- DETAILS FOR ${targetMonth} ---\n\n>> CUSTOMER BILLS (INCOME):\n`;
+ let details_txt = `--- DETAILS FOR ${labelMonth} ---\n\n>> CUSTOMER BILLS (INCOME):\n`;
 
  invoices.forEach(inv => {
+ if (targetMonth && targetMonth.toLowerCase() !== "all" && String(inv.date || "").indexOf(targetMonth) === -1) return;
  details_txt += `- ${inv.date} | ${inv.client} | Rs ${parseFloat(inv.amount).toFixed(2)}\n`;
  sales_sum += parseFloat(inv.amount) || 0;
  });
 
  details_txt += `\n>> MATERIAL PURCHASES (EXPENSE):\n`;
  expenses.forEach(exp => {
+ if (targetMonth && targetMonth.toLowerCase() !== "all" && String(exp.date || "").indexOf(targetMonth) === -1) return;
  details_txt += `- ${exp.date} | ${exp.category} | ${exp.supplier} (Memo:${exp.memo_no}) | Rs ${parseFloat(exp.amount).toFixed(2)}\n`;
  exp_sum += parseFloat(exp.amount) || 0;
  });
@@ -5346,17 +5388,27 @@ function removePaymentQr() {
 
  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
  if (profile.name) {
- document.getElementById('homeGreeting').textContent = `Welcome, ${profile.name}!`;
- document.getElementById('set_name').value = profile.name;
+ if (document.getElementById('homeGreeting')) document.getElementById('homeGreeting').textContent = `Welcome, ${profile.name}!`;
+ if (document.getElementById('set_name')) document.getElementById('set_name').value = profile.name;
+ if (document.getElementById('settingsUserName')) document.getElementById('settingsUserName').textContent = profile.name;
  }
  if (profile.shop_name) {
- document.getElementById('homeShop').textContent = profile.shop_name.toUpperCase();
- document.getElementById('set_shop').value = profile.shop_name;
+ if (document.getElementById('homeShop')) document.getElementById('homeShop').textContent = profile.shop_name.toUpperCase();
+ if (document.getElementById('set_shop')) document.getElementById('set_shop').value = profile.shop_name;
  }
- if (profile.phone) document.getElementById('set_phone').value = profile.phone;
- if (profile.email) document.getElementById('set_email').value = profile.email;
- if (profile.gst) document.getElementById('set_gst').value = profile.gst;
- if (profile.address) document.getElementById('set_address').value = profile.address;
+ if (profile.phone) {
+ if (document.getElementById('set_phone')) document.getElementById('set_phone').value = profile.phone;
+ if (document.getElementById('settingsUserEmail')) document.getElementById('settingsUserEmail').textContent = profile.email || ("Mob: " + profile.phone);
+ }
+ if (profile.email) {
+ if (document.getElementById('set_email')) document.getElementById('set_email').value = profile.email;
+ if (document.getElementById('settingsUserEmail')) document.getElementById('settingsUserEmail').textContent = profile.email;
+ }
+ if (profile.gst && document.getElementById('set_gst')) document.getElementById('set_gst').value = profile.gst;
+ if (profile.address) {
+ if (document.getElementById('set_address')) document.getElementById('set_address').value = profile.address;
+ if (document.getElementById('homeAddress')) document.getElementById('homeAddress').textContent = profile.address;
+ }
  if (profile.bank_name && document.getElementById('set_bank_name')) document.getElementById('set_bank_name').value = profile.bank_name;
  if (profile.bank_holder && document.getElementById('set_bank_holder')) document.getElementById('set_bank_holder').value = profile.bank_holder;
  if (profile.bank_acc && document.getElementById('set_bank_acc')) document.getElementById('set_bank_acc').value = profile.bank_acc;
@@ -5510,6 +5562,8 @@ function setupDb() {
  sub_quotation: "Client GST Invoice & PDF Bill",
  sub_customer_khata: "Client Balance & Records",
  mod_customer_khata: "Customer Khata",
+ mod_calculator: "General Calculator",
+ sub_calculator: "Money Sum, Discount % & Trig (sin/cos)",
  btn_clear: "CLEAR",
  btn_calculate: "+ CALCULATE",
  btn_save: "SAVE",
@@ -5589,6 +5643,8 @@ function setupDb() {
  sub_quotation: "ক্লায়েন্ট জিএসটি ইনভয়েস ও পিডিএফ বিল",
  sub_customer_khata: "ক্লায়েন্ট ব্যালেন্স ও রেকর্ডস",
  mod_customer_khata: "কাস্টমার খাতা",
+ mod_calculator: "সাধারণ ক্যালকুলেটর",
+ sub_calculator: "টাকা-পয়সা, ডিসকাউন্ট % ও কোণ (sin/cos)",
  mod_custom_series: "কাস্টম ও নতুন সিরিজ",
  sub_custom_series: "ফোল্ডিং, গ্লাস ডোর, জেসমিন ও নতুন প্রোফাইল",
  lbl_select_series: "প্রোডাক্ট / সিরিজ নির্বাচন করুন:",
@@ -6640,4 +6696,427 @@ function checkCustomerInAppNotifications() {
       }).catch(()=>{});
     }
   } catch(e){}
+}
+
+
+// =========================================================================
+// GENERAL PURPOSE & MONEY, DISCOUNT, TRIGONOMETRY CALCULATOR ENGINE
+// =========================================================================
+
+var calcTabActive = 'money';
+var calcExpr = '';
+var calcCurNum = '0';
+var calcLastOp = null;
+var calcJustEvaled = false;
+var calcShowRupee = true;
+var trigAngleMode = 'DEG';
+
+function setCalcTabMode(mode) {
+  calcTabActive = mode;
+  var btnMoney = document.getElementById('calcTabBtnMoney');
+  var btnDisc = document.getElementById('calcTabBtnDisc');
+  var btnTrig = document.getElementById('calcTabBtnTrig');
+  var viewMoney = document.getElementById('calcViewMoney');
+  var viewDisc = document.getElementById('calcViewDiscount');
+  var viewTrig = document.getElementById('calcViewTrig');
+
+  if (btnMoney) btnMoney.classList.toggle('active', mode === 'money');
+  if (btnDisc) btnDisc.classList.toggle('active', mode === 'discount');
+  if (btnTrig) btnTrig.classList.toggle('active', mode === 'trig');
+
+  if (viewMoney) viewMoney.style.display = mode === 'money' ? 'block' : 'none';
+  if (viewDisc) viewDisc.style.display = mode === 'discount' ? 'block' : 'none';
+  if (viewTrig) viewTrig.style.display = mode === 'trig' ? 'block' : 'none';
+
+  if (mode === 'money') updateCalcDisplay();
+  if (mode === 'discount') calcDiscountLive();
+  if (mode === 'trig') evalTrigInstant();
+}
+
+function updateCalcDisplay() {
+  var mainEl = document.getElementById('calcMainDisplay');
+  var exprEl = document.getElementById('calcExprDisplay');
+  if (!mainEl || !exprEl) return;
+
+  var prefix = calcShowRupee ? '₹ ' : '';
+  var formatted = calcCurNum;
+  if (!isNaN(Number(calcCurNum)) && calcCurNum.indexOf('.') === -1 && calcCurNum.length > 3) {
+    formatted = Number(calcCurNum).toLocaleString('en-IN');
+  }
+  mainEl.textContent = prefix + formatted;
+  exprEl.textContent = calcExpr;
+}
+
+function calcToggleRupeePrefix() {
+  calcShowRupee = !calcShowRupee;
+  var btn = document.getElementById('calcRupeeBtn');
+  if (btn) btn.textContent = calcShowRupee ? '₹ INR' : '123 NUM';
+  updateCalcDisplay();
+}
+
+function calcInputDigit(digit) {
+  if (calcJustEvaled) {
+    calcCurNum = '0';
+    calcExpr = '';
+    calcJustEvaled = false;
+  }
+  if (calcCurNum === '0' || calcCurNum === '-0') {
+    calcCurNum = (calcCurNum.startsWith('-') ? '-' : '') + digit;
+  } else {
+    if (calcCurNum.length < 15) calcCurNum += digit;
+  }
+  updateCalcDisplay();
+}
+
+function calcInputDot() {
+  if (calcJustEvaled) {
+    calcCurNum = '0';
+    calcExpr = '';
+    calcJustEvaled = false;
+  }
+  if (calcCurNum.indexOf('.') === -1) {
+    calcCurNum += '.';
+    updateCalcDisplay();
+  }
+}
+
+function calcToggleSign() {
+  if (calcCurNum === '0') return;
+  if (calcCurNum.startsWith('-')) {
+    calcCurNum = calcCurNum.substring(1);
+  } else {
+    calcCurNum = '-' + calcCurNum;
+  }
+  updateCalcDisplay();
+}
+
+function calcBackspace() {
+  if (calcJustEvaled) {
+    calcAllClear();
+    return;
+  }
+  if (calcCurNum.length > 1) {
+    calcCurNum = calcCurNum.slice(0, -1);
+    if (calcCurNum === '-' || calcCurNum === '') calcCurNum = '0';
+  } else {
+    calcCurNum = '0';
+  }
+  updateCalcDisplay();
+}
+
+function calcClearEntry() {
+  calcCurNum = '0';
+  updateCalcDisplay();
+}
+
+function calcAllClear() {
+  calcCurNum = '0';
+  calcExpr = '';
+  calcLastOp = null;
+  calcJustEvaled = false;
+  updateCalcDisplay();
+}
+
+function calcInputOp(op) {
+  if (calcJustEvaled) {
+    calcExpr = calcCurNum + ' ' + op + ' ';
+    calcCurNum = '0';
+    calcJustEvaled = false;
+    updateCalcDisplay();
+    return;
+  }
+
+  if (op === '%') {
+    var curVal = parseFloat(calcCurNum) || 0;
+    calcCurNum = String(curVal / 100);
+    updateCalcDisplay();
+    return;
+  }
+
+  calcExpr += calcCurNum + ' ' + op + ' ';
+  calcCurNum = '0';
+  updateCalcDisplay();
+}
+
+function calcEvaluateEqual() {
+  if (!calcExpr && !calcJustEvaled) return;
+  var fullExpr = calcExpr + calcCurNum;
+  var sanitized = fullExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/[^\d.+\-*/() ]/g, '');
+  try {
+    var result = Function('"use strict";return (' + sanitized + ')')();
+    if (!isFinite(result)) {
+      calcCurNum = 'Error';
+    } else {
+      var cleanResult = Math.round(result * 10000) / 10000;
+      calcCurNum = String(cleanResult);
+      addCalcHistory(fullExpr + ' = ' + cleanResult);
+    }
+  } catch(e) {
+    calcCurNum = 'Error';
+  }
+  calcExpr = fullExpr + ' =';
+  calcJustEvaled = true;
+  updateCalcDisplay();
+}
+
+function calcQuickGst(pct) {
+  var curVal = parseFloat(calcCurNum) || 0;
+  if (curVal === 0) return;
+  var factor = 1 + (pct / 100);
+  var result = Math.round(curVal * factor * 100) / 100;
+  calcExpr = curVal + (pct >= 0 ? ' +' + pct + '% GST =' : ' ' + pct + '% =');
+  calcCurNum = String(result);
+  calcJustEvaled = true;
+  addCalcHistory(calcExpr + ' ' + result);
+  updateCalcDisplay();
+}
+
+function addCalcHistory(entry) {
+  try {
+    var hist = JSON.parse(localStorage.getItem('sw_calc_history') || '[]');
+    hist.unshift({ text: entry, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+    if (hist.length > 20) hist = hist.slice(0, 20);
+    localStorage.setItem('sw_calc_history', JSON.stringify(hist));
+    renderCalcHistory();
+  } catch(e) {}
+}
+
+function renderCalcHistory() {
+  var tape = document.getElementById('calcHistoryTape');
+  if (!tape) return;
+  try {
+    var hist = JSON.parse(localStorage.getItem('sw_calc_history') || '[]');
+    if (hist.length === 0) {
+      tape.innerHTML = '<div style="text-align:center; padding:8px 0; color:#64748b;">কোনো পুরনো হিসাব নেই</div>';
+      return;
+    }
+    var html = '';
+    hist.forEach(function(h) {
+      var parts = h.text.split('=');
+      var ans = parts.length > 1 ? parts[1].trim() : parts[0];
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed #334155;">' +
+        '<span>' + h.text + '</span>' +
+        '<button type="button" onclick="calcUseHistoryVal(\'' + ans + '\')" style="background:#0284c7; color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:0.68rem; cursor:pointer;">Use</button>' +
+      '</div>';
+    });
+    tape.innerHTML = html;
+  } catch(e) {}
+}
+
+function calcUseHistoryVal(val) {
+  calcCurNum = String(val).replace(/[^\d.-]/g, '') || '0';
+  calcExpr = '';
+  calcJustEvaled = false;
+  updateCalcDisplay();
+}
+
+function calcClearHistory() {
+  localStorage.removeItem('sw_calc_history');
+  renderCalcHistory();
+}
+
+// -------------------------------------------------------------------------
+// DISCOUNT CALCULATOR LOGIC
+// -------------------------------------------------------------------------
+function setDiscountPreset(pct) {
+  var pInput = document.getElementById('disc_pct');
+  if (pInput) pInput.value = pct;
+  var fInput = document.getElementById('disc_flat');
+  if (fInput) fInput.value = '';
+  calcDiscountLive();
+}
+
+function calcDiscountLive() {
+  var origEl = document.getElementById('disc_orig_price');
+  var pctEl = document.getElementById('disc_pct');
+  var flatEl = document.getElementById('disc_flat');
+  var savedEl = document.getElementById('disc_val_saved');
+  var finalEl = document.getElementById('disc_val_final');
+  var bdEl = document.getElementById('disc_val_breakdown');
+  var gstEl = document.getElementById('disc_val_with_gst');
+
+  if (!origEl || !savedEl || !finalEl) return;
+  var orig = parseFloat(origEl.value) || 0;
+  var pct = parseFloat(pctEl ? pctEl.value : 0) || 0;
+
+  if (orig <= 0) {
+    savedEl.textContent = '₹ 0.00';
+    finalEl.textContent = '₹ 0.00';
+    if (bdEl) bdEl.textContent = 'আসল দাম ও ডিসকাউন্টের হিসাব এখানে দেখা যাবে';
+    if (gstEl) gstEl.textContent = '₹ 0.00';
+    return;
+  }
+
+  var savedAmt = Math.round((orig * (pct / 100)) * 100) / 100;
+  var finalPrice = Math.max(0, Math.round((orig - savedAmt) * 100) / 100);
+  var withGst = Math.round((finalPrice * 1.18) * 100) / 100;
+
+  if (flatEl && document.activeElement === pctEl) {
+    flatEl.value = savedAmt > 0 ? savedAmt : '';
+  }
+
+  savedEl.textContent = '₹ ' + savedAmt.toLocaleString('en-IN', {minimumFractionDigits: 2});
+  finalEl.textContent = '₹ ' + finalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2});
+  if (bdEl) bdEl.innerHTML = 'আসল দাম: <b>₹' + orig.toLocaleString('en-IN') + '</b> − ছাড় (' + pct + '%): <b style="color:#34d399;">₹' + savedAmt.toLocaleString('en-IN') + '</b> = <b style="color:#fbbf24;">₹' + finalPrice.toLocaleString('en-IN') + '</b>';
+  if (gstEl) gstEl.textContent = '₹ ' + withGst.toLocaleString('en-IN', {minimumFractionDigits: 2});
+}
+
+function calcDiscountFromFlatLive() {
+  var origEl = document.getElementById('disc_orig_price');
+  var flatEl = document.getElementById('disc_flat');
+  var pctEl = document.getElementById('disc_pct');
+  if (!origEl || !flatEl) return;
+  var orig = parseFloat(origEl.value) || 0;
+  var flat = parseFloat(flatEl.value) || 0;
+  if (orig > 0 && flat >= 0) {
+    var calcPct = Math.round((flat / orig) * 10000) / 100;
+    if (pctEl) pctEl.value = calcPct;
+  }
+  calcDiscountLive();
+}
+
+// -------------------------------------------------------------------------
+// TRIGONOMETRY & MITRE ANGLE CALCULATOR LOGIC
+// -------------------------------------------------------------------------
+function setTrigAngleMode(mode) {
+  trigAngleMode = mode;
+  var bDeg = document.getElementById('btnAngleDeg');
+  var bRad = document.getElementById('btnAngleRad');
+  if (bDeg) bDeg.classList.toggle('active', mode === 'DEG');
+  if (bRad) bRad.classList.toggle('active', mode === 'RAD');
+  evalTrigInstant();
+}
+
+function evalTrigInstant() {
+  var inp = document.getElementById('trig_input_val');
+  var pill = document.getElementById('trig_result_pill');
+  if (!inp || !pill) return;
+  var val = parseFloat(inp.value) || 0;
+  var isDeg = trigAngleMode === 'DEG';
+  var rad = isDeg ? (val * Math.PI / 180) : val;
+  var unitStr = isDeg ? '°' : ' rad';
+  var s = Math.abs(Math.sin(rad)) < 1e-12 ? 0 : Math.round(Math.sin(rad) * 10000) / 10000;
+  var c = Math.abs(Math.cos(rad)) < 1e-12 ? 0 : Math.round(Math.cos(rad) * 10000) / 10000;
+  pill.innerHTML = 'sin(' + val + unitStr + ') = <b>' + s + '</b> | cos(' + val + unitStr + ') = <b>' + c + '</b>';
+}
+
+function applyTrig(fn) {
+  var inp = document.getElementById('trig_input_val');
+  var pill = document.getElementById('trig_result_pill');
+  if (!inp || !pill) return;
+  var val = parseFloat(inp.value) || 0;
+  var isDeg = trigAngleMode === 'DEG';
+  var res = 0;
+  var title = '';
+
+  if (fn === 'sin') {
+    var rad = isDeg ? (val * Math.PI / 180) : val;
+    res = Math.abs(Math.sin(rad)) < 1e-12 ? 0 : Math.round(Math.sin(rad) * 10000) / 10000;
+    title = 'sin(' + val + (isDeg ? '°' : '') + ') = <b>' + res + '</b>';
+  } else if (fn === 'cos') {
+    var rad = isDeg ? (val * Math.PI / 180) : val;
+    res = Math.abs(Math.cos(rad)) < 1e-12 ? 0 : Math.round(Math.cos(rad) * 10000) / 10000;
+    title = 'cos(' + val + (isDeg ? '°' : '') + ') = <b>' + res + '</b>';
+  } else if (fn === 'tan') {
+    var norm = isDeg ? (((val % 180) + 180) % 180) : val;
+    if (isDeg && Math.abs(norm - 90) < 1e-6) {
+      title = 'tan(' + val + '°) = <b style="color:#f87171;">অসীম (Infinity / Undefined)</b>';
+    } else {
+      var rad = isDeg ? (val * Math.PI / 180) : val;
+      res = Math.abs(Math.tan(rad)) < 1e-12 ? 0 : Math.round(Math.tan(rad) * 10000) / 10000;
+      title = 'tan(' + val + (isDeg ? '°' : '') + ') = <b>' + res + '</b>';
+    }
+  } else if (fn === 'asin') {
+    if (val < -1 || val > 1) {
+      title = 'sin⁻¹(' + val + ') = <b style="color:#f87171;">Domain Error (-1 to 1 only)</b>';
+    } else {
+      var r = Math.asin(val);
+      if (isDeg) r = r * (180 / Math.PI);
+      res = Math.round(r * 10000) / 10000;
+      title = 'sin⁻¹(' + val + ') = <b>' + res + (isDeg ? '°' : '') + '</b>';
+    }
+  } else if (fn === 'acos') {
+    if (val < -1 || val > 1) {
+      title = 'cos⁻¹(' + val + ') = <b style="color:#f87171;">Domain Error (-1 to 1 only)</b>';
+    } else {
+      var r = Math.acos(val);
+      if (isDeg) r = r * (180 / Math.PI);
+      res = Math.round(r * 10000) / 10000;
+      title = 'cos⁻¹(' + val + ') = <b>' + res + (isDeg ? '°' : '') + '</b>';
+    }
+  } else if (fn === 'atan') {
+    var r = Math.atan(val);
+    if (isDeg) r = r * (180 / Math.PI);
+    res = Math.round(r * 10000) / 10000;
+    title = 'tan⁻¹(' + val + ') = <b>' + res + (isDeg ? '°' : '') + '</b>';
+  }
+
+  pill.innerHTML = title;
+}
+
+function applySci(op) {
+  var inp = document.getElementById('trig_input_val');
+  var pill = document.getElementById('trig_result_pill');
+  if (!inp || !pill) return;
+  var val = parseFloat(inp.value) || 0;
+  var res = 0;
+  var title = '';
+
+  if (op === 'sqrt') {
+    if (val < 0) {
+      title = '√(' + val + ') = <b style="color:#f87171;">Negative Error</b>';
+    } else {
+      res = Math.round(Math.sqrt(val) * 10000) / 10000;
+      title = '√(' + val + ') = <b>' + res + '</b>';
+      inp.value = res;
+    }
+  } else if (op === 'sq') {
+    res = Math.round(val * val * 10000) / 10000;
+    title = '(' + val + ')² = <b>' + res + '</b>';
+    inp.value = res;
+  } else if (op === 'inv') {
+    if (val === 0) {
+      title = '1/0 = <b style="color:#f87171;">Infinity</b>';
+    } else {
+      res = Math.round((1 / val) * 10000) / 10000;
+      title = '1 / ' + val + ' = <b>' + res + '</b>';
+      inp.value = res;
+    }
+  } else if (op === 'pi') {
+    res = Math.round(Math.PI * 10000) / 10000;
+    title = 'π = <b>' + Math.PI + '</b>';
+    inp.value = res;
+  }
+
+  pill.innerHTML = title;
+}
+
+// Mitre & Frame Slope / Diagonal Solver
+function calcMitreLive() {
+  var bEl = document.getElementById('mitre_base');
+  var hEl = document.getElementById('mitre_height');
+  var box = document.getElementById('mitre_results_box');
+  if (!bEl || !hEl || !box) return;
+  var b = parseFloat(bEl.value) || 0;
+  var h = parseFloat(hEl.value) || 0;
+
+  if (b <= 0 || h <= 0) {
+    box.innerHTML = 'উচ্চতা ও চওড়া লিখলে বাঁকা পাইপের <b>কাটিং সাইজ (কর্ণ)</b> এবং কর্নারের <b>ডিগ্রি কোণ (Mitre Angle)</b> নিজে থেকেই হিসাব হবে।';
+    return;
+  }
+
+  var hyp = Math.round(Math.sqrt(b * b + h * h) * 100) / 100;
+  var angRad = Math.atan2(h, b);
+  var angDeg = Math.round(angRad * (180 / Math.PI) * 100) / 100;
+  var compDeg = Math.round((90 - angDeg) * 100) / 100;
+
+  box.innerHTML = '<div style="color:#38bdf8; font-weight:800; font-size:0.82rem; margin-bottom:4px;">✔ হিসাবের ফলাফল (Workshop Angle & Cut):</div>' +
+    '<div>• বাঁকা পাইপ / কর্ণের মোট কাটিং মাপ: <b style="color:#fde047; font-size:0.95rem;">' + hyp + '"</b></div>' +
+    '<div>• নিচের কাটিং কোণ (Base Mitre Cut): <b style="color:#4ade80;">' + angDeg + '°</b></div>' +
+    '<div>• উপরের খাঁড়া কাটিং কোণ (Plumb/Top Cut): <b style="color:#f472b6;">' + compDeg + '°</b></div>' +
+    '<div style="margin-top:4px; font-size:0.7rem; color:#94a3b8;">💡 কাটিং টিপ: কাটিং মেশিনে <b>' + angDeg + '°</b> ডিগ্রিতে সেট করে কাটলে পাইপটি নিখুঁতভাবে মিলে যাবে।</div>';
+}
+
+if (typeof renderCalcHistory === 'function') {
+  setTimeout(renderCalcHistory, 300);
 }

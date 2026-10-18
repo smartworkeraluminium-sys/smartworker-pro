@@ -1259,15 +1259,11 @@
     };
 
     const PLAN_NAMES = {
-      'KARIGAR_1M': 'Karigar Plan (30 Days - Rs.99)',
-      'KARIGAR_3M': 'Karigar Plan (90 Days - Rs.280)',
-      'KARIGAR_6M': 'Karigar Plan (180 Days - Rs.550)',
-      'KARIGAR_1Y': 'Karigar Plan (365 Days - Rs.799)',
-      'TEAM_1M': 'Workshop Team (30 Days - Rs.499)',
-      'TEAM_1Y': 'Workshop Team (365 Days - Rs.3,999)',
-      'CORP_1M': 'Corporate Enterprise (30 Days - Rs.1,499)',
-      'CORP_1Y': 'Corporate Enterprise (365 Days - Rs.14,999)',
-      'LIFETIME': 'Lifetime VIP Pro Access (Rs.19,999)'
+      'KARIGAR_1M': 'Single User Pro (1 Person • 30 Days - Rs.99)',
+      'KARIGAR_3M': 'Single User Pro (1 Person • 90 Days - Rs.280)',
+      'KARIGAR_6M': 'Single User Pro (1 Person • 180 Days - Rs.550)',
+      'KARIGAR_1Y': 'Golden VIP Pro (1 Person • 365 Days - Rs.799)',
+      'LIFETIME': 'Single User VIP Access (Lifetime)'
     };
 
     const PLAN_VALIDITY_DAYS = {
@@ -1460,6 +1456,10 @@
       const bill = document.getElementById('in_bill').value;
       const paid = document.getElementById('in_paid').value;
       const due = document.getElementById('in_due').value;
+      const payModeEl = document.getElementById('in_pay_mode');
+      const utrEl = document.getElementById('in_utr');
+      const payMode = payModeEl ? payModeEl.value : "UPI";
+      const utr = (utrEl && utrEl.value.trim()) ? utrEl.value.trim() : "Verified";
 
       if (!devId || devId.length < 6) {
         alert("Please enter a valid Device ID (at least 6-8 characters).");
@@ -1485,6 +1485,8 @@
         bill_amount: bill,
         paid_amount: paid,
         due_amount: due,
+        pay_mode: payMode,
+        utr: utr,
         activation_key: key,
         status: "ACTIVE",
         start_date: validityObj.start_date,

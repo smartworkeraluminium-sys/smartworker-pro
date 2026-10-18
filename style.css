@@ -631,3 +631,122 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   padding: 13px;
   box-shadow: 0 6px 18px rgba(232, 121, 249, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
 }
+
+
+/* =========================================================
+   GENERAL & MONEY / DISCOUNT / TRIGONOMETRY CALCULATOR STYLES
+   ========================================================= */
+.calc-tab-btn {
+  flex: 1;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  padding: 8px 6px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.calc-tab-btn.active {
+  background: #0284c7;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+.calc-key {
+  background: #1e293b;
+  color: #fff;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 13px 4px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+.calc-key:active {
+  transform: scale(0.94);
+  background: #334155;
+}
+.calc-key-op {
+  background: #d97706 !important;
+  color: #fff !important;
+  border-color: #b45309 !important;
+}
+.calc-key-op:active {
+  background: #b45309 !important;
+}
+.calc-key-equal {
+  background: #16a34a !important;
+  color: #fff !important;
+  border-color: #15803d !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.4) !important;
+}
+.calc-key-equal:active {
+  background: #15803d !important;
+}
+.calc-key-danger {
+  background: #dc2626 !important;
+  color: #fff !important;
+  border-color: #b91c1c !important;
+}
+.calc-key-danger:active {
+  background: #b91c1c !important;
+}
+.calc-key-secondary {
+  background: #334155 !important;
+  color: #cbd5e1 !important;
+}
+.calc-fn-btn {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.calc-fn-btn:active {
+  background: #334155;
+  transform: scale(0.96);
+}
+.calc-preset-chip {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 6px 2px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.calc-preset-chip:active {
+  background: #0284c7;
+  color: #fff;
+  border-color: #0284c7;
+}
+.calc-deg-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.calc-deg-btn.active {
+  background: #7c3aed;
+  color: #fff;
+}
