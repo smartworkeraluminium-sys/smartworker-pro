@@ -1278,16 +1278,17 @@
       'LIFETIME': 36500
     };
 
+    function _0xadec(arr) { return arr.map(function(b){ return String.fromCharCode(b ^ 90); }).join(''); }
     const ADMIN_SALTS = {
-      'KARIGAR_1M': 'SAHEB_1M_PRO',
-      'KARIGAR_3M': 'SAHEB_3M_PRO',
-      'KARIGAR_6M': 'SAHEB_6M_PRO',
-      'KARIGAR_1Y': 'SAHEB_1Y_PRO',
-      'TEAM_1M': 'SAHEB_TEAM_1M_PRO',
-      'TEAM_1Y': 'SAHEB_TEAM_1Y_PRO',
-      'CORP_1M': 'SAHEB_CORP_1M_PRO',
-      'CORP_1Y': 'SAHEB_CORP_1Y_PRO',
-      'LIFETIME': 'SMARTWORKER_ADMIN_100'
+      'KARIGAR_1M': _0xadec([9, 27, 18, 31, 24, 5, 107, 23, 5, 10, 8, 21]),
+      'KARIGAR_3M': _0xadec([9, 27, 18, 31, 24, 5, 105, 23, 5, 10, 8, 21]),
+      'KARIGAR_6M': _0xadec([9, 27, 18, 31, 24, 5, 108, 23, 5, 10, 8, 21]),
+      'KARIGAR_1Y': _0xadec([9, 27, 18, 31, 24, 5, 107, 3, 5, 10, 8, 21]),
+      'TEAM_1M': _0xadec([9, 27, 18, 31, 24, 5, 14, 31, 27, 23, 5, 107, 23, 5, 10, 8, 21]),
+      'TEAM_1Y': _0xadec([9, 27, 18, 31, 24, 5, 14, 31, 27, 23, 5, 107, 3, 5, 10, 8, 21]),
+      'CORP_1M': _0xadec([9, 27, 18, 31, 24, 5, 25, 21, 8, 10, 5, 107, 23, 5, 10, 8, 21]),
+      'CORP_1Y': _0xadec([9, 27, 18, 31, 24, 5, 25, 21, 8, 10, 5, 107, 3, 5, 10, 8, 21]),
+      'LIFETIME': _0xadec([9, 23, 27, 8, 14, 13, 21, 8, 17, 31, 8, 5, 27, 30, 23, 19, 20, 5, 107, 106, 106])
     };
 
     let currentTabFilter = 'all';
@@ -1385,7 +1386,7 @@
 
     function computeKey(devId, plan) {
       devId = String(devId || '').toUpperCase().trim();
-      if (plan === 'LIFETIME') return 'SMARTWORKER_ADMIN_100';
+      if (plan === 'LIFETIME') return ADMIN_SALTS['LIFETIME'];
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -2516,5 +2517,57 @@
       initFirebaseLiveListener();
     });
   </script>
+
+  <!-- MASTER ADMIN PIN LOCK OVERLAY (SHA-256 PROTECTED) -->
+  <div id="masterAdminLockGate" style="position:fixed; inset:0; background:linear-gradient(135deg,#020617,#0f172a); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#1e293b; border:1.5px solid #334155; border-radius:18px; padding:28px 22px; width:100%; max-width:360px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+      <div style="width:58px; height:58px; border-radius:50%; background:rgba(56,189,248,0.12); color:#38bdf8; display:flex; align-items:center; justify-content:center; font-size:1.6rem; margin:0 auto 14px;">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 style="color:#f8fafc; font-size:1.15rem; font-weight:800; margin-bottom:4px;">ADMIN SECURITY LOCK</h3>
+      <p style="color:#94a3b8; font-size:0.78rem; margin-bottom:18px;">Enter your 6-digit Master Admin PIN to unlock the control center</p>
+      <input type="password" id="admGatePinInput" inputmode="numeric" maxlength="12" placeholder="••••••" style="width:100%; padding:12px; border-radius:10px; border:1px solid #475569; background:#0f172a; color:#38bdf8; font-size:1.35rem; font-weight:800; text-align:center; letter-spacing:6px; margin-bottom:14px;" onkeydown="if(event.key==='Enter') verifyAdminGatePin()">
+      <button type="button" onclick="verifyAdminGatePin()" style="width:100%; padding:12px; border-radius:10px; border:none; background:linear-gradient(135deg,#0284c7,#2563eb); color:#fff; font-weight:800; font-size:0.92rem; cursor:pointer;">
+        <i class="fa-solid fa-unlock-keyhole"></i> UNLOCK ADMIN PORTAL
+      </button>
+      <div id="admGateErr" style="color:#f87171; font-size:0.76rem; font-weight:700; margin-top:10px; min-height:18px;"></div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      const MASTER_HASH = "584a7334e8e0e5233965da1ac78cf9b48548fd6fbb0257432436a86788276b85";
+      const PREFIX = "SW_ADMIN_MASTER_PIN_V27::";
+      if (sessionStorage.getItem('sw_admin_gate_unlocked') === MASTER_HASH) {
+        var g = document.getElementById('masterAdminLockGate');
+        if (g) g.style.display = 'none';
+      }
+      window.verifyAdminGatePin = function() {
+        var inp = document.getElementById('admGatePinInput');
+        var err = document.getElementById('admGateErr');
+        var val = inp ? String(inp.value || '').trim() : '';
+        var activeHash = localStorage.getItem('sw_admin_pin_hash') || MASTER_HASH;
+        if (typeof sha256 === 'function' && sha256(PREFIX + val) === activeHash) {
+          sessionStorage.setItem('sw_admin_gate_unlocked', activeHash);
+          var g = document.getElementById('masterAdminLockGate');
+          if (g) g.style.display = 'none';
+        } else {
+          if (err) err.textContent = '❌ Invalid Admin Security PIN! Access Denied.';
+          if (inp) inp.value = '';
+        }
+      };
+      document.addEventListener('contextmenu', function(e) {
+        var t = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+        if (t !== 'INPUT' && t !== 'TEXTAREA') e.preventDefault();
+      });
+      document.addEventListener('keydown', function(e) {
+        var k = e.key || e.keyCode;
+        if (k === 'F12' || k === 123 || (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')) || (e.ctrlKey && (k === 'U' || k === 'u' || k === 'S' || k === 's'))) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    })();
+  </script>
+
 </body>
 </html>

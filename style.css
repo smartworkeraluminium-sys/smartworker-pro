@@ -752,10 +752,16 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
 }
 
 
+
 /* =========================================================================
-   ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR
+   ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR (v26)
    ========================================================================= */
-.android-calc-shell {
+#screen-calculator {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#screen-calculator .android-calc-shell {
   --calc-accent: #0284c7;
   --calc-bg: #ffffff;
   --calc-display-bg: #ffffff;
@@ -764,17 +770,18 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   --calc-border: #e2e8f0;
   --calc-sci-bg: #f8fafc;
   --calc-btn-hover: #f1f5f9;
-  background: var(--calc-bg);
-  color: var(--calc-text);
-  border-radius: 14px;
+  background: var(--calc-bg) !important;
+  color: var(--calc-text) !important;
+  min-height: calc(100vh - 118px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   overflow: hidden;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12);
-  border: 1px solid var(--calc-border);
-  margin-bottom: 12px;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  border: none;
+  font-family: 'Roboto', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.android-calc-shell.dark-theme {
+#screen-calculator .android-calc-shell.dark-theme {
   --calc-bg: #0f172a;
   --calc-display-bg: #0f172a;
   --calc-text: #f1f5f9;
@@ -784,402 +791,439 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   --calc-btn-hover: #1e293b;
 }
 
-.android-calc-display {
-  background: var(--calc-display-bg);
-  padding: 20px 18px 14px;
-  min-height: 155px;
+#screen-calculator .android-calc-main-view {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-end;
+  flex: 1;
+  justify-content: space-between;
+  background: var(--calc-bg);
+}
+
+#screen-calculator .android-calc-display {
+  background: var(--calc-display-bg) !important;
+  padding: 22px 20px 16px !important;
+  min-height: 175px;
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: flex-end !important;
   position: relative;
   border-bottom: 1px solid var(--calc-border);
 }
 
-.android-calc-mem-badge {
+#screen-calculator .android-calc-mem-badge {
   position: absolute;
   top: 12px;
   left: 16px;
   background: var(--calc-accent);
   color: #fff;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 4px;
 }
 
-.android-calc-expr {
-  font-size: 1.35rem;
-  color: var(--calc-subtext);
-  min-height: 28px;
-  text-align: right;
+#screen-calculator .android-calc-expr {
+  font-size: 1.45rem !important;
+  color: var(--calc-subtext) !important;
+  min-height: 30px;
+  text-align: right !important;
   word-break: break-all;
   width: 100%;
   font-weight: 400;
 }
 
-.android-calc-result {
-  font-size: 2.65rem;
-  font-weight: 400;
-  color: var(--calc-text);
-  text-align: right;
+#screen-calculator .android-calc-result {
+  font-size: 2.85rem !important;
+  font-weight: 400 !important;
+  color: var(--calc-text) !important;
+  text-align: right !important;
   word-break: break-all;
   width: 100%;
   line-height: 1.15;
   margin-top: 4px;
 }
 
-.android-calc-preview {
-  font-size: 1.05rem;
-  color: var(--calc-accent);
-  min-height: 20px;
-  text-align: right;
+#screen-calculator .android-calc-preview {
+  font-size: 1.1rem !important;
+  color: var(--calc-accent) !important;
+  min-height: 22px;
+  text-align: right !important;
   width: 100%;
   margin-top: 4px;
   font-weight: 500;
 }
 
-.android-calc-memory-bar {
+#screen-calculator .android-calc-memory-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   background: var(--calc-sci-bg);
   border-bottom: 1px solid var(--calc-border);
 }
 
-.android-calc-memory-bar button {
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--calc-border);
-  padding: 8px 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--calc-subtext);
+#screen-calculator .android-calc-memory-bar button {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--calc-border) !important;
+  padding: 9px 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: var(--calc-subtext) !important;
   cursor: pointer;
 }
 
-.android-calc-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  background: var(--calc-bg);
-  border-bottom: 1px solid var(--calc-border);
+#screen-calculator .android-calc-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 10px 16px !important;
+  background: var(--calc-bg) !important;
+  border-bottom: 1px solid var(--calc-border) !important;
 }
 
-.android-tool-btn {
-  background: transparent;
-  border: none;
-  color: #64748b;
-  font-size: 1.15rem;
-  width: 40px;
-  height: 38px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+#screen-calculator .android-tool-btn {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #64748b !important;
+  font-size: 1.25rem !important;
+  width: 42px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.android-tool-btn.active,
-.android-tool-btn:active {
-  color: var(--calc-accent);
-  background: rgba(2, 132, 199, 0.08);
+#screen-calculator .android-tool-btn.active,
+#screen-calculator .android-tool-btn:active {
+  color: var(--calc-accent) !important;
+  background: rgba(2, 132, 199, 0.1) !important;
 }
 
-.android-tool-btn.backspace-btn {
-  color: #38bdf8;
-  margin-left: auto;
-  font-size: 1.25rem;
+#screen-calculator .android-tool-btn.backspace-btn {
+  color: #0284c7 !important;
+  margin-left: auto !important;
+  font-size: 1.35rem !important;
 }
 
-.sci-icon-box {
-  border: 1.5px solid currentColor;
-  border-radius: 4px;
-  font-size: 0.54rem;
-  line-height: 1.05;
-  padding: 2px 3px;
-  font-weight: 800;
-  display: inline-block;
+#screen-calculator .sci-icon-box {
+  border: 1.5px solid currentColor !important;
+  border-radius: 4px !important;
+  font-size: 0.56rem !important;
+  line-height: 1.05 !important;
+  padding: 2px 4px !important;
+  font-weight: 800 !important;
+  display: inline-block !important;
+  text-align: center !important;
 }
 
-.android-keypad-grid {
-  display: grid;
-  background: var(--calc-border);
-  gap: 1px;
+#screen-calculator .android-keypad-grid {
+  display: grid !important;
+  background: var(--calc-border) !important;
+  gap: 1px !important;
+  border-top: 1px solid var(--calc-border) !important;
 }
 
-.android-keypad-grid.std-grid {
-  grid-template-columns: repeat(4, 1fr);
+#screen-calculator .android-keypad-grid.std-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
 }
 
-.android-keypad-grid.sci-grid {
-  grid-template-columns: repeat(5, 1fr);
+#screen-calculator .android-keypad-grid.sci-grid {
+  grid-template-columns: repeat(5, 1fr) !important;
 }
 
-.ak-btn {
-  background: var(--calc-bg);
-  border: none;
-  color: var(--calc-text);
-  font-size: 1.65rem;
-  font-weight: 300;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+#screen-calculator .ak-btn {
+  background: var(--calc-bg) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: var(--calc-text) !important;
+  font-size: 1.75rem !important;
+  font-weight: 300 !important;
+  height: 74px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   cursor: pointer;
   user-select: none;
-  transition: background 0.12s ease;
+  padding: 0 !important;
+  margin: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.sci-grid .ak-btn {
-  height: 56px;
-  font-size: 1.35rem;
+#screen-calculator .sci-grid .ak-btn {
+  height: 58px !important;
+  font-size: 1.35rem !important;
 }
 
-.ak-btn.ak-sci {
-  background: var(--calc-sci-bg);
-  color: var(--calc-subtext);
-  font-size: 1.02rem;
-  font-weight: 400;
+#screen-calculator .ak-btn.ak-sci {
+  background: var(--calc-sci-bg) !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.05rem !important;
+  font-weight: 400 !important;
 }
 
-.ak-btn.ak-clear {
-  color: #e65100;
-  font-weight: 400;
+#screen-calculator .ak-btn.ak-clear {
+  color: #e65100 !important;
+  font-weight: 400 !important;
 }
 
-.ak-btn.ak-op {
-  color: var(--calc-accent);
-  font-size: 1.75rem;
-  font-weight: 400;
+#screen-calculator .ak-btn.ak-op {
+  color: var(--calc-accent) !important;
+  font-size: 1.85rem !important;
+  font-weight: 400 !important;
 }
 
-.ak-btn.ak-equal {
-  background: var(--calc-accent);
-  color: #ffffff;
-  font-size: 1.9rem;
-  font-weight: 400;
+#screen-calculator .ak-btn.ak-equal {
+  background: var(--calc-accent) !important;
+  color: #ffffff !important;
+  font-size: 2rem !important;
+  font-weight: 400 !important;
 }
 
-.ak-btn:active {
-  background: var(--calc-btn-hover);
+#screen-calculator .ak-btn:active {
+  background: var(--calc-btn-hover) !important;
 }
 
-.ak-btn.ak-equal:active {
+#screen-calculator .ak-btn.ak-equal:active {
   filter: brightness(0.92);
 }
 
-.android-calc-shell.rounded-keys .android-keypad-grid {
-  background: var(--calc-bg);
-  gap: 8px;
-  padding: 10px;
+#screen-calculator .android-calc-shell.rounded-keys .android-keypad-grid {
+  background: var(--calc-bg) !important;
+  gap: 8px !important;
+  padding: 10px !important;
 }
 
-.android-calc-shell.rounded-keys .ak-btn {
-  border-radius: 18px;
-  border: 1px solid var(--calc-border);
+#screen-calculator .android-calc-shell.rounded-keys .ak-btn {
+  border-radius: 18px !important;
+  border: 1px solid var(--calc-border) !important;
 }
 
 /* UNIT CONVERTER SHEET (Screenshot 3) */
-.android-unit-converter-sheet {
-  background: var(--calc-bg);
-  padding: 14px 10px 18px;
-  border-top: 1px solid var(--calc-border);
+#screen-calculator .android-unit-converter-sheet {
+  background: var(--calc-bg) !important;
+  padding: 16px 12px 22px !important;
+  border-top: 1px solid var(--calc-border) !important;
+  min-height: 360px;
 }
 
-.uc-sheet-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--calc-subtext);
-  margin-bottom: 14px;
+#screen-calculator .uc-sheet-header {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  color: var(--calc-subtext) !important;
+  margin-bottom: 18px !important;
 }
 
-.uc-close-btn {
-  position: absolute;
-  right: 8px;
-  background: transparent;
-  border: none;
-  color: var(--calc-subtext);
-  font-size: 1rem;
+#screen-calculator .uc-close-btn {
+  position: absolute !important;
+  right: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.1rem !important;
   cursor: pointer;
+  padding: 4px 8px !important;
 }
 
-.uc-icon-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px 6px;
+#screen-calculator .uc-icon-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 18px 6px !important;
 }
 
-.uc-grid-item {
-  background: transparent;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: var(--calc-subtext);
+#screen-calculator .uc-grid-item {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  color: #475569 !important;
   cursor: pointer;
-  padding: 6px 2px;
-  border-radius: 10px;
+  padding: 6px 2px !important;
+  border-radius: 10px !important;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.uc-grid-item i {
-  font-size: 1.35rem;
+#screen-calculator .uc-grid-item i {
+  font-size: 1.4rem !important;
+  color: inherit !important;
 }
 
-.uc-grid-item span {
-  font-size: 0.74rem;
-  font-weight: 400;
-  text-align: center;
-  line-height: 1.15;
+#screen-calculator .uc-grid-item span {
+  font-size: 0.76rem !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+  line-height: 1.15 !important;
+  color: inherit !important;
 }
 
-.uc-grid-item.active-discount,
-.uc-grid-item:hover,
-.uc-grid-item:active {
-  color: var(--calc-accent);
+#screen-calculator .uc-grid-item.active-discount,
+#screen-calculator .uc-grid-item:hover,
+#screen-calculator .uc-grid-item:active {
+  color: var(--calc-accent) !important;
 }
 
-.uc-active-tool-box {
-  background: var(--calc-sci-bg);
-  border: 1px solid var(--calc-border);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 14px;
+#screen-calculator .uc-active-tool-box {
+  background: var(--calc-sci-bg) !important;
+  border: 1px solid var(--calc-border) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  margin-bottom: 14px !important;
 }
 
 /* HISTORY & SETTINGS SUB-SCREENS (Screenshots 4 & 5) */
-.android-calc-subview {
-  background: var(--calc-bg);
-  min-height: 480px;
+#screen-calculator .android-calc-subview {
+  background: var(--calc-bg) !important;
+  min-height: calc(100vh - 118px);
 }
 
-.android-subview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--calc-border);
+#screen-calculator .android-subview-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  background: var(--calc-bg) !important;
 }
 
-.subview-back-btn,
-.subview-menu-btn {
-  background: transparent;
-  border: none;
-  color: var(--calc-accent);
-  font-size: 1.15rem;
+#screen-calculator .subview-back-btn,
+#screen-calculator .subview-menu-btn {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--calc-accent) !important;
+  font-size: 1.25rem !important;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 4px 8px !important;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.subview-title {
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: var(--calc-text);
-  margin-right: auto;
-  margin-left: 12px;
+#screen-calculator .subview-title {
+  font-size: 1.2rem !important;
+  font-weight: 500 !important;
+  color: var(--calc-text) !important;
+  margin-right: auto !important;
+  margin-left: 12px !important;
 }
 
-.android-history-list {
-  display: flex;
-  flex-direction: column;
+#screen-calculator .android-history-list {
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.android-history-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--calc-border);
-  display: flex;
-  flex-direction: column;
-  position: relative;
+#screen-calculator .android-history-item {
+  padding: 14px 18px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  cursor: pointer;
+  background: var(--calc-bg) !important;
+}
+
+#screen-calculator .android-history-dots {
+  position: absolute !important;
+  left: 16px !important;
+  top: 18px !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.05rem !important;
+}
+
+#screen-calculator .android-history-expr {
+  text-align: right !important;
+  font-size: 1.35rem !important;
+  color: var(--calc-text) !important;
+  font-weight: 400 !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-history-ans {
+  text-align: right !important;
+  font-size: 1.5rem !important;
+  color: var(--calc-accent) !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-history-date {
+  text-align: left !important;
+  font-size: 0.78rem !important;
+  color: var(--calc-text) !important;
+  margin-top: 6px !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-settings-band {
+  background: #bae6fd !important;
+  color: #334155 !important;
+  padding: 7px 16px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+}
+
+#screen-calculator .android-settings-list {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#screen-calculator .android-setting-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  font-size: 1rem !important;
+  color: var(--calc-text) !important;
   cursor: pointer;
 }
 
-.android-history-item:hover {
-  background: var(--calc-btn-hover);
+#screen-calculator .android-color-swatch {
+  width: 38px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+  display: inline-block !important;
 }
 
-.android-history-dots {
-  position: absolute;
-  left: 14px;
-  top: 18px;
-  color: var(--calc-subtext);
-  font-size: 1rem;
-}
-
-.android-history-expr {
-  text-align: right;
-  font-size: 1.28rem;
-  color: var(--calc-text);
-  font-weight: 400;
-}
-
-.android-history-ans {
-  text-align: right;
-  font-size: 1.42rem;
-  color: var(--calc-accent);
-  font-weight: 400;
-  margin-top: 2px;
-}
-
-.android-history-date {
-  text-align: left;
-  font-size: 0.76rem;
-  color: var(--calc-text);
-  margin-top: 4px;
-}
-
-.android-settings-band {
-  background: #bae6fd;
-  color: #334155;
-  padding: 6px 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.android-settings-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.android-setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid var(--calc-border);
-  font-size: 0.98rem;
-  color: var(--calc-text);
-  cursor: pointer;
-}
-
-.android-color-swatch {
-  width: 38px;
-  height: 36px;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.android-switch {
+#screen-calculator .android-switch {
   position: relative;
   display: inline-block;
   width: 42px;
   height: 22px;
 }
 
-.android-switch input {
+#screen-calculator .android-switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.android-slider {
+#screen-calculator .android-slider {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -1188,7 +1232,7 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   border-radius: 22px;
 }
 
-.android-slider:before {
+#screen-calculator .android-slider:before {
   position: absolute;
   content: "";
   height: 18px;
@@ -1201,11 +1245,11 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-.android-switch input:checked + .android-slider {
+#screen-calculator .android-switch input:checked + .android-slider {
   background-color: #93c5fd;
 }
 
-.android-switch input:checked + .android-slider:before {
+#screen-calculator .android-switch input:checked + .android-slider:before {
   transform: translateX(20px);
   background-color: var(--calc-accent);
 }

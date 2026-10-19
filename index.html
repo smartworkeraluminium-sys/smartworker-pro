@@ -62,9 +62,511 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=27">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
+  <style id="androidCalcInlineStyles">
+/* =========================================================================
+   ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR (v26)
+   ========================================================================= */
+#screen-calculator {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#screen-calculator .android-calc-shell {
+  --calc-accent: #0284c7;
+  --calc-bg: #ffffff;
+  --calc-display-bg: #ffffff;
+  --calc-text: #334155;
+  --calc-subtext: #64748b;
+  --calc-border: #e2e8f0;
+  --calc-sci-bg: #f8fafc;
+  --calc-btn-hover: #f1f5f9;
+  background: var(--calc-bg) !important;
+  color: var(--calc-text) !important;
+  min-height: calc(100vh - 118px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border: none;
+  font-family: 'Roboto', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#screen-calculator .android-calc-shell.dark-theme {
+  --calc-bg: #0f172a;
+  --calc-display-bg: #0f172a;
+  --calc-text: #f1f5f9;
+  --calc-subtext: #94a3b8;
+  --calc-border: #1e293b;
+  --calc-sci-bg: #1e293b;
+  --calc-btn-hover: #1e293b;
+}
+
+#screen-calculator .android-calc-main-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+  background: var(--calc-bg);
+}
+
+#screen-calculator .android-calc-display {
+  background: var(--calc-display-bg) !important;
+  padding: 22px 20px 16px !important;
+  min-height: 175px;
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: flex-end !important;
+  position: relative;
+  border-bottom: 1px solid var(--calc-border);
+}
+
+#screen-calculator .android-calc-mem-badge {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  background: var(--calc-accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+#screen-calculator .android-calc-expr {
+  font-size: 1.45rem !important;
+  color: var(--calc-subtext) !important;
+  min-height: 30px;
+  text-align: right !important;
+  word-break: break-all;
+  width: 100%;
+  font-weight: 400;
+}
+
+#screen-calculator .android-calc-result {
+  font-size: 2.85rem !important;
+  font-weight: 400 !important;
+  color: var(--calc-text) !important;
+  text-align: right !important;
+  word-break: break-all;
+  width: 100%;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+
+#screen-calculator .android-calc-preview {
+  font-size: 1.1rem !important;
+  color: var(--calc-accent) !important;
+  min-height: 22px;
+  text-align: right !important;
+  width: 100%;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+#screen-calculator .android-calc-memory-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--calc-sci-bg);
+  border-bottom: 1px solid var(--calc-border);
+}
+
+#screen-calculator .android-calc-memory-bar button {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--calc-border) !important;
+  padding: 9px 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: var(--calc-subtext) !important;
+  cursor: pointer;
+}
+
+#screen-calculator .android-calc-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 10px 16px !important;
+  background: var(--calc-bg) !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+}
+
+#screen-calculator .android-tool-btn {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #64748b !important;
+  font-size: 1.25rem !important;
+  width: 42px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  padding: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .android-tool-btn.active,
+#screen-calculator .android-tool-btn:active {
+  color: var(--calc-accent) !important;
+  background: rgba(2, 132, 199, 0.1) !important;
+}
+
+#screen-calculator .android-tool-btn.backspace-btn {
+  color: #0284c7 !important;
+  margin-left: auto !important;
+  font-size: 1.35rem !important;
+}
+
+#screen-calculator .sci-icon-box {
+  border: 1.5px solid currentColor !important;
+  border-radius: 4px !important;
+  font-size: 0.56rem !important;
+  line-height: 1.05 !important;
+  padding: 2px 4px !important;
+  font-weight: 800 !important;
+  display: inline-block !important;
+  text-align: center !important;
+}
+
+#screen-calculator .android-keypad-grid {
+  display: grid !important;
+  background: var(--calc-border) !important;
+  gap: 1px !important;
+  border-top: 1px solid var(--calc-border) !important;
+}
+
+#screen-calculator .android-keypad-grid.std-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+#screen-calculator .android-keypad-grid.sci-grid {
+  grid-template-columns: repeat(5, 1fr) !important;
+}
+
+#screen-calculator .ak-btn {
+  background: var(--calc-bg) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: var(--calc-text) !important;
+  font-size: 1.75rem !important;
+  font-weight: 300 !important;
+  height: 74px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  user-select: none;
+  padding: 0 !important;
+  margin: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .sci-grid .ak-btn {
+  height: 58px !important;
+  font-size: 1.35rem !important;
+}
+
+#screen-calculator .ak-btn.ak-sci {
+  background: var(--calc-sci-bg) !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.05rem !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn.ak-clear {
+  color: #e65100 !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn.ak-op {
+  color: var(--calc-accent) !important;
+  font-size: 1.85rem !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn.ak-equal {
+  background: var(--calc-accent) !important;
+  color: #ffffff !important;
+  font-size: 2rem !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn:active {
+  background: var(--calc-btn-hover) !important;
+}
+
+#screen-calculator .ak-btn.ak-equal:active {
+  filter: brightness(0.92);
+}
+
+#screen-calculator .android-calc-shell.rounded-keys .android-keypad-grid {
+  background: var(--calc-bg) !important;
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+#screen-calculator .android-calc-shell.rounded-keys .ak-btn {
+  border-radius: 18px !important;
+  border: 1px solid var(--calc-border) !important;
+}
+
+/* UNIT CONVERTER SHEET (Screenshot 3) */
+#screen-calculator .android-unit-converter-sheet {
+  background: var(--calc-bg) !important;
+  padding: 16px 12px 22px !important;
+  border-top: 1px solid var(--calc-border) !important;
+  min-height: 360px;
+}
+
+#screen-calculator .uc-sheet-header {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  color: var(--calc-subtext) !important;
+  margin-bottom: 18px !important;
+}
+
+#screen-calculator .uc-close-btn {
+  position: absolute !important;
+  right: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.1rem !important;
+  cursor: pointer;
+  padding: 4px 8px !important;
+}
+
+#screen-calculator .uc-icon-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 18px 6px !important;
+}
+
+#screen-calculator .uc-grid-item {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  color: #475569 !important;
+  cursor: pointer;
+  padding: 6px 2px !important;
+  border-radius: 10px !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .uc-grid-item i {
+  font-size: 1.4rem !important;
+  color: inherit !important;
+}
+
+#screen-calculator .uc-grid-item span {
+  font-size: 0.76rem !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+  line-height: 1.15 !important;
+  color: inherit !important;
+}
+
+#screen-calculator .uc-grid-item.active-discount,
+#screen-calculator .uc-grid-item:hover,
+#screen-calculator .uc-grid-item:active {
+  color: var(--calc-accent) !important;
+}
+
+#screen-calculator .uc-active-tool-box {
+  background: var(--calc-sci-bg) !important;
+  border: 1px solid var(--calc-border) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  margin-bottom: 14px !important;
+}
+
+/* HISTORY & SETTINGS SUB-SCREENS (Screenshots 4 & 5) */
+#screen-calculator .android-calc-subview {
+  background: var(--calc-bg) !important;
+  min-height: calc(100vh - 118px);
+}
+
+#screen-calculator .android-subview-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  background: var(--calc-bg) !important;
+}
+
+#screen-calculator .subview-back-btn,
+#screen-calculator .subview-menu-btn {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--calc-accent) !important;
+  font-size: 1.25rem !important;
+  cursor: pointer;
+  padding: 4px 8px !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .subview-title {
+  font-size: 1.2rem !important;
+  font-weight: 500 !important;
+  color: var(--calc-text) !important;
+  margin-right: auto !important;
+  margin-left: 12px !important;
+}
+
+#screen-calculator .android-history-list {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#screen-calculator .android-history-item {
+  padding: 14px 18px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  cursor: pointer;
+  background: var(--calc-bg) !important;
+}
+
+#screen-calculator .android-history-dots {
+  position: absolute !important;
+  left: 16px !important;
+  top: 18px !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.05rem !important;
+}
+
+#screen-calculator .android-history-expr {
+  text-align: right !important;
+  font-size: 1.35rem !important;
+  color: var(--calc-text) !important;
+  font-weight: 400 !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-history-ans {
+  text-align: right !important;
+  font-size: 1.5rem !important;
+  color: var(--calc-accent) !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-history-date {
+  text-align: left !important;
+  font-size: 0.78rem !important;
+  color: var(--calc-text) !important;
+  margin-top: 6px !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-settings-band {
+  background: #bae6fd !important;
+  color: #334155 !important;
+  padding: 7px 16px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+}
+
+#screen-calculator .android-settings-list {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#screen-calculator .android-setting-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  font-size: 1rem !important;
+  color: var(--calc-text) !important;
+  cursor: pointer;
+}
+
+#screen-calculator .android-color-swatch {
+  width: 38px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+  display: inline-block !important;
+}
+
+#screen-calculator .android-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+#screen-calculator .android-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+#screen-calculator .android-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .2s;
+  border-radius: 22px;
+}
+
+#screen-calculator .android-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+#screen-calculator .android-switch input:checked + .android-slider {
+  background-color: #93c5fd;
+}
+
+#screen-calculator .android-switch input:checked + .android-slider:before {
+  transform: translateX(20px);
+  background-color: var(--calc-accent);
+}
+</style>
 </head>
 <body>
 
@@ -2599,7 +3101,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=27"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {

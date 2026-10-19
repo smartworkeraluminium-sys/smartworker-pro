@@ -4780,19 +4780,20 @@ function autofillCustomer() {
  }
 
  const ADMIN_WHATSAPP_NUMBER = "919239413517";
+ function _0xdec(arr) { return arr.map(function(b){ return String.fromCharCode(b ^ 90); }).join(''); }
  const SALTS = {
- "KARIGAR_1M": "SAHEB_1M_PRO",
- "KARIGAR_3M": "SAHEB_3M_PRO",
- "KARIGAR_6M": "SAHEB_6M_PRO",
- "KARIGAR_1Y": "SAHEB_1Y_PRO",
- "TEAM_1M": "SAHEB_TEAM_1M_PRO",
- "TEAM_1Y": "SAHEB_TEAM_1Y_PRO",
- "CORP_1M": "SAHEB_CORP_1M_PRO",
- "CORP_1Y": "SAHEB_CORP_1Y_PRO",
- "1M": "SAHEB_1M_PRO",
- "1Y": "SAHEB_1Y_PRO"
- };
- const SPECIAL_PROMO_CODE = "SMARTWORKER_ADMIN_100";
+  "KARIGAR_1M": _0xdec([9, 27, 18, 31, 24, 5, 107, 23, 5, 10, 8, 21]),
+  "KARIGAR_3M": _0xdec([9, 27, 18, 31, 24, 5, 105, 23, 5, 10, 8, 21]),
+  "KARIGAR_6M": _0xdec([9, 27, 18, 31, 24, 5, 108, 23, 5, 10, 8, 21]),
+  "KARIGAR_1Y": _0xdec([9, 27, 18, 31, 24, 5, 107, 3, 5, 10, 8, 21]),
+  "TEAM_1M": _0xdec([9, 27, 18, 31, 24, 5, 14, 31, 27, 23, 5, 107, 23, 5, 10, 8, 21]),
+  "TEAM_1Y": _0xdec([9, 27, 18, 31, 24, 5, 14, 31, 27, 23, 5, 107, 3, 5, 10, 8, 21]),
+  "CORP_1M": _0xdec([9, 27, 18, 31, 24, 5, 25, 21, 8, 10, 5, 107, 23, 5, 10, 8, 21]),
+  "CORP_1Y": _0xdec([9, 27, 18, 31, 24, 5, 25, 21, 8, 10, 5, 107, 3, 5, 10, 8, 21]),
+  "1M": _0xdec([9, 27, 18, 31, 24, 5, 107, 23, 5, 10, 8, 21]),
+  "1Y": _0xdec([9, 27, 18, 31, 24, 5, 107, 3, 5, 10, 8, 21])
+};
+ const SPECIAL_PROMO_CODE = _0xdec([9, 23, 27, 8, 14, 13, 21, 8, 17, 31, 8, 5, 27, 30, 23, 19, 20, 5, 107, 106, 106]);
 
 
 function addTeamMember() {
@@ -6306,26 +6307,36 @@ window.onload = bootApp;
 // SMART WORKER PRO - MASTER ADMIN SUBSCRIPTION & RECHARGE ENGINE
 // =========================================================================
 
-const DEFAULT_ADMIN_PIN = "7860";
+const MASTER_ADMIN_PIN_HASH = "584a7334e8e0e5233965da1ac78cf9b48548fd6fbb0257432436a86788276b85";
+const ADMIN_PIN_SALT_PREFIX = "SW_ADMIN_MASTER_PIN_V27::";
 let lastGeneratedAdminKey = "";
 let lastTargetPhone = "";
 let lastTargetPlan = "";
 let lastTargetName = "";
 
+function getAdminPinHash() {
+  return localStorage.getItem('sw_admin_pin_hash') || MASTER_ADMIN_PIN_HASH;
+}
+
+function verifyAdminPinInput(rawPin) {
+  if (!rawPin) return false;
+  const clean = String(rawPin).trim();
+  return sha256(ADMIN_PIN_SALT_PREFIX + clean) === getAdminPinHash();
+}
+
 function getAdminPin() {
-  return localStorage.getItem('sw_admin_pin') || DEFAULT_ADMIN_PIN;
+  return "•••••• (Protected)";
 }
 
 function openAdminPortalWithPin() {
-  const savedPin = getAdminPin();
-  const entered = prompt("🔑 Enter Admin Security PIN:\n(Default PIN: 7860)");
+  const entered = prompt("🔑 Enter 6-Digit Admin Security PIN:");
   if (entered === null) return;
-  if (entered.trim() === savedPin) {
+  if (verifyAdminPinInput(entered)) {
     sessionStorage.setItem('sw_admin_authenticated', 'true');
     openScreen('admin-portal', 'ADMIN PORTAL');
     renderAdminPortal();
   } else {
-    alert("❌ Incorrect PIN! Access denied.");
+    alert("❌ Incorrect Admin PIN! Unauthorized access blocked.");
   }
 }
 
@@ -6336,14 +6347,16 @@ function lockAdminPortal() {
 }
 
 function adminChangePinPrompt() {
-  const current = getAdminPin();
-  const oldPin = prompt("Enter current Admin PIN:");
-  if (oldPin !== current) { alert("❌ Current PIN is incorrect!"); return; }
-  const newPin = prompt("Enter new 4-digit Admin PIN:");
+  const oldPin = prompt("Enter current Admin Security PIN:");
+  if (!verifyAdminPinInput(oldPin)) { alert("❌ Current Admin PIN is incorrect!"); return; }
+  const newPin = prompt("Enter new 6-digit Admin Security PIN:");
   if (!newPin || newPin.trim().length < 4) { alert("❌ PIN must be at least 4 characters!"); return; }
-  localStorage.setItem('sw_admin_pin', newPin.trim());
-  const pinDisp = document.getElementById('admCurrentPinDisplay'); if (pinDisp) pinDisp.textContent = newPin.trim();
-  alert("✅ Admin PIN updated successfully!");
+  const newHash = sha256(ADMIN_PIN_SALT_PREFIX + newPin.trim());
+  localStorage.setItem('sw_admin_pin_hash', newHash);
+  localStorage.removeItem('sw_admin_pin');
+  const pinDisp = document.getElementById('admCurrentPinDisplay');
+  if (pinDisp) pinDisp.textContent = "•••••• (Protected)";
+  alert("✅ Admin Security PIN updated and encrypted successfully!");
 }
 
 // Generate mathematical key matching checkActivationType
@@ -7204,12 +7217,17 @@ function renderCalcHistory() {
     hist.forEach(function(h) {
       var exprPart = h.expr || (h.text ? h.text.split('=')[0].trim() : '0');
       var ansPart = h.ans || (h.text && h.text.split('=')[1] ? h.text.split('=')[1].trim() : '0');
-      var dateStr = h.time || 'Today';
-      html += '<div class="android-history-item" onclick="calcUseHistoryVal(\'' + String(ansPart).replace(/[^0-9.-]/g, '') + '\')">' +
-        '<span class="android-history-dots"><i class="fa-solid fa-ellipsis-vertical"></i></span>' +
-        '<div class="android-history-expr">' + formatExprWithCommas(exprPart) + '</div>' +
-        '<div class="android-history-ans">= ' + formatCalcNumberWithCommas(ansPart) + '</div>' +
-        '<div class="android-history-date">' + dateStr + '</div>' +
+      var dateStr = h.time || formatHistoryTimestamp();
+      if (dateStr.length <= 10 && dateStr.indexOf(',') === -1) {
+        var nowD = new Date();
+        var mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        dateStr = mNames[nowD.getMonth()] + ' ' + nowD.getDate() + ', ' + nowD.getFullYear() + ' ' + dateStr;
+      }
+      html += '<div class="android-history-item" style="padding:14px 18px; border-bottom:1px solid #e2e8f0; display:flex; flex-direction:column; position:relative; cursor:pointer;" onclick="calcUseHistoryVal(\'' + String(ansPart).replace(/[^0-9.-]/g, '') + '\')">' +
+        '<span class="android-history-dots" style="position:absolute; left:16px; top:18px; color:#64748b; font-size:1.05rem;"><i class="fa-solid fa-ellipsis-vertical"></i></span>' +
+        '<div class="android-history-expr" style="text-align:right; font-size:1.35rem; color:#334155; font-weight:400; width:100%;">' + formatExprWithCommas(exprPart) + '</div>' +
+        '<div class="android-history-ans" style="text-align:right; font-size:1.5rem; color:#0284c7; font-weight:400; margin-top:2px; width:100%;">= ' + formatCalcNumberWithCommas(ansPart) + '</div>' +
+        '<div class="android-history-date" style="text-align:left; font-size:0.78rem; color:#334155; margin-top:6px; width:100%;">' + dateStr + '</div>' +
       '</div>';
     });
     tape.innerHTML = html;
@@ -7306,23 +7324,39 @@ function toggleUnitConverterPanel() {
     ucPanel.style.display = 'block';
     if (keypadArea) keypadArea.style.display = 'none';
     if (btnConv) btnConv.classList.add('active');
-    openUnitConverterTool('discount');
+    closeActiveUnitConverterTool();
   }
+}
+
+function closeActiveUnitConverterTool() {
+  var box = document.getElementById('ucActiveToolBox');
+  var grid = document.querySelector('#calcUnitConverterPanel .uc-icon-grid');
+  if (box) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+  if (grid) grid.style.display = 'grid';
 }
 
 function openUnitConverterTool(toolKey) {
   var ucPanel = document.getElementById('calcUnitConverterPanel');
   var keypadArea = document.getElementById('calcKeypadArea');
   var box = document.getElementById('ucActiveToolBox');
+  var grid = document.querySelector('#calcUnitConverterPanel .uc-icon-grid');
   if (ucPanel && ucPanel.style.display === 'none') {
     ucPanel.style.display = 'block';
     if (keypadArea) keypadArea.style.display = 'none';
   }
   if (!box) return;
   box.style.display = 'block';
+  if (grid) grid.style.display = 'none';
+  var backBtnHtml = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #e2e8f0;">' +
+    '<button type="button" onclick="closeActiveUnitConverterTool()" style="background:transparent; border:none; color:#0284c7; font-weight:700; font-size:0.82rem; cursor:pointer; padding:2px 0;">← All Unit Converters</button>' +
+    '<span style="font-size:0.72rem; color:#64748b;">Tap to switch tool</span>' +
+  '</div>';
 
   if (toolKey === 'discount') {
-    box.innerHTML = '' +
+    box.innerHTML = backBtnHtml +
       '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🏷️ DISCOUNT CALCULATOR</div>' +
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
         '<div><label style="font-size:0.72rem; color:#64748b;">Original Price (₹)</label>' +
@@ -7349,7 +7383,7 @@ function openUnitConverterTool(toolKey) {
   }
 
   if (toolKey === 'gst') {
-    box.innerHTML = '' +
+    box.innerHTML = backBtnHtml +
       '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🧾 GST TAX CALCULATOR</div>' +
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
         '<div><label style="font-size:0.72rem; color:#64748b;">Base Amount (₹)</label>' +
@@ -7365,7 +7399,7 @@ function openUnitConverterTool(toolKey) {
   }
 
   if (toolKey === 'angle') {
-    box.innerHTML = '' +
+    box.innerHTML = backBtnHtml +
       '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">📐 ANGLE, TRIGONOMETRY & MITRE CUT</div>' +
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
         '<div><label style="font-size:0.72rem; color:#64748b;">Width / Base (Inch)</label>' +
@@ -7402,7 +7436,7 @@ function openUnitConverterTool(toolKey) {
   var cfg = configs[toolKey] || { title: '🔄 ' + String(toolKey).toUpperCase() + ' CALCULATOR', u1: 'Input Value', u2: 'Converted (x12)', u3: 'Converted (x100)', f12: 12, f13: 100 };
   window._activeUcCfg = cfg;
 
-  box.innerHTML = '' +
+  box.innerHTML = backBtnHtml +
     '<div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">' + cfg.title + '</div>' +
     '<div style="margin-bottom:8px;">' +
       '<label style="font-size:0.72rem; color:#64748b;">' + cfg.u1 + '</label>' +
@@ -7577,3 +7611,47 @@ function calcMitreLive() {
 if (typeof renderCalcHistory === 'function') {
   setTimeout(renderCalcHistory, 300);
 }
+
+
+// =========================================================================
+// SMART WORKER PRO - ANTI-THEFT, ANTI-INSPECT & ANTI-HANG SECURITY SHIELD (v27)
+// =========================================================================
+(function initSmartWorkerSecurityShield() {
+  try {
+    // Remove any legacy plaintext admin pin from localStorage
+    localStorage.removeItem('sw_admin_pin');
+
+    // 1. Block Right-Click Context Menu on non-input elements to prevent code copying
+    document.addEventListener('contextmenu', function(e) {
+      var tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+
+    // 2. Block F12, Ctrl+Shift+I/J/C (DevTools), Ctrl+U (View Source), Ctrl+S (Save Page)
+    document.addEventListener('keydown', function(e) {
+      var key = e.key || e.keyCode;
+      if (
+        key === 'F12' || key === 123 ||
+        (e.ctrlKey && e.shiftKey && (key === 'I' || key === 'i' || key === 'J' || key === 'j' || key === 'C' || key === 'c' || key === 73 || key === 74 || key === 67)) ||
+        (e.ctrlKey && (key === 'U' || key === 'u' || key === 'S' || key === 's' || key === 85 || key === 83))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, false);
+
+    // 3. Global Anti-Hang & Crash Recovery Guard
+    window.addEventListener('error', function(evt) {
+      console.warn('[SmartWorker Shield] Prevented UI hang from runtime error:', evt.message);
+      return true;
+    });
+    window.addEventListener('unhandledrejection', function(evt) {
+      console.warn('[SmartWorker Shield] Handled background promise:', evt.reason);
+      if (evt && typeof evt.preventDefault === 'function') evt.preventDefault();
+    });
+  } catch (err) {}
+})();

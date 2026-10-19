@@ -1,5 +1,5 @@
 // Smart Worker Pro - Network-First Offline-Ready Service Worker
-const CACHE_NAME = 'smart-worker-pro-v25';
+const CACHE_NAME = 'smart-worker-pro-v27';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
