@@ -754,7 +754,7 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
 
 
 /* =========================================================================
-   ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR (v26)
+   ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR (v31)
    ========================================================================= */
 #screen-calculator {
   padding: 0 !important;
@@ -765,19 +765,21 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   --calc-accent: #0284c7;
   --calc-bg: #ffffff;
   --calc-display-bg: #ffffff;
-  --calc-text: #334155;
+  --calc-text: #1e293b;
   --calc-subtext: #64748b;
   --calc-border: #e2e8f0;
   --calc-sci-bg: #f8fafc;
   --calc-btn-hover: #f1f5f9;
   background: var(--calc-bg) !important;
   color: var(--calc-text) !important;
-  min-height: calc(100vh - 118px);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  border: none;
+  height: calc(100vh - 118px) !important;
+  min-height: calc(100vh - 118px) !important;
+  max-height: calc(100vh - 118px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+  border: none !important;
   font-family: 'Roboto', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -792,24 +794,27 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
 }
 
 #screen-calculator .android-calc-main-view {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  justify-content: space-between;
-  background: var(--calc-bg);
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  justify-content: space-between !important;
+  background: var(--calc-bg) !important;
+  overflow: hidden !important;
 }
 
 #screen-calculator .android-calc-display {
   background: var(--calc-display-bg) !important;
-  padding: 22px 20px 16px !important;
-  min-height: 175px;
-  flex: 1;
+  padding: 20px 20px 14px !important;
+  flex: 1 1 auto !important;
+  min-height: 140px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-end !important;
   align-items: flex-end !important;
-  position: relative;
-  border-bottom: 1px solid var(--calc-border);
+  position: relative !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  overflow: hidden !important;
 }
 
 #screen-calculator .android-calc-mem-badge {
@@ -825,13 +830,13 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
 }
 
 #screen-calculator .android-calc-expr {
-  font-size: 1.45rem !important;
+  font-size: 1.35rem !important;
   color: var(--calc-subtext) !important;
-  min-height: 30px;
+  min-height: 28px !important;
   text-align: right !important;
-  word-break: break-all;
-  width: 100%;
-  font-weight: 400;
+  word-break: break-all !important;
+  width: 100% !important;
+  font-weight: 400 !important;
 }
 
 #screen-calculator .android-calc-result {
@@ -839,20 +844,20 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   font-weight: 400 !important;
   color: var(--calc-text) !important;
   text-align: right !important;
-  word-break: break-all;
-  width: 100%;
-  line-height: 1.15;
-  margin-top: 4px;
+  word-break: break-all !important;
+  width: 100% !important;
+  line-height: 1.15 !important;
+  margin-top: 4px !important;
 }
 
 #screen-calculator .android-calc-preview {
   font-size: 1.1rem !important;
   color: var(--calc-accent) !important;
-  min-height: 22px;
+  min-height: 22px !important;
   text-align: right !important;
-  width: 100%;
-  margin-top: 4px;
-  font-weight: 500;
+  width: 100% !important;
+  margin-top: 2px !important;
+  font-weight: 500 !important;
 }
 
 #screen-calculator .android-calc-memory-bar {
@@ -866,19 +871,21 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   background: transparent !important;
   border: none !important;
   border-right: 1px solid var(--calc-border) !important;
-  padding: 9px 0 !important;
-  font-size: 0.85rem !important;
+  padding: 8px 0 !important;
+  font-size: 0.82rem !important;
   font-weight: 700 !important;
   color: var(--calc-subtext) !important;
   cursor: pointer;
 }
 
 #screen-calculator .android-calc-toolbar {
+  flex: 0 0 44px !important;
+  height: 44px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
   gap: 8px !important;
-  padding: 10px 16px !important;
+  padding: 0 16px !important;
   background: var(--calc-bg) !important;
   border-bottom: 1px solid var(--calc-border) !important;
 }
@@ -891,7 +898,7 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   color: #64748b !important;
   font-size: 1.25rem !important;
   width: 42px !important;
-  height: 40px !important;
+  height: 38px !important;
   border-radius: 8px !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -925,11 +932,14 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   text-align: center !important;
 }
 
+#screen-calculator .android-calc-keypad-area {
+  flex: 0 0 auto !important;
+  background: var(--calc-border) !important;
+}
+
 #screen-calculator .android-keypad-grid {
-  display: grid !important;
   background: var(--calc-border) !important;
   gap: 1px !important;
-  border-top: 1px solid var(--calc-border) !important;
 }
 
 #screen-calculator .android-keypad-grid.std-grid {
@@ -947,9 +957,10 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   box-shadow: none !important;
   border-radius: 0 !important;
   color: var(--calc-text) !important;
-  font-size: 1.75rem !important;
+  font-size: 1.65rem !important;
   font-weight: 300 !important;
-  height: 74px !important;
+  height: 60px !important;
+  min-height: 60px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -962,8 +973,9 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
 }
 
 #screen-calculator .sci-grid .ak-btn {
-  height: 58px !important;
-  font-size: 1.35rem !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  font-size: 1.2rem !important;
 }
 
 #screen-calculator .ak-btn.ak-sci {

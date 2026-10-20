@@ -7017,12 +7017,16 @@ function toggleCalcScientificMode() {
   var keypadArea = document.getElementById('calcKeypadArea');
 
   if (ucPanel && ucPanel.style.display !== 'none') {
-    ucPanel.style.display = 'none';
-    if (keypadArea) keypadArea.style.display = 'block';
+    ucPanel.style.setProperty('display', 'none', 'important');
+    if (keypadArea) keypadArea.style.setProperty('display', 'block', 'important');
   }
 
-  if (stdGrid) stdGrid.style.display = calcSciMode ? 'none' : 'grid';
-  if (sciGrid) sciGrid.style.display = calcSciMode ? 'grid' : 'none';
+  if (stdGrid) {
+    stdGrid.style.setProperty('display', calcSciMode ? 'none' : 'grid', 'important');
+  }
+  if (sciGrid) {
+    sciGrid.style.setProperty('display', calcSciMode ? 'grid' : 'none', 'important');
+  }
   if (btnSci) btnSci.classList.toggle('active', calcSciMode);
   if (iconTxt) iconTxt.innerHTML = calcSciMode ? '+−<br>×÷' : '√π<br>e=';
 }
@@ -7255,9 +7259,9 @@ function openCalcSubScreen(screenName) {
   var histV = document.getElementById('calcHistoryView');
   var setV = document.getElementById('calcSettingsView');
 
-  if (mainV) mainV.style.display = (screenName === 'main') ? 'block' : 'none';
-  if (histV) histV.style.display = (screenName === 'history') ? 'block' : 'none';
-  if (setV) setV.style.display = (screenName === 'settings') ? 'block' : 'none';
+  if (mainV) mainV.style.setProperty('display', (screenName === 'main') ? 'flex' : 'none', 'important');
+  if (histV) histV.style.setProperty('display', (screenName === 'history') ? 'block' : 'none', 'important');
+  if (setV) setV.style.setProperty('display', (screenName === 'settings') ? 'block' : 'none', 'important');
 
   if (screenName === 'history') renderCalcHistory();
 }
@@ -7317,12 +7321,12 @@ function toggleUnitConverterPanel() {
 
   var isOpen = ucPanel.style.display !== 'none';
   if (isOpen) {
-    ucPanel.style.display = 'none';
-    if (keypadArea) keypadArea.style.display = 'block';
+    ucPanel.style.setProperty('display', 'none', 'important');
+    if (keypadArea) keypadArea.style.setProperty('display', 'block', 'important');
     if (btnConv) btnConv.classList.remove('active');
   } else {
-    ucPanel.style.display = 'block';
-    if (keypadArea) keypadArea.style.display = 'none';
+    ucPanel.style.setProperty('display', 'block', 'important');
+    if (keypadArea) keypadArea.style.setProperty('display', 'none', 'important');
     if (btnConv) btnConv.classList.add('active');
     closeActiveUnitConverterTool();
   }
