@@ -193,18 +193,10 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
 
  function updateCloudUserUI(user) {
  const badge = document.getElementById('cloudUserBadge');
- const loginBtn = document.getElementById('cloudLoginTriggerBtn');
- const emailSpan = document.getElementById('cloudUserEmail');
-
- if (user) {
- if (badge) badge.style.display = 'flex';
- if (loginBtn) loginBtn.style.display = 'none';
- if (emailSpan) emailSpan.textContent = user.email || user.displayName || "Online";
- } else {
  if (badge) badge.style.display = 'none';
- if (loginBtn) loginBtn.style.display = 'flex';
- }
- }
+ const loginBtn = document.getElementById('cloudLoginTriggerBtn');
+ if (loginBtn) loginBtn.style.display = user ? 'none' : 'flex';
+}
 
  function openAuthModal() {
  const m = document.getElementById('authModal');
@@ -445,10 +437,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
     fbDb.collection('users').doc(String(targetId)).set(data, { merge: true }).then(() => {
       console.log("☁️ All Smart Worker data securely saved to isolated cloud vault!");
       const badge = document.getElementById('cloudUserBadge');
-      if (badge) {
-        badge.style.display = 'inline-flex';
-        badge.title = "Cloud Synced (Private Vault)";
-      }
+      if (badge) badge.style.display = 'none';
     }).catch(err => {
       console.warn("Cloud write notice:", err);
     });
@@ -6122,40 +6111,9 @@ function addToOfflineQueue(actionType, payload) {
 
 function updateOfflineStatusBadge() {
   const badge = document.getElementById('networkStatusBadge');
-  if (!badge) return;
-  const queue = getOfflineQueue();
-  const queueCount = queue ? queue.length : 0;
-
-  if (navigator.onLine) {
-    if (queueCount > 0) {
-      badge.style.display = 'inline-flex';
-      badge.style.background = 'rgba(56, 189, 248, 0.15)';
-      badge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
-      badge.style.color = '#38bdf8';
-      badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:0.6rem;"></i> <span>Syncing (' + queueCount + ')</span>';
-    } else {
-      badge.style.display = 'inline-flex';
-      badge.style.background = 'rgba(34, 197, 94, 0.15)';
-      badge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
-      badge.style.color = '#4ade80';
-      badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> <span>Online</span>';
-    }
-  } else {
-    badge.style.display = 'inline-flex';
-    badge.style.background = 'rgba(245, 158, 11, 0.15)';
-    badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
-    badge.style.color = '#fbbf24';
-    badge.innerHTML = '<i class="fa-solid fa-cloud-arrow-down" style="font-size:0.6rem;"></i> <span>Offline Mode</span>';
-  }
-
+  if (badge) badge.style.display = 'none';
   const notice = document.getElementById('homeSyncNotice');
-  if (notice) {
-    if (navigator.onLine) {
-      notice.innerHTML = '<i class="fa-solid fa-shield-halved" style="color:#4ade80;"></i> <span>Cloud Synced • Auto-Backup Active</span>';
-    } else {
-      notice.innerHTML = '<i class="fa-solid fa-cloud-arrow-down" style="color:#f59e0b;"></i> <span>Offline Mode • Stored Locally, Auto-Sync Ready</span>';
-    }
-  }
+  if (notice) notice.style.display = 'none';
 }
 
 function syncOfflineQueueToCloud() {
