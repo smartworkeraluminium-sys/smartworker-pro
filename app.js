@@ -4671,9 +4671,7 @@ function autofillCustomer() {
  if (screenName === 'customer_lookup') {
    if (typeof renderCustomerKhataScreen === 'function') renderCustomerKhataScreen();
  }
- if (screenName === 'custom_series') {
-   if (typeof renderCustomSeriesDropdown === 'function') renderCustomSeriesDropdown();
- }
+
 
  const topBack = document.getElementById('topBackBtn');
  const rightActions = document.getElementById('topBarRightActions');
@@ -6291,8 +6289,8 @@ function openAdminPortalWithPin() {
   if (entered === null) return;
   if (verifyAdminPinInput(entered)) {
     sessionStorage.setItem('sw_admin_authenticated', 'true');
-    openScreen('admin-portal', 'ADMIN PORTAL');
-    renderAdminPortal();
+    sessionStorage.setItem('sw_admin_gate_unlocked', getAdminPinHash());
+    window.location.href = 'admin.html';
   } else {
     alert("❌ Incorrect Admin PIN! Unauthorized access blocked.");
   }
