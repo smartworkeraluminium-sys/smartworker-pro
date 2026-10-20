@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="canonical" href="https://smartworkerpro.in/">
+  <meta property="og:url" content="https://smartworkerpro.in/">
   <title>Smart Worker Pro - Fabrication Management System</title>
   
   <!-- PWA Manifest & App Configuration -->
@@ -62,7 +64,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=30">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -864,17 +866,6 @@
  <div class="pro-card-sub" data-i18n="sub_ceiling">False Ceiling Grid & Perimeter</div>
  </div>
 
-      <!-- 7. Dynamic & Custom Series -->
-      <div class="pro-card" onclick="openScreen('custom_series', 'CUSTOM & DYNAMIC SERIES')" style="border: 1.5px solid #818cf8; background: linear-gradient(135deg, #1e1b4b, #312e81);">
-        <div class="pro-card-header">
-          <div class="pro-card-icon" style="background:rgba(255,255,255,0.18); color:#a5b4fc;">
-            <i class="fa-solid fa-shapes"></i>
-          </div>
-          <span style="font-size:0.65rem; background:#4f46e5; color:#fff; font-weight:800; padding:2px 7px; border-radius:10px;">PRO / NEW</span>
-        </div>
-        <div class="pro-card-title" style="color:#fff;" data-i18n="mod_custom_series">Dynamic & Custom Series</div>
-        <div class="pro-card-sub" style="color:#c7d2fe;" data-i18n="sub_custom_series">Folding, Glass Door, Jasmine & Custom</div>
-      </div>
 
  </div>
 
@@ -905,16 +896,16 @@
  <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
  </div>
 
- <!-- 3. General & Money Calculator -->
- <div class="pro-card" onclick="openScreen('calculator', 'CALCULATOR')" style="border: 1.5px solid #38bdf8; background: linear-gradient(135deg, #0f172a, #1e293b);">
+ <!-- 3. Smart Calculator (Matching Exact Same White Card Style) -->
+ <div class="pro-card" onclick="openScreen('calculator', 'SMART CALCULATOR')">
  <div class="pro-card-header">
- <div class="pro-card-icon" style="background:rgba(56, 189, 248, 0.18); color:#38bdf8;">
+ <div class="pro-card-icon" style="background:#eff6ff; color:#0284c7;">
  <i class="fa-solid fa-calculator"></i>
  </div>
- <span style="font-size:0.65rem; background:#0284c7; color:#fff; font-weight:800; padding:2px 7px; border-radius:10px;">PRO TOOL</span>
+ <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
  </div>
- <div class="pro-card-title" style="color:#fff;" data-i18n="mod_calculator">General Calculator</div>
- <div class="pro-card-sub" style="color:#94a3b8;" data-i18n="sub_calculator">Money Sum, Discount % & Trig (sin/cos)</div>
+ <div class="pro-card-title" data-i18n="mod_calculator">Smart Calculator</div>
+ <div class="pro-card-sub" data-i18n="sub_calculator">Standard, Scientific & Converter</div>
  </div>
  </div>
  </div>
@@ -2011,13 +2002,13 @@
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
 
- <!-- Privacy Policy & Legal Terms -->
- <div onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')" class="gemini-menu-row">
+ <!-- Privacy Policy & Legal Terms (Built-in Legal Protection Shield) -->
+ <div onclick="openPrivacyLegalModal()" class="gemini-menu-row">
  <div class="gemini-row-left">
- <span class="gemini-icon" style="color:#64748b;"><i class="fa-solid fa-shield-halved"></i></span>
- <span>Privacy Policy & Legal Terms</span>
+ <span class="gemini-icon" style="color:#0284c7;"><i class="fa-solid fa-scale-balanced"></i></span>
+ <span>Privacy Policy, Terms & Legal Protection</span>
  </div>
- <i class="fa-solid fa-arrow-up-right-from-square gemini-chevron"></i>
+ <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
  </div>
 
@@ -3101,7 +3092,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=27"></script>
+  <script src="app.js?v=30"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
@@ -3157,6 +3148,50 @@
     </form>
   </div>
 </div>
+
+
+  <!-- ================= IRONCLAD PRIVACY POLICY, TERMS OF USE & LEGAL DISCLAIMER MODAL (DPDP ACT 2023 & IT ACT 2000 COMPLIANT) ================= -->
+  <div id="privacyLegalModal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,0.82); z-index:999999; align-items:center; justify-content:center; padding:14px;">
+    <div style="background:#ffffff; color:#0f172a; width:100%; max-width:540px; max-height:88vh; border-radius:16px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.45); border:1px solid #cbd5e1;">
+      <div style="background:linear-gradient(135deg,#0f172a,#1e293b); color:#ffffff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:0.95rem;">
+          <i class="fa-solid fa-scale-balanced" style="color:#38bdf8;"></i>
+          <span>PRIVACY POLICY & LEGAL TERMS OF USE</span>
+        </div>
+        <button type="button" onclick="closePrivacyLegalModal()" style="background:rgba(255,255,255,0.12); border:none; color:#fff; width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:1rem;">✕</button>
+      </div>
+
+      <div style="padding:16px 18px; overflow-y:auto; font-size:0.8rem; line-height:1.55; color:#334155;">
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:0.76rem; color:#0369a1;">
+          <b>Official Platform:</b> https://smartworkerpro.in<br>
+          <b>Compliance:</b> Information Technology Act, 2000 & Digital Personal Data Protection (DPDP) Act, 2023 (India)
+        </div>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">1. Zero Data-Leakage & User Data Privacy (DPDP Act 2023)</h4>
+        <p style="margin-bottom:8px;">Smart Worker Pro operates on a strict <b>Per-User Cryptographic Vault (`SHA-256`)</b> architecture. All customer measurements, quotations, invoices, Customer Khata ledgers, workshop logos, and payment QR codes created by a user are stored locally on the user's device and/or in the user's private encrypted cloud vault. We never sell, rent, share, or expose any user's business or client data to any third party or other user.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">2. Fabrication Cutting & Calculation Disclaimer (Zero Liability)</h4>
+        <p style="margin-bottom:8px;">All aluminium, uPVC, glass, ACP sheet, false ceiling, and hardware calculations provided by Smart Worker Pro are mathematical estimation aids based on standard section parameters. Because aluminium extrusion profiles, track thickness, and site wall levels vary across manufacturers, <b>the user/fabricator must physically verify all measurements on-site before cutting any pipe, glass, or board</b>. Smart Worker Pro and its proprietor shall have <b>zero financial or legal liability</b> for any material wastage, cutting error, glass breakage, or commercial loss.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">3. Billing, GST & Financial Record Responsibility</h4>
+        <p style="margin-bottom:8px;">The Quotation, PDF Invoice, and Customer Ledger modules are digital record-keeping tools provided "as-is". The workshop owner is solely responsible for verifying invoice totals, GSTIN accuracy, tax compliance, and payment collection with their clients. Smart Worker Pro is not a payment bank or financial intermediary between the workshop and its clients.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">4. Single-User Subscription & Non-Refundable License</h4>
+        <p style="margin-bottom:8px;">Each Pro Subscription Plan (30 Days, 90 Days, 180 Days, or 365 Days) is strictly a <b>Single-User / Single-Device (1 Mobile Only)</b> software license tied to the user's unique Device ID. Once an 8-character Activation Key is issued and activated, the subscription fee is non-refundable and non-transferable.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">5. Intellectual Property & Anti-Cloning Protection</h4>
+        <p style="margin-bottom:8px;">The source code, UI design, cutting formulas, and brand assets of Smart Worker Pro (`smartworkerpro.in`) are protected under the Copyright Act, 1957 (India). Any unauthorized copying, reverse-engineering, decompilation, or domain cloning is strictly prohibited and subject to legal action.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">6. Governing Law & Exclusive Jurisdiction</h4>
+        <p style="margin-bottom:4px;">By using Smart Worker Pro, you agree to all terms above. Any dispute or legal proceeding arising out of the use of this software shall be governed by the laws of India and shall be subject to the <b>exclusive jurisdiction of the Courts in Howrah, West Bengal, India</b>.</p>
+      </div>
+
+      <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <span style="font-size:0.72rem; color:#16a34a; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Accepted & Active on this Device</span>
+        <button type="button" onclick="acceptAndClosePrivacyLegalModal()" style="background:#0284c7; color:#ffffff; border:none; padding:9px 18px; border-radius:8px; font-weight:800; font-size:0.8rem; cursor:pointer;">I Agree & Close</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

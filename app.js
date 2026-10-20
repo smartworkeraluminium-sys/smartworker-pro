@@ -7644,6 +7644,40 @@ if (typeof renderCalcHistory === 'function') {
       }
     }, false);
 
+    
+    // 4. Official Domain Lock & Anti-Clone Protection for SmartWorkerPro.in
+    (function enforceSmartWorkerDomainLock() {
+      var host = (window.location && window.location.hostname) ? String(window.location.hostname).toLowerCase().trim() : '';
+      var proto = (window.location && window.location.protocol) ? String(window.location.protocol).toLowerCase() : '';
+      // Allow official domain smartworkerpro.in (+ subdomains), local testing/APK WebView, and authorized cloud deploy previews
+      var isAuthorized = (
+        !host ||
+        proto === 'file:' ||
+        proto === 'content:' ||
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host === 'smartworkerpro.in' ||
+        host === 'www.smartworkerpro.in' ||
+        host.endsWith('.smartworkerpro.in') ||
+        host.endsWith('.androidplatform.net') ||
+        host.endsWith('.web.app') ||
+        host.endsWith('.firebaseapp.com') ||
+        host.endsWith('.pages.dev') ||
+        host.endsWith('.vercel.app') ||
+        host.endsWith('.netlify.app') ||
+        host.endsWith('.github.io')
+      );
+      window.SW_OFFICIAL_DOMAIN = 'smartworkerpro.in';
+      if (!isAuthorized) {
+        document.body.innerHTML = '<div style="position:fixed;inset:0;background:#020617;color:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:sans-serif;z-index:9999999;">' +
+          '<div style="font-size:3rem;margin-bottom:12px;">🛡️</div>' +
+          '<h2 style="color:#f87171;font-size:1.3rem;font-weight:800;margin-bottom:8px;">UNAUTHORIZED DOMAIN CLONE BLOCKED</h2>' +
+          '<p style="color:#94a3b8;font-size:0.9rem;max-width:420px;line-height:1.5;">This software is cryptographically licensed exclusively to <b>https://smartworkerpro.in</b>.<br>Running a cloned copy on <b>' + host + '</b> is strictly prohibited.</p>' +
+        '</div>';
+        throw new Error('Unauthorized Domain Clone Blocked: ' + host);
+      }
+    })();
+
     // 3. Global Anti-Hang & Crash Recovery Guard
     window.addEventListener('error', function(evt) {
       console.warn('[SmartWorker Shield] Prevented UI hang from runtime error:', evt.message);
@@ -7655,3 +7689,19 @@ if (typeof renderCalcHistory === 'function') {
     });
   } catch (err) {}
 })();
+
+
+function openPrivacyLegalModal() {
+  var m = document.getElementById('privacyLegalModal');
+  if (m) m.style.display = 'flex';
+}
+
+function closePrivacyLegalModal() {
+  var m = document.getElementById('privacyLegalModal');
+  if (m) m.style.display = 'none';
+}
+
+function acceptAndClosePrivacyLegalModal() {
+  localStorage.setItem('sw_legal_terms_accepted_v29', 'true');
+  closePrivacyLegalModal();
+}

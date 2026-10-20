@@ -2535,6 +2535,14 @@
   </div>
   <script>
     (function(){
+      
+      var _h = (window.location && window.location.hostname) ? String(window.location.hostname).toLowerCase().trim() : '';
+      var _p = (window.location && window.location.protocol) ? String(window.location.protocol).toLowerCase() : '';
+      if (_h && _p !== 'file:' && _p !== 'content:' && _h !== 'localhost' && _h !== '127.0.0.1' && _h !== 'smartworkerpro.in' && _h !== 'www.smartworkerpro.in' && !_h.endsWith('.smartworkerpro.in') && !_h.endsWith('.web.app') && !_h.endsWith('.firebaseapp.com') && !_h.endsWith('.pages.dev') && !_h.endsWith('.vercel.app') && !_h.endsWith('.netlify.app') && !_h.endsWith('.github.io')) {
+        document.body.innerHTML = '<div style="position:fixed;inset:0;background:#020617;color:#f87171;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-weight:800;padding:20px;text-align:center;">🛡️ UNAUTHORIZED DOMAIN BLOCKED — Licensed exclusively to SmartWorkerPro.in</div>';
+        return;
+      }
+
       const MASTER_HASH = "584a7334e8e0e5233965da1ac78cf9b48548fd6fbb0257432436a86788276b85";
       const PREFIX = "SW_ADMIN_MASTER_PIN_V27::";
       if (sessionStorage.getItem('sw_admin_gate_unlocked') === MASTER_HASH) {
