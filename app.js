@@ -1645,14 +1645,44 @@ function onDoorTypeChanged() {
   if (faceCol) faceCol.style.display = isHidden ? 'none' : 'block';
 }
 
-function onDoorOuterChanged() {
-  var hasOuter = document.getElementById('dr_has_outer') ? (document.getElementById('dr_has_outer').value === 'yes') : true;
-  var col = document.getElementById('dr_outer_face_col');
-  if (col) {
-    col.style.opacity = hasOuter ? '1' : '0.35';
-    var inp = document.getElementById('dr_outer_face');
-    if (inp) inp.disabled = !hasOuter;
+function onDoorOuterTypeSelected() {
+  var sel = document.getElementById('dr_outer_type');
+  var ofInp = document.getElementById('dr_outer_face');
+  var ofCol = document.getElementById('dr_outer_face_col');
+  var isMm = document.getElementById('dr_unit') ? document.getElementById('dr_unit').value.includes('Millimeter') : false;
+  if (!sel || !ofInp) return;
+
+  var val = sel.value;
+  if (val === 'none') {
+    ofInp.value = '0';
+    if (ofCol) ofCol.style.opacity = '0.35';
+  } else if (val === '2.5x1.5') {
+    ofInp.value = isMm ? '38.1' : '1.5';
+    if (ofCol) ofCol.style.opacity = '1';
+  } else if (val === '2x1') {
+    ofInp.value = isMm ? '25.4' : '1.0';
+    if (ofCol) ofCol.style.opacity = '1';
+  } else if (val === '3x1.5') {
+    ofInp.value = isMm ? '38.1' : '1.5';
+    if (ofCol) ofCol.style.opacity = '1';
+  } else if (val === '4x1.75') {
+    ofInp.value = isMm ? '44.5' : '1.75';
+    if (ofCol) ofCol.style.opacity = '1';
+  } else if (val === 'chaukhat_3.5' || val === 'chaukhat_4') {
+    ofInp.value = isMm ? '44.5' : '1.75';
+    if (ofCol) ofCol.style.opacity = '1';
+  } else if (val === 'chaukhat_2.5' || val === 'chaukhat_5') {
+    ofInp.value = isMm ? '38.1' : '1.5';
+    if (ofCol) ofCol.style.opacity = '1';
+  } else if (val === 'custom') {
+    if (ofCol) ofCol.style.opacity = '1';
+    ofInp.focus();
   }
+}
+
+function onDoorOuterFaceInput() {
+  var sel = document.getElementById('dr_outer_type');
+  if (sel) sel.value = 'custom';
 }
 
 function toggleDoorMiddleRailInput() {
@@ -1955,6 +1985,7 @@ function calculateDoor() {
   let has_outer = true;
   let outer_face = 1.5;
   let outer_v = h, outer_h = 0;
+  let outer_name = "2.5\" x 1.5\" Single Groove (Sec 20045)";
 
   if (d_type === "Top Hung Door") {
     // Top Hung Door (untouched per user instruction)
@@ -1966,15 +1997,32 @@ function calculateDoor() {
       leaf_w = w + 4.0;
     }
   } else {
-    // Standard Door & Floor Spring Door (Exact Workshop Formula with Simple Number Input)
-    const has_outer_opt = document.getElementById('dr_has_outer') ? (document.getElementById('dr_has_outer').value === 'yes') : true;
-    has_outer = has_outer_opt;
-
-    if (has_outer) {
+    // Standard Door & Floor Spring Door (Exact Workshop Formula with Profile Dropdown & Number Box)
+    const outer_opt = document.getElementById('dr_outer_type') ? document.getElementById('dr_outer_type').value : "2.5x1.5";
+    
+    if (outer_opt === "none") {
+      has_outer = false;
+      outer_face = 0;
+      outer_name = "Without Outer Frame (Direct Opening)";
+    } else {
+      has_outer = true;
       var raw_of = safeEval(document.getElementById('dr_outer_face') ? document.getElementById('dr_outer_face').value : 1.5) || 1.5;
       outer_face = (is_mm || raw_of > 10) ? raw_of / 25.4 : raw_of;
+
+      if (outer_opt === "2x1") outer_name = "2\" x 1\" Single Groove (Sec 20049)";
+      else if (outer_opt === "3x1.5") outer_name = "3\" x 1.5\" Single Groove (Sec 20038)";
+      else if (outer_opt === "4x1.75") outer_name = "4\" x 1.75\" Single Groove (Sec 20052)";
+      else if (outer_opt === "chaukhat_3.5") outer_name = "3.5\" x 1.75\" Door Chaukhat (Sec 19504)";
+      else if (outer_opt === "chaukhat_4") outer_name = "4\" x 1.75\" Heavy Chaukhat (Sec 19628)";
+      else if (outer_opt === "chaukhat_2.5") outer_name = "2.5\" x 1.5\" Door Frame (Sec 19552)";
+      else if (outer_opt === "chaukhat_5") outer_name = "5\" x 1.5\" Deep Chaukhat (Sec 19634)";
+      else if (outer_opt === "custom") outer_name = "Custom Outer (" + disp(outer_face) + " Face)";
+      else outer_name = "2.5\" x 1.5\" Single Groove (Sec 20045)";
+    }
+
+    if (has_outer) {
       outer_h = Math.max(0, w - (2 * outer_face));
-      // Vertical: Half Inch (1/2" = 0.5") floor clear + outer top frame
+      // Vertical: Half Inch (1/2" = 0.5") floor clear + top outer frame
       door_v = h - outer_face - 0.5;
     } else {
       outer_face = 0;
@@ -2004,7 +2052,7 @@ function calculateDoor() {
 
   // 1. OUTER FRAME
   if (has_outer) {
-    out += `--- OUTER FRAME ---
+    out += `--- OUTER FRAME [${outer_name}] ---
 `;
     out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc) [Profile: ${disp(outer_face)}]
 `;
