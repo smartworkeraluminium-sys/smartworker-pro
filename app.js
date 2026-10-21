@@ -1,3 +1,11 @@
+function getModuleGlassSpec(prefix) {
+  var typeEl = document.getElementById(prefix + '_glass_type') || document.getElementById(prefix + '_glass_spec');
+  var thickEl = document.getElementById(prefix + '_glass_thick');
+  var gType = typeEl ? typeEl.value : "Royal Blue Reflective Glass";
+  var gThick = thickEl ? thickEl.value : "5.0 mm";
+  return (gThick ? gThick + " " : "") + gType;
+}
+
 
 // ========================================================
 // GLASS BILLING SLAB SAFE-GUARD ENGINE (6-INCH / 1-FOOT SLAB PROTECTOR)
@@ -1204,6 +1212,12 @@ function keypadEnter() {
  const raw_w = safeEval(document.getElementById('dm_w').value);
  if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
 
+ const client_name = document.getElementById('dm_client') ? document.getElementById('dm_client').value.trim() : "";
+ const frame_color = document.getElementById('dm_color') ? document.getElementById('dm_color').value : "Jet Black Matt";
+ const glass_spec = getModuleGlassSpec('dm');
+
+ dm_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
+
  const is_mm = document.getElementById('dm_unit').value.includes('Millimeter');
  const h_mm = is_mm ? raw_h : raw_h * 25.4;
  const w_mm = is_mm ? raw_w : raw_w * 25.4;
@@ -1364,7 +1378,7 @@ function keypadEnter() {
 
  const client_name = document.getElementById('sl_client') ? document.getElementById('sl_client').value.trim() : "";
  const frame_color = document.getElementById('sl_color') ? document.getElementById('sl_color').value : "Jet Black Matt";
- const glass_spec = document.getElementById('sl_glass_spec') ? document.getElementById('sl_glass_spec').value : "5mm Royal Blue Reflective";
+ const glass_spec = getModuleGlassSpec('sl');
 
  sl_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -1501,7 +1515,7 @@ function keypadEnter() {
 
  const client_name = document.getElementById('cc_client') ? document.getElementById('cc_client').value.trim() : "";
  const frame_color = document.getElementById('cc_color') ? document.getElementById('cc_color').value : "Jet Black Matt";
- const glass_spec = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : "5mm Royal Blue Reflective";
+ const glass_spec = getModuleGlassSpec('cc');
 
  cc_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -1954,7 +1968,7 @@ function calculateDoor() {
 
   const client_name = document.getElementById('dr_client') ? document.getElementById('dr_client').value.trim() : "";
   const frame_color = document.getElementById('dr_color') ? document.getElementById('dr_color').value : "Jet Black Matt";
-  const glass_spec = document.getElementById('dr_glass_spec') ? document.getElementById('dr_glass_spec').value : "5mm Royal Blue Reflective";
+  const glass_spec = getModuleGlassSpec('dr');
 
   dr_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -2398,7 +2412,7 @@ function calculatePartition() {
 
  const client_name = document.getElementById('pt_client') ? document.getElementById('pt_client').value.trim() : "";
  const frame_color = document.getElementById('pt_color') ? document.getElementById('pt_color').value : "Jet Black Matt";
- const glass_spec = document.getElementById('pt_glass_spec') ? document.getElementById('pt_glass_spec').value : "5mm Royal Blue Reflective";
+ const glass_spec = getModuleGlassSpec('pt');
 
  pt_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
