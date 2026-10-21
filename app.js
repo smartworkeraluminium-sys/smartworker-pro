@@ -1638,6 +1638,10 @@ function onDoorTypeChanged() {
   if (box) {
     box.style.display = (dType === "Domal System Door") ? 'none' : 'block';
   }
+  var outerGrp = document.getElementById('dr_outer_group');
+  if (outerGrp) {
+    outerGrp.style.display = (dType === "Domal System Door" || dType === "Top Hung Door") ? 'none' : 'block';
+  }
 }
 
 function toggleDoorMiddleRailInput() {
@@ -1920,23 +1924,11 @@ function calculateDoor() {
 
   let leaf_w = 0, door_v = 0;
   let has_outer = true;
-  let outer_v = h, outer_h = w - 3.0;
+  let outer_face = 1.75;
+  let outer_v = h, outer_h = 0;
 
-  if (d_type === "Standard Door") {
-    door_v = h - 1.75;
-    if (palla_qty === 2) {
-      leaf_w = (w - 3.25) / 2.0;
-    } else {
-      leaf_w = w - 3.25;
-    }
-  } else if (d_type === "Floor Spring Door") {
-    door_v = h - 2.0;
-    if (palla_qty === 2) {
-      leaf_w = (w - 3.5) / 2.0;
-    } else {
-      leaf_w = w - 3.25;
-    }
-  } else if (d_type === "Top Hung Door") {
+  if (d_type === "Top Hung Door") {
+    // Top Hung Door (untouched per user instruction)
     has_outer = false;
     door_v = h - 2.0;
     if (palla_qty === 2) {
@@ -1944,9 +1936,31 @@ function calculateDoor() {
     } else {
       leaf_w = w + 4.0;
     }
+  } else {
+    // Standard Door & Floor Spring Door (Exact Workshop Formula)
+    const outer_opt = document.getElementById('dr_has_outer') ? (document.getElementById('dr_has_outer').value === 'yes') : true;
+    has_outer = outer_opt;
+    outer_face = has_outer ? 1.75 : 0;
+    outer_h = Math.max(0, w - (2 * outer_face));
+
+    // Vertical: Half Inch (1/2" = 0.5") clear gap + outer top frame (if present)
+    door_v = h - outer_face - 0.5;
+
+    // Horizontal:
+    // Double Door = Minus 3 Suta (3/8" = 0.375") + outer frame
+    // Single Door = Minus 2 Suta (1/4" = 0.25") + outer frame
+    const h_gap_deduct = (palla_qty === 2) ? 0.375 : 0.25;
+    const net_horiz_open = Math.max(0, w - (2 * outer_face) - h_gap_deduct);
+
+    if (palla_qty === 2) {
+      leaf_w = net_horiz_open / 2.0;
+    } else {
+      leaf_w = net_horiz_open;
+    }
   }
 
-  // Width of horizontal rails (Top Rail, Middle Rail, Bottom Rail)
+  // Width of horizontal rails (Top Rail, Middle Rail, Bottom Rail):
+  // Leaf width minus 2 vertical stiles
   const rail_w = Math.max(0, leaf_w - (2 * vert_w));
   const panel_w = rail_w + 0.75; // Bite into vertical stiles groove
 
@@ -1961,7 +1975,7 @@ function calculateDoor() {
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
     }
-  } else {
+  } else if (d_type === "Top Hung Door") {
     out += `--- TOP HUNG TRACK ---
 `;
     out += `> Heavy Top Sliding Track: ${disp(w)} (${1 * door_qty} pc)
@@ -1969,22 +1983,32 @@ function calculateDoor() {
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(w);
     }
+  } else {
+    out += `--- NO OUTER FRAME (DIRECT OPENING) ---
+`;
+    out += `> Fitted directly into opening (No outer aluminium chaukhat required)
+`;
   }
 
   // 2. DOOR SASH SECTIONS (PALLA CUTTING)
   const total_leaves = palla_qty * door_qty;
+  const palla_note = (palla_qty === 2) ? "Double Door: 3 Suta (3/8\") Minus" : "Single Door: 2 Suta (1/4\") Minus";
+  const vert_note = has_outer ? "Half Inch (1/2\") Clear + 1 3/4\" Top Frame" : "Half Inch (1/2\") Clear Gap";
+
   out += `
 --- DOOR SASH (CUSTOM TUBE SECTIONS) ---
 `;
-  out += `> Door Vertical Stiles: ${disp(door_v)} (${2 * total_leaves} pc) [Profile: ${disp(vert_w)}]
+  out += `> Door Vertical Stiles: ${disp(door_v)} (${2 * total_leaves} pc) [Profile: ${disp(vert_w)} | ${vert_note}]
 `;
-  out += `> Door Top Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(top_h)}]
+  out += `> Door Leaf Width: ${disp(leaf_w)} (${total_leaves} Leaf) [${palla_note}]
+`;
+  out += `> Door Top Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(top_h)} | Leaf - 2 Stiles]
 `;
   if (has_mid) {
     out += `> Door Middle Transom: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(mid_h)} @ ${disp(mid_level)} Level]
 `;
   }
-  out += `> Door Bottom Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(bot_h)}]
+  out += `> Door Bottom Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(bot_h)} | Leaf - 2 Stiles]
 `;
 
   for (let q = 0; q < total_leaves; q++) {
