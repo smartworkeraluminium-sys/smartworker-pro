@@ -1965,42 +1965,37 @@ function calculateDoor() {
     }
   } else {
     // Standard Door & Floor Spring Door (Exact Workshop Formula with Dynamic Outer)
-    const outer_opt = document.getElementById('dr_outer_type') ? document.getElementById('dr_outer_type').value : "1.75";
+    const outer_opt = document.getElementById('dr_outer_type') ? document.getElementById('dr_outer_type').value : "1.5";
     
     if (outer_opt === "none") {
       has_outer = false;
       outer_face = 0;
       outer_name = "Without Outer Frame (Direct Opening)";
+    } else if (outer_opt === "1.5" || outer_opt === "2.5x1.5" || outer_opt === "3x1.5") {
+      has_outer = true;
+      outer_face = 1.5;
+      outer_name = "1.5\" Face Frame (3\" Total Width Minus - Sec 20045)";
     } else if (outer_opt === "2x1_1in") {
       has_outer = true;
       outer_face = 1.0;
-      outer_name = "2\" x 1\" Single Groove (1\" Face - Sec 20049)";
+      outer_name = "2\" x 1\" Single Groove (1\" Face - 2\" Total Minus)";
     } else if (outer_opt === "2x1_2in") {
       has_outer = true;
       outer_face = 2.0;
-      outer_name = "2\" x 1\" Single Groove (2\" Face - Sec 20049)";
-    } else if (outer_opt === "2.5x1.5") {
-      has_outer = true;
-      outer_face = 1.5;
-      outer_name = "2.5\" x 1.5\" Single Groove (1.5\" Face - Sec 20045)";
-    } else if (outer_opt === "3x1.5") {
-      has_outer = true;
-      outer_face = 1.5;
-      outer_name = "3\" x 1.5\" Single Groove (1.5\" Face - Sec 20038)";
-    } else if (outer_opt === "4x1.75") {
+      outer_name = "2\" x 1\" Single Groove (2\" Face - 4\" Total Minus)";
+    } else if (outer_opt === "4x1.75" || outer_opt === "1.75") {
       has_outer = true;
       outer_face = 1.75;
-      outer_name = "4\" x 1.75\" Single Groove (1.75\" Face - Sec 20052)";
+      outer_name = "1.75\" Door Frame (3.5\" Total Width Minus)";
     } else if (outer_opt === "custom") {
       has_outer = true;
-      var raw_cof = safeEval(document.getElementById('dr_custom_outer_face') ? document.getElementById('dr_custom_outer_face').value : 1.75) || 1.75;
+      var raw_cof = safeEval(document.getElementById('dr_custom_outer_face') ? document.getElementById('dr_custom_outer_face').value : 1.5) || 1.5;
       outer_face = (is_mm || raw_cof > 10) ? raw_cof / 25.4 : raw_cof;
       outer_name = "Custom Outer (" + disp(outer_face) + " Face)";
     } else {
-      // 1.75 default
       has_outer = true;
-      outer_face = 1.75;
-      outer_name = "Standard Door Frame (1.75\" Face - Sec 19504/19628)";
+      outer_face = 1.5;
+      outer_name = "1.5\" Face Frame (3\" Total Width Minus)";
     }
 
     outer_h = Math.max(0, w - (2 * outer_face));
