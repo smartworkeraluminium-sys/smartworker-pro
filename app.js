@@ -1748,6 +1748,21 @@ function applyDoorSectionPreset(preset) {
       if (tInp) tInp.value = '63.5';
       if (bInp) bInp.value = '114.3'; // Jindal Sec 19534/19510 (114.30 x 44.45 mm ~ 4.5")
       if (mInp) mInp.value = '76.2';  // 3.0"
+    } else if (preset === 'heavy6') {
+      if (vInp) vInp.value = '44.5';
+      if (tInp) tInp.value = '63.5';
+      if (bInp) bInp.value = '150.0'; // Jindal Sec 19517/19584 (150.00 x 44.45 mm ~ 6.0")
+      if (mInp) mInp.value = '63.5';
+    } else if (preset === 'mega8') {
+      if (vInp) vInp.value = '44.5';
+      if (tInp) tInp.value = '63.5';
+      if (bInp) bInp.value = '200.0'; // Jindal Sec 19621 (200.00 x 44.45 mm ~ 8.0")
+      if (mInp) mInp.value = '63.5';
+    } else if (preset === 'mid3') {
+      if (vInp) vInp.value = '44.5';
+      if (tInp) tInp.value = '63.5';
+      if (bInp) bInp.value = '101.6';
+      if (mInp) mInp.value = '76.2';  // 3.0" Mid Rail
     } else if (preset === 'economy') {
       if (vInp) vInp.value = '44.5';
       if (tInp) tInp.value = '44.5';  // Jindal Sec 19539 (47.62 x 44.45 mm ~ 1.75")
@@ -1769,6 +1784,21 @@ function applyDoorSectionPreset(preset) {
       if (vInp) vInp.value = '1.75';
       if (tInp) tInp.value = '2.5';
       if (bInp) bInp.value = '4.5';
+      if (mInp) mInp.value = '3.0';
+    } else if (preset === 'heavy6') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '2.5';
+      if (bInp) bInp.value = '6.0';
+      if (mInp) mInp.value = '2.5';
+    } else if (preset === 'mega8') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '2.5';
+      if (bInp) bInp.value = '8.0';
+      if (mInp) mInp.value = '2.5';
+    } else if (preset === 'mid3') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '2.5';
+      if (bInp) bInp.value = '4.0';
       if (mInp) mInp.value = '3.0';
     } else if (preset === 'economy') {
       if (vInp) vInp.value = '1.75';
@@ -2050,15 +2080,36 @@ function clearDoor() {
  // 7. PARTITION MODULE
  // ========================================================
  var pt_part_count = 0;
- var pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
+ var pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [], "Snap-on Beading Clip (12ft Bars)": [] };
  var pt_glass_dict = {};
 
  function onPartitionUnitChanged() {
-  // Sync partition unit changes
+  var isMm = document.getElementById("pt_unit") ? document.getElementById("pt_unit").value.includes("Millimeter") : false;
+  var cfInp = document.getElementById("pt_custom_face");
+  var cfLbl = document.getElementById("pt_custom_face_lbl");
+  if (isMm) {
+    if (cfLbl) cfLbl.textContent = "Custom Tube Face Width (mm):";
+    if (cfInp) {
+      var cur = parseFloat(cfInp.value) || 1.5;
+      cfInp.value = cur < 10 ? (cur * 25.4).toFixed(1) : cur;
+      cfInp.step = "0.5";
+    }
+  } else {
+    if (cfLbl) cfLbl.textContent = "Custom Tube Face Width (Inch):";
+    if (cfInp) {
+      var cur = parseFloat(cfInp.value) || 38.1;
+      cfInp.value = cur > 10 ? (cur / 25.4).toFixed(2).replace(/\.00$/, "") : cur;
+      cfInp.step = "0.125";
+    }
+  }
 }
 
 function onPartitionTubeChanged() {
-  // Sync partition tube profile
+  var prof = document.getElementById("pt_tube_profile");
+  var col = document.getElementById("pt_custom_face_col");
+  if (prof && col) {
+    col.style.display = (prof.value === "custom") ? "block" : "none";
+  }
 }
 
 function calculatePartition() {
@@ -2094,9 +2145,37 @@ function calculatePartition() {
  } else if (pt_prof === "50.8x25.4") {
    tube_face = 1.0;
    tube_name = "2\" x 1\" (50.8x25.4mm - Sec 20050/20049 Sleek)";
- } else if (pt_prof === "76.2x38.1") {
+ } else if (pt_prof === "75x38.1" || pt_prof === "76.2x38.1") {
    tube_face = 1.5;
-   tube_name = "3\" x 1.5\" (76.2x38.1mm - Sec 20143 Heavy)";
+   tube_name = "3\" x 1.5\" (75x38.1mm - Sec 20143 Heavy)";
+ } else if (pt_prof === "75x45") {
+   tube_face = 1.75;
+   tube_name = "3\" x 1.75\" (75x45mm - Sec 20144)";
+ } else if (pt_prof === "82.5x38") {
+   tube_face = 1.5;
+   tube_name = "3.25\" x 1.5\" (82.5x38mm - Sec 20037/20038)";
+ } else if (pt_prof === "89x32") {
+   tube_face = 1.25;
+   tube_name = "3.5\" x 1.25\" (89x32mm - Sec 20021/20032)";
+ } else if (pt_prof === "116x44.5") {
+   tube_face = 1.75;
+   tube_name = "4.5\" x 1.75\" (116x44.5mm - Sec 20145 Jumbo)";
+ } else if (pt_prof === "127x44.45") {
+   tube_face = 1.75;
+   tube_name = "5\" x 1.75\" (127x44.45mm - Sec 20157 Mega)";
+ } else if (pt_prof === "custom") {
+   var raw_cf = safeEval(document.getElementById('pt_custom_face') ? document.getElementById('pt_custom_face').value : 1.5) || 1.5;
+   tube_face = (is_mm || raw_cf > 10) ? raw_cf / 25.4 : raw_cf;
+   tube_name = "Custom (" + disp(tube_face) + " Face)";
+ }
+
+ // Optional Corner Samosa Post
+ const samosa_opt = document.getElementById('pt_samosa') ? document.getElementById('pt_samosa').value : "none";
+ let samosa_desc = "";
+ if (samosa_opt === "20103") {
+   samosa_desc = "2.5\" Corner Samosa Pipe (Sec #20103 - 62x35.5mm)";
+ } else if (samosa_opt === "20106") {
+   samosa_desc = "4\" Heavy Corner Samosa Pipe (Sec #20106 - 101.6x96.2mm)";
  }
 
  // Frame height deductions: top tube, bottom tube, and (rows - 1) transoms
@@ -2146,9 +2225,13 @@ function calculatePartition() {
    out += "-----------------------------------\n";
    out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
    out += "-----------------------------------\n";
-   out += `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
-   out += `> Outer Horizontals (Top/Bottom): ${disp(outer_h)} (2 pc)\n`;
+   out += `> Outer Verticals [Single Groove - Wall Post]: ${disp(outer_v)} (2 pc)\n`;
+   out += `> Outer Horizontals [Single Groove - Ceiling & Floor]: ${disp(outer_h)} (2 pc)\n`;
    pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
+   if (samosa_desc) {
+     out += `> Corner Samosa Post [${samosa_desc}]: ${disp(outer_v)} (1 pc)\n`;
+     pt_buckets["Double Glazing"].push(outer_v);
+   }
 
    if (cols > 1) {
      out += `> Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
@@ -2226,10 +2309,49 @@ function calculatePartition() {
      pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
    }
 
-   // 4. HARDWARE
-   const beading_rft = Math.round(((bottom_h + inner_h)*2 + (mid_h + inner_h)*2 + (top_h + inner_h)*2) * cols / 12);
+   // 4. SNAP-ON BEADING CLIPS (1/16" HALF-SUTA DEDUCTED PER WORKSHOP RULE)
+   const clip_deduct = 0.0625; // 1/16" (half suta) minus
+   const clip_h_cut = Math.max(0, inner_h - clip_deduct);
+   const clip_bot_cut = Math.max(0, bottom_h - clip_deduct);
+   const clip_mid_cut = Math.max(0, mid_h - clip_deduct);
+   const clip_top_cut = Math.max(0, top_h - clip_deduct);
+
+   const h_clip_qty = 2 * rows * cols;
+   const v_bot_qty = 2 * cols;
+   const v_mid_qty = 2 * cols;
+   const v_top_qty = 2 * cols;
+
+   const beading_rft = Math.round(((clip_bot_cut + clip_h_cut)*2 + (clip_mid_cut + clip_h_cut)*2 + (clip_top_cut + clip_h_cut)*2) * cols / 12);
+   const clip_pipes_12ft = Math.max(1, Math.ceil(beading_rft / 12));
+
+   out += "\n-----------------------------------\n";
+   out += "✂️ SNAP-ON BEADING CLIPS (1/16\" HALF-SUTA DEDUCTED)\n";
+   out += "-----------------------------------\n";
+   out += `> Horizontal Clips: ${disp(clip_h_cut)} (${h_clip_qty} pc) [Bay Gap ${disp(inner_h)} - 1/16\"]\n`;
+   if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
+     out += `> Vertical Clips (Bottom Box): ${disp(clip_bot_cut)} (${v_bot_qty} pc) [Gap ${disp(bottom_h)} - 1/16\"]\n`;
+     out += `> Vertical Clips (Middle Box): ${disp(clip_mid_cut)} (${v_mid_qty} pc) [Gap ${disp(mid_h)} - 1/16\"]\n`;
+     out += `> Vertical Clips (Top Box): ${disp(clip_top_cut)} (${v_top_qty} pc) [Gap ${disp(top_h)} - 1/16\"]\n`;
+   } else {
+     const v_clip_all = Math.max(0, bottom_h - clip_deduct);
+     out += `> Vertical Clips: ${disp(v_clip_all)} (${2 * rows * cols} pc) [Gap ${disp(bottom_h)} - 1/16\"]\n`;
+   }
+   out += `• Total Clip Profile Required: Approx ${beading_rft} Running Feet (~${clip_pipes_12ft} Pipes of 12ft | Sec #20129)\n`;
+
+   // Push clip cut pieces into 12ft purchase optimizer bucket
+   for (let i = 0; i < h_clip_qty; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_h_cut);
+   if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
+     for (let i = 0; i < v_bot_qty; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_bot_cut);
+     for (let i = 0; i < v_mid_qty; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_mid_cut);
+     for (let i = 0; i < v_top_qty; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_top_cut);
+   } else {
+     for (let i = 0; i < 2 * rows * cols; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(bottom_h - clip_deduct);
+   }
+
+   const tape_rolls = Math.max(1, Math.ceil(beading_rft / 150));
    out += "\n" + ("--- HARDWARE & ACCESSORIES ---\n");
-   out += `> Square Clip (Beading): Approx ${beading_rft} Running Feet\n`;
+   out += `> Snap-on Beading Clip (Sec #20129 - 12ft Bars Only): ${beading_rft} R.Ft (~${clip_pipes_12ft} Bars of 12ft)\n`;
+   out += `> Single-Sided Pressure Tape (for Snap Clips): Approx ${beading_rft} R.Ft (~${tape_rolls} Roll of 50m/164ft)\n`;
    out += `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
    out += `> Corner Cleats & Screws Set\n`;
 
@@ -2345,7 +2467,50 @@ function calculatePartition() {
      }
    }
 
+   // Snap-on Beading Clips for Door + Partition (1/16" half-suta minus)
+   const clip_deduct = 0.0625;
+   const clip_side_h = Math.max(0, inner_h - clip_deduct);
+   const clip_side_bot = Math.max(0, bottom_h - clip_deduct);
+   const clip_side_mid = Math.max(0, mid_h - clip_deduct);
+   const clip_side_top = Math.max(0, top_h - clip_deduct);
+   const clip_tr_w = Math.max(0, dw - clip_deduct);
+   const clip_tr_h = Math.max(0, (h - dh - tube_face) - clip_deduct);
+
+   const side_clip_rft = cols > 0 ? Math.round(((clip_side_bot + clip_side_h)*2 + (clip_side_mid + clip_side_h)*2 + (clip_side_top + clip_side_h)*2) * cols / 12) : 0;
+   const tr_clip_rft = Math.round((clip_tr_w + clip_tr_h) * 2 / 12);
+   const total_dp_clip_rft = side_clip_rft + tr_clip_rft;
+   const total_dp_pipes = Math.max(1, Math.ceil(total_dp_clip_rft / 12));
+
+   out += "\n-----------------------------------\n";
+   out += "✂️ SNAP-ON BEADING CLIPS (1/16\" HALF-SUTA DEDUCTED)\n";
+   out += "-----------------------------------\n";
+   if (cols > 0) {
+     out += `> Side Horizontal Clips: ${disp(clip_side_h)} (${2 * rows * cols} pc) [Bay Gap ${disp(inner_h)} - 1/16\"]\n`;
+     if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
+       out += `> Side Vertical Clips (Bottom Box): ${disp(clip_side_bot)} (${2 * cols} pc) [Gap ${disp(bottom_h)} - 1/16\"]\n`;
+       out += `> Side Vertical Clips (Middle Box): ${disp(clip_side_mid)} (${2 * cols} pc) [Gap ${disp(mid_h)} - 1/16\"]\n`;
+       out += `> Side Vertical Clips (Top Box): ${disp(clip_side_top)} (${2 * cols} pc) [Gap ${disp(top_h)} - 1/16\"]\n`;
+     }
+   }
+   out += `> Door Top Transom Clips (Horiz): ${disp(clip_tr_w)} (2 pc) [Gap ${disp(dw)} - 1/16\"]\n`;
+   out += `> Door Top Transom Clips (Vert): ${disp(clip_tr_h)} (2 pc) [Gap ${disp(h - dh - tube_face)} - 1/16\"]\n`;
+   out += `• Total Clip Profile Required: Approx ${total_dp_clip_rft} Running Feet (~${total_dp_pipes} Pipes of 12ft | Sec #20129)\n`;
+
+   // Push clip cut pieces into 12ft purchase optimizer bucket
+   if (cols > 0) {
+     for (let i = 0; i < 2 * rows * cols; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_side_h);
+     if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
+       for (let i = 0; i < 2 * cols; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_side_bot);
+       for (let i = 0; i < 2 * cols; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_side_mid);
+       for (let i = 0; i < 2 * cols; i++) pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_side_top);
+     }
+   }
+   pt_buckets["Snap-on Beading Clip (12ft Bars)"].push(clip_tr_w, clip_tr_w, clip_tr_h, clip_tr_h);
+
+   const dp_tape_rolls = Math.max(1, Math.ceil(total_dp_clip_rft / 150));
    out += "\n" + ("--- HARDWARE & FITTINGS ---\n");
+   out += `> Snap-on Beading Clip (Sec #20129 - 12ft Bars Only): ${total_dp_clip_rft} R.Ft (~${total_dp_pipes} Bars of 12ft)\n`;
+   out += `> Single-Sided Pressure Tape (for Snap Clips): Approx ${total_dp_clip_rft} R.Ft (~${dp_tape_rolls} Roll of 50m/164ft)\n`;
    out += "> Door Lock: 1 Set\n> Floor Spring / Pivot: 1 Set\n> Door Handle: 1 Set\n";
  }
 
@@ -2356,7 +2521,7 @@ function calculatePartition() {
 
  function clearPartition() {
  pt_part_count = 0;
- pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
+ pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [], "Snap-on Beading Clip (12ft Bars)": [] };
  pt_glass_dict = {};
  document.getElementById('pt_h').value = "";
  document.getElementById('pt_w').value = "";
@@ -2989,8 +3154,8 @@ function clearCustomSeries() {
   keys.forEach(function(pName, idx) {
     const pieces = buckets[pName];
     if (!pieces || pieces.length === 0) return;
-    const isDomal = pName.indexOf('Domal') !== -1;
-    const plan = isDomal ? optimizeCuttingPlan(pieces, [144]) : optimizeCuttingPlan(pieces);
+    const is12ftOnly = pName.indexOf('Domal') !== -1 || pName.indexOf('Clip') !== -1 || pName.indexOf('Beading') !== -1;
+    const plan = is12ftOnly ? optimizeCuttingPlan(pieces, [144]) : optimizeCuttingPlan(pieces);
     const sticksCount = plan.bins ? plan.bins.length : (plan.sticks_needed || 1);
     const ft = plan.len ? Math.floor(plan.len / 12) : (plan.standard_length_ft || 12);
     totalSticks += sticksCount;
@@ -7927,4 +8092,236 @@ function closePrivacyLegalModal() {
 function acceptAndClosePrivacyLegalModal() {
   localStorage.setItem('sw_legal_terms_accepted_v29', 'true');
   closePrivacyLegalModal();
+}
+
+
+// ========================================================
+// JINDAL ARCHITECTURAL SECTIONS HANDBOOK MODULE
+// ========================================================
+var currentJindalCaller = "all";
+var currentJindalCategory = "all";
+
+var JINDAL_SECTIONS_DATA = [
+  // Door Bottom Rails
+  {cat:"bottom", target:"bottom", sec:"19556", name:"4\" Commercial Bottom Rail", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:4.0, val_mm:101.6, wt:"1.943 kg/m", pipe_wt:"7.1 kg", desc:"Most popular commercial door bottom kickplate"},
+  {cat:"bottom", target:"bottom", sec:"19534", name:"4.5\" Jumbo Kickplate", mm:"114.30 x 44.45 mm", inch:"4 1/2\" x 1 3/4\"", val_in:4.5, val_mm:114.3, wt:"1.190 kg/m", pipe_wt:"4.3 kg", desc:"Taller commercial kickplate for entry doors"},
+  {cat:"bottom", target:"bottom", sec:"19510", name:"4.5\" Heavy Jumbo Kickplate", mm:"114.30 x 44.45 mm", inch:"4 1/2\" x 1 3/4\"", val_in:4.5, val_mm:114.3, wt:"2.646 kg/m", pipe_wt:"9.7 kg", desc:"Heavy duty 3.18mm thick bottom rail"},
+  {cat:"bottom", target:"bottom", sec:"19529", name:"3.75\" Bottom Rail", mm:"95.25 x 44.45 mm", inch:"3 3/4\" x 1 3/4\"", val_in:3.75, val_mm:95.25, wt:"1.301 kg/m", pipe_wt:"4.7 kg", desc:"Medium kickplate (Sec 19529/19505)"},
+  {cat:"bottom", target:"bottom", sec:"19563", name:"3.35\" Rail (Kickplate)", mm:"85.00 x 44.45 mm", inch:"3 3/8\" x 1 3/4\"", val_in:3.35, val_mm:85.0, wt:"1.843 kg/m", pipe_wt:"6.7 kg", desc:"3 inch 3 suta bottom rail"},
+  {cat:"bottom", target:"bottom", sec:"19578", name:"2.5\" Economy Bottom Rail", mm:"63.50 x 44.45 mm", inch:"2 1/2\" x 1 3/4\"", val_in:2.5, val_mm:63.5, wt:"1.006 kg/m", pipe_wt:"3.7 kg", desc:"Light interior & bathroom door bottom"},
+  {cat:"bottom", target:"bottom", sec:"19517", name:"6\" Heavy Kickplate", mm:"150.00 x 44.45 mm", inch:"6\" x 1 3/4\"", val_in:6.0, val_mm:150.0, wt:"2.376 kg/m", pipe_wt:"8.7 kg", desc:"6 inch extra tall bottom kickplate"},
+  {cat:"bottom", target:"bottom", sec:"19621", name:"8\" Mega Kickplate", mm:"200.00 x 44.45 mm", inch:"8\" x 1 3/4\"", val_in:8.0, val_mm:200.0, wt:"3.894 kg/m", pipe_wt:"14.2 kg", desc:"8 inch mega heavy commercial door kickplate"},
+
+  // Door Top & Middle Rails
+  {cat:"top_mid", target:"top", sec:"19578", name:"2.5\" Top Rail", mm:"63.50 x 44.45 mm", inch:"2 1/2\" x 1 3/4\"", val_in:2.5, val_mm:63.5, wt:"1.006 kg/m", pipe_wt:"3.7 kg", desc:"Standard 2.5 inch door top rail"},
+  {cat:"top_mid", target:"mid", sec:"19578", name:"2.5\" Middle Transom Rail", mm:"63.50 x 44.45 mm", inch:"2 1/2\" x 1 3/4\"", val_in:2.5, val_mm:63.5, wt:"1.006 kg/m", pipe_wt:"3.7 kg", desc:"Standard 2.5 inch door middle transom"},
+  {cat:"top_mid", target:"top", sec:"19539", name:"1.75\" Slim Top Rail", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:47.62, wt:"0.719 kg/m", pipe_wt:"2.6 kg", desc:"Slim lightweight top rail"},
+  {cat:"top_mid", target:"mid", sec:"19539", name:"1.75\" Slim Middle Transom", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:47.62, wt:"0.719 kg/m", pipe_wt:"2.6 kg", desc:"Slim lightweight middle transom"},
+  {cat:"top_mid", target:"top", sec:"19555", name:"2\" Top Rail", mm:"50.00 x 44.50 mm", inch:"2\" x 1 3/4\"", val_in:2.0, val_mm:50.0, wt:"1.247 kg/m", pipe_wt:"4.5 kg", desc:"2 inch top rail for compact doors"},
+  {cat:"top_mid", target:"mid", sec:"19555", name:"2\" Middle Transom", mm:"50.00 x 44.50 mm", inch:"2\" x 1 3/4\"", val_in:2.0, val_mm:50.0, wt:"1.247 kg/m", pipe_wt:"4.5 kg", desc:"2 inch middle divider transom"},
+  {cat:"top_mid", target:"mid", sec:"19563", name:"3.35\" Wide Mid Rail", mm:"85.00 x 44.45 mm", inch:"3 3/8\" x 1 3/4\"", val_in:3.35, val_mm:85.0, wt:"1.843 kg/m", pipe_wt:"6.7 kg", desc:"Wide middle transom for push plates"},
+
+  // Door Stiles (Verticals)
+  {cat:"vert", target:"vert", sec:"19538", name:"1.75\" Door Vertical (Stile)", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"0.759 kg/m", pipe_wt:"2.8 kg", desc:"Standard handle & hinge side stile"},
+  {cat:"vert", target:"vert", sec:"19547", name:"1.75\" Light Door Stile", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"0.667 kg/m", pipe_wt:"2.4 kg", desc:"Light weight door vertical stile"},
+  {cat:"vert", target:"vert", sec:"19501", name:"1.75\" Heavy Door Stile", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"1.509 kg/m", pipe_wt:"5.5 kg", desc:"Heavy duty 3.10mm thick stile"},
+  {cat:"vert", target:"vert", sec:"19585", name:"2\" Wide Face Door Stile", mm:"50.00 x 44.50 mm", inch:"2\" x 1 3/4\"", val_in:2.0, val_mm:50.0, wt:"1.030 kg/m", pipe_wt:"3.8 kg", desc:"2 inch wide face vertical stile"},
+  {cat:"vert", target:"vert", sec:"19516", name:"2.12\" Heavy Stile", mm:"53.70 x 44.45 mm", inch:"2 1/8\" x 1 3/4\"", val_in:2.12, val_mm:53.7, wt:"1.238 kg/m", pipe_wt:"4.5 kg", desc:"Extra wide pivot/hinge vertical stile"},
+
+  // Door Outer Frames
+  {cat:"frame", target:"frame", sec:"19504", name:"3.5\" Door Outer Frame", mm:"88.90 x 47.63 mm", inch:"3 1/2\" x 1 7/8\"", val_in:3.5, val_mm:88.9, wt:"1.324 kg/m", pipe_wt:"4.8 kg", desc:"Standard 3.5 inch chaukhat frame"},
+  {cat:"frame", target:"frame", sec:"19594", name:"3.35\" Door Frame", mm:"86.00 x 45.00 mm", inch:"3 3/8\" x 1 3/4\"", val_in:3.35, val_mm:86.0, wt:"1.285 kg/m", pipe_wt:"4.7 kg", desc:"Door chaukhat frame"},
+  {cat:"frame", target:"frame", sec:"19628", name:"4\" Heavy Door Frame", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:4.0, val_mm:101.6, wt:"2.451 kg/m", pipe_wt:"8.9 kg", desc:"4 inch heavy commercial door frame"},
+  {cat:"frame", target:"frame", sec:"19634", name:"5\" Deep Door Frame", mm:"125.00 x 37.00 mm", inch:"5\" x 1 1/2\"", val_in:5.0, val_mm:125.0, wt:"1.415 kg/m", pipe_wt:"5.2 kg", desc:"5 inch deep wall chaukhat frame"},
+
+  // Partition Tubes
+  {cat:"partition", target:"partition", sec:"20046", name:"2.5\" x 1.5\" Double Groove Tube", mm:"63.50 x 38.10 mm", inch:"2 1/2\" x 1 1/2\"", val_in:1.5, val_mm:38.1, wt:"0.686 kg/m", pipe_wt:"2.5 kg", desc:"Most popular partition tube in India"},
+  {cat:"partition", target:"partition", sec:"20045", name:"2.5\" x 1.5\" Single Groove Frame", mm:"63.50 x 38.10 mm", inch:"2 1/2\" x 1 1/2\"", val_in:1.5, val_mm:38.1, wt:"0.681 kg/m", pipe_wt:"2.5 kg", desc:"Perimeter outer frame against walls & floor"},
+  {cat:"partition", target:"partition", sec:"20050", name:"2\" x 1\" Double Groove Tube", mm:"50.80 x 25.40 mm", inch:"2\" x 1\"", val_in:1.0, val_mm:25.4, wt:"0.496 kg/m", pipe_wt:"1.8 kg", desc:"Sleek partition divider for compact spaces"},
+  {cat:"partition", target:"partition", sec:"20049", name:"2\" x 1\" Single Groove Frame", mm:"50.80 x 25.40 mm", inch:"2\" x 1\"", val_in:1.0, val_mm:25.4, wt:"0.414 kg/m", pipe_wt:"1.5 kg", desc:"Perimeter frame for 2x1 partition"},
+  {cat:"partition", target:"partition", sec:"20143", name:"3\" x 1.5\" Double Groove Tube", mm:"75.00 x 38.10 mm", inch:"3\" x 1 1/2\"", val_in:1.5, val_mm:38.1, wt:"0.832 kg/m", pipe_wt:"3.0 kg", desc:"3 inch partition tube"},
+  {cat:"partition", target:"partition", sec:"20051", name:"4\" x 1.75\" Heavy Commercial Tube", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"1.954 kg/m", pipe_wt:"7.1 kg", desc:"Heavy double groove tube for offices & banks"},
+  {cat:"partition", target:"partition", sec:"20052", name:"4\" x 1.75\" Heavy Single Groove", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"1.950 kg/m", pipe_wt:"7.1 kg", desc:"Heavy perimeter frame for 4x1.75 partition"},
+
+  // Samosa Sections
+  {cat:"samosa", target:"samosa", sec:"20103", name:"2.5\" Samosa Corner Pipe", mm:"62.00 x 35.50 mm", inch:"2.44\" x 1.40\"", val_in:2.5, val_mm:62.0, wt:"0.944 kg/m", pipe_wt:"3.4 kg", desc:"45 & 135 degree corner samosa for 2.5x1.5 partition"},
+  {cat:"samosa", target:"samosa", sec:"20106", name:"4\" Heavy Samosa Corner Pipe", mm:"101.60 x 96.23 mm", inch:"4\" x 3 3/4\"", val_in:4.0, val_mm:101.6, wt:"1.875 kg/m", pipe_wt:"6.8 kg", desc:"Heavy corner samosa for 4-inch commercial partition"}
+];
+
+function openJindalCatalogueModal(caller) {
+  currentJindalCaller = caller || "all";
+  var modal = document.getElementById("jindalCatalogueModal");
+  if (!modal) return;
+  modal.style.display = "flex";
+
+  if (caller === "partition") {
+    setJindalCategory("partition");
+  } else if (caller === "door") {
+    setJindalCategory("all");
+  } else {
+    setJindalCategory("all");
+  }
+}
+
+function closeJindalCatalogueModal() {
+  var modal = document.getElementById("jindalCatalogueModal");
+  if (modal) modal.style.display = "none";
+}
+
+function setJindalCategory(cat, btn) {
+  currentJindalCategory = cat;
+  var container = document.getElementById("jindal_cat_filters");
+  if (container) {
+    var btns = container.querySelectorAll(".jindal-filter-btn");
+    btns.forEach(function(b) { b.classList.remove("active"); });
+    if (btn) {
+      btn.classList.add("active");
+    } else {
+      btns.forEach(function(b) {
+        if (b.getAttribute("onclick") && b.getAttribute("onclick").indexOf("'" + cat + "'") !== -1) {
+          b.classList.add("active");
+        }
+      });
+    }
+  }
+  renderJindalCatalogue();
+}
+
+function filterJindalCatalogue() {
+  renderJindalCatalogue();
+}
+
+function renderJindalCatalogue() {
+  var container = document.getElementById("jindal_sections_container");
+  if (!container) return;
+
+  var q = (document.getElementById("jindal_search_input") ? document.getElementById("jindal_search_input").value.toLowerCase().trim() : "");
+  var cat = currentJindalCategory;
+
+  var filtered = JINDAL_SECTIONS_DATA.filter(function(item) {
+    if (cat !== "all" && item.cat !== cat) return false;
+    if (q) {
+      var matchSec = item.sec.toLowerCase().indexOf(q) !== -1;
+      var matchName = item.name.toLowerCase().indexOf(q) !== -1;
+      var matchMm = item.mm.toLowerCase().indexOf(q) !== -1;
+      var matchInch = item.inch.toLowerCase().indexOf(q) !== -1;
+      var matchDesc = item.desc.toLowerCase().indexOf(q) !== -1;
+      return matchSec || matchName || matchMm || matchInch || matchDesc;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:0.85rem;"><i class="fa-solid fa-magnifying-glass" style="font-size:1.8rem; margin-bottom:8px; display:block;"></i>No sections match your search.</div>';
+    return;
+  }
+
+  var html = "";
+  filtered.forEach(function(item) {
+    var loadBtnText = "Load to Door";
+    var loadBtnBg = "#0284c7";
+    if (item.target === "partition" || item.target === "samosa") {
+      loadBtnText = "Set in Partition";
+      loadBtnBg = "#059669";
+    }
+
+    html += '<div class="jindal-card">';
+    html += '  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">';
+    html += '    <div>';
+    html += '      <span style="background:#e0f2fe; color:#0369a1; font-size:0.65rem; font-weight:800; padding:2px 6px; border-radius:4px; margin-right:5px;">SEC #' + item.sec + '</span>';
+    html += '      <span style="font-weight:800; font-size:0.84rem; color:#0f172a;">' + item.name + '</span>';
+    html += '    </div>';
+    html += '    <button type="button" onclick="applyJindalSection(\'' + item.sec + '\')" style="background:' + loadBtnBg + '; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-size:0.70rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:3px; white-space:nowrap; box-shadow:0 2px 4px rgba(0,0,0,0.15);">';
+    html += '      <i class="fa-solid fa-bolt"></i> <span>' + loadBtnText + '</span>';
+    html += '    </button>';
+    html += '  </div>';
+
+    html += '  <div style="display:flex; gap:12px; margin-top:4px; flex-wrap:wrap; font-size:0.74rem;">';
+    html += '    <div><span style="color:#64748b;">Dimension:</span> <b style="color:#1e3a8a;">' + item.mm + '</b> (' + item.inch + ')</div>';
+    html += '    <div><span style="color:#64748b;">Weight:</span> <b style="color:#0f766e;">' + item.wt + '</b> (~\'' + item.pipe_wt + ')</div>';
+    html += '  </div>';
+
+    html += '  <div style="font-size:0.70rem; color:#64748b; margin-top:2px;">' + item.desc + '</div>';
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function applyJindalSection(secId) {
+  var item = JINDAL_SECTIONS_DATA.find(function(s) { return s.sec === secId; });
+  if (!item) return;
+
+  var isDoorMm = document.getElementById("dr_unit") ? document.getElementById("dr_unit").value.includes("Millimeter") : false;
+
+  if (item.target === "bottom") {
+    var bInp = document.getElementById("dr_bot_h");
+    if (bInp) bInp.value = isDoorMm ? item.val_mm : item.val_in;
+    var pSel = document.getElementById("dr_section_preset");
+    if (pSel) pSel.value = "custom";
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
+    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Bottom Rail!");
+  } else if (item.target === "top") {
+    var tInp = document.getElementById("dr_top_h");
+    if (tInp) tInp.value = isDoorMm ? item.val_mm : item.val_in;
+    var pSel = document.getElementById("dr_section_preset");
+    if (pSel) pSel.value = "custom";
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
+    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Top Rail!");
+  } else if (item.target === "mid") {
+    var mInp = document.getElementById("dr_mid_h");
+    if (mInp) mInp.value = isDoorMm ? item.val_mm : item.val_in;
+    var hasMidSel = document.getElementById("dr_has_mid");
+    if (hasMidSel) {
+      hasMidSel.value = "yes";
+      toggleDoorMiddleRailInput();
+    }
+    var pSel = document.getElementById("dr_section_preset");
+    if (pSel) pSel.value = "custom";
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
+    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Middle Transom!");
+  } else if (item.target === "vert") {
+    var vInp = document.getElementById("dr_vert_w");
+    if (vInp) vInp.value = isDoorMm ? item.val_mm : item.val_in;
+    var pSel = document.getElementById("dr_section_preset");
+    if (pSel) pSel.value = "custom";
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
+    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Vertical Stile!");
+  } else if (item.target === "frame") {
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
+    alert("Jindal Sec #" + item.sec + " (" + item.name + ") is a Door Outer Chaukhat Frame!");
+  } else if (item.target === "partition") {
+    var ptSel = document.getElementById("pt_tube_profile");
+    if (ptSel) {
+      if (item.sec === "20051" || item.sec === "20052") ptSel.value = "101.6x44.45";
+      else if (item.sec === "20050" || item.sec === "20049") ptSel.value = "50.8x25.4";
+      else if (item.sec === "20143") ptSel.value = "75x38.1";
+      else if (item.sec === "20144") ptSel.value = "75x45";
+      else if (item.sec === "20037" || item.sec === "20038") ptSel.value = "82.5x38";
+      else if (item.sec === "20021" || item.sec === "20032") ptSel.value = "89x32";
+      else if (item.sec === "20145") ptSel.value = "116x44.5";
+      else if (item.sec === "20157") ptSel.value = "127x44.45";
+      else ptSel.value = "63.5x38.1";
+      onPartitionTubeChanged();
+    }
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "partition") openScreen("partition", "PARTITION MASTER");
+    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") into Partition Tube Profile!");
+  } else if (item.target === "samosa") {
+    var smSel = document.getElementById("pt_samosa");
+    if (smSel) {
+      smSel.value = (item.sec === "20106") ? "20106" : "20103";
+    }
+    closeJindalCatalogueModal();
+    if (currentJindalCaller !== "partition") openScreen("partition", "PARTITION MASTER");
+    alert("Loaded Corner Samosa Sec #" + item.sec + " (" + item.name + ") into Partition!");
+  } else {
+    closeJindalCatalogueModal();
+    alert("Jindal Sec #" + item.sec + " (" + item.name + ") viewed!");
+  }
 }
