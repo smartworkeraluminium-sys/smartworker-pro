@@ -1252,11 +1252,21 @@
  <input type="number" id="dr_qty" value="1" min="1">
  </div>
  <div class="form-group" id="dr_outer_group">
- <label>Outer Frame (Chaukhat):</label>
- <select id="dr_has_outer" style="font-weight:700;">
- <option value="yes" selected>With Outer Frame (1.75" Frame)</option>
- <option value="no">Without Outer Frame (Direct Opening)</option>
+ <label>Outer Frame / Chaukhat Profile:</label>
+ <select id="dr_outer_type" onchange="onDoorOuterProfileChanged()" style="font-weight:700; color:#1e3a8a;">
+ <option value="1.75" selected>Standard Door Frame (1.75" / 44.5mm Face)</option>
+ <option value="2x1_1in">2" x 1" Single Groove (1.0" / 25.4mm Face)</option>
+ <option value="2x1_2in">2" x 1" Single Groove (2.0" / 50.8mm Face)</option>
+ <option value="2.5x1.5">2.5" x 1.5" Single Groove (1.5" / 38.1mm Face - Sec 20045)</option>
+ <option value="3x1.5">3" x 1.5" Single Groove (1.5" / 38.1mm Face - Sec 20038)</option>
+ <option value="4x1.75">4" x 1.75" Single Groove (1.75" / 44.5mm Face - Sec 20052)</option>
+ <option value="custom">Custom Outer Profile (Type Any Face Width)</option>
+ <option value="none">Without Outer Frame (No Outer - Direct Opening)</option>
  </select>
+ </div>
+ <div class="form-group" id="dr_custom_outer_col" style="display:none;">
+ <label id="dr_custom_outer_lbl">Custom Outer Face Width (Inch):</label>
+ <input type="number" id="dr_custom_outer_face" value="1.75" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
  </div>
  <div class="form-group">
  <label>Total Height (H):</label>

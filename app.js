@@ -1644,6 +1644,14 @@ function onDoorTypeChanged() {
   }
 }
 
+function onDoorOuterProfileChanged() {
+  var sel = document.getElementById('dr_outer_type');
+  var col = document.getElementById('dr_custom_outer_col');
+  if (sel && col) {
+    col.style.display = (sel.value === 'custom') ? 'block' : 'none';
+  }
+}
+
 function toggleDoorMiddleRailInput() {
   var sel = document.getElementById('dr_has_mid');
   var hasMid = sel ? (sel.value === 'yes') : true;
@@ -1730,6 +1738,24 @@ function onDoorUnitChanged() {
       var curL = parseFloat(mlInp.value) || 914;
       mlInp.value = curL > 100 ? (curL / 25.4).toFixed(1).replace(/\.0$/, '') : curL;
       mlInp.step = "0.5";
+    }
+  }
+
+  var coLbl = document.getElementById('dr_custom_outer_lbl');
+  var coInp = document.getElementById('dr_custom_outer_face');
+  if (isMm) {
+    if (coLbl) coLbl.textContent = "Custom Outer Face Width (mm):";
+    if (coInp) {
+      var curCO = parseFloat(coInp.value) || 1.75;
+      coInp.value = curCO < 10 ? (curCO * 25.4).toFixed(1) : curCO;
+      coInp.step = "0.5";
+    }
+  } else {
+    if (coLbl) coLbl.textContent = "Custom Outer Face Width (Inch):";
+    if (coInp) {
+      var curCO = parseFloat(coInp.value) || 44.5;
+      coInp.value = curCO > 10 ? (curCO / 25.4).toFixed(2).replace(/\.00$/, '') : curCO;
+      coInp.step = "0.125";
     }
   }
 }
@@ -1926,6 +1952,7 @@ function calculateDoor() {
   let has_outer = true;
   let outer_face = 1.75;
   let outer_v = h, outer_h = 0;
+  let outer_name = "Standard Door Frame (1.75\" Face)";
 
   if (d_type === "Top Hung Door") {
     // Top Hung Door (untouched per user instruction)
@@ -1937,10 +1964,45 @@ function calculateDoor() {
       leaf_w = w + 4.0;
     }
   } else {
-    // Standard Door & Floor Spring Door (Exact Workshop Formula)
-    const outer_opt = document.getElementById('dr_has_outer') ? (document.getElementById('dr_has_outer').value === 'yes') : true;
-    has_outer = outer_opt;
-    outer_face = has_outer ? 1.75 : 0;
+    // Standard Door & Floor Spring Door (Exact Workshop Formula with Dynamic Outer)
+    const outer_opt = document.getElementById('dr_outer_type') ? document.getElementById('dr_outer_type').value : "1.75";
+    
+    if (outer_opt === "none") {
+      has_outer = false;
+      outer_face = 0;
+      outer_name = "Without Outer Frame (Direct Opening)";
+    } else if (outer_opt === "2x1_1in") {
+      has_outer = true;
+      outer_face = 1.0;
+      outer_name = "2\" x 1\" Single Groove (1\" Face - Sec 20049)";
+    } else if (outer_opt === "2x1_2in") {
+      has_outer = true;
+      outer_face = 2.0;
+      outer_name = "2\" x 1\" Single Groove (2\" Face - Sec 20049)";
+    } else if (outer_opt === "2.5x1.5") {
+      has_outer = true;
+      outer_face = 1.5;
+      outer_name = "2.5\" x 1.5\" Single Groove (1.5\" Face - Sec 20045)";
+    } else if (outer_opt === "3x1.5") {
+      has_outer = true;
+      outer_face = 1.5;
+      outer_name = "3\" x 1.5\" Single Groove (1.5\" Face - Sec 20038)";
+    } else if (outer_opt === "4x1.75") {
+      has_outer = true;
+      outer_face = 1.75;
+      outer_name = "4\" x 1.75\" Single Groove (1.75\" Face - Sec 20052)";
+    } else if (outer_opt === "custom") {
+      has_outer = true;
+      var raw_cof = safeEval(document.getElementById('dr_custom_outer_face') ? document.getElementById('dr_custom_outer_face').value : 1.75) || 1.75;
+      outer_face = (is_mm || raw_cof > 10) ? raw_cof / 25.4 : raw_cof;
+      outer_name = "Custom Outer (" + disp(outer_face) + " Face)";
+    } else {
+      // 1.75 default
+      has_outer = true;
+      outer_face = 1.75;
+      outer_name = "Standard Door Frame (1.75\" Face - Sec 19504/19628)";
+    }
+
     outer_h = Math.max(0, w - (2 * outer_face));
 
     // Vertical: Half Inch (1/2" = 0.5") clear gap + outer top frame (if present)
@@ -1966,7 +2028,7 @@ function calculateDoor() {
 
   // 1. OUTER FRAME
   if (has_outer) {
-    out += `--- OUTER FRAME ---
+    out += `--- OUTER FRAME [${outer_name}] ---
 `;
     out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)
 `;
@@ -1993,7 +2055,7 @@ function calculateDoor() {
   // 2. DOOR SASH SECTIONS (PALLA CUTTING)
   const total_leaves = palla_qty * door_qty;
   const palla_note = (palla_qty === 2) ? "Double Door: 3 Suta (3/8\") Minus" : "Single Door: 2 Suta (1/4\") Minus";
-  const vert_note = has_outer ? "Half Inch (1/2\") Clear + 1 3/4\" Top Frame" : "Half Inch (1/2\") Clear Gap";
+  const vert_note = has_outer ? `Half Inch (1/2\") Clear + ${disp(outer_face)} Top Frame` : `Half Inch (1/2\") Clear Gap`;
 
   out += `
 --- DOOR SASH (CUSTOM TUBE SECTIONS) ---
