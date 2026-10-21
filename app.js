@@ -1629,10 +1629,162 @@ function keypadEnter() {
  // 6. DOOR MASTER MODULE
  // ========================================================
  var dr_door_count = 0;
- var dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
- var dr_glass_dict = {};
+var dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Top Rail": [], "Door Bottom Rail": [], "Door Middle Rail": [] };
+var dr_glass_dict = {};
 
- function calculateDoor() {
+function onDoorTypeChanged() {
+  var dType = document.getElementById('dr_type') ? document.getElementById('dr_type').value : "Standard Door";
+  var box = document.getElementById('dr_custom_profile_box');
+  if (box) {
+    box.style.display = (dType === "Domal System Door") ? 'none' : 'block';
+  }
+}
+
+function toggleDoorMiddleRailInput() {
+  var sel = document.getElementById('dr_has_mid');
+  var hasMid = sel ? (sel.value === 'yes') : true;
+  var col1 = document.getElementById('dr_mid_h_col');
+  var col2 = document.getElementById('dr_mid_lvl_col');
+  if (col1) col1.style.opacity = hasMid ? '1' : '0.35';
+  if (col2) col2.style.opacity = hasMid ? '1' : '0.35';
+}
+
+function onDoorUnitChanged() {
+  var isMm = document.getElementById('dr_unit') ? document.getElementById('dr_unit').value.includes('Millimeter') : false;
+  var vInp = document.getElementById('dr_vert_w');
+  var tInp = document.getElementById('dr_top_h');
+  var bInp = document.getElementById('dr_bot_h');
+  var mInp = document.getElementById('dr_mid_h');
+  var mlInp = document.getElementById('dr_mid_level');
+
+  var vLbl = document.getElementById('dr_vert_lbl');
+  var tLbl = document.getElementById('dr_top_lbl');
+  var bLbl = document.getElementById('dr_bot_lbl');
+  var mLbl = document.getElementById('dr_mid_lbl');
+  var mlLbl = document.getElementById('dr_mid_lvl_lbl');
+
+  if (isMm) {
+    if (vLbl) vLbl.textContent = "Vertical Stile (mm):";
+    if (tLbl) tLbl.textContent = "Top Rail (mm):";
+    if (bLbl) bLbl.textContent = "Bottom Rail (mm):";
+    if (mLbl) mLbl.textContent = "Mid Rail Section (mm):";
+    if (mlLbl) mlLbl.textContent = "Mid Center Level (mm):";
+
+    if (vInp) {
+      var curV = parseFloat(vInp.value) || 1.75;
+      vInp.value = curV < 10 ? (curV * 25.4).toFixed(1) : curV;
+      vInp.step = "0.5";
+    }
+    if (tInp) {
+      var curT = parseFloat(tInp.value) || 2.5;
+      tInp.value = curT < 10 ? (curT * 25.4).toFixed(1) : curT;
+      tInp.step = "0.5";
+    }
+    if (bInp) {
+      var curB = parseFloat(bInp.value) || 4.0;
+      bInp.value = curB < 10 ? (curB * 25.4).toFixed(1) : curB;
+      bInp.step = "0.5";
+    }
+    if (mInp) {
+      var curM = parseFloat(mInp.value) || 2.5;
+      mInp.value = curM < 10 ? (curM * 25.4).toFixed(1) : curM;
+      mInp.step = "0.5";
+    }
+    if (mlInp) {
+      var curL = parseFloat(mlInp.value) || 36.0;
+      mlInp.value = curL < 100 ? Math.round(curL * 25.4) : curL;
+      mlInp.step = "10";
+    }
+  } else {
+    if (vLbl) vLbl.textContent = "Vertical Stile (Inch):";
+    if (tLbl) tLbl.textContent = "Top Rail (Inch):";
+    if (bLbl) bLbl.textContent = "Bottom Rail (Inch):";
+    if (mLbl) mLbl.textContent = "Mid Rail Section (Inch):";
+    if (mlLbl) mlLbl.textContent = "Mid Center Level (Inch):";
+
+    if (vInp) {
+      var curV = parseFloat(vInp.value) || 44.5;
+      vInp.value = curV > 10 ? (curV / 25.4).toFixed(2).replace(/\.00$/, '') : curV;
+      vInp.step = "0.125";
+    }
+    if (tInp) {
+      var curT = parseFloat(tInp.value) || 63.5;
+      tInp.value = curT > 10 ? (curT / 25.4).toFixed(2).replace(/\.00$/, '') : curT;
+      tInp.step = "0.125";
+    }
+    if (bInp) {
+      var curB = parseFloat(bInp.value) || 101.6;
+      bInp.value = curB > 10 ? (curB / 25.4).toFixed(2).replace(/\.00$/, '') : curB;
+      bInp.step = "0.125";
+    }
+    if (mInp) {
+      var curM = parseFloat(mInp.value) || 63.5;
+      mInp.value = curM > 10 ? (curM / 25.4).toFixed(2).replace(/\.00$/, '') : curM;
+      mInp.step = "0.125";
+    }
+    if (mlInp) {
+      var curL = parseFloat(mlInp.value) || 914;
+      mlInp.value = curL > 100 ? (curL / 25.4).toFixed(1).replace(/\.0$/, '') : curL;
+      mlInp.step = "0.5";
+    }
+  }
+}
+
+function applyDoorSectionPreset(preset) {
+  var isMm = document.getElementById('dr_unit') ? document.getElementById('dr_unit').value.includes('Millimeter') : false;
+  var vInp = document.getElementById('dr_vert_w');
+  var tInp = document.getElementById('dr_top_h');
+  var bInp = document.getElementById('dr_bot_h');
+  var mInp = document.getElementById('dr_mid_h');
+
+  if (isMm) {
+    if (preset === 'commercial') {
+      if (vInp) vInp.value = '44.5';  // Jindal Sec 19538/19547 (47.62 x 44.45 mm ~ 1.75")
+      if (tInp) tInp.value = '63.5';  // 2.5"
+      if (bInp) bInp.value = '101.6'; // Jindal Sec 19556 (101.60 x 44.45 mm ~ 4.0")
+      if (mInp) mInp.value = '63.5';
+    } else if (preset === 'jumbo') {
+      if (vInp) vInp.value = '44.5';
+      if (tInp) tInp.value = '63.5';
+      if (bInp) bInp.value = '114.3'; // Jindal Sec 19534/19510 (114.30 x 44.45 mm ~ 4.5")
+      if (mInp) mInp.value = '76.2';  // 3.0"
+    } else if (preset === 'economy') {
+      if (vInp) vInp.value = '44.5';
+      if (tInp) tInp.value = '44.5';  // Jindal Sec 19539 (47.62 x 44.45 mm ~ 1.75")
+      if (bInp) bInp.value = '63.5';  // 2.5"
+      if (mInp) mInp.value = '44.5';
+    } else if (preset === 'slim') {
+      if (vInp) vInp.value = '44.5';
+      if (tInp) tInp.value = '50.8';  // 2.0"
+      if (bInp) bInp.value = '101.6';
+      if (mInp) mInp.value = '50.8';
+    }
+  } else {
+    if (preset === 'commercial') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '2.5';
+      if (bInp) bInp.value = '4.0';
+      if (mInp) mInp.value = '2.5';
+    } else if (preset === 'jumbo') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '2.5';
+      if (bInp) bInp.value = '4.5';
+      if (mInp) mInp.value = '3.0';
+    } else if (preset === 'economy') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '1.75';
+      if (bInp) bInp.value = '2.5';
+      if (mInp) mInp.value = '1.75';
+    } else if (preset === 'slim') {
+      if (vInp) vInp.value = '1.75';
+      if (tInp) tInp.value = '2.0';
+      if (bInp) bInp.value = '4.0';
+      if (mInp) mInp.value = '2.0';
+    }
+  }
+}
+
+function calculateDoor() {
   const raw_h = safeEval(document.getElementById('dr_h').value);
   const raw_w = safeEval(document.getElementById('dr_w').value);
   if (raw_h === 0 || raw_w === 0) {
@@ -1651,144 +1803,232 @@ function keypadEnter() {
   const qty_str = door_qty > 1 ? ` (Qty: ${door_qty} Doors)` : "";
   const palla_str = palla_qty === 2 ? "Double Door" : "Single Door";
 
-  let outer_v = h, outer_h = w - 3.0, has_outer = true, has_mid = false;
-  let door_v = 0, door_tb = 0;
-  let leaf_w = 0;
+  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+  const unit_str = is_mm ? "mm" : "Inch";
+  dr_door_count += 1;
 
-  const ovr_dr = (typeof getFormulaOverrides === 'function') ? getFormulaOverrides() : {};
-  const std_h_deduct = (ovr_dr && ovr_dr.dr_v_deduct != null && parseFloat(ovr_dr.dr_v_deduct) !== 0.375) ? parseFloat(ovr_dr.dr_v_deduct) : 1.75;
+  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${disp(h)} x ${disp(w)})${qty_str}]
+`;
+
+  // -------------------------------------------------------------
+  // BRANCH 1: DOMAL SYSTEM DOOR (Preserved 100% untouched)
+  // -------------------------------------------------------------
+  if (d_type === "Domal System Door") {
+    let outer_v = h, outer_h = w - 3.0;
+    let door_v = h - (25.0 / 25.4);
+    let leaf_w = (palla_qty === 2) ? (((w - (38.0 / 25.4)) - 0.25) / 2.0) : (w - (38.0 / 25.4));
+    let door_tb = leaf_w - 3.5;
+    let dg_h = door_v - 7.0;
+    let dg_w = door_tb - 1.0;
+
+    out += `--- OUTER FRAME ---
+`;
+    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)
+`;
+    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)
+`;
+    for (let q = 0; q < door_qty; q++) {
+      dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
+    }
+
+    out += `
+--- DOOR SASH (PALLA CUTTING) ---
+`;
+    out += `> Door Sash Verticals (Stiles): ${disp(door_v)} (${2 * palla_qty * door_qty} pc)
+`;
+    out += `> Door Sash Top/Bottom: ${disp(door_tb)} (${2 * palla_qty * door_qty} pc)
+`;
+
+    for (let q = 0; q < door_qty * palla_qty; q++) {
+      dr_buckets["Door Verticals"].push(door_v, door_v);
+      dr_buckets["Door Top Rail"].push(door_tb);
+      dr_buckets["Door Bottom Rail"].push(door_tb);
+    }
+
+    out += `
+--- GLASS / ACP SIZES ---
+`;
+    out += `> Door Panel Glass / Board: ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)
+`;
+    const gKey = `${disp(dg_h)} x ${disp(dg_w)}`;
+    dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + (palla_qty * door_qty);
+
+    out += `
+--- HARDWARE & ACCESSORIES ---
+`;
+    out += `> Domal Heavy Door Hinges / Pivot Set: ${3 * palla_qty * door_qty} pc
+`;
+    out += `> Heavy Touch Lock / Deadbolt Lock: ${1 * door_qty} Set
+`;
+    out += `> Premium Door Handle: ${palla_qty * door_qty} Set
+`;
+    out += `> Corner Cleats & Screws Set: Required
+`;
+
+    const prevOut = document.getElementById('dr_out').textContent;
+    document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
+    document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
+    return;
+  }
+
+  // -------------------------------------------------------------
+  // BRANCH 2: DYNAMIC TUBE SECTIONS (Standard, Floor Spring, Top Hung)
+  // -------------------------------------------------------------
+  let vert_w = parseFloat(document.getElementById('dr_vert_w') ? document.getElementById('dr_vert_w').value : 1.75) || 1.75;
+  let top_h = parseFloat(document.getElementById('dr_top_h') ? document.getElementById('dr_top_h').value : 2.5) || 2.5;
+  let bot_h = parseFloat(document.getElementById('dr_bot_h') ? document.getElementById('dr_bot_h').value : 4.0) || 4.0;
+  const has_mid = document.getElementById('dr_has_mid') ? (document.getElementById('dr_has_mid').value === 'yes') : true;
+  let mid_h = parseFloat(document.getElementById('dr_mid_h') ? document.getElementById('dr_mid_h').value : 2.5) || 2.5;
+  let mid_level = parseFloat(document.getElementById('dr_mid_level') ? document.getElementById('dr_mid_level').value : 36.0) || 36.0;
+
+  // Auto-detect MM vs Inch inputs: if input > 10, it is in mm -> normalize to inches for cutting calculations
+  if (vert_w > 10) vert_w = vert_w / 25.4;
+  if (top_h > 10) top_h = top_h / 25.4;
+  if (bot_h > 10) bot_h = bot_h / 25.4;
+  if (mid_h > 10) mid_h = mid_h / 25.4;
+  if (mid_level > 100) mid_level = mid_level / 25.4;
+
+  let leaf_w = 0, door_v = 0;
+  let has_outer = true;
+  let outer_v = h, outer_h = w - 3.0;
+
   if (d_type === "Standard Door") {
-    door_v = h - std_h_deduct;
+    door_v = h - 1.75;
     if (palla_qty === 2) {
-      // 2 Palla: Inside opening is w - 3.0". Center meeting gap is 0.25".
       leaf_w = (w - 3.25) / 2.0;
-      door_tb = leaf_w - 3.5; // Two vertical styles (1.75" + 1.75" = 3.5")
     } else {
       leaf_w = w - 3.25;
-      door_tb = w - 6.75;
     }
   } else if (d_type === "Floor Spring Door") {
     door_v = h - 2.0;
     if (palla_qty === 2) {
       leaf_w = (w - 3.5) / 2.0;
-      door_tb = leaf_w - 3.5;
     } else {
       leaf_w = w - 3.25;
-      door_tb = w - 6.75;
     }
   } else if (d_type === "Top Hung Door") {
-    // Top Hung Door Formula
-    door_v = h - 2.0;
     has_outer = false;
-    has_mid = true;
+    door_v = h - 2.0;
     if (palla_qty === 2) {
-      // 2 Palla bi-parting
       leaf_w = (w + 4.0) / 2.0;
-      door_tb = leaf_w - 3.5;
     } else {
       leaf_w = w + 4.0;
-      door_tb = leaf_w - 3.5;
-    }
-  } else if (d_type === "Domal System Door") {
-    door_v = h - (25.0 / 25.4);
-    if (palla_qty === 2) {
-      leaf_w = ((w - (38.0 / 25.4)) - 0.25) / 2.0;
-      door_tb = leaf_w - 3.5;
-    } else {
-      leaf_w = w - (38.0 / 25.4);
-      door_tb = leaf_w - 3.5;
-    }
-  } else {
-    door_v = h - 2.0;
-    if (palla_qty === 2) {
-      leaf_w = (w - 3.5) / 2.0;
-      door_tb = leaf_w - 3.5;
-    } else {
-      leaf_w = w - 3.25;
-      door_tb = w - 6.75;
     }
   }
 
-  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
-  const unit_str = is_mm ? "mm" : "Inch";
-  dr_door_count += 1;
+  // Width of horizontal rails (Top Rail, Middle Rail, Bottom Rail)
+  const rail_w = Math.max(0, leaf_w - (2 * vert_w));
+  const panel_w = rail_w + 0.75; // Bite into vertical stiles groove
 
-  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${disp(h)} x ${disp(w)})${qty_str}]\n`;
-
+  // 1. OUTER FRAME
   if (has_outer) {
-    out += `--- OUTER FRAME ---\n`;
-    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)\n`;
-    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)\n`;
+    out += `--- OUTER FRAME ---
+`;
+    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)
+`;
+    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)
+`;
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
     }
-  }
-
-  const total_leaves = palla_qty * door_qty;
-  const total_verticals = total_leaves * 2;
-  const total_tb = total_leaves * 2;
-
-  if (d_type === "Top Hung Door") {
-    out += `\n--- DOOR SASH (${palla_str} - Single Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---\n`;
-    out += `> Door Vertical: ${disp(door_v)} (${total_verticals} pc)\n`;
-    out += `> Top Rail: ${disp(door_tb)} (${total_leaves} pc)\n`;
-    out += `> Bottom Rail: ${disp(door_tb)} (${total_leaves} pc)\n`;
-    out += `> Middle Section: ${disp(door_tb)} (${total_leaves} pc)\n`;
-    out += `> Top Running Track: ${disp(w * (palla_qty === 2 ? 1.5 : 2.0))} (${1 * door_qty} pc)\n`;
-
-    for (let q = 0; q < total_leaves; q++) {
-      dr_buckets["Door Verticals"].push(door_v, door_v);
-      dr_buckets["Door Horizontals"].push(door_tb, door_tb, door_tb);
-    }
-
-    out += `\n--- HARDWARE & ACCESSORIES (${palla_str}) ---\n`;
-    out += `> Top Hung Heavy Rollers: ${palla_qty === 2 ? (2 * door_qty) + " Sets (4 pc/door)" : (1 * door_qty) + " Set (2 pc)"}\n`;
-    out += `> Bottom Floor Guide: ${total_leaves} pc\n`;
-    out += `> Door Handles: ${total_leaves} Sets\n`;
-    out += `> Concealed Hook Lock / Flush Bolts: ${palla_qty === 2 ? "1 Hook Lock + 2 Flush Bolts" : "1 Set"}\n`;
-
-    const mid_g_h = ((door_v - 7.75) / 2.0) - 0.25;
-    const mid_g_w = door_tb - 0.25;
-    const total_glass_pcs = total_leaves * 2;
-    out += `\n--- GLASS / BOARD ---\n`;
-    out += `> Panel Glass / Board: ${disp(mid_g_h)} x ${disp(mid_g_w)} (${total_glass_pcs} pc)\n`;
-    const gKey = `${disp(mid_g_h)} x ${disp(mid_g_w)}`;
-    dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + total_glass_pcs;
-
   } else {
-    out += `\n--- DOOR SASH (${palla_str} - Single Leaf: ${disp(door_v)} x ${disp(leaf_w)}) ---\n`;
-    out += `> Door Vertical: ${disp(door_v)} (${total_verticals} pc)\n`;
-    out += `> Door Top / Bottom: ${disp(door_tb)} (${total_tb} pc)\n`;
-
-    for (let i = 0; i < total_verticals; i++) dr_buckets["Door Verticals"].push(door_v);
-    for (let i = 0; i < total_tb; i++) dr_buckets["Door Horizontals"].push(door_tb);
-
-    out += `\n--- HARDWARE & ACCESSORIES (${palla_str}) ---\n`;
-    if (d_type === "Floor Spring Door") {
-      out += `> Hydraulic Floor Spring: ${total_leaves} Sets\n`;
-      out += `> Top Pivot & Bottom Strap: ${total_leaves} Sets\n`;
-      out += `> Centre Lock / Corner Lock: ${1 * door_qty} Set\n`;
-      out += `> Door Pull Handles: ${total_leaves} Pairs\n`;
-    } else if (d_type === "Domal System Door") {
-      out += `> Domal Heavy Hinges: ${3 * total_leaves} pc\n`;
-      if (palla_qty === 2) out += `> Domal Flush Bolts: ${2 * door_qty} pc (Top & Bot for inactive leaf)\n`;
-      out += `> Domal Door Lock: ${1 * door_qty} Set\n`;
-      out += `> Door Handles: ${total_leaves} Sets\n`;
-    } else {
-      out += `> Door Hinges: ${3 * total_leaves} pc (3 pc per leaf)\n`;
-      if (palla_qty === 2) out += `> Tower Bolt / Flush Bolt: ${2 * door_qty} pc (Top & Bot for inactive leaf)\n`;
-      out += `> Door Lock: ${1 * door_qty} Set (Mortise / Cylinder Lock)\n`;
-      out += `> Door Handles: ${total_leaves} Sets\n`;
-      out += `> Door Closer: ${total_leaves} pc (Optional)\n`;
+    out += `--- TOP HUNG TRACK ---
+`;
+    out += `> Heavy Top Sliding Track: ${disp(w)} (${1 * door_qty} pc)
+`;
+    for (let q = 0; q < door_qty; q++) {
+      dr_buckets["Door Outer Frame"].push(w);
     }
-
-    const glass_h = door_v - 5.875 - 0.25;
-    const glass_w = door_tb - 0.25;
-    out += `\n--- GLASS / BOARD ---\n`;
-    out += `> Glass / Board Size: ${disp(glass_h)} x ${disp(glass_w)} (${total_leaves} pc)\n`;
-    const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
-    dr_glass_dict[glass_key] = (dr_glass_dict[glass_key] || 0) + total_leaves;
   }
+
+  // 2. DOOR SASH SECTIONS (PALLA CUTTING)
+  const total_leaves = palla_qty * door_qty;
+  out += `
+--- DOOR SASH (CUSTOM TUBE SECTIONS) ---
+`;
+  out += `> Door Vertical Stiles: ${disp(door_v)} (${2 * total_leaves} pc) [Profile: ${disp(vert_w)}]
+`;
+  out += `> Door Top Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(top_h)}]
+`;
+  if (has_mid) {
+    out += `> Door Middle Transom: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(mid_h)} @ ${disp(mid_level)} Level]
+`;
+  }
+  out += `> Door Bottom Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(bot_h)}]
+`;
+
+  for (let q = 0; q < total_leaves; q++) {
+    dr_buckets["Door Verticals"].push(door_v, door_v);
+    dr_buckets["Door Top Rail"].push(rail_w);
+    if (has_mid) dr_buckets["Door Middle Rail"].push(rail_w);
+    dr_buckets["Door Bottom Rail"].push(rail_w);
+  }
+
+  // 3. GLASS & ACP SHEET CUTTING SIZES
+  out += `
+--- GLASS & ACP SHEET CUTTING SIZES ---
+`;
+  if (has_mid) {
+    const bot_open_h = Math.max(4.0, mid_level - bot_h - (mid_h / 2.0));
+    const top_open_h = Math.max(4.0, door_v - mid_level - top_h - (mid_h / 2.0));
+    const top_gh = top_open_h + 0.75;
+    const bot_gh = bot_open_h + 0.75;
+
+    out += `> [Top Panel] Glass Size: ${disp(top_gh)} x ${disp(panel_w)} (${total_leaves} pc)
+`;
+    out += `> [Bottom Panel] ACP / Board Size: ${disp(bot_gh)} x ${disp(panel_w)} (${total_leaves} pc)
+`;
+
+    const topKey = `${disp(top_gh)} x ${disp(panel_w)} (Top Glass)`;
+    const botKey = `${disp(bot_gh)} x ${disp(panel_w)} (Bottom ACP)`;
+    dr_glass_dict[topKey] = (dr_glass_dict[topKey] || 0) + total_leaves;
+    dr_glass_dict[botKey] = (dr_glass_dict[botKey] || 0) + total_leaves;
+  } else {
+    const full_open_h = Math.max(6.0, door_v - top_h - bot_h);
+    const full_gh = full_open_h + 0.75;
+
+    out += `> [Full Panel] Glass / Board Size: ${disp(full_gh)} x ${disp(panel_w)} (${total_leaves} pc)
+`;
+    const fullKey = `${disp(full_gh)} x ${disp(panel_w)} (Full Door Panel)`;
+    dr_glass_dict[fullKey] = (dr_glass_dict[fullKey] || 0) + total_leaves;
+  }
+
+  // 4. HARDWARE & ACCESSORIES
+  out += `
+--- HARDWARE & ACCESSORIES ---
+`;
+  if (d_type === "Standard Door") {
+    out += `> Heavy Duty Door Butt Hinges (4"/5"): ${3 * total_leaves} pc
+`;
+    out += `> Door Mortise Lock / Deadbolt Set: ${1 * door_qty} Set
+`;
+    out += `> Tower Bolt (Top & Bottom): ${(palla_qty === 2 ? 2 : 1) * door_qty} pc
+`;
+    out += `> Door Handles (Inner & Outer): ${total_leaves} Set
+`;
+    out += `> Door Stopper / Buffer: ${total_leaves} pc
+`;
+  } else if (d_type === "Floor Spring Door") {
+    out += `> Heavy Double Cylinder Floor Spring: ${total_leaves} Set
+`;
+    out += `> Top & Bottom Patch Fittings / Pivot: ${total_leaves} Set
+`;
+    out += `> Floor Spring Patch Lock: ${1 * door_qty} Set
+`;
+    out += `> Long Stainless Steel Pull Handle: ${total_leaves} Set
+`;
+  } else if (d_type === "Top Hung Door") {
+    out += `> Heavy 4-Wheel Top Sliding Rollers: ${2 * total_leaves} pc
+`;
+    out += `> Bottom Floor Guide Roller / Channel: ${total_leaves} pc
+`;
+    out += `> Concealed Flush Handle / Pull Handle: ${total_leaves} Set
+`;
+    out += `> Sliding Door Hook Lock: ${1 * door_qty} Set
+`;
+  }
+  out += `> Square Clip (Beading) / Gasket Girth: Approx ${Math.round((door_v + leaf_w) * 2 * total_leaves / 12)} Running Feet
+`;
 
   const prevOut = document.getElementById('dr_out').textContent;
   document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
@@ -1797,7 +2037,7 @@ function keypadEnter() {
 
 function clearDoor() {
   dr_door_count = 0;
-  dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Horizontals": [] };
+  dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Top Rail": [], "Door Bottom Rail": [], "Door Middle Rail": [] };
   dr_glass_dict = {};
   document.getElementById('dr_h').value = "";
   document.getElementById('dr_w').value = "";
@@ -1813,7 +2053,15 @@ function clearDoor() {
  var pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
  var pt_glass_dict = {};
 
- function calculatePartition() {
+ function onPartitionUnitChanged() {
+  // Sync partition unit changes
+}
+
+function onPartitionTubeChanged() {
+  // Sync partition tube profile
+}
+
+function calculatePartition() {
  const raw_h = safeEval(document.getElementById('pt_h').value);
  const raw_w = safeEval(document.getElementById('pt_w').value);
  if (raw_h === 0 || raw_w === 0) {
@@ -1836,8 +2084,23 @@ function clearDoor() {
 
  let out = "";
 
- // Frame height deductions: top 1.5", bottom 1.5", and (rows - 1) transoms (each 1.5")
- const frame_deduct = (rows + 1) * 1.5;
+ // Dynamic tube profile from Jindal Catalogue
+ let tube_face = 1.5;
+ let tube_name = "2.5\" x 1.5\" (63.5x38.1mm - Sec 20046/20045)";
+ const pt_prof = document.getElementById('pt_tube_profile') ? document.getElementById('pt_tube_profile').value : "63.5x38.1";
+ if (pt_prof === "101.6x44.45") {
+   tube_face = 1.75;
+   tube_name = "4\" x 1.75\" (101.6x44.45mm - Sec 20051/20052 Commercial)";
+ } else if (pt_prof === "50.8x25.4") {
+   tube_face = 1.0;
+   tube_name = "2\" x 1\" (50.8x25.4mm - Sec 20050/20049 Sleek)";
+ } else if (pt_prof === "76.2x38.1") {
+   tube_face = 1.5;
+   tube_name = "3\" x 1.5\" (76.2x38.1mm - Sec 20143 Heavy)";
+ }
+
+ // Frame height deductions: top tube, bottom tube, and (rows - 1) transoms
+ const frame_deduct = (rows + 1) * tube_face;
  const total_open_h = Math.max(10, h - frame_deduct);
 
  let bottom_h = 0, mid_h = 0, top_h = 0;
@@ -1875,9 +2138,9 @@ function clearDoor() {
  }
 
  if (p_type === "Fixed Partition") {
-   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n`;
-   const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
-   const inner_h = (w - ((cols + 1) * 1.5)) / cols;
+   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)}) - Profile: ${tube_name}]\n`;
+   const outer_v = h, inter_v = h - (2 * tube_face), outer_h = w - (2 * tube_face);
+   const inner_h = (w - ((cols + 1) * tube_face)) / cols;
 
    // 1. FRAME SECTIONS
    out += "-----------------------------------\n";
@@ -1899,8 +2162,8 @@ function clearDoor() {
    }
 
    // 2. FRAME BOX CLEAR OPENINGS & VERTICAL PIPE MARKING GUIDE
-   const mark_bottom_transom = bottom_h + 1.5;
-   const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
+   const mark_bottom_transom = bottom_h + tube_face;
+   const mark_mid_transom = bottom_h + tube_face + mid_h + tube_face;
 
    out += "\n-----------------------------------\n";
    out += "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
@@ -1982,10 +2245,10 @@ function clearDoor() {
    const dh = is_mm ? raw_dh / 25.4 : raw_dh;
    const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
-   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n`;
-   const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
-   const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
-   const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
+   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)}) - Profile: ${tube_name}]\n`;
+   const outer_v = h, inter_v = h - (2 * tube_face), door_side_v = h - tube_face;
+   const outer_h_top = w - (2 * tube_face), rem_w = w - (dw + (2 * tube_face));
+   const inner_h = cols > 0 ? (rem_w - (2 * tube_face)) / cols : 0;
 
    out += "-----------------------------------\n";
    out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";

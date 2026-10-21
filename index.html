@@ -64,7 +64,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=35">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1214,7 +1214,7 @@
  <div class="form-grid">
  <div class="form-group">
  <label>Door Type:</label>
- <select id="dr_type">
+ <select id="dr_type" onchange="onDoorTypeChanged()">
  <option value="Standard Door" selected>Standard Door</option>
  <option value="Floor Spring Door">Floor Spring Door</option>
  <option value="Top Hung Door">Top Hung Door</option>
@@ -1223,7 +1223,7 @@
  </div>
  <div class="form-group">
  <label>Input Unit:</label>
- <select id="dr_unit">
+ <select id="dr_unit" onchange="onDoorUnitChanged()">
  <option value="Inch" selected>Inch</option>
  <option value="Millimeter">Millimeter</option>
  </select>
@@ -1254,6 +1254,56 @@
  <div class="form-group" style="grid-column: 1 / -1;">
  <label><span data-i18n="lbl_room_tag">Location Tag:</span></label>
  <input type="text" id="dr_loc" placeholder="e.g. Main Entrance, Office, Balcony">
+ </div>
+
+ <!-- Dynamic Custom Door Tube Profiles (Party Specific Options) -->
+ <div id="dr_custom_profile_box" style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px; margin-top:2px;">
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+     <div style="font-size:0.78rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:6px;">
+       <i class="fa-solid fa-sliders" style="color:#0284c7;"></i>
+       <span>DOOR TUBE SECTIONS & PROFILE SPECIFICATIONS:</span>
+     </div>
+     <select id="dr_section_preset" onchange="applyDoorSectionPreset(this.value)" style="font-size:0.75rem; font-weight:700; padding:4px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; color:#0284c7;">
+       <option value="commercial" selected>Commercial (4" Bottom, 2.5" Top & Mid, 1.75" Vert)</option>
+       <option value="jumbo">Jumbo Kickplate (5" Bottom, 2.5" Top, 1.75" Vert)</option>
+       <option value="economy">Economy / Interior (2.5" Bottom, 1.75" Top & Vert)</option>
+       <option value="slim">Slim Patch (4" Bottom, 2" Top, 1.75" Vert)</option>
+       <option value="custom">Custom (Type Any Custom Inches)</option>
+     </select>
+   </div>
+
+   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+     <div>
+       <label id="dr_vert_lbl" style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Vertical Stile (Inch):</label>
+       <input type="number" id="dr_vert_w" value="1.75" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div>
+       <label id="dr_top_lbl" style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Top Rail (Inch):</label>
+       <input type="number" id="dr_top_h" value="2.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div>
+       <label id="dr_bot_lbl" style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Bottom Rail (Inch):</label>
+       <input type="number" id="dr_bot_h" value="4.0" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+   </div>
+
+   <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:8px;">
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Middle Rail (Transom):</label>
+       <select id="dr_has_mid" onchange="toggleDoorMiddleRailInput()" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.78rem; font-weight:700;">
+         <option value="yes" selected>With Middle Rail (2 Panels)</option>
+         <option value="no">No Middle (Full Glass/Board)</option>
+       </select>
+     </div>
+     <div id="dr_mid_h_col">
+       <label id="dr_mid_lbl" style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Mid Rail Section (Inch):</label>
+       <input type="number" id="dr_mid_h" value="2.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div id="dr_mid_lvl_col">
+       <label id="dr_mid_lvl_lbl" style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Mid Center Level (Inch):</label>
+       <input type="number" id="dr_mid_level" value="36.0" step="0.5" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+   </div>
  </div>
  </div>
 
@@ -1298,9 +1348,18 @@
  <div class="form-grid">
  <div class="form-group">
  <label>Input Unit:</label>
- <select id="pt_unit">
+ <select id="pt_unit" onchange="onPartitionUnitChanged()">
  <option value="Inch" selected>Inch</option>
  <option value="Millimeter">Millimeter</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label>Tube Profile (Jindal Section):</label>
+ <select id="pt_tube_profile" onchange="onPartitionTubeChanged()">
+ <option value="63.5x38.1" selected>2.5" x 1.5" (63.5x38.1mm - Sec 20046/20045 Standard)</option>
+ <option value="101.6x44.45">4" x 1.75" (101.6x44.45mm - Sec 20051/20052 Commercial)</option>
+ <option value="50.8x25.4">2" x 1" (50.8x25.4mm - Sec 20050/20049 Sleek Interior)</option>
+ <option value="76.2x38.1">3" x 1.5" (76.2x38.1mm - Sec 20143 Heavy)</option>
  </select>
  </div>
  <div class="form-group">
@@ -3000,7 +3059,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=34"></script>
+  <script src="app.js?v=35"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
