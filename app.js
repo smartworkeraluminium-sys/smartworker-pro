@@ -1363,8 +1363,8 @@ function keypadEnter() {
  if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
 
  const client_name = document.getElementById('sl_client') ? document.getElementById('sl_client').value.trim() : "";
- const frame_color = document.getElementById('sl_color') ? document.getElementById('sl_color').value : "Jet Black";
- const glass_spec = document.getElementById('sl_glass_spec') ? document.getElementById('sl_glass_spec').value : "5mm Blue Reflective Glass";
+ const frame_color = document.getElementById('sl_color') ? document.getElementById('sl_color').value : "Jet Black Matt";
+ const glass_spec = document.getElementById('sl_glass_spec') ? document.getElementById('sl_glass_spec').value : "5mm Royal Blue Reflective";
 
  sl_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -1500,8 +1500,8 @@ function keypadEnter() {
  if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
 
  const client_name = document.getElementById('cc_client') ? document.getElementById('cc_client').value.trim() : "";
- const frame_color = document.getElementById('cc_color') ? document.getElementById('cc_color').value : "Jet Black";
- const glass_spec = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : "5mm Blue Reflective Glass";
+ const frame_color = document.getElementById('cc_color') ? document.getElementById('cc_color').value : "Jet Black Matt";
+ const glass_spec = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : "5mm Royal Blue Reflective";
 
  cc_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -1953,8 +1953,8 @@ function calculateDoor() {
   const palla_str = palla_qty === 2 ? "Double Door" : "Single Door";
 
   const client_name = document.getElementById('dr_client') ? document.getElementById('dr_client').value.trim() : "";
-  const frame_color = document.getElementById('dr_color') ? document.getElementById('dr_color').value : "Jet Black";
-  const glass_spec = document.getElementById('dr_glass_spec') ? document.getElementById('dr_glass_spec').value : "5mm Blue Reflective Glass";
+  const frame_color = document.getElementById('dr_color') ? document.getElementById('dr_color').value : "Jet Black Matt";
+  const glass_spec = document.getElementById('dr_glass_spec') ? document.getElementById('dr_glass_spec').value : "5mm Royal Blue Reflective";
 
   dr_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -2397,8 +2397,8 @@ function calculatePartition() {
  const panel_mode = (document.getElementById('pt_panel_mode') ? document.getElementById('pt_panel_mode').value : "OPTIMIZED_4X8");
 
  const client_name = document.getElementById('pt_client') ? document.getElementById('pt_client').value.trim() : "";
- const frame_color = document.getElementById('pt_color') ? document.getElementById('pt_color').value : "Jet Black";
- const glass_spec = document.getElementById('pt_glass_spec') ? document.getElementById('pt_glass_spec').value : "5mm Blue Reflective Glass";
+ const frame_color = document.getElementById('pt_color') ? document.getElementById('pt_color').value : "Jet Black Matt";
+ const glass_spec = document.getElementById('pt_glass_spec') ? document.getElementById('pt_glass_spec').value : "5mm Royal Blue Reflective";
 
  pt_job_meta = { client: client_name, color: frame_color, glass: glass_spec };
 
@@ -4685,7 +4685,7 @@ function autofillCustomer() {
 
  let grand_total = 0.0;
  effectiveItems.forEach((item, i) => {
- const color = item.color || 'Jet Black';
+ const color = item.color || 'Jet Black Matt';
  const thick = item.thickness || '1.5 mm';
  const g_thick = item.glass_thick || '5.0 mm';
  const g_type = item.glass_type || 'Clear Float';
