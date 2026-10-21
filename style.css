@@ -1265,34 +1265,3 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   transform: translateX(20px);
   background-color: var(--calc-accent);
 }
-/* Jindal Catalogue Handbook Styling */
-.jindal-filter-btn {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  padding: 4px 10px;
-  border-radius: 14px;
-  font-size: 0.70rem;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.jindal-filter-btn.active {
-  background: #0284c7;
-  color: #ffffff;
-  border-color: #0284c7;
-}
-.jindal-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.jindal-card:hover {
-  border-color: #38bdf8;
-  box-shadow: 0 3px 8px rgba(2,132,199,0.12);
-}

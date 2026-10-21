@@ -1639,16 +1639,19 @@ function onDoorTypeChanged() {
     box.style.display = (dType === "Domal System Door") ? 'none' : 'block';
   }
   var outerGrp = document.getElementById('dr_outer_group');
-  if (outerGrp) {
-    outerGrp.style.display = (dType === "Domal System Door" || dType === "Top Hung Door") ? 'none' : 'block';
-  }
+  var faceCol = document.getElementById('dr_outer_face_col');
+  var isHidden = (dType === "Domal System Door" || dType === "Top Hung Door");
+  if (outerGrp) outerGrp.style.display = isHidden ? 'none' : 'block';
+  if (faceCol) faceCol.style.display = isHidden ? 'none' : 'block';
 }
 
-function onDoorOuterProfileChanged() {
-  var sel = document.getElementById('dr_outer_type');
-  var col = document.getElementById('dr_custom_outer_col');
-  if (sel && col) {
-    col.style.display = (sel.value === 'custom') ? 'block' : 'none';
+function onDoorOuterChanged() {
+  var hasOuter = document.getElementById('dr_has_outer') ? (document.getElementById('dr_has_outer').value === 'yes') : true;
+  var col = document.getElementById('dr_outer_face_col');
+  if (col) {
+    col.style.opacity = hasOuter ? '1' : '0.35';
+    var inp = document.getElementById('dr_outer_face');
+    if (inp) inp.disabled = !hasOuter;
   }
 }
 
@@ -1741,21 +1744,21 @@ function onDoorUnitChanged() {
     }
   }
 
-  var coLbl = document.getElementById('dr_custom_outer_lbl');
-  var coInp = document.getElementById('dr_custom_outer_face');
+  var ofLbl = document.getElementById('dr_outer_face_lbl');
+  var ofInp = document.getElementById('dr_outer_face');
   if (isMm) {
-    if (coLbl) coLbl.textContent = "Custom Outer Face Width (mm):";
-    if (coInp) {
-      var curCO = parseFloat(coInp.value) || 1.75;
-      coInp.value = curCO < 10 ? (curCO * 25.4).toFixed(1) : curCO;
-      coInp.step = "0.5";
+    if (ofLbl) ofLbl.textContent = "Outer Face (mm):";
+    if (ofInp) {
+      var curOF = parseFloat(ofInp.value) || 1.5;
+      ofInp.value = curOF < 10 ? (curOF * 25.4).toFixed(1) : curOF;
+      ofInp.step = "0.5";
     }
   } else {
-    if (coLbl) coLbl.textContent = "Custom Outer Face Width (Inch):";
-    if (coInp) {
-      var curCO = parseFloat(coInp.value) || 44.5;
-      coInp.value = curCO > 10 ? (curCO / 25.4).toFixed(2).replace(/\.00$/, '') : curCO;
-      coInp.step = "0.125";
+    if (ofLbl) ofLbl.textContent = "Outer Face (Inch):";
+    if (ofInp) {
+      var curOF = parseFloat(ofInp.value) || 38.1;
+      ofInp.value = curOF > 10 ? (curOF / 25.4).toFixed(2).replace(/\.00$/, '') : curOF;
+      ofInp.step = "0.125";
     }
   }
 }
@@ -1769,24 +1772,24 @@ function applyDoorSectionPreset(preset) {
 
   if (isMm) {
     if (preset === 'commercial') {
-      if (vInp) vInp.value = '44.5';  // Jindal Sec 19538/19547 (47.62 x 44.45 mm ~ 1.75")
+      if (vInp) vInp.value = '44.5';  // Standard Sec 19538/19547 (47.62 x 44.45 mm ~ 1.75")
       if (tInp) tInp.value = '63.5';  // 2.5"
-      if (bInp) bInp.value = '101.6'; // Jindal Sec 19556 (101.60 x 44.45 mm ~ 4.0")
+      if (bInp) bInp.value = '101.6'; // Standard Sec 19556 (101.60 x 44.45 mm ~ 4.0")
       if (mInp) mInp.value = '63.5';
     } else if (preset === 'jumbo') {
       if (vInp) vInp.value = '44.5';
       if (tInp) tInp.value = '63.5';
-      if (bInp) bInp.value = '114.3'; // Jindal Sec 19534/19510 (114.30 x 44.45 mm ~ 4.5")
+      if (bInp) bInp.value = '114.3'; // Standard Sec 19534/19510 (114.30 x 44.45 mm ~ 4.5")
       if (mInp) mInp.value = '76.2';  // 3.0"
     } else if (preset === 'heavy6') {
       if (vInp) vInp.value = '44.5';
       if (tInp) tInp.value = '63.5';
-      if (bInp) bInp.value = '150.0'; // Jindal Sec 19517/19584 (150.00 x 44.45 mm ~ 6.0")
+      if (bInp) bInp.value = '150.0'; // Standard Sec 19517/19584 (150.00 x 44.45 mm ~ 6.0")
       if (mInp) mInp.value = '63.5';
     } else if (preset === 'mega8') {
       if (vInp) vInp.value = '44.5';
       if (tInp) tInp.value = '63.5';
-      if (bInp) bInp.value = '200.0'; // Jindal Sec 19621 (200.00 x 44.45 mm ~ 8.0")
+      if (bInp) bInp.value = '200.0'; // Standard Sec 19621 (200.00 x 44.45 mm ~ 8.0")
       if (mInp) mInp.value = '63.5';
     } else if (preset === 'mid3') {
       if (vInp) vInp.value = '44.5';
@@ -1795,7 +1798,7 @@ function applyDoorSectionPreset(preset) {
       if (mInp) mInp.value = '76.2';  // 3.0" Mid Rail
     } else if (preset === 'economy') {
       if (vInp) vInp.value = '44.5';
-      if (tInp) tInp.value = '44.5';  // Jindal Sec 19539 (47.62 x 44.45 mm ~ 1.75")
+      if (tInp) tInp.value = '44.5';  // Standard Sec 19539 (47.62 x 44.45 mm ~ 1.75")
       if (bInp) bInp.value = '63.5';  // 2.5"
       if (mInp) mInp.value = '44.5';
     } else if (preset === 'slim') {
@@ -1950,9 +1953,8 @@ function calculateDoor() {
 
   let leaf_w = 0, door_v = 0;
   let has_outer = true;
-  let outer_face = 1.75;
+  let outer_face = 1.5;
   let outer_v = h, outer_h = 0;
-  let outer_name = "Standard Door Frame (1.75\" Face)";
 
   if (d_type === "Top Hung Door") {
     // Top Hung Door (untouched per user instruction)
@@ -1964,44 +1966,23 @@ function calculateDoor() {
       leaf_w = w + 4.0;
     }
   } else {
-    // Standard Door & Floor Spring Door (Exact Workshop Formula with Dynamic Outer)
-    const outer_opt = document.getElementById('dr_outer_type') ? document.getElementById('dr_outer_type').value : "1.5";
-    
-    if (outer_opt === "none") {
-      has_outer = false;
-      outer_face = 0;
-      outer_name = "Without Outer Frame (Direct Opening)";
-    } else if (outer_opt === "1.5" || outer_opt === "2.5x1.5" || outer_opt === "3x1.5") {
-      has_outer = true;
-      outer_face = 1.5;
-      outer_name = "1.5\" Face Frame (3\" Total Width Minus - Sec 20045)";
-    } else if (outer_opt === "2x1_1in") {
-      has_outer = true;
-      outer_face = 1.0;
-      outer_name = "2\" x 1\" Single Groove (1\" Face - 2\" Total Minus)";
-    } else if (outer_opt === "2x1_2in") {
-      has_outer = true;
-      outer_face = 2.0;
-      outer_name = "2\" x 1\" Single Groove (2\" Face - 4\" Total Minus)";
-    } else if (outer_opt === "4x1.75" || outer_opt === "1.75") {
-      has_outer = true;
-      outer_face = 1.75;
-      outer_name = "1.75\" Door Frame (3.5\" Total Width Minus)";
-    } else if (outer_opt === "custom") {
-      has_outer = true;
-      var raw_cof = safeEval(document.getElementById('dr_custom_outer_face') ? document.getElementById('dr_custom_outer_face').value : 1.5) || 1.5;
-      outer_face = (is_mm || raw_cof > 10) ? raw_cof / 25.4 : raw_cof;
-      outer_name = "Custom Outer (" + disp(outer_face) + " Face)";
+    // Standard Door & Floor Spring Door (Exact Workshop Formula with Simple Number Input)
+    const has_outer_opt = document.getElementById('dr_has_outer') ? (document.getElementById('dr_has_outer').value === 'yes') : true;
+    has_outer = has_outer_opt;
+
+    if (has_outer) {
+      var raw_of = safeEval(document.getElementById('dr_outer_face') ? document.getElementById('dr_outer_face').value : 1.5) || 1.5;
+      outer_face = (is_mm || raw_of > 10) ? raw_of / 25.4 : raw_of;
+      outer_h = Math.max(0, w - (2 * outer_face));
+      // Vertical: Half Inch (1/2" = 0.5") floor clear + outer top frame
+      door_v = h - outer_face - 0.5;
     } else {
-      has_outer = true;
-      outer_face = 1.5;
-      outer_name = "1.5\" Face Frame (3\" Total Width Minus)";
+      outer_face = 0;
+      outer_v = h;
+      outer_h = 0;
+      // Vertical: Only Half Inch (1/2" = 0.5") floor clear
+      door_v = h - 0.5;
     }
-
-    outer_h = Math.max(0, w - (2 * outer_face));
-
-    // Vertical: Half Inch (1/2" = 0.5") clear gap + outer top frame (if present)
-    door_v = h - outer_face - 0.5;
 
     // Horizontal:
     // Double Door = Minus 3 Suta (3/8" = 0.375") + outer frame
@@ -2023,9 +2004,9 @@ function calculateDoor() {
 
   // 1. OUTER FRAME
   if (has_outer) {
-    out += `--- OUTER FRAME [${outer_name}] ---
+    out += `--- OUTER FRAME ---
 `;
-    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)
+    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc) [Profile: ${disp(outer_face)}]
 `;
     out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)
 `;
@@ -2043,7 +2024,7 @@ function calculateDoor() {
   } else {
     out += `--- NO OUTER FRAME (DIRECT OPENING) ---
 `;
-    out += `> Fitted directly into opening (No outer aluminium chaukhat required)
+    out += `> Fitted directly into opening (No aluminium chaukhat required)
 `;
   }
 
@@ -2216,7 +2197,7 @@ function calculatePartition() {
 
  let out = "";
 
- // Dynamic tube profile from Jindal Catalogue
+ // Dynamic tube profile from architectural standards
  let tube_face = 1.5;
  let tube_name = "2.5\" x 1.5\" (63.5x38.1mm - Sec 20046/20045)";
  const pt_prof = document.getElementById('pt_tube_profile') ? document.getElementById('pt_tube_profile').value : "63.5x38.1";
@@ -8177,232 +8158,3 @@ function acceptAndClosePrivacyLegalModal() {
 
 
 // ========================================================
-// JINDAL ARCHITECTURAL SECTIONS HANDBOOK MODULE
-// ========================================================
-var currentJindalCaller = "all";
-var currentJindalCategory = "all";
-
-var JINDAL_SECTIONS_DATA = [
-  // Door Bottom Rails
-  {cat:"bottom", target:"bottom", sec:"19556", name:"4\" Commercial Bottom Rail", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:4.0, val_mm:101.6, wt:"1.943 kg/m", pipe_wt:"7.1 kg", desc:"Most popular commercial door bottom kickplate"},
-  {cat:"bottom", target:"bottom", sec:"19534", name:"4.5\" Jumbo Kickplate", mm:"114.30 x 44.45 mm", inch:"4 1/2\" x 1 3/4\"", val_in:4.5, val_mm:114.3, wt:"1.190 kg/m", pipe_wt:"4.3 kg", desc:"Taller commercial kickplate for entry doors"},
-  {cat:"bottom", target:"bottom", sec:"19510", name:"4.5\" Heavy Jumbo Kickplate", mm:"114.30 x 44.45 mm", inch:"4 1/2\" x 1 3/4\"", val_in:4.5, val_mm:114.3, wt:"2.646 kg/m", pipe_wt:"9.7 kg", desc:"Heavy duty 3.18mm thick bottom rail"},
-  {cat:"bottom", target:"bottom", sec:"19529", name:"3.75\" Bottom Rail", mm:"95.25 x 44.45 mm", inch:"3 3/4\" x 1 3/4\"", val_in:3.75, val_mm:95.25, wt:"1.301 kg/m", pipe_wt:"4.7 kg", desc:"Medium kickplate (Sec 19529/19505)"},
-  {cat:"bottom", target:"bottom", sec:"19563", name:"3.35\" Rail (Kickplate)", mm:"85.00 x 44.45 mm", inch:"3 3/8\" x 1 3/4\"", val_in:3.35, val_mm:85.0, wt:"1.843 kg/m", pipe_wt:"6.7 kg", desc:"3 inch 3 suta bottom rail"},
-  {cat:"bottom", target:"bottom", sec:"19578", name:"2.5\" Economy Bottom Rail", mm:"63.50 x 44.45 mm", inch:"2 1/2\" x 1 3/4\"", val_in:2.5, val_mm:63.5, wt:"1.006 kg/m", pipe_wt:"3.7 kg", desc:"Light interior & bathroom door bottom"},
-  {cat:"bottom", target:"bottom", sec:"19517", name:"6\" Heavy Kickplate", mm:"150.00 x 44.45 mm", inch:"6\" x 1 3/4\"", val_in:6.0, val_mm:150.0, wt:"2.376 kg/m", pipe_wt:"8.7 kg", desc:"6 inch extra tall bottom kickplate"},
-  {cat:"bottom", target:"bottom", sec:"19621", name:"8\" Mega Kickplate", mm:"200.00 x 44.45 mm", inch:"8\" x 1 3/4\"", val_in:8.0, val_mm:200.0, wt:"3.894 kg/m", pipe_wt:"14.2 kg", desc:"8 inch mega heavy commercial door kickplate"},
-
-  // Door Top & Middle Rails
-  {cat:"top_mid", target:"top", sec:"19578", name:"2.5\" Top Rail", mm:"63.50 x 44.45 mm", inch:"2 1/2\" x 1 3/4\"", val_in:2.5, val_mm:63.5, wt:"1.006 kg/m", pipe_wt:"3.7 kg", desc:"Standard 2.5 inch door top rail"},
-  {cat:"top_mid", target:"mid", sec:"19578", name:"2.5\" Middle Transom Rail", mm:"63.50 x 44.45 mm", inch:"2 1/2\" x 1 3/4\"", val_in:2.5, val_mm:63.5, wt:"1.006 kg/m", pipe_wt:"3.7 kg", desc:"Standard 2.5 inch door middle transom"},
-  {cat:"top_mid", target:"top", sec:"19539", name:"1.75\" Slim Top Rail", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:47.62, wt:"0.719 kg/m", pipe_wt:"2.6 kg", desc:"Slim lightweight top rail"},
-  {cat:"top_mid", target:"mid", sec:"19539", name:"1.75\" Slim Middle Transom", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:47.62, wt:"0.719 kg/m", pipe_wt:"2.6 kg", desc:"Slim lightweight middle transom"},
-  {cat:"top_mid", target:"top", sec:"19555", name:"2\" Top Rail", mm:"50.00 x 44.50 mm", inch:"2\" x 1 3/4\"", val_in:2.0, val_mm:50.0, wt:"1.247 kg/m", pipe_wt:"4.5 kg", desc:"2 inch top rail for compact doors"},
-  {cat:"top_mid", target:"mid", sec:"19555", name:"2\" Middle Transom", mm:"50.00 x 44.50 mm", inch:"2\" x 1 3/4\"", val_in:2.0, val_mm:50.0, wt:"1.247 kg/m", pipe_wt:"4.5 kg", desc:"2 inch middle divider transom"},
-  {cat:"top_mid", target:"mid", sec:"19563", name:"3.35\" Wide Mid Rail", mm:"85.00 x 44.45 mm", inch:"3 3/8\" x 1 3/4\"", val_in:3.35, val_mm:85.0, wt:"1.843 kg/m", pipe_wt:"6.7 kg", desc:"Wide middle transom for push plates"},
-
-  // Door Stiles (Verticals)
-  {cat:"vert", target:"vert", sec:"19538", name:"1.75\" Door Vertical (Stile)", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"0.759 kg/m", pipe_wt:"2.8 kg", desc:"Standard handle & hinge side stile"},
-  {cat:"vert", target:"vert", sec:"19547", name:"1.75\" Light Door Stile", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"0.667 kg/m", pipe_wt:"2.4 kg", desc:"Light weight door vertical stile"},
-  {cat:"vert", target:"vert", sec:"19501", name:"1.75\" Heavy Door Stile", mm:"47.62 x 44.45 mm", inch:"1 7/8\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"1.509 kg/m", pipe_wt:"5.5 kg", desc:"Heavy duty 3.10mm thick stile"},
-  {cat:"vert", target:"vert", sec:"19585", name:"2\" Wide Face Door Stile", mm:"50.00 x 44.50 mm", inch:"2\" x 1 3/4\"", val_in:2.0, val_mm:50.0, wt:"1.030 kg/m", pipe_wt:"3.8 kg", desc:"2 inch wide face vertical stile"},
-  {cat:"vert", target:"vert", sec:"19516", name:"2.12\" Heavy Stile", mm:"53.70 x 44.45 mm", inch:"2 1/8\" x 1 3/4\"", val_in:2.12, val_mm:53.7, wt:"1.238 kg/m", pipe_wt:"4.5 kg", desc:"Extra wide pivot/hinge vertical stile"},
-
-  // Door Outer Frames
-  {cat:"frame", target:"frame", sec:"19504", name:"3.5\" Door Outer Frame", mm:"88.90 x 47.63 mm", inch:"3 1/2\" x 1 7/8\"", val_in:3.5, val_mm:88.9, wt:"1.324 kg/m", pipe_wt:"4.8 kg", desc:"Standard 3.5 inch chaukhat frame"},
-  {cat:"frame", target:"frame", sec:"19594", name:"3.35\" Door Frame", mm:"86.00 x 45.00 mm", inch:"3 3/8\" x 1 3/4\"", val_in:3.35, val_mm:86.0, wt:"1.285 kg/m", pipe_wt:"4.7 kg", desc:"Door chaukhat frame"},
-  {cat:"frame", target:"frame", sec:"19628", name:"4\" Heavy Door Frame", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:4.0, val_mm:101.6, wt:"2.451 kg/m", pipe_wt:"8.9 kg", desc:"4 inch heavy commercial door frame"},
-  {cat:"frame", target:"frame", sec:"19634", name:"5\" Deep Door Frame", mm:"125.00 x 37.00 mm", inch:"5\" x 1 1/2\"", val_in:5.0, val_mm:125.0, wt:"1.415 kg/m", pipe_wt:"5.2 kg", desc:"5 inch deep wall chaukhat frame"},
-
-  // Partition Tubes
-  {cat:"partition", target:"partition", sec:"20046", name:"2.5\" x 1.5\" Double Groove Tube", mm:"63.50 x 38.10 mm", inch:"2 1/2\" x 1 1/2\"", val_in:1.5, val_mm:38.1, wt:"0.686 kg/m", pipe_wt:"2.5 kg", desc:"Most popular partition tube in India"},
-  {cat:"partition", target:"partition", sec:"20045", name:"2.5\" x 1.5\" Single Groove Frame", mm:"63.50 x 38.10 mm", inch:"2 1/2\" x 1 1/2\"", val_in:1.5, val_mm:38.1, wt:"0.681 kg/m", pipe_wt:"2.5 kg", desc:"Perimeter outer frame against walls & floor"},
-  {cat:"partition", target:"partition", sec:"20050", name:"2\" x 1\" Double Groove Tube", mm:"50.80 x 25.40 mm", inch:"2\" x 1\"", val_in:1.0, val_mm:25.4, wt:"0.496 kg/m", pipe_wt:"1.8 kg", desc:"Sleek partition divider for compact spaces"},
-  {cat:"partition", target:"partition", sec:"20049", name:"2\" x 1\" Single Groove Frame", mm:"50.80 x 25.40 mm", inch:"2\" x 1\"", val_in:1.0, val_mm:25.4, wt:"0.414 kg/m", pipe_wt:"1.5 kg", desc:"Perimeter frame for 2x1 partition"},
-  {cat:"partition", target:"partition", sec:"20143", name:"3\" x 1.5\" Double Groove Tube", mm:"75.00 x 38.10 mm", inch:"3\" x 1 1/2\"", val_in:1.5, val_mm:38.1, wt:"0.832 kg/m", pipe_wt:"3.0 kg", desc:"3 inch partition tube"},
-  {cat:"partition", target:"partition", sec:"20051", name:"4\" x 1.75\" Heavy Commercial Tube", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"1.954 kg/m", pipe_wt:"7.1 kg", desc:"Heavy double groove tube for offices & banks"},
-  {cat:"partition", target:"partition", sec:"20052", name:"4\" x 1.75\" Heavy Single Groove", mm:"101.60 x 44.45 mm", inch:"4\" x 1 3/4\"", val_in:1.75, val_mm:44.45, wt:"1.950 kg/m", pipe_wt:"7.1 kg", desc:"Heavy perimeter frame for 4x1.75 partition"},
-
-  // Samosa Sections
-  {cat:"samosa", target:"samosa", sec:"20103", name:"2.5\" Samosa Corner Pipe", mm:"62.00 x 35.50 mm", inch:"2.44\" x 1.40\"", val_in:2.5, val_mm:62.0, wt:"0.944 kg/m", pipe_wt:"3.4 kg", desc:"45 & 135 degree corner samosa for 2.5x1.5 partition"},
-  {cat:"samosa", target:"samosa", sec:"20106", name:"4\" Heavy Samosa Corner Pipe", mm:"101.60 x 96.23 mm", inch:"4\" x 3 3/4\"", val_in:4.0, val_mm:101.6, wt:"1.875 kg/m", pipe_wt:"6.8 kg", desc:"Heavy corner samosa for 4-inch commercial partition"}
-];
-
-function openJindalCatalogueModal(caller) {
-  currentJindalCaller = caller || "all";
-  var modal = document.getElementById("jindalCatalogueModal");
-  if (!modal) return;
-  modal.style.display = "flex";
-
-  if (caller === "partition") {
-    setJindalCategory("partition");
-  } else if (caller === "door") {
-    setJindalCategory("all");
-  } else {
-    setJindalCategory("all");
-  }
-}
-
-function closeJindalCatalogueModal() {
-  var modal = document.getElementById("jindalCatalogueModal");
-  if (modal) modal.style.display = "none";
-}
-
-function setJindalCategory(cat, btn) {
-  currentJindalCategory = cat;
-  var container = document.getElementById("jindal_cat_filters");
-  if (container) {
-    var btns = container.querySelectorAll(".jindal-filter-btn");
-    btns.forEach(function(b) { b.classList.remove("active"); });
-    if (btn) {
-      btn.classList.add("active");
-    } else {
-      btns.forEach(function(b) {
-        if (b.getAttribute("onclick") && b.getAttribute("onclick").indexOf("'" + cat + "'") !== -1) {
-          b.classList.add("active");
-        }
-      });
-    }
-  }
-  renderJindalCatalogue();
-}
-
-function filterJindalCatalogue() {
-  renderJindalCatalogue();
-}
-
-function renderJindalCatalogue() {
-  var container = document.getElementById("jindal_sections_container");
-  if (!container) return;
-
-  var q = (document.getElementById("jindal_search_input") ? document.getElementById("jindal_search_input").value.toLowerCase().trim() : "");
-  var cat = currentJindalCategory;
-
-  var filtered = JINDAL_SECTIONS_DATA.filter(function(item) {
-    if (cat !== "all" && item.cat !== cat) return false;
-    if (q) {
-      var matchSec = item.sec.toLowerCase().indexOf(q) !== -1;
-      var matchName = item.name.toLowerCase().indexOf(q) !== -1;
-      var matchMm = item.mm.toLowerCase().indexOf(q) !== -1;
-      var matchInch = item.inch.toLowerCase().indexOf(q) !== -1;
-      var matchDesc = item.desc.toLowerCase().indexOf(q) !== -1;
-      return matchSec || matchName || matchMm || matchInch || matchDesc;
-    }
-    return true;
-  });
-
-  if (filtered.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:0.85rem;"><i class="fa-solid fa-magnifying-glass" style="font-size:1.8rem; margin-bottom:8px; display:block;"></i>No sections match your search.</div>';
-    return;
-  }
-
-  var html = "";
-  filtered.forEach(function(item) {
-    var loadBtnText = "Load to Door";
-    var loadBtnBg = "#0284c7";
-    if (item.target === "partition" || item.target === "samosa") {
-      loadBtnText = "Set in Partition";
-      loadBtnBg = "#059669";
-    }
-
-    html += '<div class="jindal-card">';
-    html += '  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">';
-    html += '    <div>';
-    html += '      <span style="background:#e0f2fe; color:#0369a1; font-size:0.65rem; font-weight:800; padding:2px 6px; border-radius:4px; margin-right:5px;">SEC #' + item.sec + '</span>';
-    html += '      <span style="font-weight:800; font-size:0.84rem; color:#0f172a;">' + item.name + '</span>';
-    html += '    </div>';
-    html += '    <button type="button" onclick="applyJindalSection(\'' + item.sec + '\')" style="background:' + loadBtnBg + '; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-size:0.70rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:3px; white-space:nowrap; box-shadow:0 2px 4px rgba(0,0,0,0.15);">';
-    html += '      <i class="fa-solid fa-bolt"></i> <span>' + loadBtnText + '</span>';
-    html += '    </button>';
-    html += '  </div>';
-
-    html += '  <div style="display:flex; gap:12px; margin-top:4px; flex-wrap:wrap; font-size:0.74rem;">';
-    html += '    <div><span style="color:#64748b;">Dimension:</span> <b style="color:#1e3a8a;">' + item.mm + '</b> (' + item.inch + ')</div>';
-    html += '    <div><span style="color:#64748b;">Weight:</span> <b style="color:#0f766e;">' + item.wt + '</b> (~\'' + item.pipe_wt + ')</div>';
-    html += '  </div>';
-
-    html += '  <div style="font-size:0.70rem; color:#64748b; margin-top:2px;">' + item.desc + '</div>';
-    html += '</div>';
-  });
-
-  container.innerHTML = html;
-}
-
-function applyJindalSection(secId) {
-  var item = JINDAL_SECTIONS_DATA.find(function(s) { return s.sec === secId; });
-  if (!item) return;
-
-  var isDoorMm = document.getElementById("dr_unit") ? document.getElementById("dr_unit").value.includes("Millimeter") : false;
-
-  if (item.target === "bottom") {
-    var bInp = document.getElementById("dr_bot_h");
-    if (bInp) bInp.value = isDoorMm ? item.val_mm : item.val_in;
-    var pSel = document.getElementById("dr_section_preset");
-    if (pSel) pSel.value = "custom";
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
-    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Bottom Rail!");
-  } else if (item.target === "top") {
-    var tInp = document.getElementById("dr_top_h");
-    if (tInp) tInp.value = isDoorMm ? item.val_mm : item.val_in;
-    var pSel = document.getElementById("dr_section_preset");
-    if (pSel) pSel.value = "custom";
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
-    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Top Rail!");
-  } else if (item.target === "mid") {
-    var mInp = document.getElementById("dr_mid_h");
-    if (mInp) mInp.value = isDoorMm ? item.val_mm : item.val_in;
-    var hasMidSel = document.getElementById("dr_has_mid");
-    if (hasMidSel) {
-      hasMidSel.value = "yes";
-      toggleDoorMiddleRailInput();
-    }
-    var pSel = document.getElementById("dr_section_preset");
-    if (pSel) pSel.value = "custom";
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
-    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Middle Transom!");
-  } else if (item.target === "vert") {
-    var vInp = document.getElementById("dr_vert_w");
-    if (vInp) vInp.value = isDoorMm ? item.val_mm : item.val_in;
-    var pSel = document.getElementById("dr_section_preset");
-    if (pSel) pSel.value = "custom";
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
-    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") as Vertical Stile!");
-  } else if (item.target === "frame") {
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "door") openScreen("door", "DOOR OPTION");
-    alert("Jindal Sec #" + item.sec + " (" + item.name + ") is a Door Outer Chaukhat Frame!");
-  } else if (item.target === "partition") {
-    var ptSel = document.getElementById("pt_tube_profile");
-    if (ptSel) {
-      if (item.sec === "20051" || item.sec === "20052") ptSel.value = "101.6x44.45";
-      else if (item.sec === "20050" || item.sec === "20049") ptSel.value = "50.8x25.4";
-      else if (item.sec === "20143") ptSel.value = "75x38.1";
-      else if (item.sec === "20144") ptSel.value = "75x45";
-      else if (item.sec === "20037" || item.sec === "20038") ptSel.value = "82.5x38";
-      else if (item.sec === "20021" || item.sec === "20032") ptSel.value = "89x32";
-      else if (item.sec === "20145") ptSel.value = "116x44.5";
-      else if (item.sec === "20157") ptSel.value = "127x44.45";
-      else ptSel.value = "63.5x38.1";
-      onPartitionTubeChanged();
-    }
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "partition") openScreen("partition", "PARTITION MASTER");
-    alert("Loaded Jindal Sec #" + item.sec + " (" + item.name + ") into Partition Tube Profile!");
-  } else if (item.target === "samosa") {
-    var smSel = document.getElementById("pt_samosa");
-    if (smSel) {
-      smSel.value = (item.sec === "20106") ? "20106" : "20103";
-    }
-    closeJindalCatalogueModal();
-    if (currentJindalCaller !== "partition") openScreen("partition", "PARTITION MASTER");
-    alert("Loaded Corner Samosa Sec #" + item.sec + " (" + item.name + ") into Partition!");
-  } else {
-    closeJindalCatalogueModal();
-    alert("Jindal Sec #" + item.sec + " (" + item.name + ") viewed!");
-  }
-}
