@@ -3,10 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="canonical" href="https://smartworkerpro.in/">
+  <meta property="og:url" content="https://smartworkerpro.in/">
   <title>Smart Worker Pro - Fabrication Management System</title>
   
   <!-- PWA Manifest & App Configuration -->
   <link rel="manifest" href="manifest.json">
+  <!-- Instant PWA Install Prompt Capture & Early Service Worker Registration -->
+  <script>
+    window.deferredPwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredPwaPrompt = e;
+      var btn = document.getElementById('btnMandatoryInstall');
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-mobile-screen-button" style="font-size:1.15rem;"></i> <span>INSTALL TO HOME SCREEN</span>';
+      }
+    });
+    if ('serviceWorker' in navigator) {
+      if (window.caches) {
+        caches.keys().then(function(keys) {
+          keys.forEach(function(k) {
+            if (k !== 'smart-worker-pro-v18') caches.delete(k);
+          });
+        });
+      }
+      navigator.serviceWorker.register('./sw.js?v=18').then(function(reg) {
+        if (reg && reg.update) reg.update();
+      }).catch(function(){});
+    }
+  </script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,11 +40,11 @@
   <meta name="theme-color" content="#0b132b">
   
   <!-- App Icons for Home Screen & Favicon -->
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="shortcut icon" type="image/png" href="logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="logo.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="logo.png">
+  <link rel="icon" type="image/png" href="logo.png?v=34">
+  <link rel="shortcut icon" type="image/png" href="logo.png?v=34">
+  <link rel="apple-touch-icon" href="logo.png?v=34">
+  <link rel="apple-touch-icon" sizes="192x192" href="logo.png?v=34">
+  <link rel="apple-touch-icon" sizes="512x512" href="logo.png?v=34">
   
   <!-- Icons & Typography -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
@@ -38,11 +64,593 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=35">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
+  <style id="androidCalcInlineStyles">
+/* =========================================================================
+   ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR (v31)
+   ========================================================================= */
+#screen-calculator {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#screen-calculator .android-calc-shell {
+  --calc-accent: #0284c7;
+  --calc-bg: #ffffff;
+  --calc-display-bg: #ffffff;
+  --calc-text: #1e293b;
+  --calc-subtext: #64748b;
+  --calc-border: #e2e8f0;
+  --calc-sci-bg: #f8fafc;
+  --calc-btn-hover: #f1f5f9;
+  background: var(--calc-bg) !important;
+  color: var(--calc-text) !important;
+  height: calc(100vh - 118px) !important;
+  min-height: calc(100vh - 118px) !important;
+  max-height: calc(100vh - 118px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+  border: none !important;
+  font-family: 'Roboto', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#screen-calculator .android-calc-shell.dark-theme {
+  --calc-bg: #0f172a;
+  --calc-display-bg: #0f172a;
+  --calc-text: #f1f5f9;
+  --calc-subtext: #94a3b8;
+  --calc-border: #1e293b;
+  --calc-sci-bg: #1e293b;
+  --calc-btn-hover: #1e293b;
+}
+
+#screen-calculator .android-calc-main-view {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  justify-content: space-between !important;
+  background: var(--calc-bg) !important;
+  overflow: hidden !important;
+}
+
+#screen-calculator .android-calc-display {
+  background: var(--calc-display-bg) !important;
+  padding: 20px 20px 14px !important;
+  flex: 1 1 auto !important;
+  min-height: 140px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: flex-end !important;
+  position: relative !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  overflow: hidden !important;
+}
+
+#screen-calculator .android-calc-mem-badge {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  background: var(--calc-accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+#screen-calculator .android-calc-expr {
+  font-size: 1.35rem !important;
+  color: var(--calc-subtext) !important;
+  min-height: 28px !important;
+  text-align: right !important;
+  word-break: break-all !important;
+  width: 100% !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .android-calc-result {
+  font-size: 2.85rem !important;
+  font-weight: 400 !important;
+  color: var(--calc-text) !important;
+  text-align: right !important;
+  word-break: break-all !important;
+  width: 100% !important;
+  line-height: 1.15 !important;
+  margin-top: 4px !important;
+}
+
+#screen-calculator .android-calc-preview {
+  font-size: 1.1rem !important;
+  color: var(--calc-accent) !important;
+  min-height: 22px !important;
+  text-align: right !important;
+  width: 100% !important;
+  margin-top: 2px !important;
+  font-weight: 500 !important;
+}
+
+#screen-calculator .android-calc-memory-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--calc-sci-bg);
+  border-bottom: 1px solid var(--calc-border);
+}
+
+#screen-calculator .android-calc-memory-bar button {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--calc-border) !important;
+  padding: 8px 0 !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: var(--calc-subtext) !important;
+  cursor: pointer;
+}
+
+#screen-calculator .android-calc-toolbar {
+  flex: 0 0 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 0 16px !important;
+  background: var(--calc-bg) !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+}
+
+#screen-calculator .android-tool-btn {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #64748b !important;
+  font-size: 1.25rem !important;
+  width: 42px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  padding: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .android-tool-btn.active,
+#screen-calculator .android-tool-btn:active {
+  color: var(--calc-accent) !important;
+  background: rgba(2, 132, 199, 0.1) !important;
+}
+
+#screen-calculator .android-tool-btn.backspace-btn {
+  color: #0284c7 !important;
+  margin-left: auto !important;
+  font-size: 1.35rem !important;
+}
+
+#screen-calculator .sci-icon-box {
+  border: 1.5px solid currentColor !important;
+  border-radius: 4px !important;
+  font-size: 0.56rem !important;
+  line-height: 1.05 !important;
+  padding: 2px 4px !important;
+  font-weight: 800 !important;
+  display: inline-block !important;
+  text-align: center !important;
+}
+
+#screen-calculator .android-calc-keypad-area {
+  flex: 0 0 auto !important;
+  background: var(--calc-border) !important;
+}
+
+#screen-calculator .android-keypad-grid {
+  background: var(--calc-border) !important;
+  gap: 1px !important;
+}
+
+#screen-calculator .android-keypad-grid.std-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+#screen-calculator .android-keypad-grid.sci-grid {
+  grid-template-columns: repeat(5, 1fr) !important;
+}
+
+#screen-calculator .ak-btn {
+  background: var(--calc-bg) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: var(--calc-text) !important;
+  font-size: 1.65rem !important;
+  font-weight: 300 !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  user-select: none;
+  padding: 0 !important;
+  margin: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .sci-grid .ak-btn {
+  height: 48px !important;
+  min-height: 48px !important;
+  font-size: 1.2rem !important;
+}
+
+#screen-calculator .ak-btn.ak-sci {
+  background: var(--calc-sci-bg) !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.05rem !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn.ak-clear {
+  color: #e65100 !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn.ak-op {
+  color: var(--calc-accent) !important;
+  font-size: 1.85rem !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn.ak-equal {
+  background: var(--calc-accent) !important;
+  color: #ffffff !important;
+  font-size: 2rem !important;
+  font-weight: 400 !important;
+}
+
+#screen-calculator .ak-btn:active {
+  background: var(--calc-btn-hover) !important;
+}
+
+#screen-calculator .ak-btn.ak-equal:active {
+  filter: brightness(0.92);
+}
+
+#screen-calculator .android-calc-shell.rounded-keys .android-keypad-grid {
+  background: var(--calc-bg) !important;
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+#screen-calculator .android-calc-shell.rounded-keys .ak-btn {
+  border-radius: 18px !important;
+  border: 1px solid var(--calc-border) !important;
+}
+
+/* UNIT CONVERTER SHEET (Screenshot 3) */
+#screen-calculator .android-unit-converter-sheet {
+  background: var(--calc-bg) !important;
+  padding: 16px 12px 22px !important;
+  border-top: 1px solid var(--calc-border) !important;
+  min-height: 360px;
+}
+
+#screen-calculator .uc-sheet-header {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  color: var(--calc-subtext) !important;
+  margin-bottom: 18px !important;
+}
+
+#screen-calculator .uc-close-btn {
+  position: absolute !important;
+  right: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.1rem !important;
+  cursor: pointer;
+  padding: 4px 8px !important;
+}
+
+#screen-calculator .uc-icon-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 18px 6px !important;
+}
+
+#screen-calculator .uc-grid-item {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  color: #475569 !important;
+  cursor: pointer;
+  padding: 6px 2px !important;
+  border-radius: 10px !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .uc-grid-item i {
+  font-size: 1.4rem !important;
+  color: inherit !important;
+}
+
+#screen-calculator .uc-grid-item span {
+  font-size: 0.76rem !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+  line-height: 1.15 !important;
+  color: inherit !important;
+}
+
+#screen-calculator .uc-grid-item.active-discount,
+#screen-calculator .uc-grid-item:hover,
+#screen-calculator .uc-grid-item:active {
+  color: var(--calc-accent) !important;
+}
+
+#screen-calculator .uc-active-tool-box {
+  background: var(--calc-sci-bg) !important;
+  border: 1px solid var(--calc-border) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  margin-bottom: 14px !important;
+}
+
+/* HISTORY & SETTINGS SUB-SCREENS (Screenshots 4 & 5) */
+#screen-calculator .android-calc-subview {
+  background: var(--calc-bg) !important;
+  min-height: calc(100vh - 118px);
+}
+
+#screen-calculator .android-subview-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  background: var(--calc-bg) !important;
+}
+
+#screen-calculator .subview-back-btn,
+#screen-calculator .subview-menu-btn {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--calc-accent) !important;
+  font-size: 1.25rem !important;
+  cursor: pointer;
+  padding: 4px 8px !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#screen-calculator .subview-title {
+  font-size: 1.2rem !important;
+  font-weight: 500 !important;
+  color: var(--calc-text) !important;
+  margin-right: auto !important;
+  margin-left: 12px !important;
+}
+
+#screen-calculator .android-history-list {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#screen-calculator .android-history-item {
+  padding: 14px 18px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  cursor: pointer;
+  background: var(--calc-bg) !important;
+}
+
+#screen-calculator .android-history-dots {
+  position: absolute !important;
+  left: 16px !important;
+  top: 18px !important;
+  color: var(--calc-subtext) !important;
+  font-size: 1.05rem !important;
+}
+
+#screen-calculator .android-history-expr {
+  text-align: right !important;
+  font-size: 1.35rem !important;
+  color: var(--calc-text) !important;
+  font-weight: 400 !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-history-ans {
+  text-align: right !important;
+  font-size: 1.5rem !important;
+  color: var(--calc-accent) !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-history-date {
+  text-align: left !important;
+  font-size: 0.78rem !important;
+  color: var(--calc-text) !important;
+  margin-top: 6px !important;
+  width: 100% !important;
+}
+
+#screen-calculator .android-settings-band {
+  background: #bae6fd !important;
+  color: #334155 !important;
+  padding: 7px 16px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+}
+
+#screen-calculator .android-settings-list {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#screen-calculator .android-setting-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px !important;
+  border-bottom: 1px solid var(--calc-border) !important;
+  font-size: 1rem !important;
+  color: var(--calc-text) !important;
+  cursor: pointer;
+}
+
+#screen-calculator .android-color-swatch {
+  width: 38px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+  display: inline-block !important;
+}
+
+#screen-calculator .android-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+#screen-calculator .android-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+#screen-calculator .android-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .2s;
+  border-radius: 22px;
+}
+
+#screen-calculator .android-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+#screen-calculator .android-switch input:checked + .android-slider {
+  background-color: #93c5fd;
+}
+
+#screen-calculator .android-switch input:checked + .android-slider:before {
+  transform: translateX(20px);
+  background-color: var(--calc-accent);
+}
+  </style>
 </head>
 <body>
+
+  <!-- ================= MANDATORY APP INSTALL GATE OVERLAY ================= -->
+  <div id="pwaInstallGateOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; background:linear-gradient(145deg, #090d16 0%, #0f172a 50%, #1e3a8a 100%); color:#fff; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; overflow-y:auto;">
+    <div style="background:rgba(15, 23, 42, 0.92); border:1.5px solid rgba(56, 189, 248, 0.35); border-radius:24px; padding:28px 22px; max-width:390px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.65);">
+      
+      <!-- App Icon & Verified Badge -->
+      <div style="position:relative; display:inline-block; margin-bottom:14px;">
+        <img src="logo.png?v=34" alt="Smart Worker Pro" onerror="this.style.display='none';" style="width:88px; height:88px; border-radius:22px; background:#fff; padding:6px; box-shadow:0 8px 24px rgba(2, 132, 199, 0.45);">
+        <div style="position:absolute; bottom:-4px; right:-4px; background:#16a34a; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; border:2.5px solid #0f172a;">
+          <i class="fa-solid fa-check"></i>
+        </div>
+      </div>
+
+      <div style="font-size:1.35rem; font-weight:800; color:#fff; letter-spacing:0.4px; margin-bottom:4px;">
+        SMART WORKER PRO
+      </div>
+      <div style="font-size:0.8rem; color:#38bdf8; font-weight:700; margin-bottom:14px;">
+        Official Aluminium &amp; UPVC Fabrication App
+      </div>
+
+      <!-- App Store Style Stats Row -->
+      <div style="display:flex; justify-content:space-around; align-items:center; background:#1e293b; border:1px solid #334155; border-radius:14px; padding:10px 8px; margin-bottom:18px; font-size:0.75rem;">
+        <div>
+          <div style="font-weight:800; color:#fbbf24;">4.9 ★</div>
+          <div style="color:#94a3b8; font-size:0.65rem;">Verified</div>
+        </div>
+        <div style="width:1px; height:24px; background:#334155;"></div>
+        <div>
+          <div style="font-weight:800; color:#4ade80;">100%</div>
+          <div style="color:#94a3b8; font-size:0.65rem;">Offline Ready</div>
+        </div>
+        <div style="width:1px; height:24px; background:#334155;"></div>
+        <div>
+          <div style="font-weight:800; color:#38bdf8;">Fast</div>
+          <div style="color:#94a3b8; font-size:0.65rem;">Mobile App</div>
+        </div>
+      </div>
+
+      <!-- Features Checklist -->
+      <div style="text-align:left; background:rgba(30, 41, 59, 0.6); border:1px solid #334155; border-radius:14px; padding:12px 14px; margin-bottom:18px; font-size:0.78rem; color:#e2e8f0; line-height:1.65;">
+        <div><i class="fa-solid fa-circle-check" style="color:#4ade80; margin-right:6px;"></i> Domal, Sliding, Casement &amp; Door Calculator</div>
+        <div><i class="fa-solid fa-circle-check" style="color:#4ade80; margin-right:6px;"></i> Smart Dimension Fraction Keypad</div>
+        <div><i class="fa-solid fa-circle-check" style="color:#4ade80; margin-right:6px;"></i> Digital Site Khata &amp; Client PDF Billing</div>
+      </div>
+
+      <!-- Install Progress Box (Shown during installation) -->
+      <div id="pwaInstallProgressBox" style="display:none; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.76rem; font-weight:700; color:#93c5fd; margin-bottom:6px;">
+          <span id="pwaInstallStatusText">Installing Smart Worker Pro...</span>
+          <span id="pwaInstallPercentText">0%</span>
+        </div>
+        <div style="background:#1e293b; height:10px; border-radius:6px; overflow:hidden; border:1px solid #334155;">
+          <div id="pwaInstallProgressBar" style="background:linear-gradient(90deg, #16a34a, #4ade80); width:0%; height:100%; transition:width 0.25s ease;"></div>
+        </div>
+      </div>
+
+      <!-- Primary Install Action Button -->
+      <button type="button" id="btnMandatoryInstall" onclick="handleMandatoryPwaInstall()" style="width:100%; background:linear-gradient(135deg, #16a34a, #15803d); color:#fff; border:none; border-radius:14px; padding:15px 18px; font-size:1.02rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 22px rgba(22, 163, 74, 0.45); letter-spacing:0.3px;">
+        <i class="fa-solid fa-download" style="font-size:1.15rem;"></i>
+        <span>INSTALL APP NOW</span>
+      </button>
+
+      <div id="pwaInstallFooterHint" style="font-size:0.7rem; color:#94a3b8; margin-top:12px; line-height:1.4;">
+        Please install the application on your device first to unlock and launch all fabrication tools.
+      </div>
+    </div>
+  </div>
+
 
  <!-- Top App Bar -->
  <!-- Top App Bar (Clean Minimalist Google Style) -->
@@ -53,19 +661,16 @@
  </button>
  </div>
  <div class="title" id="screenTitle">
- <img src="logo.png?v=2" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;">
+ <img src="logo.png?v=34" alt="SWA" onerror="this.style.display='none';" style="height:28px; width:auto; border-radius:4px; background:#fff; padding:1px;">
  <span id="titleText">SMART WORKER PRO</span>
  </div>
  <div class="top-bar-right">
  <div id="topBarRightActions" style="display:flex; align-items:center; gap:6px;">
-        <div id="networkStatusBadge" style="display:inline-flex; align-items:center; gap:4px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#4ade80; padding:4px 8px; border-radius:12px; font-size:0.7rem; font-weight:700; cursor:pointer;" onclick="if(typeof syncOfflineQueueToCloud==='function') syncOfflineQueueToCloud();" title="Click to sync cloud data">
-          <i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> <span>Online</span>
-        </div>
-        <div id="cloudUserBadge" style="display:none; align-items:center; gap:4px; background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:3px 8px; border-radius:12px; font-size:0.7rem; font-weight:bold;">
- <i class="fa-solid fa-cloud"></i>
- <span id="cloudUserEmail" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">User</span>
- </div>
+
  <!-- Gemini Style Account / Settings Avatar Icon -->
+ <button onclick="openScreen('calculator', 'CALCULATOR')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.22); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#38bdf8; font-size:1.05rem;" title="General & Money Calculator">
+ <i class="fa-solid fa-calculator"></i>
+ </button>
  <button onclick="openScreen('settings', 'SETTINGS')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.22); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fbbf24; font-size:1.15rem;" title="Settings & Account">
  <i class="fa-solid fa-gear"></i>
  </button>
@@ -78,72 +683,75 @@
  <!-- ================= 0. AUTH / LOGIN SCREEN (OPENS FIRST IF NOT LOGGED IN) ================= -->
  <div id="screen-auth" class="screen active">
  <div class="auth-screen-box">
- <img src="logo.png?v=2" alt="Logo" class="auth-logo" onerror="this.style.display='none';">
+ <img src="logo.png?v=34" alt="Logo" class="auth-logo" onerror="this.style.display='none';">
  <div class="auth-title">SMART WORKER PRO</div>
  <div class="auth-sub">Aluminium & UPVC Fabrication Management</div>
 
- <div class="auth-tabs">
- <button id="tabBtnLogin" class="auth-tab-btn" style="background:#2563eb; color:#fff;" onclick="switchAuthMode('login')">Sign In</button>
- <button id="tabBtnRegister" class="auth-tab-btn" style="background:#f1f5f9; color:#475569;" onclick="switchAuthMode('register')">Register Workshop</button>
+ <!-- Two Clear Primary Tabs -->
+ <div class="auth-tabs" style="display:flex; gap:8px; margin-bottom:18px; background:#f1f5f9; padding:4px; border-radius:10px;">
+ <button id="tabBtnRegister" type="button" class="auth-tab-btn" style="background:#16a34a; color:#fff; font-weight:800; padding:11px; border-radius:8px; flex:1; cursor:pointer;" onclick="switchAuthMode('register')">
+ <i class="fa-solid fa-user-plus"></i> Register Workshop
+ </button>
+ <button id="tabBtnLogin" type="button" class="auth-tab-btn" style="background:transparent; color:#475569; font-weight:800; padding:11px; border-radius:8px; flex:1; cursor:pointer;" onclick="switchAuthMode('login')">
+ <i class="fa-solid fa-right-to-bracket"></i> Sign In
+ </button>
  </div>
 
- <!-- Login Form -->
- <div id="authFormLogin">
+ <!-- 1. Register Workshop Form (Active By Default for New Users) -->
+ <div id="authFormRegister" style="display:block;">
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Your Full Name *</label>
+ <input type="text" id="auth_reg_name" placeholder="Enter owner full name">
+ </div>
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Workshop / Shop Name *</label>
+ <input type="text" id="auth_reg_shop" placeholder="e.g. Smart Worker Aluminium">
+ </div>
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Mobile Number * (10 Digits)</label>
+ <input type="tel" id="auth_reg_phone" placeholder="Enter 10-digit mobile number" maxlength="10">
+ </div>
+ <div class="form-group" style="margin-bottom:8px;">
+ <label style="font-weight:700; color:#334155;">Create Strong Password * (Min 6 Characters)</label>
+ <input type="password" id="auth_reg_pass" placeholder="Create your 6+ character password">
+ </div>
+ <div class="form-group" style="margin-bottom:14px;">
+ <label style="font-weight:700; color:#334155;">Confirm Password * (Re-enter same password)</label>
+ <input type="password" id="auth_reg_pass_confirm" placeholder="Re-enter identical password">
+ </div>
+ <button type="button" class="action-btn" style="background:#16a34a; width:100%; padding:13px; font-size:0.96rem; font-weight:800; border-radius:8px; margin-bottom:12px; cursor:pointer;" onclick="doEmailRegister()">
+ <i class="fa-solid fa-user-plus"></i> REGISTER WORKSHOP & CREATE ID
+ </button>
+ <div style="font-size:0.8rem; color:#64748b; margin-top:8px;">
+ Already registered? <a href="javascript:void(0)" onclick="switchAuthMode('login')" style="color:#2563eb; font-weight:800; text-decoration:none;">Sign In here &rarr;</a>
+ </div>
+ </div>
+
+ <!-- 2. Sign In Form (For Existing Registered Users) -->
+ <div id="authFormLogin" style="display:none;">
  <div class="form-group" style="margin-bottom:10px;">
- <label>Gmail / Email ID:</label>
- <input type="text" id="auth_login_email" placeholder="fabricator@gmail.com">
+ <label style="font-weight:700; color:#334155;">Registered Mobile Number * (10 Digits)</label>
+ <input type="tel" id="auth_login_email" placeholder="Enter your 10-digit mobile number" maxlength="10">
  </div>
  <div class="form-group" style="margin-bottom:14px;">
- <label>Password:</label>
- <input type="password" id="auth_login_pass" placeholder="Enter password">
+ <label style="font-weight:700; color:#334155;">Your Password *</label>
+ <input type="password" id="auth_login_pass" placeholder="Enter your registered password">
  </div>
- <button class="action-btn" style="background:#2563eb; width:100%; padding:12px; font-size:0.95rem; margin-bottom:12px;" onclick="doEmailLogin()">
- <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+ <button type="button" class="action-btn" style="background:#2563eb; width:100%; padding:13px; font-size:0.96rem; font-weight:800; border-radius:8px; margin-bottom:12px; cursor:pointer;" onclick="doEmailLogin()">
+ <i class="fa-solid fa-right-to-bracket"></i> SIGN IN TO WORKSHOP
  </button>
- <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:14px;">
- <a href="javascript:void(0)" onclick="doForgotPassword()" style="color:#2563eb; text-decoration:none; font-weight:600;">Forgot Password?</a>
- <span style="color:#64748b;">Cloud Database Sync</span>
+ <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; margin-top:6px; margin-bottom:14px;">
+ <a href="javascript:void(0)" onclick="openForgotPassModal()" style="color:#ef4444; text-decoration:none; font-weight:700;"><i class="fa-solid fa-shield-halved"></i> Forgot Password?</a>
+ <span style="color:#64748b;">Direct Call Verification</span>
+ </div>
+ <div style="font-size:0.8rem; color:#64748b; border-top:1px dashed #cbd5e1; padding-top:12px;">
+ New workshop? <a href="javascript:void(0)" onclick="switchAuthMode('register')" style="color:#16a34a; font-weight:800; text-decoration:none;">Register Workshop here &rarr;</a>
  </div>
  </div>
 
- <!-- Register Form -->
- <div id="authFormRegister" style="display:none;">
- <div class="form-group" style="margin-bottom:8px;">
- <label>Your Name:</label>
- <input type="text" id="auth_reg_name" placeholder="Full name">
- </div>
- <div class="form-group" style="margin-bottom:8px;">
- <label>Workshop / Shop Name:</label>
- <input type="text" id="auth_reg_shop" placeholder="e.g. Royal Aluminium Works">
- </div>
- <div class="form-group" style="margin-bottom:8px;">
- <label>Mobile Number:</label>
- <input type="text" id="auth_reg_phone" placeholder="10-digit mobile">
- </div>
- <div class="form-group" style="margin-bottom:8px;">
- <label>Gmail Address:</label>
- <input type="text" id="auth_reg_email" placeholder="example@gmail.com">
- </div>
- <div class="form-group" style="margin-bottom:14px;">
- <label>Create Password:</label>
- <input type="password" id="auth_reg_pass" placeholder="At least 6 characters">
- </div>
- <button class="action-btn" style="background:#16a34a; width:100%; padding:12px; font-size:0.95rem; margin-bottom:12px;" onclick="doEmailRegister()">
- <i class="fa-solid fa-user-plus"></i> Create Account & Cloud Sync
- </button>
- </div>
-
- <!-- Google 1-Click Sign In -->
- <div style="border-top:1px dashed #cbd5e1; padding-top:14px; margin-top:8px;">
- <button onclick="doGoogleSignIn()" style="width:100%; padding:11px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; font-weight:700; font-size:0.86rem; color:#334155; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
- <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="height:18px;">
- <span>Sign in with Google</span>
- </button>
- </div>
-
- <div style="margin-top:16px;">
- <button onclick="skipAuthToGuest()" style="background:transparent; border:none; color:#64748b; font-size:0.78rem; text-decoration:underline; cursor:pointer;">
- Continue as Guest / Demo Mode &rarr;
+ <div style="margin-top:18px; border-top:1px solid #f1f5f9; padding-top:12px;">
+ <button type="button" onclick="skipAuthToGuest()" style="background:transparent; border:none; color:#64748b; font-size:0.78rem; text-decoration:underline; cursor:pointer;">
+ Continue as Demo / Guest Mode &rarr;
  </button>
  </div>
  </div>
@@ -154,16 +762,14 @@
  <!-- Workshop Digital Identity Card (User's Factory) -->
  <div class="home-header" style="background:linear-gradient(135deg, #0b132b, #1e3a8a); padding:16px; border-radius:0 0 20px 20px; box-shadow:0 4px 14px rgba(11,19,43,0.25); display:flex; align-items:center; justify-content:space-between;">
  <div style="display:flex; align-items:center; gap:12px;">
- <img src="logo.png?v=2" alt="Logo" onerror="this.style.display='none';" style="height:48px; width:auto; border-radius:10px; background:#fff; padding:2px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+ <img src="logo.png?v=34" alt="Logo" onerror="this.style.display='none';" style="height:48px; width:auto; border-radius:10px; background:#fff; padding:2px; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
  <div>
  <div class="welcome" id="homeGreeting" style="font-size:0.75rem; color:#93c5fd; font-weight:600;">Welcome, Fabricator!</div>
  <div class="shop-name" id="homeShop" style="font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:0.3px;">FABRICATION WORKSHOP</div>
  <div style="font-size:0.68rem; color:#cbd5e1; margin-top:2px; display:flex; align-items:center; gap:4px;">
  <i class="fa-solid fa-location-dot" style="color:#38bdf8;"></i> <span id="homeAddress">Fabrication Workshop</span>
  </div>
- <div id="homeSyncNotice" style="font-size:0.65rem; color:#bae6fd; margin-top:3px; display:flex; align-items:center; gap:5px;">
- <i class="fa-solid fa-shield-halved" style="color:#4ade80;"></i> <span>100% Offline Ready • Auto Cloud Sync</span>
- </div>
+
  </div>
  </div>
  <button onclick="openScreen('profile', 'WORKSHOP PROFILE')" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:6px 10px; border-radius:16px; font-size:0.72rem; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);" title="Edit Workshop Profile">
@@ -263,6 +869,8 @@
  <div class="pro-card-title" data-i18n="mod_ceiling">Ceiling Estimator</div>
  <div class="pro-card-sub" data-i18n="sub_ceiling">False Ceiling Grid & Perimeter</div>
  </div>
+
+
  </div>
 
  <!-- Section 2: Business & Billing (Balanced 2-Card Grid) -->
@@ -290,6 +898,18 @@
  </div>
  <div class="pro-card-title" data-i18n="mod_customer_khata">Customer Khata</div>
  <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
+ </div>
+
+ <!-- 3. Smart Calculator (Matching Exact Same White Card Style) -->
+ <div class="pro-card" onclick="openScreen('calculator', 'SMART CALCULATOR')">
+ <div class="pro-card-header">
+ <div class="pro-card-icon" style="background:#eff6ff; color:#0284c7;">
+ <i class="fa-solid fa-calculator"></i>
+ </div>
+ <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+ </div>
+ <div class="pro-card-title" data-i18n="mod_calculator">Smart Calculator</div>
+ <div class="pro-card-sub" data-i18n="sub_calculator">Standard, Scientific & Converter</div>
  </div>
  </div>
  </div>
@@ -343,13 +963,13 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dm_h')" style="cursor:pointer; background:#fff;" type="text" id="dm_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('dm_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dm_h')" style="cursor:pointer; background:#fff;" type="text" id="dm_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('dm_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Width:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dm_w')" style="cursor:pointer; background:#fff;" type="text" id="dm_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('dm_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dm_w')" style="cursor:pointer; background:#fff;" type="text" id="dm_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('dm_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -394,8 +1014,7 @@
 
  <div class="output-label">CUTTING SIZES:</div>
  <div class="output-area" id="dm_alu_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="dm_mat_out"></div>
+ <div id="dm_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 3. SLIDING WINDOW SCREEN ================= -->
@@ -432,13 +1051,13 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sl_h')" style="cursor:pointer; background:#fff;" type="text" id="sl_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sl_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sl_h')" style="cursor:pointer; background:#fff;" type="text" id="sl_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sl_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Width:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sl_w')" style="cursor:pointer; background:#fff;" type="text" id="sl_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sl_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sl_w')" style="cursor:pointer; background:#fff;" type="text" id="sl_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('sl_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -483,8 +1102,7 @@
 
  <div class="output-label" style="color:#cc661a;">CUTTING SIZES:</div>
  <div class="output-area" id="sl_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="sl_mat_out"></div>
+ <div id="sl_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 4. CUSTOM CASEMENT SCREEN ================= -->
@@ -508,25 +1126,25 @@
  <div class="form-group">
  <label>Total Height (H):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_h')" style="cursor:pointer; background:#fff;" type="text" id="cc_h"> <button class="keypad-trigger" onclick="openKeypad('cc_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_h')" style="cursor:pointer; background:#fff;" type="text" id="cc_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Width (W):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_w')" style="cursor:pointer; background:#fff;" type="text" id="cc_w"> <button class="keypad-trigger" onclick="openKeypad('cc_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_w')" style="cursor:pointer; background:#fff;" type="text" id="cc_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Bottom Part Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_bot_h')" style="cursor:pointer; background:#fff;" type="text" id="cc_bot_h" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_bot_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_bot_h')" style="cursor:pointer; background:#fff;" type="text" id="cc_bot_h" value="0"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_bot_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Clear Gap for 1 Leaf:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('cc_mid_w')" style="cursor:pointer; background:#fff;" type="text" id="cc_mid_w" value="0"> <button class="keypad-trigger" onclick="openKeypad('cc_mid_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('cc_mid_w')" style="cursor:pointer; background:#fff;" type="text" id="cc_mid_w" value="0"> <button type="button" class="keypad-trigger" onclick="openKeypad('cc_mid_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -546,11 +1164,11 @@
  <input type="number" id="cc_bot_open" value="0">
  </div>
  <div class="form-group">
- <label>Room / Location Tag:</label>
- <input type="text" id="cc_loc" placeholder="e.g. Hall / Bedroom">
+ <label style="color:#2563eb;">Room / Location Tag:</label>
+ <input type="text" id="cc_loc" placeholder="e.g. Bed-1, Balcony">
  </div>
  <div class="form-group">
- <label>Window Quantity (Pcs):</label>
+ <label style="color:#16a34a;">Window Quantity (Pcs):</label>
  <input type="number" id="cc_qty" value="1" min="1">
  </div>
  </div>
@@ -587,8 +1205,7 @@
 
  <div class="output-label" style="color:#cc3366;">CUTTING SIZES:</div>
  <div class="output-area" id="cc_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="cc_mat_out"></div>
+ <div id="cc_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 5. DOOR OPTION SCREEN ================= -->
@@ -597,7 +1214,7 @@
  <div class="form-grid">
  <div class="form-group">
  <label>Door Type:</label>
- <select id="dr_type">
+ <select id="dr_type" onchange="onDoorTypeChanged()">
  <option value="Standard Door" selected>Standard Door</option>
  <option value="Floor Spring Door">Floor Spring Door</option>
  <option value="Top Hung Door">Top Hung Door</option>
@@ -612,16 +1229,81 @@
  </select>
  </div>
  <div class="form-group">
+ <label><span data-i18n="lbl_door_palla">Door Option:</span></label>
+ <select id="dr_palla" style="font-weight:700; color:#1e3a8a;">
+ <option value="2" selected>Double Door</option>
+ <option value="1">Single Door</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label><span data-i18n="lbl_qty">Door Quantity (Pcs):</span></label>
+ <input type="number" id="dr_qty" value="1" min="1">
+ </div>
+ <div class="form-group">
  <label>Total Height (H):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dr_h')" style="cursor:pointer; background:#fff;" type="text" id="dr_h"> <button class="keypad-trigger" onclick="openKeypad('dr_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dr_h')" style="cursor:pointer; background:#fff;" type="text" id="dr_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('dr_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Width (W):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('dr_w')" style="cursor:pointer; background:#fff;" type="text" id="dr_w"> <button class="keypad-trigger" onclick="openKeypad('dr_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('dr_w')" style="cursor:pointer; background:#fff;" type="text" id="dr_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('dr_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
+ </div>
+ <div class="form-group" style="grid-column: 1 / -1;">
+ <label><span data-i18n="lbl_room_tag">Location Tag:</span></label>
+ <input type="text" id="dr_loc" placeholder="e.g. Main Entrance, Office, Balcony">
+ </div>
+
+ <!-- Dynamic Custom Door Tube Profiles (Party Specific Options) -->
+ <div id="dr_custom_profile_box" style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px; margin-top:2px;">
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+     <div style="font-size:0.78rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:6px;">
+       <i class="fa-solid fa-sliders" style="color:#0284c7;"></i>
+       <span>DOOR TUBE SECTIONS & PROFILE SPECIFICATIONS:</span>
+     </div>
+     <select id="dr_section_preset" onchange="applyDoorSectionPreset(this.value)" style="font-size:0.75rem; font-weight:700; padding:4px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; color:#0284c7;">
+       <option value="commercial" selected>Commercial (4" Bottom, 2.5" Top & Mid, 1.75" Vert)</option>
+       <option value="jumbo">Jumbo Kickplate (5" Bottom, 2.5" Top, 1.75" Vert)</option>
+       <option value="economy">Economy / Interior (2.5" Bottom, 1.75" Top & Vert)</option>
+       <option value="slim">Slim Patch (4" Bottom, 2" Top, 1.75" Vert)</option>
+       <option value="custom">Custom (Type Any Custom Inches)</option>
+     </select>
+   </div>
+
+   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Vertical Stile:</label>
+       <input type="number" id="dr_vert_w" value="1.75" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Top Rail:</label>
+       <input type="number" id="dr_top_h" value="2.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Bottom Rail:</label>
+       <input type="number" id="dr_bot_h" value="4.0" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+   </div>
+
+   <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:8px;">
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Middle Rail (Transom):</label>
+       <select id="dr_has_mid" onchange="toggleDoorMiddleRailInput()" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.78rem; font-weight:700;">
+         <option value="yes" selected>With Middle Rail (2 Panels)</option>
+         <option value="no">No Middle (Full Glass/Board)</option>
+       </select>
+     </div>
+     <div id="dr_mid_h_col">
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Mid Rail Section:</label>
+       <input type="number" id="dr_mid_h" value="2.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div id="dr_mid_lvl_col">
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Mid Center Level:</label>
+       <input type="number" id="dr_mid_level" value="36.0" step="0.5" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+   </div>
  </div>
  </div>
 
@@ -657,8 +1339,7 @@
 
  <div class="output-label" style="color:#b34d1a;">CUTTING SIZES:</div>
  <div class="output-area" id="dr_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="dr_mat_out"></div>
+ <div id="dr_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
@@ -682,25 +1363,25 @@
  <div class="form-group">
  <label>Total Wall Height (H):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_h')" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button class="keypad-trigger" onclick="openKeypad('pt_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_h')" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Total Wall Width (W):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_w')" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button class="keypad-trigger" onclick="openKeypad('pt_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_w')" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Door Height (Optional):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_dh')" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button class="keypad-trigger" onclick="openKeypad('pt_dh')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_dh')" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dh')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Door Width (Optional):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('pt_dw')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button class="keypad-trigger" onclick="openKeypad('pt_dw')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_dw')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dw')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
   <div class="form-group">
@@ -754,8 +1435,7 @@
 
  <div class="output-label" style="color:#e64d4d;">CUTTING SIZES:</div>
  <div class="output-area" id="pt_out"></div>
- <div class="output-label" style="color:#2e7d32;">MATERIAL PURCHASE (AUTO-OPTIMIZED):</div>
- <div class="output-area mat-area" id="pt_mat_out"></div>
+ <div id="pt_mat_out" style="display:none;"></div>
  </div>
 
  <!-- ================= 7. CEILING ESTIMATOR SCREEN ================= -->
@@ -772,13 +1452,13 @@
  <div class="form-group">
  <label>Room Length (Ft):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('ce_l')" style="cursor:pointer; background:#fff;" type="text" id="ce_l"> <button class="keypad-trigger" onclick="openKeypad('ce_l')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('ce_l')" style="cursor:pointer; background:#fff;" type="text" id="ce_l"> <button type="button" class="keypad-trigger" onclick="openKeypad('ce_l')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Room Width (Ft):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('ce_w')" style="cursor:pointer; background:#fff;" type="text" id="ce_w"> <button class="keypad-trigger" onclick="openKeypad('ce_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('ce_w')" style="cursor:pointer; background:#fff;" type="text" id="ce_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('ce_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  </div>
@@ -815,7 +1495,7 @@
  <div class="form-group">
  <label>Phone / PIN:</label>
  <div style="display:flex; gap:4px;">
- <input type="text" id="q_phone">
+ <input type="text" id="q_phone" oninput="handleCustomerPhoneAutoLookup(this.value)" placeholder="10-digit mobile number">
  <button onclick="autofillCustomer()" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:0 8px; cursor:pointer;"><i class="fa-solid fa-magnifying-glass"></i></button>
  </div>
  </div>
@@ -840,6 +1520,26 @@
  <option value="Commercial Credit: 15 Days Net Payment after Handover">Commercial Credit: 15 Days Net Payment after Handover</option>
  </select>
  </div>
+ </div>
+
+ <!-- Live Customer Khata Balance & History Alert Box -->
+ <div id="custKhataAlertBox" style="display:none; background:#fef2f2; border:1.5px solid #f87171; border-radius:12px; padding:12px; margin-top:10px; margin-bottom:12px; box-shadow:0 2px 8px rgba(239,68,68,0.1);">
+   <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+     <div style="font-size:0.84rem; font-weight:800; color:#991b1b; display:flex; align-items:center; gap:6px;">
+       <i class="fa-solid fa-address-book" style="color:#ef4444;"></i>
+       <span id="ckb_client_title">Client Khata History Found</span>
+     </div>
+     <span id="ckb_due_badge" style="background:#ef4444; color:#fff; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:12px;">₹0 Due</span>
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:0.75rem; color:#475569; background:#fff; padding:8px; border-radius:8px; border:1px solid #fee2e2; margin-bottom:8px; text-align:center;">
+     <div><span>Total Billed:</span> <b id="ckb_total_billed" style="display:block; color:#0284c7; font-size:0.85rem;">₹0</b></div>
+     <div><span>Total Paid:</span> <b id="ckb_total_paid" style="display:block; color:#16a34a; font-size:0.85rem;">₹0</b></div>
+     <div><span>Previous Due:</span> <b id="ckb_total_due" style="display:block; color:#dc2626; font-size:0.85rem;">₹0</b></div>
+   </div>
+   <label style="display:flex; align-items:center; gap:8px; font-size:0.78rem; font-weight:700; color:#991b1b; cursor:pointer;">
+     <input type="checkbox" id="q_include_prev_due" checked onchange="updateLiveDue()" style="width:16px; height:16px; accent-color:#dc2626; cursor:pointer;">
+     <span>Auto-include Previous Due (<b id="ckb_include_due_text">₹0</b>) in Total Bill Due</span>
+   </label>
  </div>
 
  <div style="font-size:0.85rem; font-weight:bold; color:#993399; margin:12px 0 6px 0;">ADD BILL ITEM</div>
@@ -958,7 +1658,7 @@
  <div class="form-group">
  <label style="color:#2e7d32; font-weight:bold;">Rate (Rs/Sq.Ft):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('q_rate')" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button class="keypad-trigger" onclick="openKeypad('q_rate')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_rate')" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_rate')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
 
@@ -970,14 +1670,14 @@
  <div class="form-group">
  <label>Height:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('q_h')" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button class="keypad-trigger" onclick="openKeypad('q_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_h')" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
 
  <div class="form-group" style="grid-column: span 2;">
  <label>Width:</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('q_w')" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button class="keypad-trigger" onclick="openKeypad('q_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_w')" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  </div>
@@ -993,7 +1693,7 @@
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
  <label style="font-size:0.8rem; font-weight:bold; color:#993399; width:35%;">Advance (Rs):</label>
  <div class="input-wrapper" style="width:42%;">
- <input readonly onclick="openKeypad('q_advance')" style="cursor:pointer; background:#fff;" type="text" id="q_advance" value="0" oninput="updateLiveDue()"> <button class="keypad-trigger" onclick="openKeypad('q_advance')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_advance')" style="cursor:pointer; background:#fff;" type="text" id="q_advance" value="0" oninput="updateLiveDue()"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_advance')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  <button style="width:23%; background:#0284c7; color:#fff; font-size:0.75rem; font-weight:bold; border:none; padding:8px 0; border-radius:6px; cursor:pointer;" onclick="set50PercentAdvance()">50% Auto</button>
  </div>
@@ -1006,7 +1706,7 @@
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
  <label style="font-size:0.8rem; font-weight:bold; color:#e65100; width:40%;">Transport/Labor (Rs):</label>
  <div class="input-wrapper" style="width:60%;">
- <input readonly onclick="openKeypad('q_extra_charge')" style="cursor:pointer; background:#fff;" type="text" id="q_extra_charge" value="0"> <button class="keypad-trigger" onclick="openKeypad('q_extra_charge')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('q_extra_charge')" style="cursor:pointer; background:#fff;" type="text" id="q_extra_charge" value="0"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_extra_charge')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
 
@@ -1032,7 +1732,7 @@
  <div class="form-box">
  <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
  <label style="font-weight:bold;">Select Month:</label>
- <input type="text" id="dash_month" value="" style="flex:1;">
+ <input type="text" id="dash_month" value="" placeholder="All Records (or MM/YYYY)" style="flex:1;">
  <button class="action-btn btn-calc" style="flex:0.3; padding:6px;" onclick="loadDashboard()">Load</button>
  </div>
 
@@ -1104,7 +1804,7 @@
  </div>
 
  <div style="font-size:0.82rem; font-weight:800; color:#2563eb; margin:12px 0 6px 0; border-top:1px dashed #cbd5e1; padding-top:8px;">
- BANK & NEFT/RTGS DETAILS (FOR CORPORATE INVOICES)
+ OPTIONAL: BANK & UPI DETAILS (PRINTED ON CUSTOMER BILLS IF FILLED)
  </div>
  <div class="form-grid">
  <div class="form-group">
@@ -1242,7 +1942,7 @@
 <!-- Gemini User Profile Header Card -->
  <div class="gemini-card" style="padding:16px 18px; margin-bottom:12px; display:flex; align-items:center; gap:14px;">
  <div style="position:relative;">
- <img src="logo.png?v=2" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=Smart+Worker&background=0284c7&color=fff';" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8; padding:2px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+ <img src="logo.png?v=34" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=Smart+Worker&background=0284c7&color=fff';" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8; padding:2px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
  <span style="position:absolute; bottom:0; right:0; background:#0284c7; color:#fff; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; border:2px solid #fff;"><i class="fa-solid fa-pen"></i></span>
  </div>
  <div style="flex:1;">
@@ -1297,10 +1997,8 @@
  </div>
  <span id="currentLangBadge" style="font-size:0.75rem; color:#0284c7; font-weight:800; background:#e0f2fe; padding:2px 8px; border-radius:6px;">English</span>
  </div>
- <div class="gemini-lang-toggle">
- <button type="button" id="setLangEn" onclick="changeLanguage('en')" class="gemini-lang-btn active">English</button>
- <button type="button" id="setLangBn" onclick="changeLanguage('bn')" class="gemini-lang-btn">বাংলা</button>
- <button type="button" id="setLangHi" onclick="changeLanguage('hi')" class="gemini-lang-btn">हिन्दी</button>
+ <div class="gemini-lang-toggle" style="grid-template-columns: 1fr;">
+ <button type="button" id="setLangEn" onclick="changeLanguage('en')" class="gemini-lang-btn active" style="width:100%;">English</button>
  </div>
  </div>
 
@@ -1331,6 +2029,15 @@
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
 
+ <!-- General Calculator Option in Settings -->
+ <div onclick="openScreen('calculator', 'CALCULATOR')" class="gemini-menu-row">
+ <div class="gemini-row-left">
+ <span class="gemini-icon" style="color:#0284c7;"><i class="fa-solid fa-calculator"></i></span>
+ <span>General & Money Calculator</span>
+ </div>
+ <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+ </div>
+
  <!-- Business Performance Dashboard -->
  <div onclick="openScreen('dashboard', 'BUSINESS DASHBOARD')" class="gemini-menu-row">
  <div class="gemini-row-left">
@@ -1349,13 +2056,22 @@
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
 
- <!-- Privacy Policy & Legal Terms -->
- <div onclick="window.open('https://doc-hosting.flycricket.io/smart-worker-pro-privacy-policy/f14b6197-2482-4e0f-8827-3a8f11ba788f/privacy')" class="gemini-menu-row">
+ <!-- Google Sheets Auto Sync -->
+ <div onclick="configureGoogleSheetSync()" class="gemini-menu-row">
  <div class="gemini-row-left">
- <span class="gemini-icon" style="color:#64748b;"><i class="fa-solid fa-shield-halved"></i></span>
- <span>Privacy Policy & Legal Terms</span>
+ <span class="gemini-icon" style="color:#16a34a;"><i class="fa-solid fa-table"></i></span>
+ <span>Google Sheets Auto-Sync URL</span>
  </div>
- <i class="fa-solid fa-arrow-up-right-from-square gemini-chevron"></i>
+ <i class="fa-solid fa-chevron-right gemini-chevron"></i>
+ </div>
+
+ <!-- Privacy Policy & Legal Terms (Built-in Legal Protection Shield) -->
+ <div onclick="openPrivacyLegalModal()" class="gemini-menu-row">
+ <div class="gemini-row-left">
+ <span class="gemini-icon" style="color:#0284c7;"><i class="fa-solid fa-scale-balanced"></i></span>
+ <span>Privacy Policy, Terms & Legal Protection</span>
+ </div>
+ <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
  </div>
 
@@ -1389,7 +2105,7 @@
     <div style="display:flex; gap:8px; margin-bottom:8px;">
       <div style="flex:1; position:relative;">
         <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:11px; color:#94a3b8; font-size:0.85rem;"></i>
-        <input type="text" id="khataSearchInput" placeholder="কাস্টমারের নাম, ফোন বা সাইট খুঁজুন..." oninput="handleKhataSearch(this.value)" style="width:100%; padding:8px 10px 8px 32px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="khataSearchInput" placeholder="Search customer name, phone or site..." oninput="handleKhataSearch(this.value)" style="width:100%; padding:8px 10px 8px 32px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <button type="button" onclick="openAddCustomerModal()" style="background:linear-gradient(135deg, #0284c7, #0369a1); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:0.82rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 2px 6px rgba(2,132,199,0.3);">
         <i class="fa-solid fa-user-plus"></i> + Add Customer
@@ -1429,15 +2145,15 @@
     <form onsubmit="handleSaveNewCustomer(event)">
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Customer Full Name *</label>
-        <input type="text" id="new_cust_name" required placeholder="যেমন: অমিতাভ বাবু" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="new_cust_name" required placeholder="e.g. Amitava Babu" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Mobile Number *</label>
-        <input type="tel" id="new_cust_phone" required placeholder="১০ সংখ্যার মোবাইল নম্বর" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="tel" id="new_cust_phone" required placeholder="10-digit mobile number" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Site / Project Location</label>
-        <input type="text" id="new_cust_site" placeholder="যেমন: আমতা চাঁদনী, ২য় তলা বাড়ি" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="new_cust_site" placeholder="e.g. Amta Chandni, 2nd Floor" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
       <div style="margin-bottom:14px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Previous Due Balance (Optional)</label>
@@ -1517,7 +2233,7 @@
     <form onsubmit="handleSavePayment(event)">
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Payment Amount (Rs) *</label>
-        <input type="number" id="pay_amount" required placeholder="যেমন: 5000" style="width:100%; padding:8px 10px; border:1.5px solid #16a34a; border-radius:8px; font-size:1rem; font-weight:800; color:#16a34a; outline:none;">
+        <input type="number" id="pay_amount" required placeholder="e.g. 5000" style="width:100%; padding:8px 10px; border:1.5px solid #16a34a; border-radius:8px; font-size:1rem; font-weight:800; color:#16a34a; outline:none;">
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Payment Method</label>
@@ -1534,7 +2250,7 @@
       </div>
       <div style="margin-bottom:14px;">
         <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Note / Description</label>
-        <input type="text" id="pay_note" placeholder="যেমন: ডমাল উইন্ডো কাজের অ্যাডভান্স" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
+        <input type="text" id="pay_note" placeholder="e.g. Domal window work advance" style="width:100%; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.85rem; outline:none;">
       </div>
 
       <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -1621,13 +2337,13 @@
  <div class="form-group">
  <label>Height (Inches):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sk_h')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button class="keypad-trigger" onclick="openKeypad('sk_h')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sk_h')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
  <label>Width (Inches):</label>
  <div class="input-wrapper">
- <input readonly onclick="openKeypad('sk_w')" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button class="keypad-trigger" onclick="openKeypad('sk_w')">⌨️</button>
+ <input readonly inputmode="none" onclick="openKeypad('sk_w')" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -1706,86 +2422,134 @@
  <!-- ================= 15. ACTIVATION SCREEN ================= -->
  <div id="screen-activation" class="screen">
  <div class="form-box" style="background:#1e293b; color:#fff; border: 1px solid #334155;">
- <div id="actStatusBanner" style="background:#334155; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:0.95rem; margin-bottom:14px;">
+ <div id="actStatusBanner" style="background:#334155; color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; font-size:0.95rem; margin-bottom:10px;">
  Status: FREE PLAN (Limited Features)
  </div>
 
- <!-- 50-User Team Members Management Section (Unlocked for Corporate Pro) -->
- <div id="corporateTeamSection" style="display:none; background:#1e1b4b; border:1px solid #8b5cf6; border-radius:12px; padding:12px; margin-bottom:14px;">
- <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
- <div style="color:#c084fc; font-weight:800; font-size:0.85rem;"><i class="fa-solid fa-users"></i> WORKSHOP TEAM MANAGEMENT (MAX 50 USERS)</div>
- <div id="teamCountBadge" style="background:#8b5cf6; color:#fff; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:10px;">0 / 50 Active</div>
- </div>
- <div class="form-grid" style="margin-bottom:8px;">
- <div class="form-group">
- <input type="text" id="team_member_name" placeholder="Worker / Fitter Name">
- </div>
- <div class="form-group">
- <input type="text" id="team_member_phone" placeholder="Worker Mobile / Gmail">
- </div>
- </div>
- <button class="action-btn" style="background:#8b5cf6; width:100%; padding:8px; font-size:0.8rem; margin-bottom:8px;" onclick="addTeamMember()">
- + Add Worker to Team (Add Worker to Team)
- </button>
- <div id="teamMemberList" style="max-height:120px; overflow-y:auto; font-size:0.75rem; color:#e0e7ff; background:#0f172a; padding:6px; border-radius:6px;">
- No team members added yet.
- </div>
+ <!-- Jio / Telecom Style Live Recharge Validity Card -->
+ <div id="telecomValidityCard" style="display:none; background:#0f172a; border:1.5px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:14px;">
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+     <span id="tvPlanTitle" style="font-size:0.82rem; font-weight:800; color:#38bdf8;">ACTIVE RECHARGE PACK</span>
+     <span id="tvDaysBadge" style="background:#16a34a; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">30 Days Left</span>
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.74rem; color:#cbd5e1; margin-bottom:8px; background:#1e293b; padding:8px; border-radius:8px;">
+     <div><span style="color:#94a3b8;">Start Date:</span> <b id="tvStartDate" style="color:#fff;">--</b></div>
+     <div><span style="color:#94a3b8;">Valid Until:</span> <b id="tvExpiryDate" style="color:#4ade80;">--</b></div>
+   </div>
+   <div style="background:#334155; height:7px; border-radius:4px; overflow:hidden;">
+     <div id="tvProgressBar" style="background:linear-gradient(90deg, #22c55e, #38bdf8); width:100%; height:100%; transition:width 0.3s;"></div>
+   </div>
+   <div id="tvSubNote" style="font-size:0.68rem; color:#94a3b8; margin-top:5px; text-align:center;">
+     Auto-locks automatically when validity days are completed.
+   </div>
  </div>
 
-
- <div style="font-size:0.85rem; font-weight:bold; color:#fbbf24; margin-bottom:10px; text-transform:uppercase;">
- SELECT YOUR PRO MEMBERSHIP PLAN:
+ <!-- CORPORATE EDITION HEADER BADGE -->
+ <div style="background:linear-gradient(90deg, #1e1b4b, #0f172a, #1e1b4b); border:1.5px solid #fbbf24; border-radius:12px; padding:10px 12px; margin-bottom:14px; text-align:center; box-shadow:0 4px 15px rgba(251,191,36,0.2);">
+   <div style="font-size:0.86rem; font-weight:900; color:#fde047; letter-spacing:0.6px; text-transform:uppercase;">
+     <i class="fa-solid fa-crown" style="color:#fbbf24;"></i> EXECUTIVE SINGLE-USER PRO PLANS
+   </div>
+   <div style="font-size:0.72rem; color:#e2e8f0; margin-top:2px;">
+     Strict 1-Person License • Valid for <b>1 Mobile Device Only</b> from Activation Day
+   </div>
  </div>
 
- <!-- TIER 1: KARIGAR PLAN (SOLO FABRICATOR) -->
- <div style="background:#0f172a; border:1.5px solid #38bdf8; border-radius:12px; padding:12px; margin-bottom:12px;">
- <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
- <div style="color:#38bdf8; font-weight:800; font-size:0.9rem;"><i class="fa-solid fa-screwdriver-wrench"></i> 1. KARIGAR PLAN (Solo Fabricator)</div>
- <div style="background:#0284c7; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">1 User (Single)</div>
- </div>
- <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For individual solo fabricators & small local workshops</div>
- <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
- <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹99 / Mo</span>
- <span style="color:#4ade80; font-weight:bold; font-size:0.85rem;">Annual: ₹799 / Yr (Save 33%)</span>
- </div>
- <div style="display:flex; gap:6px;">
- <button class="action-btn" style="background:#0284c7; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Karigar_Monthly')">Choose ₹99 / Month</button>
- <button class="action-btn" style="background:#f59e0b; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Karigar_Annual')">Choose ₹799 / Year</button>
- </div>
- </div>
-
- <!-- TIER 2: WORKSHOP TEAM PLAN (5 TO 10 USERS) -->
- <div style="background:#0f172a; border:2px solid #22c55e; border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 3px 12px rgba(34, 197, 94, 0.15);">
- <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
- <div style="color:#4ade80; font-weight:800; font-size:0.9rem;"><i class="fa-solid fa-industry"></i> 2. WORKSHOP PLAN (Medium Team)</div>
- <div style="background:#16a34a; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">5 to 10 Workers</div>
- </div>
- <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For medium workshops handling 2-3 ongoing sites simultaneously</div>
- <div style="display:flex; justify-content:space-between; align-items:center; background:#14532d; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
- <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹499 / Mo</span>
- <span style="color:#fde047; font-weight:bold; font-size:0.85rem;">Annual: ₹3,999 / Yr (Save 33%)</span>
- </div>
- <div style="display:flex; gap:6px;">
- <button class="action-btn" style="background:#16a34a; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Monthly')">Choose ₹499 / Month</button>
- <button class="action-btn" style="background:#22c55e; color:#000; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Workshop_Annual')">Choose ₹3,999 / Year</button>
- </div>
+ <!-- 1. RADIANT 24K GOLDEN VIP EDITION (365 DAYS / 1 YEAR - FLAGSHIP GOLDEN CARD) -->
+ <div class="corp-plan-golden-vip">
+   <div style="background:linear-gradient(90deg, #fef08a, #fbbf24, #f59e0b, #fef08a); color:#1c1917; font-size:0.68rem; font-weight:900; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; margin-bottom:8px; box-shadow:0 2px 10px rgba(254,240,138,0.5);">
+     <i class="fa-solid fa-crown"></i> GOLDEN VIP CROWN PACK • BEST VALUE (SAVE 33%)
+   </div>
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+     <div>
+       <div style="font-size:1.05rem; font-weight:900; color:#fef08a; text-shadow:0 2px 8px rgba(0,0,0,0.45); letter-spacing:0.3px;">
+         365 DAYS ANNUAL PRO
+       </div>
+       <div style="font-size:0.74rem; color:#fde68a; font-weight:600;">
+         Full 1 Year Uninterrupted Access • <b>1 User Only</b>
+       </div>
+     </div>
+     <div style="text-align:right; background:rgba(0,0,0,0.35); border:1.5px solid #fde047; padding:6px 12px; border-radius:12px;">
+       <div style="font-size:1.45rem; font-weight:900; color:#fef08a; line-height:1; text-shadow:0 0 12px rgba(253,224,71,0.75);">₹799</div>
+       <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-top:2px;">365 Days • 1 User</div>
+     </div>
+   </div>
+   <div style="font-size:0.73rem; color:#fffbeb; background:rgba(0,0,0,0.28); border:1px solid rgba(253,224,71,0.4); border-radius:8px; padding:6px 10px; margin-bottom:10px;">
+     ✨ All 4 Horizontal Workshop PDFs + Custom Logo & QR Bill + Site Khata + Cloud Backup
+   </div>
+   <button class="action-btn corp-gold-btn" style="width:100%; padding:12px; font-size:0.88rem; border-radius:10px;" onclick="subscribeViaWhatsApp('Karigar_Annual')">
+     <i class="fa-solid fa-crown"></i> ACTIVATE 365 DAYS GOLDEN VIP (₹799)
+   </button>
  </div>
 
- <!-- TIER 3: CORPORATE ENTERPRISE (UP TO 50 USERS) -->
- <div style="background:#0f172a; border:2px solid #8b5cf6; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 4px 14px rgba(139, 92, 246, 0.2);">
- <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
- <div style="color:#c084fc; font-weight:800; font-size:0.9rem;"><i class="fa-solid fa-building"></i> 3. CORPORATE ENTERPRISE (Large Factory)</div>
- <div style="background:#7c3aed; color:#fff; font-size:0.68rem; font-weight:bold; padding:2px 6px; border-radius:4px;">Up to 50 Workers</div>
- </div>
- <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">For large contractors, promoters & multi-branch fabrication factories</div>
- <div style="display:flex; justify-content:space-between; align-items:center; background:#2e1065; padding:6px 10px; border-radius:6px; margin-bottom:8px;">
- <span style="color:#fff; font-weight:bold; font-size:0.85rem;">Monthly: ₹1,499 / Mo</span>
- <span style="color:#38bdf8; font-weight:bold; font-size:0.85rem;">Annual: ₹14,999 / Yr</span>
- </div>
- <div style="display:flex; gap:6px;">
- <button class="action-btn" style="background:#8b5cf6; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Monthly')">Choose ₹1,499 / Month</button>
- <button class="action-btn" style="background:#a855f7; color:#fff; font-weight:800; padding:8px; font-size:0.78rem;" onclick="subscribeViaWhatsApp('Corporate_Annual')">Choose ₹14,999 / Year</button>
- </div>
+ <!-- OTHER 3 DISTINCT VIBRANT CORPORATE PLANS (30 DAYS, 90 DAYS, 180 DAYS) -->
+ <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+
+   <!-- 2. 180 DAYS (6 MONTHS) - ROYAL AMETHYST VIOLET-MAGENTA CARD -->
+   <div class="corp-plan-amethyst">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+       <div>
+         <span style="background:#e879f9; color:#2e1065; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:12px; text-transform:uppercase;">
+           <i class="fa-solid fa-gem"></i> HALF-YEARLY CORPORATE PACK
+         </span>
+         <div style="font-size:0.96rem; font-weight:900; color:#fff; margin-top:4px;">
+           180 DAYS (6 MONTHS) PRO
+         </div>
+         <div style="font-size:0.72rem; color:#f5d0fe;">Valid for 180 Days • Strictly 1 User / 1 Device</div>
+       </div>
+       <div style="text-align:right; background:rgba(15,23,42,0.45); border:1.5px solid #e879f9; padding:6px 11px; border-radius:10px;">
+         <div style="font-size:1.3rem; font-weight:900; color:#f0abfc; line-height:1;">₹550</div>
+         <div style="font-size:0.64rem; color:#fff; font-weight:700; margin-top:2px;">180 Days</div>
+       </div>
+     </div>
+     <button class="action-btn" style="width:100%; background:linear-gradient(90deg, #e879f9, #a855f7, #7e22ce); color:#fff; font-weight:800; padding:10px; font-size:0.82rem; border-radius:8px; border:1px solid #f5d0fe; box-shadow:0 4px 12px rgba(217,70,239,0.4);" onclick="subscribeViaWhatsApp('Karigar_6M')">
+       <i class="fa-solid fa-bolt"></i> SELECT 180 DAYS PLAN — ₹550 (1 User)
+     </button>
+   </div>
+
+   <!-- 3. 90 DAYS (3 MONTHS) - RADIANT EMERALD TEAL-GREEN CARD -->
+   <div class="corp-plan-emerald">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+       <div>
+         <span style="background:#34d399; color:#022c22; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:12px; text-transform:uppercase;">
+           <i class="fa-solid fa-shield-halved"></i> QUARTERLY SMART PACK
+         </span>
+         <div style="font-size:0.96rem; font-weight:900; color:#fff; margin-top:4px;">
+           90 DAYS (3 MONTHS) PRO
+         </div>
+         <div style="font-size:0.72rem; color:#a7f3d0;">Valid for 90 Days • Strictly 1 User / 1 Device</div>
+       </div>
+       <div style="text-align:right; background:rgba(15,23,42,0.45); border:1.5px solid #34d399; padding:6px 11px; border-radius:10px;">
+         <div style="font-size:1.3rem; font-weight:900; color:#6ee7b7; line-height:1;">₹280</div>
+         <div style="font-size:0.64rem; color:#fff; font-weight:700; margin-top:2px;">90 Days</div>
+       </div>
+     </div>
+     <button class="action-btn" style="width:100%; background:linear-gradient(90deg, #10b981, #059669, #047857); color:#fff; font-weight:800; padding:10px; font-size:0.82rem; border-radius:8px; border:1px solid #a7f3d0; box-shadow:0 4px 12px rgba(16,185,129,0.4);" onclick="subscribeViaWhatsApp('Karigar_3M')">
+       <i class="fa-solid fa-circle-check"></i> SELECT 90 DAYS PLAN — ₹280 (1 User)
+     </button>
+   </div>
+
+   <!-- 4. 30 DAYS (1 MONTH) - ELECTRIC SAPPHIRE CYAN-BLUE CARD -->
+   <div class="corp-plan-sapphire">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+       <div>
+         <span style="background:#38bdf8; color:#082f49; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:12px; text-transform:uppercase;">
+           <i class="fa-solid fa-rocket"></i> MONTHLY STARTER PACK
+         </span>
+         <div style="font-size:0.96rem; font-weight:900; color:#fff; margin-top:4px;">
+           30 DAYS (1 MONTH) PRO
+         </div>
+         <div style="font-size:0.72rem; color:#bae6fd;">Valid for 30 Days • Strictly 1 User / 1 Device</div>
+       </div>
+       <div style="text-align:right; background:rgba(15,23,42,0.45); border:1.5px solid #38bdf8; padding:6px 11px; border-radius:10px;">
+         <div style="font-size:1.3rem; font-weight:900; color:#7dd3fc; line-height:1;">₹99</div>
+         <div style="font-size:0.64rem; color:#fff; font-weight:700; margin-top:2px;">30 Days</div>
+       </div>
+     </div>
+     <button class="action-btn" style="width:100%; background:linear-gradient(90deg, #38bdf8, #0284c7, #0369a1); color:#fff; font-weight:800; padding:10px; font-size:0.82rem; border-radius:8px; border:1px solid #bae6fd; box-shadow:0 4px 12px rgba(2,132,199,0.4);" onclick="subscribeViaWhatsApp('Karigar_Monthly')">
+       <i class="fa-solid fa-key"></i> SELECT 30 DAYS PLAN — ₹99 (1 User)
+     </button>
+   </div>
+
  </div>
 
  <!-- Pro Benefits -->
@@ -1829,7 +2593,342 @@
 
  </div>
 
- <!-- Bottom Nav -->
+ 
+  <!-- ================= 16. ANDROID STANDARD, SCIENTIFIC, UNIT CONVERTER, HISTORY & SETTINGS CALCULATOR (100% ENGLISH) ================= -->
+  <div id="screen-calculator" class="screen">
+    <div id="androidCalcShell" class="android-calc-shell">
+
+      <!-- MAIN CALCULATOR VIEW (Screenshots 1 & 2) -->
+      <div id="calcMainView" class="android-calc-main-view">
+        <!-- Display Area -->
+        <div class="android-calc-display">
+          <div id="calcMemIndicator" class="android-calc-mem-badge" style="display:none;">M</div>
+          <div id="calcExpressionLine" class="android-calc-expr"></div>
+          <div id="calcMainResult" class="android-calc-result">0</div>
+          <div id="calcLivePreview" class="android-calc-preview"></div>
+        </div>
+
+        <!-- Optional Memory Bar (Toggled from Calculator Settings) -->
+        <div id="calcMemoryBar" class="android-calc-memory-bar" style="display:none;">
+          <button type="button" onclick="calcMemoryOp('MC')">MC</button>
+          <button type="button" onclick="calcMemoryOp('MR')">MR</button>
+          <button type="button" onclick="calcMemoryOp('M+')">M+</button>
+          <button type="button" onclick="calcMemoryOp('M-')">M-</button>
+        </div>
+
+        <!-- 6-Icon Action Toolbar (History, Unit Converter, Scientific Toggle, Dark Mode, Settings, Backspace) -->
+        <div class="android-calc-toolbar">
+          <button type="button" class="android-tool-btn" onclick="openCalcSubScreen('history')" title="History">
+            <i class="fa-regular fa-clock"></i>
+          </button>
+          <button type="button" class="android-tool-btn" id="btnToolConverter" onclick="toggleUnitConverterPanel()" title="Unit Converter">
+            <i class="fa-solid fa-ruler-horizontal"></i>
+          </button>
+          <button type="button" class="android-tool-btn" id="btnToolScientific" onclick="toggleCalcScientificMode()" title="Scientific Calculator">
+            <span class="sci-icon-box" id="sciToggleIconText">√π<br>e=</span>
+          </button>
+          <button type="button" class="android-tool-btn" id="btnToolTheme" onclick="toggleAndroidCalcTheme()" title="Light / Dark Mode">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          <button type="button" class="android-tool-btn" onclick="openCalcSubScreen('settings')" title="Calculator Settings">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+          <button type="button" class="android-tool-btn backspace-btn" onclick="calcBackspace()" title="Backspace">
+            <i class="fa-solid fa-delete-left"></i>
+          </button>
+        </div>
+
+        <!-- KEYPAD CONTAINER: Switches between Standard 4x5 (Screenshot 1) and Scientific 5x7 (Screenshot 2) -->
+        <div id="calcKeypadArea" class="android-calc-keypad-area">
+          <!-- STANDARD 4x5 KEYPAD (Screenshot 1) -->
+          <div id="calcGridStandard" class="android-keypad-grid std-grid" style="display:grid !important;">
+            <button type="button" class="ak-btn ak-clear" onclick="calcAllClear()">C</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputParen()">()</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('%')">%</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('÷')">÷</button>
+
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('7')">7</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('8')">8</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('9')">9</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('×')">×</button>
+
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('4')">4</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('5')">5</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('6')">6</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('−')">−</button>
+
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('1')">1</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('2')">2</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('3')">3</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('+')">+</button>
+
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('0')">0</button>
+            <button type="button" class="ak-btn ak-num" id="btnMultiZeroStd" onclick="calcInputMultiZero()">00</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputDot()">.</button>
+            <button type="button" class="ak-btn ak-equal" onclick="calcEvaluateEqual()">=</button>
+          </div>
+
+          <!-- SCIENTIFIC 5x7 KEYPAD (Screenshot 2) -->
+          <div id="calcGridScientific" class="android-keypad-grid sci-grid" style="display:none !important;">
+            <button type="button" class="ak-btn ak-sci" onclick="toggleSciInverse()">⇄</button>
+            <button type="button" class="ak-btn ak-sci" id="btnSciRadDeg" onclick="toggleSciRadDeg()">Rad</button>
+            <button type="button" class="ak-btn ak-sci" id="btnSciSin" onclick="calcSciFunc('sin')">sin</button>
+            <button type="button" class="ak-btn ak-sci" id="btnSciCos" onclick="calcSciFunc('cos')">cos</button>
+            <button type="button" class="ak-btn ak-sci" id="btnSciTan" onclick="calcSciFunc('tan')">tan</button>
+
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('sqrt')">√</button>
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('ln')">ln</button>
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('log')">log</button>
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('inv')">1/x</button>
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('exp')">e<sup>x</sup></button>
+
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('sq')">x²</button>
+            <button type="button" class="ak-btn ak-clear" onclick="calcAllClear()">C</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputParen()">()</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('%')">%</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('÷')">÷</button>
+
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('pow')">x<sup>y</sup></button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('7')">7</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('8')">8</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('9')">9</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('×')">×</button>
+
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('abs')">|x|</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('4')">4</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('5')">5</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('6')">6</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('−')">−</button>
+
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('pi')">π</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('1')">1</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('2')">2</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('3')">3</button>
+            <button type="button" class="ak-btn ak-op" onclick="calcInputOp('+')">+</button>
+
+            <button type="button" class="ak-btn ak-sci" onclick="calcSciFunc('e')">e</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputNum('0')">0</button>
+            <button type="button" class="ak-btn ak-num" id="btnMultiZeroSci" onclick="calcInputMultiZero()">00</button>
+            <button type="button" class="ak-btn ak-num" onclick="calcInputDot()">.</button>
+            <button type="button" class="ak-btn ak-equal" onclick="calcEvaluateEqual()">=</button>
+          </div>
+        </div>
+
+        <!-- UNIT CONVERTER SHEET (Screenshot 3 - 4-Column Grid + Interactive Tool Panel) -->
+        <div id="calcUnitConverterPanel" class="android-unit-converter-sheet" style="display:none;">
+          <div class="uc-sheet-header">
+            <span>UNIT CONVERTER</span>
+            <button type="button" class="uc-close-btn" onclick="toggleUnitConverterPanel()">✕</button>
+          </div>
+
+          <!-- Interactive Converter / Calculator Workspace (Opens when any icon is tapped) -->
+          <div id="ucActiveToolBox" class="uc-active-tool-box" style="display:none;"></div>
+
+          <!-- 4-Column Icon Grid matching Screenshot 3 -->
+          <div class="uc-icon-grid">
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('currency')">
+              <i class="fa-solid fa-circle-dollar-to-slot"></i><span>Currency</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('area')">
+              <i class="fa-solid fa-vector-square"></i><span>Area</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('length')">
+              <i class="fa-solid fa-ruler-horizontal"></i><span>Length</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('temperature')">
+              <i class="fa-solid fa-temperature-half"></i><span>Temperature</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('volume')">
+              <i class="fa-solid fa-cube"></i><span>Volume</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('mass')">
+              <i class="fa-solid fa-weight-scale"></i><span>Mass</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('data')">
+              <i class="fa-solid fa-chart-pie"></i><span>Data</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('speed')">
+              <i class="fa-solid fa-gauge-high"></i><span>Speed</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('time')">
+              <i class="fa-regular fa-clock"></i><span>Time</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('pressure')">
+              <i class="fa-solid fa-gauge"></i><span>Pressure</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('force')">
+              <i class="fa-solid fa-up-right-from-square"></i><span>Force</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('power')">
+              <i class="fa-solid fa-bolt"></i><span>Power</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('energy')">
+              <i class="fa-solid fa-fire"></i><span>Energy</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('frequency')">
+              <i class="fa-solid fa-wave-square"></i><span>Frequency</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('angle')">
+              <i class="fa-solid fa-drafting-compass"></i><span>Angle</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('fuel')">
+              <i class="fa-solid fa-gas-pump"></i><span>Fuel</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('age')">
+              <i class="fa-solid fa-cake-candles"></i><span>Age</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('numeral')">
+              <i class="fa-solid fa-hashtag"></i><span>Numeral System</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('gst')">
+              <i class="fa-solid fa-file-invoice-dollar"></i><span>GST</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('split_bill')">
+              <i class="fa-solid fa-receipt"></i><span>Split bill</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('date')">
+              <i class="fa-regular fa-calendar-days"></i><span>Date</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('bmi')">
+              <i class="fa-solid fa-person"></i><span>BMI</span>
+            </button>
+            <button type="button" class="uc-grid-item active-discount" onclick="openUnitConverterTool('discount')">
+              <i class="fa-solid fa-tag"></i><span>Discount</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('loan')">
+              <i class="fa-solid fa-hand-holding-dollar"></i><span>Loan</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('fuel_eff')">
+              <i class="fa-solid fa-oil-can"></i><span>Fuel efficiency</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('fuel_cost')">
+              <i class="fa-solid fa-coins"></i><span>Fuel cost</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('investment')">
+              <i class="fa-solid fa-chart-line"></i><span>Investment</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('cycle')">
+              <i class="fa-regular fa-calendar-check"></i><span>Menstrual cycle</span>
+            </button>
+
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('bmr')">
+              <i class="fa-solid fa-fire-flame-curved"></i><span>BMR</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('gpa')">
+              <i class="fa-solid fa-graduation-cap"></i><span>GPA</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('world_time')">
+              <i class="fa-solid fa-globe"></i><span>World Time</span>
+            </button>
+            <button type="button" class="uc-grid-item" onclick="openUnitConverterTool('savings')">
+              <i class="fa-solid fa-piggy-bank"></i><span>Savings</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY SUB-SCREEN (Screenshot 5) -->
+      <div id="calcHistoryView" class="android-calc-subview" style="display:none;">
+        <div class="android-subview-header">
+          <button type="button" class="subview-back-btn" onclick="openCalcSubScreen('main')">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <span class="subview-title">History</span>
+          <button type="button" class="subview-menu-btn" onclick="calcClearHistory()" title="Clear History">
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+          </button>
+        </div>
+        <div id="calcHistoryTape" class="android-history-list"></div>
+      </div>
+
+      <!-- SETTINGS SUB-SCREEN (Screenshot 4) -->
+      <div id="calcSettingsView" class="android-calc-subview" style="display:none;">
+        <div class="android-subview-header">
+          <button type="button" class="subview-back-btn" onclick="openCalcSubScreen('main')">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <span class="subview-title">Settings</span>
+          <button type="button" class="subview-menu-btn">
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+          </button>
+        </div>
+        <div class="android-settings-band">Appearance</div>
+        <div class="android-settings-list">
+          <div class="android-setting-row" onclick="cycleCalcAccentColor()">
+            <span>Change color</span>
+            <span id="calcColorSwatch" class="android-color-swatch" style="background:#0284c7;"></span>
+          </div>
+          <div class="android-setting-row">
+            <span>Rounded buttons</span>
+            <label class="android-switch">
+              <input type="checkbox" id="chkCalcRounded" onchange="applyCalcSettingsUI()">
+              <span class="android-slider"></span>
+            </label>
+          </div>
+          <div class="android-setting-row">
+            <span>Change font</span>
+            <span style="font-size:0.78rem; color:#64748b;">Default</span>
+          </div>
+          <div class="android-setting-row">
+            <span>Change app name</span>
+            <span style="font-size:0.78rem; color:#64748b;">Calculator</span>
+          </div>
+          <div class="android-setting-row">
+            <span>Show memory buttons</span>
+            <label class="android-switch">
+              <input type="checkbox" id="chkCalcMemory" onchange="applyCalcSettingsUI()">
+              <span class="android-slider"></span>
+            </label>
+          </div>
+          <div class="android-setting-row">
+            <span>Enable double zero</span>
+            <label class="android-switch">
+              <input type="checkbox" id="chkCalcDoubleZero" checked onchange="applyCalcSettingsUI('double')">
+              <span class="android-slider"></span>
+            </label>
+          </div>
+          <div class="android-setting-row">
+            <span>Enable triple zero</span>
+            <label class="android-switch">
+              <input type="checkbox" id="chkCalcTripleZero" onchange="applyCalcSettingsUI('triple')">
+              <span class="android-slider"></span>
+            </label>
+          </div>
+          <div class="android-setting-row">
+            <span>Manage task bar buttons</span>
+            <span style="font-size:0.78rem; color:#64748b;">All Active</span>
+          </div>
+          <div class="android-setting-row">
+            <span>Comma button position</span>
+            <span style="font-size:0.78rem; color:#64748b;">Standard</span>
+          </div>
+          <div class="android-setting-row">
+            <span>Set auto night mode time</span>
+            <label class="android-switch">
+              <input type="checkbox" id="chkCalcNightMode" onchange="toggleAndroidCalcTheme()">
+              <span class="android-slider"></span>
+            </label>
+          </div>
+          <div class="android-setting-row">
+            <span>Enable full screen</span>
+            <label class="android-switch">
+              <input type="checkbox" id="chkCalcFullScreen" onchange="applyCalcSettingsUI()">
+              <span class="android-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
  <nav class="bottom-nav">
  <div class="nav-item active" onclick="goHome()"><i class="fa-solid fa-house"></i><span data-i18n="nav_home">Home</span></div>
  <div class="nav-item" onclick="openScreen('dashboard', 'DASHBOARD')"><i class="fa-solid fa-chart-column"></i><span data-i18n="nav_dashboard">Dashboard</span></div>
@@ -1847,11 +2946,11 @@
 
 
 <!-- Keypad Modal (Numbers & 16 Fractions) -->
-  <div class="modal-overlay" id="keypadModal" onclick="if(event.target===this) this.classList.remove('active')">
+  <div class="modal-overlay" id="keypadModal" onclick="if(event.target===this) closeKeypadModal()">
     <div class="keypad-modal">
       <div class="keypad-header-bar">
         <span class="keypad-title" data-i18n="keypad_title">Smart Dimension Calculator</span>
-        <button type="button" class="keypad-close-btn" onclick="document.getElementById('keypadModal').classList.remove('active')">&times;</button>
+        <button type="button" class="keypad-close-btn" onclick="closeKeypadModal()">&times;</button>
       </div>
       <div class="keypad-display-row">
         <div class="keypad-display" id="kDisplay">0</div>
@@ -1926,11 +3025,6 @@
       </div>
     </div>
   </div>
-    </div>
-  </div>
- </div>
- 
- </div>
 
  <!-- Expense Modal -->
  <div class="modal-overlay" id="expenseModal">
@@ -1965,7 +3059,7 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js"></script>
+  <script src="app.js?v=35"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
@@ -1978,5 +3072,93 @@
     });
   }
 </script>
+
+<!-- Secure Password Reset & Owner Verification Request Modal -->
+<div id="forgotPassModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px);">
+  <div style="background:#ffffff; border-radius:18px; max-width:440px; width:100%; padding:22px; box-shadow:0 12px 35px rgba(0,0,0,0.35); text-align:left;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+      <h3 style="font-size:1.05rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-user-shield" style="color:#2563eb;"></i> <span>Forgot Password Verification</span>
+      </h3>
+      <button type="button" onclick="closeForgotPassModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer;">✕</button>
+    </div>
+
+    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px; margin-bottom:14px; font-size:0.75rem; color:#1e40af; line-height:1.45;">
+      <i class="fa-solid fa-shield-halved" style="color:#2563eb;"></i> <b>Security Notice:</b> To prevent unauthorized access, password will only be released after Admin verifies genuine workshop ownership via direct telephone call.
+    </div>
+
+    <form onsubmit="handleForgotPassSubmit(event)">
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.78rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Registered Mobile Number *</label>
+        <input type="tel" id="fp_phone" required placeholder="Enter 10-digit mobile number" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.78rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Your Full Name *</label>
+        <input type="text" id="fp_name" required placeholder="Owner full name" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Workshop / Shop Name *</label>
+        <input type="text" id="fp_shop" required placeholder="e.g. Royal Aluminium Works" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none;">
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="submit" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; border:none; padding:11px; border-radius:8px; font-size:0.88rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(37,99,235,0.3);">
+          <i class="fa-solid fa-paper-plane"></i> Submit Verification Request to Admin
+        </button>
+        <button type="button" onclick="contactAdminDirectWhatsApp()" style="background:#25D366; color:#fff; border:none; padding:10px; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <i class="fa-brands fa-whatsapp"></i> Call / WhatsApp Admin (9239413517)
+        </button>
+        <button type="button" onclick="closeForgotPassModal()" style="background:#f1f5f9; color:#475569; border:none; padding:8px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+  <!-- ================= IRONCLAD PRIVACY POLICY, TERMS OF USE & LEGAL DISCLAIMER MODAL (DPDP ACT 2023 & IT ACT 2000 COMPLIANT) ================= -->
+  <div id="privacyLegalModal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,0.82); z-index:999999; align-items:center; justify-content:center; padding:14px;">
+    <div style="background:#ffffff; color:#0f172a; width:100%; max-width:540px; max-height:88vh; border-radius:16px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.45); border:1px solid #cbd5e1;">
+      <div style="background:linear-gradient(135deg,#0f172a,#1e293b); color:#ffffff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:0.95rem;">
+          <i class="fa-solid fa-scale-balanced" style="color:#38bdf8;"></i>
+          <span>PRIVACY POLICY & LEGAL TERMS OF USE</span>
+        </div>
+        <button type="button" onclick="closePrivacyLegalModal()" style="background:rgba(255,255,255,0.12); border:none; color:#fff; width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:1rem;">✕</button>
+      </div>
+
+      <div style="padding:16px 18px; overflow-y:auto; font-size:0.8rem; line-height:1.55; color:#334155;">
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:0.76rem; color:#0369a1;">
+          <b>Official Platform:</b> https://smartworkerpro.in<br>
+          <b>Compliance:</b> Information Technology Act, 2000 & Digital Personal Data Protection (DPDP) Act, 2023 (India)
+        </div>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">1. Zero Data-Leakage & User Data Privacy (DPDP Act 2023)</h4>
+        <p style="margin-bottom:8px;">Smart Worker Pro operates on a strict <b>Per-User Cryptographic Vault (`SHA-256`)</b> architecture. All customer measurements, quotations, invoices, Customer Khata ledgers, workshop logos, and payment QR codes created by a user are stored locally on the user's device and/or in the user's private encrypted cloud vault. We never sell, rent, share, or expose any user's business or client data to any third party or other user.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">2. Fabrication Cutting & Calculation Disclaimer (Zero Liability)</h4>
+        <p style="margin-bottom:8px;">All aluminium, uPVC, glass, ACP sheet, false ceiling, and hardware calculations provided by Smart Worker Pro are mathematical estimation aids based on standard section parameters. Because aluminium extrusion profiles, track thickness, and site wall levels vary across manufacturers, <b>the user/fabricator must physically verify all measurements on-site before cutting any pipe, glass, or board</b>. Smart Worker Pro and its proprietor shall have <b>zero financial or legal liability</b> for any material wastage, cutting error, glass breakage, or commercial loss.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">3. Billing, GST & Financial Record Responsibility</h4>
+        <p style="margin-bottom:8px;">The Quotation, PDF Invoice, and Customer Ledger modules are digital record-keeping tools provided "as-is". The workshop owner is solely responsible for verifying invoice totals, GSTIN accuracy, tax compliance, and payment collection with their clients. Smart Worker Pro is not a payment bank or financial intermediary between the workshop and its clients.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">4. Single-User Subscription & Non-Refundable License</h4>
+        <p style="margin-bottom:8px;">Each Pro Subscription Plan (30 Days, 90 Days, 180 Days, or 365 Days) is strictly a <b>Single-User / Single-Device (1 Mobile Only)</b> software license tied to the user's unique Device ID. Once an 8-character Activation Key is issued and activated, the subscription fee is non-refundable and non-transferable.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">5. Intellectual Property & Anti-Cloning Protection</h4>
+        <p style="margin-bottom:8px;">The source code, UI design, cutting formulas, and brand assets of Smart Worker Pro (`smartworkerpro.in`) are protected under the Copyright Act, 1957 (India). Any unauthorized copying, reverse-engineering, decompilation, or domain cloning is strictly prohibited and subject to legal action.</p>
+
+        <h4 style="color:#0f172a; font-size:0.86rem; font-weight:800; margin:10px 0 4px;">6. Governing Law & Exclusive Jurisdiction</h4>
+        <p style="margin-bottom:4px;">By using Smart Worker Pro, you agree to all terms above. Any dispute or legal proceeding arising out of the use of this software shall be governed by the laws of India and shall be subject to the <b>exclusive jurisdiction of the Courts in Howrah, West Bengal, India</b>.</p>
+      </div>
+
+      <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <span style="font-size:0.72rem; color:#16a34a; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Accepted & Active on this Device</span>
+        <button type="button" onclick="acceptAndClosePrivacyLegalModal()" style="background:#0284c7; color:#ffffff; border:none; padding:9px 18px; border-radius:8px; font-weight:800; font-size:0.8rem; cursor:pointer;">I Agree & Close</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
