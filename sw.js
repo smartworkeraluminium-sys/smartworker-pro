@@ -1,66 +1,56 @@
-// Smart Worker Pro v50 - Instant Cache + Background Revalidate Service Worker
 const CACHE_NAME = 'smart-worker-pro-v50';
-const ASSETS_TO_CACHE = [
+const CORE_ASSETS = [
   './',
   './index.html',
-  './admin.html',
-  './style.css',
-  './app.js',
-  './logo.png',
-  './manifest.json'
+  './style.css?v=35',
+  './app.js?v=34',
+  './manifest.json',
+  './logo.png?v=34'
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', function(event) {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).catch((err) => {
-      console.warn('SW cache.addAll warning:', err);
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.addAll(CORE_ASSETS).catch(function() {});
     })
   );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', function(event) {
   event.waitUntil(
-    caches.keys().then((keys) => {
+    caches.keys().then(function(keys) {
       return Promise.all(
-        keys.map((k) => {
-          if (k !== CACHE_NAME) return caches.delete(k);
+        keys.map(function(key) {
+          if (key !== CACHE_NAME) return caches.delete(key);
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(function() {
+      return self.clients.claim();
+    })
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // External APIs, Apps Script, or Firebase: Network first
-  if (url.origin.includes('firebase') || url.origin.includes('googleapis') || url.origin.includes('gstatic') || url.origin.includes('firestore') || url.origin.includes('script.google.com') || url.origin.includes('script.googleusercontent.com')) {
-    if (event.request.method !== 'GET') return;
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(JSON.stringify({ offline: true }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
-    );
+self.addEventListener('fetch', function(event) {
+  if (event.request.method !== 'GET') return;
+  const reqUrl = event.request.url;
+  if (reqUrl.includes('firestore.googleapis.com') || reqUrl.includes('firebaseio.com') || reqUrl.includes('script.google.com')) {
     return;
   }
-
-  // Local assets: Cache-First with background update for instant speed
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-          const resClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+    caches.match(event.request).then(function(cachedResp) {
+      const fetchPromise = fetch(event.request).then(function(netResp) {
+        if (netResp && netResp.status === 200) {
+          const respClone = netResp.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, respClone);
+          });
         }
-        return networkResponse;
-      }).catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
+        return netResp;
+      }).catch(function() {
+        return cachedResp;
+      });
+      return cachedResp || fetchPromise;
     })
   );
 });
