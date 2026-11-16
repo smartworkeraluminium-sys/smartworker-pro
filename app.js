@@ -1,4 +1,46 @@
 
+function getGlassCuttingTechNote(gSpec) {
+  gSpec = String(gSpec || '5mm Clear Float Glass (Transparent)');
+  if (gSpec.includes('One-Way') || gSpec.includes('Reflective')) {
+    return 'Reflective Mirror Coating OUTSIDE | Cut on Non-Coated Side';
+  }
+  if (gSpec.includes('Solar Control')) {
+    return 'Solar Coating Side Identified | Edge Grinding Recommended';
+  }
+  if (gSpec.includes('Toughened')) {
+    return 'Cut & Edge Polish BEFORE Tempering (No Cutting After Toughening)';
+  }
+  if (gSpec.includes('Frosted') || gSpec.includes('Pinhead') || gSpec.includes('Bajri')) {
+    return 'Cut on Smooth Side (Rough/Textured Privacy Side Inside)';
+  }
+  if (gSpec.includes('Extra Clear')) {
+    return 'Low-Iron Ultra White Glass | Clean Diamond Wheel Cut';
+  }
+  if (gSpec.includes('Tinted')) {
+    return 'Heat-Absorbing Tinted Float | Standard Diamond Wheel Cut';
+  }
+  if (gSpec.includes('Laminated')) {
+    return '2-Ply Glass + PVB Interlayer | Score Both Sides & Heat/Blade Cut PVB';
+  }
+  if (gSpec.includes('Heat-Strengthened')) {
+    return 'Cut & Edge Grind BEFORE Heat-Strengthening (High-Temp Thermal Safe)';
+  }
+  if (gSpec.includes('Bulletproof')) {
+    return 'Multi-Layer Armored Factory Custom Unit (No On-Site Cutting)';
+  }
+  if (gSpec.includes('ACP') || gSpec.includes('uPVC') || gSpec.includes('WPC') || gSpec.includes('Wooden')) {
+    return 'Non-Glass Panel | Cut with Circular Saw / Router Blade (3mm-20mm Beading)';
+  }
+  if (gSpec.includes('Acrylic') || gSpec.includes('Polycarbonate')) {
+    return 'Plastic/Acrylic Sheet | Fine-Tooth Saw or Acrylic Scorer (Keep Protective Film)';
+  }
+  if (gSpec.includes('DGU')) {
+    return 'Double Glazed Sealed Unit (Sliding up to 20mm / Casement up to 30mm)';
+  }
+  return 'Annealed (কাঁচা গ্লাস) | Standard Diamond Wheel Cut & Smooth Edge';
+}
+
+
 // ========================================================
 // GLASS BILLING SLAB SAFE-GUARD ENGINE (6-INCH / 1-FOOT SLAB PROTECTOR)
 // Prevents glass shops from jumping to next 6-inch slab for +1 suta!
@@ -1292,8 +1334,10 @@ function keypadEnter() {
  alu_txt += `\n--- MOSQUITO NET ---\n> Mesh Top/Bot: ${disp(mesh_w_in)} (${2 * win_qty} pc)\n> Mesh Handle: ${disp(v_cut_in)} (${2 * win_qty} pc)\n> Mesh Interlock Clip: ${disp(v_cut_in)} (${1 * win_qty} pc)\n`;
  }
 
- const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c * win_qty} pc)\n`;
- const glass_key = `${disp(gh_in)} x ${disp(gw_in)}`;
+ const dm_g_spec = document.getElementById('dm_glass_spec') ? document.getElementById('dm_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+ const dm_g_tech = getGlassCuttingTechNote(dm_g_spec);
+ const glass_txt = `\n--- GLASS SIZES & SPECIFICATION ---\n> Glass Type: ${dm_g_spec}\n> Cutting Size: ${disp(gh_in)} x ${disp(gw_in)} (${s_c * win_qty} pc)\n> Cutter Note: ${dm_g_tech}\n`;
+ const glass_key = `${disp(gh_in)} x ${disp(gw_in)} | ${dm_g_spec} [${dm_g_tech}]`;
  dm_glass_dict[glass_key] = (dm_glass_dict[glass_key] || 0) + (s_c * win_qty);
 
  let track_type = t_text.split(' ')[0];
@@ -1415,8 +1459,10 @@ function keypadEnter() {
  alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty * win_qty} pc)\n`;
  alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty * win_qty} pc)\n`;
 
- const glass_txt = `\n--- GLASS SIZES ---\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c * win_qty} pc)\n`;
- const glass_key = `${disp(glass_h)} x ${disp(glass_w)}`;
+ const sl_g_spec = document.getElementById('sl_glass_spec') ? document.getElementById('sl_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+ const sl_g_tech = getGlassCuttingTechNote(sl_g_spec);
+ const glass_txt = `\n--- GLASS SIZES & SPECIFICATION ---\n> Glass Type: ${sl_g_spec}\n> Cutting Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c * win_qty} pc)\n> Cutter Note: ${sl_g_tech}\n`;
+ const glass_key = `${disp(glass_h)} x ${disp(glass_w)} | ${sl_g_spec} [${sl_g_tech}]`;
  sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + (g_c * win_qty);
 
  const track_type = t_type.split(' ')[0];
@@ -1555,8 +1601,10 @@ function keypadEnter() {
  out_txt += `[OPENABLE SASH | Qty: ${top_open * win_qty} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\n`;
  const s1_h = top_gap_h + overlap, s1_w = w_gap_open + overlap;
  const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
- out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${top_open * win_qty} Sash)\n > Glass Size: ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
- const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
+ const cc_g_spec = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+ const cc_g_tech = getGlassCuttingTechNote(cc_g_spec);
+ out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${top_open * win_qty} Sash)\n > Glass Type: ${cc_g_spec}\n > Glass Size: ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc) [${cc_g_tech}]\n`;
+ const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass) | ${cc_g_spec} [${cc_g_tech}]`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (top_open * win_qty);
  for (let i = 0; i < top_open * 2 * win_qty; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
  }
@@ -1564,8 +1612,10 @@ function keypadEnter() {
  if (top_fixed > 0) {
  out_txt += `[FIXED GLASS | Qty: ${top_fixed * win_qty} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_fixed)}]\n`;
  const g_h = top_gap_h - glass_m_fixed, g_w = w_gap_fixed - glass_m_fixed;
- out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)} (${top_fixed * win_qty} pc)\n > Square Clip (Beading): Required\n`;
- const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
+ const cc_g_spec_f1 = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+ const cc_g_tech_f1 = getGlassCuttingTechNote(cc_g_spec_f1);
+ out_txt += ` > Glass Type: ${cc_g_spec_f1}\n > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)} (${top_fixed * win_qty} pc) [${cc_g_tech_f1}]\n > Square Clip (Beading): Required\n`;
+ const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass) | ${cc_g_spec_f1} [${cc_g_tech_f1}]`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (top_fixed * win_qty);
  const beading_length = (top_gap_h + w_gap_fixed) * 2 / 25.4;
  for (let i = 0; i < top_fixed * win_qty; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
@@ -1577,16 +1627,20 @@ function keypadEnter() {
  out_txt += `[OPENABLE SASH | Qty: ${bot_open * win_qty} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
  const s1_h = bot_gap_h + overlap, s1_w = bot_gap_w + overlap;
  const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
- out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${bot_open * win_qty} Sash)\n > Glass Size: ${disp(g_h)} x ${disp(g_w)} (${bot_open * win_qty} pc)\n`;
- const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass)`;
+ const cc_g_spec_b1 = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+ const cc_g_tech_b1 = getGlassCuttingTechNote(cc_g_spec_b1);
+ out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${bot_open * win_qty} Sash)\n > Glass Type: ${cc_g_spec_b1}\n > Glass Size: ${disp(g_h)} x ${disp(g_w)} (${bot_open * win_qty} pc) [${cc_g_tech_b1}]\n`;
+ const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash Glass) | ${cc_g_spec_b1} [${cc_g_tech_b1}]`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (bot_open * win_qty);
  for (let i = 0; i < bot_open * 2 * win_qty; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
  }
  if (bot_fixed > 0) {
  out_txt += `[FIXED GLASS | Qty: ${bot_fixed * win_qty} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
  const g_h = bot_gap_h - glass_m_fixed, g_w = bot_gap_w - glass_m_fixed;
- out_txt += ` > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)} (${bot_fixed * win_qty} pc)\n > Square Clip (Beading): Required\n`;
- const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass)`;
+ const cc_g_spec_b2 = document.getElementById('cc_glass_spec') ? document.getElementById('cc_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+ const cc_g_tech_b2 = getGlassCuttingTechNote(cc_g_spec_b2);
+ out_txt += ` > Glass Type: ${cc_g_spec_b2}\n > Fixed Glass Size: ${disp(g_h)} x ${disp(g_w)} (${bot_fixed * win_qty} pc) [${cc_g_tech_b2}]\n > Square Clip (Beading): Required\n`;
+ const gKey = `${disp(g_h)} x ${disp(g_w)} (Fixed Glass) | ${cc_g_spec_b2} [${cc_g_tech_b2}]`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (bot_fixed * win_qty);
  const beading_length = (bot_gap_h + bot_gap_w) * 2 / 25.4;
  for (let i = 0; i < bot_fixed * win_qty; i++) cc_buckets["Square Clip (Beading)"].push(beading_length);
@@ -1742,9 +1796,11 @@ function calculateDoor() {
     out += `
 --- GLASS / ACP SIZES ---
 `;
-    out += `> Door Panel Glass / Board: ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)
+    const dr_g_spec = document.getElementById('dr_glass_spec') ? document.getElementById('dr_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+    const dr_g_tech = getGlassCuttingTechNote(dr_g_spec);
+    out += `> Glass Type: ${dr_g_spec}\n> Door Panel Glass / Board: ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)\n> Cutter Note: ${dr_g_tech}
 `;
-    const gKey = `${disp(dg_h)} x ${disp(dg_w)}`;
+    const gKey = `${disp(dg_h)} x ${disp(dg_w)} (Domal Door) | ${dr_g_spec} [${dr_g_tech}]`;
     dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + (palla_qty * door_qty);
 
     out += `
@@ -1861,22 +1917,28 @@ function calculateDoor() {
     const top_gh = top_open_h + 0.75;
     const bot_gh = bot_open_h + 0.75;
 
+    const dr_g_spec2 = document.getElementById('dr_glass_spec') ? document.getElementById('dr_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+    const dr_g_tech2 = getGlassCuttingTechNote(dr_g_spec2);
+    out += `> Top Glass Type: ${dr_g_spec2} [${dr_g_tech2}]\n`;
     out += `> [Top Panel] Glass Size: ${disp(top_gh)} x ${disp(panel_w)} (${total_leaves} pc)
 `;
     out += `> [Bottom Panel] ACP / Board Size: ${disp(bot_gh)} x ${disp(panel_w)} (${total_leaves} pc)
 `;
 
-    const topKey = `${disp(top_gh)} x ${disp(panel_w)} (Top Glass)`;
-    const botKey = `${disp(bot_gh)} x ${disp(panel_w)} (Bottom ACP)`;
+    const topKey = `${disp(top_gh)} x ${disp(panel_w)} (Top Glass) | ${dr_g_spec2} [${dr_g_tech2}]`;
+    const botKey = `${disp(bot_gh)} x ${disp(panel_w)} (Bottom ACP) | ACP Sheet Panel [Standard Router/Saw Cut]`;
     dr_glass_dict[topKey] = (dr_glass_dict[topKey] || 0) + total_leaves;
     dr_glass_dict[botKey] = (dr_glass_dict[botKey] || 0) + total_leaves;
   } else {
+    const dr_g_spec3 = document.getElementById('dr_glass_spec') ? document.getElementById('dr_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+    const dr_g_tech3 = getGlassCuttingTechNote(dr_g_spec3);
     const full_open_h = Math.max(6.0, door_v - top_h - bot_h);
     const full_gh = full_open_h + 0.75;
 
+    out += `> Glass Type: ${dr_g_spec3} [${dr_g_tech3}]\n`;
     out += `> [Full Panel] Glass / Board Size: ${disp(full_gh)} x ${disp(panel_w)} (${total_leaves} pc)
 `;
-    const fullKey = `${disp(full_gh)} x ${disp(panel_w)} (Full Door Panel)`;
+    const fullKey = `${disp(full_gh)} x ${disp(panel_w)} (Full Door Panel) | ${dr_g_spec3} [${dr_g_tech3}]`;
     dr_glass_dict[fullKey] = (dr_glass_dict[fullKey] || 0) + total_leaves;
   }
 
@@ -2060,9 +2122,12 @@ function clearDoor() {
      out += `> [Middle] Glass (Identical Size): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `> [Top] Header Glass (Smaller Box): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
 
-     pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
-     pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
-     pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+     const pt_g_spec = document.getElementById('pt_glass_spec') ? document.getElementById('pt_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+     const pt_g_tech = getGlassCuttingTechNote(pt_g_spec);
+     out += `> Selected Glass Type: ${pt_g_spec} [${pt_g_tech}]\n`;
+     pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)} | ACP Sheet Panel [Standard Cut]`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)} | ACP Sheet Panel [Standard Cut]`] || 0) + cols;
+     pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)} | ${pt_g_spec} [${pt_g_tech}]`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)} | ${pt_g_spec} [${pt_g_tech}]`] || 0) + cols;
+     pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)} | ${pt_g_spec} [${pt_g_tech}]`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)} | ${pt_g_spec} [${pt_g_tech}]`] || 0) + cols;
 
      // 4'x8' Sheet count
      const sheet_w = 48.0, sheet_h = 96.0;
@@ -2086,7 +2151,10 @@ function clearDoor() {
      const glass_qty = cols * rows;
      out += `--- GLASS / BOARD ---\n> Size: ${disp(g_guard.cut)} x ${disp(cut_w)} (${glass_qty} pc)\n`;
      out += `> Shop Billing Slab: ${g_guard.slab}" x ${w_guard.slab}"\n`;
-     const gKey = `${disp(g_guard.cut)} x ${disp(cut_w)}`;
+     const pt_g_spec_eq = document.getElementById('pt_glass_spec') ? document.getElementById('pt_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+     const pt_g_tech_eq = getGlassCuttingTechNote(pt_g_spec_eq);
+     out += `> Glass Type: ${pt_g_spec_eq} [${pt_g_tech_eq}]\n`;
+     const gKey = `${disp(g_guard.cut)} x ${disp(cut_w)} | ${pt_g_spec_eq} [${pt_g_tech_eq}]`;
      pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
    }
 
@@ -2186,11 +2254,14 @@ function clearDoor() {
      out += `> [Middle] Side Partition Glass (Identical): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `> [Top] Side Partition Header Glass (Small): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
 
-     pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)}`] = (pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)}`] || 0) + 1;
-     pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)}`] = (pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)}`] || 0) + 1;
-     pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
-     pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
-     pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)}`] || 0) + cols;
+     const pt_g_spec2 = document.getElementById('pt_glass_spec') ? document.getElementById('pt_glass_spec').value : '5mm Clear Float Glass (Transparent)';
+     const pt_g_tech2 = getGlassCuttingTechNote(pt_g_spec2);
+     out += `> Selected Glass Type: ${pt_g_spec2} [${pt_g_tech2}]\n`;
+     pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] = (pt_glass_dict[`[Door Glass] ${disp(dg_h)} x ${disp(dg_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] || 0) + 1;
+     pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] = (pt_glass_dict[`[Transom Glass] ${disp(transom_g_h)} x ${disp(transom_g_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] || 0) + 1;
+     pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)} | ACP Sheet Panel [Standard Cut]`] = (pt_glass_dict[`[ACP Board] ${disp(bottom_cut_h)} x ${disp(cut_w)} | ACP Sheet Panel [Standard Cut]`] || 0) + cols;
+     pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] = (pt_glass_dict[`[Middle Glass] ${disp(mid_cut_h)} x ${disp(cut_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] || 0) + cols;
+     pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] = (pt_glass_dict[`[Top Glass] ${disp(top_cut_h)} x ${disp(cut_w)} | ${pt_g_spec2} [${pt_g_tech2}]`] || 0) + cols;
 
      out += "\n" + ("--- 🛡️ GLASS SHOP BILLING SLAB SAFE-GUARD (ZERO PENALTY) ---\n");
      out += `• Middle Glass Slab: ${mid_guard.slab}" x ${w_guard.slab}" | Top Header Glass Slab: ${top_guard.slab}" x ${w_guard.slab}"\n`;
@@ -2772,44 +2843,63 @@ function clearCustomSeries() {
   doc.text("DATE: " + today, 18, 36.5);
 
   let totalPanes = 0;
-  const glassRows = keys.map(function(sz, idx) {
-    const qty = glassDict[sz];
+  const glassRows = keys.map(function(rawKey, idx) {
+    const qty = glassDict[rawKey];
     totalPanes += qty;
+    let sizePart = rawKey;
+    let specPart = "5mm Clear Float Glass (Transparent)";
+    let techPart = "Standard Diamond Wheel Cut";
+    if (rawKey.indexOf('|') !== -1) {
+      const splitPipe = rawKey.split('|');
+      sizePart = splitPipe[0].trim();
+      const rest = splitPipe.slice(1).join('|').trim();
+      const brkMatch = rest.match(/^(.*?)\[(.*?)\]$/);
+      if (brkMatch) {
+        specPart = brkMatch[1].trim();
+        techPart = brkMatch[2].trim();
+      } else {
+        specPart = rest;
+      }
+    }
     return [
       idx + 1,
-      sz,
+      sizePart,
+      specPart,
+      techPart,
       qty + " Pcs"
     ];
   });
 
   glassRows.push([
-    { content: "TOTAL GLASS PIECES", colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 249, 255] } },
+    { content: "TOTAL GLASS PIECES TO CUT", colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 249, 255] } },
     { content: totalPanes + " Pcs", styles: { fontStyle: 'bold', halign: 'center', fillColor: [186, 230, 253] } }
   ]);
 
   doc.autoTable({
     startY: 41,
-    head: [['#', 'Glass Cutting Size (Height x Width)', 'Quantity']],
+    head: [['#', 'Cutting Size (Height x Width)', 'Customer Selected Glass Type & Shade', 'Cutter Technique / Side Note', 'Quantity']],
     body: glassRows,
     theme: 'grid',
     headStyles: {
       fillColor: [2, 132, 199],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 9,
+      fontSize: 8.5,
       halign: 'center'
     },
     styles: {
-      fontSize: 9.5,
-      cellPadding: 3,
+      fontSize: 8.5,
+      cellPadding: 2.8,
       fontStyle: 'bold',
       halign: 'center',
       textColor: [15, 23, 42]
     },
     columnStyles: {
-      0: { cellWidth: 25, halign: 'center' },
-      1: { cellWidth: 180, halign: 'center' },
-      2: { cellWidth: 64, halign: 'center', textColor: [2, 132, 199] }
+      0: { cellWidth: 14, halign: 'center' },
+      1: { cellWidth: 68, halign: 'center' },
+      2: { cellWidth: 85, halign: 'left', textColor: [3, 105, 161] },
+      3: { cellWidth: 72, halign: 'left', fontSize: 7.8, textColor: [71, 85, 105] },
+      4: { cellWidth: 30, halign: 'center', textColor: [2, 132, 199] }
     }
   });
 
@@ -3038,6 +3128,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('cc_w').value = itm.w;
  if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = itm.qty;
+ if (document.getElementById('cc_glass_spec') && itm.glass) document.getElementById('cc_glass_spec').value = itm.glass;
  calculateCasement();
  alert(`Loaded ${itm.room} (${cat}) into Casement Calculator!`);
  } else if (cat.includes("Partition")) {
@@ -3062,6 +3153,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dm_w').value = itm.w;
  if (document.getElementById('dm_loc')) document.getElementById('dm_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dm_qty')) document.getElementById('dm_qty').value = itm.qty;
+ if (document.getElementById('dm_glass_spec') && itm.glass) document.getElementById('dm_glass_spec').value = itm.glass;
  calculateDomal();
  alert(`Loaded ${itm.room} into Domal Calculator!`);
  } else if (cat.includes("Sliding")) {
@@ -3074,6 +3166,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('sl_w').value = itm.w;
  if (document.getElementById('sl_loc')) document.getElementById('sl_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('sl_qty')) document.getElementById('sl_qty').value = itm.qty;
+ if (document.getElementById('sl_glass_spec') && itm.glass) document.getElementById('sl_glass_spec').value = itm.glass;
  calculateSliding();
  alert(`Loaded ${itm.room} into Sliding Calculator!`);
  } else if (cat.includes("Door")) {
@@ -3086,6 +3179,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dr_w').value = itm.w;
  if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dr_qty')) document.getElementById('dr_qty').value = itm.qty;
+ if (document.getElementById('dr_glass_spec') && itm.glass) document.getElementById('dr_glass_spec').value = itm.glass;
  calculateDoor();
  alert(`Loaded ${itm.room} into Door Calculator!`);
  } else if (cat.includes("Ceiling")) {
@@ -3124,6 +3218,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('cc_w').value = itm.w;
  if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = itm.qty;
+ if (document.getElementById('cc_glass_spec') && itm.glass) document.getElementById('cc_glass_spec').value = itm.glass;
  calculateCasement();
  } else if (cat.includes("Partition")) {
  partitionCount += itm.qty;
@@ -3144,6 +3239,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dm_w').value = itm.w;
  if (document.getElementById('dm_loc')) document.getElementById('dm_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dm_qty')) document.getElementById('dm_qty').value = itm.qty;
+ if (document.getElementById('dm_glass_spec') && itm.glass) document.getElementById('dm_glass_spec').value = itm.glass;
  calculateDomal();
  } else if (cat.includes("Sliding")) {
  slidingCount += itm.qty;
@@ -3154,6 +3250,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('sl_w').value = itm.w;
  if (document.getElementById('sl_loc')) document.getElementById('sl_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('sl_qty')) document.getElementById('sl_qty').value = itm.qty;
+ if (document.getElementById('sl_glass_spec') && itm.glass) document.getElementById('sl_glass_spec').value = itm.glass;
  calculateSliding();
  } else if (cat.includes("Door")) {
  doorCount += itm.qty;
@@ -3164,6 +3261,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dr_w').value = itm.w;
  if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dr_qty')) document.getElementById('dr_qty').value = itm.qty;
+ if (document.getElementById('dr_glass_spec') && itm.glass) document.getElementById('dr_glass_spec').value = itm.glass;
  calculateDoor();
  }
  });
@@ -3471,7 +3569,8 @@ function saveMeasurementData(projectType, outId, matId) {
  const runFt = ((itm.h + itm.w) * 2 / 12) * itm.qty;
  siteBuckets[catKey].push(runFt * 12);
 
- const gKey = `${itm.h - 4}" x ${Math.round(itm.w / 2)}" (${itm.glass})`;
+ const skTech = getGlassCuttingTechNote(itm.glass);
+ const gKey = `${itm.h - 4}" x ${Math.round(itm.w / 2)}" (${itm.room} - ${itm.tag}) | ${itm.glass} [${skTech}]`;
  siteGlass[gKey] = (siteGlass[gKey] || 0) + (itm.qty * 2);
  });
 
@@ -3615,13 +3714,25 @@ function saveMeasurementData(projectType, outId, matId) {
  if (String(glass_thick).includes('DGU') || String(glass_type).includes('DGU') || String(glass_type).includes('Double')) {
  glass_cost = 195.0;
  } else {
- if (String(glass_type).includes('Reflective')) {
- const refl_base = parseFloat(cost_data['Reflective Glass (Rs/Sq.Ft)']) || 55.0;
- glass_cost += Math.max(15.0, refl_base - base_clear_sqft);
+ if (String(glass_type).includes('Bulletproof')) {
+ glass_cost = 650.0;
+ } else if (String(glass_type).includes('Laminated')) {
+ glass_cost = 145.0 * g_mult;
+ } else if (String(glass_type).includes('Heat-Strengthened')) {
+ glass_cost = 95.0 * g_mult;
+ } else if (String(glass_type).includes('ACP') || String(glass_type).includes('uPVC') || String(glass_type).includes('Acrylic')) {
+ glass_cost = 65.0;
+ } else if (String(glass_type).includes('Solar Control')) {
+ glass_cost = 115.0 * g_mult;
+ } else if (String(glass_type).includes('Extra Clear')) {
+ glass_cost = Math.max(glass_cost * 1.8, 70.0 * g_mult);
+ } else if (String(glass_type).includes('Reflective') || String(glass_type).includes('One-Way')) {
+ const refl_base = parseFloat(cost_data['Reflective Glass (Rs/Sq.Ft)']) || 65.0;
+ glass_cost += Math.max(20.0, refl_base - base_clear_sqft);
  } else if (String(glass_type).includes('Tinted')) {
+ glass_cost += 15.0;
+ } else if (String(glass_type).includes('Frosted') || String(glass_type).includes('Pinhead') || String(glass_type).includes('Bajri')) {
  glass_cost += 12.0;
- } else if (String(glass_type).includes('Frosted') || String(glass_type).includes('Pinhead')) {
- glass_cost += 10.0;
  }
  }
 
