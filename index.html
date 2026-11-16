@@ -24,11 +24,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v50') caches.delete(k);
+            if (k !== 'smart-worker-pro-v55') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=50').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=55').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=55">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -983,6 +983,51 @@
  <input type="number" id="dm_qty" value="1" min="1">
  </div>
  <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="dm_alu_color" onchange="toggleCustomAluColor('dm')">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy">Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy">Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black" selected>Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
+ </select>
+ <input type="text" id="dm_alu_custom_color" placeholder="Type Custom Color Name..." style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
+ <select id="dm_alu_thick">
+ <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
+ <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
+ <option value="1.2 mm">1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
+ <option value="1.5 mm" selected>1.5 mm</option>
+ <option value="1.6 mm">1.6 mm</option>
+ <option value="1.8 mm">1.8 mm</option>
+ <option value="2.0 mm">2.0 mm</option>
+ <option value="2.5 mm">2.5 mm</option>
+ <option value="3.0 mm">3.0 mm</option>
+ </select>
+ </div>
+ <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
  <select id="dm_g_type">
  <option value="Clear" selected>Clear</option>
@@ -1105,6 +1150,51 @@
  <div class="form-group">
  <label style="color:#16a34a;">Window Quantity (Pcs):</label>
  <input type="number" id="sl_qty" value="1" min="1">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="sl_alu_color" onchange="toggleCustomAluColor('sl')">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy">Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy" selected>Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black">Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
+ </select>
+ <input type="text" id="sl_alu_custom_color" placeholder="Type Custom Color Name..." style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
+ <select id="sl_alu_thick">
+ <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
+ <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
+ <option value="1.2 mm" selected>1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
+ <option value="1.5 mm">1.5 mm</option>
+ <option value="1.6 mm">1.6 mm</option>
+ <option value="1.8 mm">1.8 mm</option>
+ <option value="2.0 mm">2.0 mm</option>
+ <option value="2.5 mm">2.5 mm</option>
+ <option value="3.0 mm">3.0 mm</option>
+ </select>
  </div>
  <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
@@ -1244,6 +1334,51 @@
  <div class="form-group">
  <label style="color:#16a34a;">Window Quantity (Pcs):</label>
  <input type="number" id="cc_qty" value="1" min="1">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="cc_alu_color" onchange="toggleCustomAluColor('cc')">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy">Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy">Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black" selected>Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
+ </select>
+ <input type="text" id="cc_alu_custom_color" placeholder="Type Custom Color Name..." style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
+ <select id="cc_alu_thick">
+ <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
+ <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
+ <option value="1.2 mm">1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
+ <option value="1.5 mm" selected>1.5 mm</option>
+ <option value="1.6 mm">1.6 mm</option>
+ <option value="1.8 mm">1.8 mm</option>
+ <option value="2.0 mm">2.0 mm</option>
+ <option value="2.5 mm">2.5 mm</option>
+ <option value="3.0 mm">3.0 mm</option>
+ </select>
  </div>
  <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
@@ -1416,6 +1551,51 @@
    </div>
  </div>
  <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="dr_alu_color" onchange="toggleCustomAluColor('dr')">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy" selected>Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy">Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black">Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
+ </select>
+ <input type="text" id="dr_alu_custom_color" placeholder="Type Custom Color Name..." style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
+ <select id="dr_alu_thick">
+ <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
+ <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
+ <option value="1.2 mm">1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
+ <option value="1.5 mm" selected>1.5 mm</option>
+ <option value="1.6 mm">1.6 mm</option>
+ <option value="1.8 mm">1.8 mm</option>
+ <option value="2.0 mm">2.0 mm</option>
+ <option value="2.5 mm">2.5 mm</option>
+ <option value="3.0 mm">3.0 mm</option>
+ </select>
+ </div>
+ <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
  <select id="dr_g_type">
  <option value="Clear" selected>Clear</option>
@@ -1546,6 +1726,51 @@
  <div class="form-group">
  <label>Vertical Sections:</label>
  <input type="number" id="pt_rows" value="3">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="pt_alu_color" onchange="toggleCustomAluColor('pt')">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy" selected>Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy">Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black">Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
+ </select>
+ <input type="text" id="pt_alu_custom_color" placeholder="Type Custom Color Name..." style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
+ <select id="pt_alu_thick">
+ <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
+ <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
+ <option value="1.2 mm">1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
+ <option value="1.5 mm" selected>1.5 mm</option>
+ <option value="1.6 mm">1.6 mm</option>
+ <option value="1.8 mm">1.8 mm</option>
+ <option value="2.0 mm">2.0 mm</option>
+ <option value="2.5 mm">2.5 mm</option>
+ <option value="3.0 mm">3.0 mm</option>
+ </select>
  </div>
  <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
@@ -1770,29 +1995,43 @@
  </div>
 
  <div class="form-group" style="grid-column: span 2;">
- <label>Alu Finish:</label>
- <select id="q_color" onchange="updateSuggestedRate()">
- <option value="Aluminium: Silver / Natural (Mill)">Aluminium: Silver / Natural (Mill)</option>
- <option value="Aluminium: Anodized Silver">Aluminium: Anodized Silver</option>
- <option value="Aluminium: Stainless Steel (SS Finish)">Aluminium: Stainless Steel (SS Finish)</option>
- <option value="Aluminium: Anodized Champagne">Aluminium: Anodized Champagne</option>
- <option value="Aluminium: Gold / Champagne Finish">Aluminium: Gold / Champagne Finish</option>
- <option value="Aluminium: Powder Coated Pure White">Aluminium: Powder Coated Pure White</option>
- <option value="Aluminium: Powder Coated Jet Black" selected>Aluminium: Powder Coated Jet Black</option>
- <option value="Aluminium: Powder Coated Chocolate Brown">Aluminium: Powder Coated Chocolate Brown</option>
- <option value="Aluminium: Powder Coated Charcoal Grey">Aluminium: Powder Coated Charcoal Grey</option>
- <option value="Aluminium: Powder Coated Ivory">Aluminium: Powder Coated Ivory</option>
- <option value="Aluminium: Wooden Finish (Light Teak)">Aluminium: Wooden Finish (Light Teak)</option>
- <option value="Aluminium: Wooden Finish (Dark Walnut)">Aluminium: Wooden Finish (Dark Walnut)</option>
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="q_color" onchange="toggleCustomAluColor('q'); updateSuggestedRate();">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy">Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy">Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black" selected>Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
  </select>
+ <input type="text" id="q_alu_custom_color" placeholder="Type Custom Powder Color Name..." oninput="updateSuggestedRate()" style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
  </div>
 
  <div class="form-group">
- <label>Thickness:</label>
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
  <select id="q_thick" onchange="updateSuggestedRate()">
  <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
  <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
  <option value="1.2 mm">1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
  <option value="1.5 mm" selected>1.5 mm</option>
  <option value="1.6 mm">1.6 mm</option>
  <option value="1.8 mm">1.8 mm</option>
@@ -2547,6 +2786,51 @@
  <input type="number" id="sk_qty" value="1" min="1">
  </div>
  <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+ <select id="sk_alu_color" onchange="toggleCustomAluColor('sk')">
+ <option value="Silver (Natural)">Silver (Natural)</option>
+ <option value="Anodized Silver Glossy">Anodized Silver Glossy</option>
+ <option value="Anodized Silver Matte">Anodized Silver Matte</option>
+ <option value="Anodized Golden Glossy">Anodized Golden Glossy</option>
+ <option value="Anodized Golden Matte">Anodized Golden Matte</option>
+ <option value="Anodized Champagne Glossy">Anodized Champagne Glossy</option>
+ <option value="Anodized Champagne Matte">Anodized Champagne Matte</option>
+ <option value="Anodized Brown Glossy">Anodized Brown Glossy</option>
+ <option value="Anodized Brown Matte">Anodized Brown Matte</option>
+ <option value="Anodized Black Glossy">Anodized Black Glossy</option>
+ <option value="Anodized Black Matte">Anodized Black Matte</option>
+ <option value="Powder Coated Black" selected>Powder Coated Black</option>
+ <option value="Powder Coated White">Powder Coated White</option>
+ <option value="Powder Coated Brown">Powder Coated Brown</option>
+ <option value="Powder Coated Grey">Powder Coated Grey</option>
+ <option value="Powder Coated Ivory">Powder Coated Ivory</option>
+ <option value="Powder Coated Red">Powder Coated Red</option>
+ <option value="Powder Coated Blue">Powder Coated Blue</option>
+ <option value="Powder Coated Green">Powder Coated Green</option>
+ <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+ <option value="Wooden Finish Walnut">Wooden Finish Walnut</option>
+ <option value="Custom Color...">Custom Color...</option>
+ </select>
+ <input type="text" id="sk_alu_custom_color" placeholder="Type Custom Color Name..." style="display:none; margin-top:6px; border:1.5px solid #0f766e; background:#f0fdf4; font-weight:700;">
+ </div>
+ <div class="form-group">
+ <label style="color:#0f766e; font-weight:700;">Alu Thick (0.8 - 3mm):</label>
+ <select id="sk_alu_thick">
+ <option value="0.8 mm">0.8 mm</option>
+ <option value="0.9 mm">0.9 mm</option>
+ <option value="1.0 mm">1.0 mm</option>
+ <option value="1.1 mm">1.1 mm</option>
+ <option value="1.2 mm" selected>1.2 mm</option>
+ <option value="1.4 mm">1.4 mm</option>
+ <option value="1.5 mm">1.5 mm</option>
+ <option value="1.6 mm">1.6 mm</option>
+ <option value="1.8 mm">1.8 mm</option>
+ <option value="2.0 mm">2.0 mm</option>
+ <option value="2.5 mm">2.5 mm</option>
+ <option value="3.0 mm">3.0 mm</option>
+ </select>
+ </div>
+ <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
  <select id="sk_glass">
  <option value="Clear" selected>Clear</option>
@@ -3280,12 +3564,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=35"></script>
+  <script src="app.js?v=55"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=55').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

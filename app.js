@@ -2,6 +2,43 @@
 // =========================================================================
 // SIMPLE GLASS SPEC HELPER & 4'x8' ACP BOARD CALCULATOR
 // =========================================================================
+function toggleCustomAluColor(prefix) {
+  var selId = (prefix === 'q') ? 'q_color' : (prefix + '_alu_color');
+  var inpId = prefix + '_alu_custom_color';
+  var sel = document.getElementById(selId);
+  var inp = document.getElementById(inpId);
+  if (!sel || !inp) return;
+  if (sel.value === 'Custom Color...') {
+    inp.style.display = 'block';
+    inp.focus();
+  } else {
+    inp.style.display = 'none';
+  }
+}
+
+function getModuleAluColor(prefix) {
+  var selId = (prefix === 'q') ? 'q_color' : (prefix + '_alu_color');
+  var inpId = prefix + '_alu_custom_color';
+  var sel = document.getElementById(selId);
+  var inp = document.getElementById(inpId);
+  var val = sel ? sel.value.trim() : 'Powder Coated Black';
+  if (val === 'Custom Color...') {
+    var customVal = (inp && inp.value.trim()) ? inp.value.trim() : 'Custom Powder Color';
+    return 'Powder Coated (' + customVal + ')';
+  }
+  return val;
+}
+
+function getModuleAluThick(prefix) {
+  var selId = (prefix === 'q') ? 'q_thick' : (prefix + '_alu_thick');
+  var sel = document.getElementById(selId);
+  return sel ? sel.value.trim() : '1.2 mm';
+}
+
+function getModuleAluLabel(prefix) {
+  return getModuleAluThick(prefix) + ' | ' + getModuleAluColor(prefix);
+}
+
 function getModuleGlassLabel(prefix) {
   var tEl = document.getElementById(prefix + '_g_thick');
   var gEl = document.getElementById(prefix + '_g_type');
@@ -1363,7 +1400,9 @@ function keypadEnter() {
 
  const w_sign = net_w_mod >= 0 ? `+${Math.round(net_w_mod)}` : `${Math.round(net_w_mod)}`;
  
+ const dm_aspec = getModuleAluLabel('dm');
  let alu_txt = `[Domal Win #${dm_window_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)}${qty_str}]\n`;
+ alu_txt += `> Alu Spec: ${dm_aspec}\n`;
  alu_txt += `> Outer Track (Top/Bot): ${disp(w_in)} (${2 * win_qty} pc)\n`;
  alu_txt += `> Outer Track (Vertical): ${disp(h_in)} (${2 * win_qty} pc)\n`;
  alu_txt += `> Sash Top/Bottom: ${disp(h_cut_in)} (${s_c * 2 * win_qty} pc)\n`;
@@ -1490,7 +1529,9 @@ function keypadEnter() {
  hw_txt += `> Sliding Roller / Bearing: ${g_c * 2 * win_qty} pc\n`;
  hw_txt += `> Star Lock: ${(g_c >= 3 ? 2 : 1) * win_qty} pc\n> Rubber & Woolpile: Required\n`;
 
+ const sl_aspec = getModuleAluLabel('sl');
  let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)} (${sys_type.split(' ')[0]})${qty_str}]\n`;
+ alu_txt += `> Alu Spec: ${sl_aspec}\n`;
  alu_txt += `> Track Top: ${disp(w_in)} (${1 * win_qty} pc)\n`;
  alu_txt += `> Track Bottom: ${disp(w_in)} (${1 * win_qty} pc)\n`;
  alu_txt += `> Track Vertical: ${disp(h_in)} (${2 * win_qty} pc)\n`;
@@ -1605,7 +1646,9 @@ function keypadEnter() {
  const qty_str = win_qty > 1 ? ` (Qty: ${win_qty} Windows)` : "";
  const total_sash_qty = (top_open + bot_open) * win_qty;
 
+ const cc_aspec = getModuleAluLabel('cc');
  let out_txt = `[${series} Win #${cc_window_count}${loc_str} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty_str}]\n`;
+ out_txt += `> Alu Spec: ${cc_aspec}\n`;
  out_txt += "--- 1. OUTER FRAME & MULLIONS ---\n";
  out_txt += `> Outer Vertical: ${disp(h_mm)} (${2 * win_qty} pc)\n> Outer Horizontal: ${disp(w_mm)} (${2 * win_qty} pc)\n`;
  for (let q = 0; q < win_qty; q++) {
@@ -1827,9 +1870,12 @@ function calculateDoor() {
     out += `
 --- GLASS / ACP SIZES ---
 `;
-    out += `> Door Panel Glass / Board: ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)
+    const dr_gspec1 = getModuleGlassLabel('dr');
+    out += `> Alu Spec: ${getModuleAluLabel('dr')}
 `;
-    const gKey = `${disp(dg_h)} x ${disp(dg_w)}`;
+    out += `> Door Glass (${dr_gspec1}): ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)
+`;
+    const gKey = `${disp(dg_h)} x ${disp(dg_w)} (Domal Door Glass) || ${dr_gspec1}`;
     dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + (palla_qty * door_qty);
 
     out += `
@@ -1892,6 +1938,7 @@ function calculateDoor() {
   const rail_w = Math.max(0, leaf_w - (2 * vert_w));
   const panel_w = rail_w + 0.75; // Bite into vertical stiles groove
 
+  out += `> Alu Spec: ${getModuleAluLabel('dr')}\n`;
   // 1. OUTER FRAME
   if (has_outer) {
     out += `--- OUTER FRAME ---
@@ -2089,7 +2136,7 @@ function clearDoor() {
  }
 
  if (p_type === "Fixed Partition") {
-   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n`;
+   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
    const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
    const inner_h = (w - ((cols + 1) * 1.5)) / cols;
 
@@ -2185,7 +2232,7 @@ function clearDoor() {
    const dh = is_mm ? raw_dh / 25.4 : raw_dh;
    const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
-   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n`;
+   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
    const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
    const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
    const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
@@ -2730,7 +2777,7 @@ function clearCustomSeries() {
         const parts = clean.split(':');
         const pName = parts[0].trim();
         const pVal = parts.slice(1).join(':').trim();
-        if (/glass|board|beading/i.test(pName)) return;
+        if (/glass|board|beading|alu spec/i.test(pName)) return;
         unitProfiles[pName] = pVal;
         if (allProfileHeaders.indexOf(pName) === -1) {
           allProfileHeaders.push(pName);
@@ -2925,6 +2972,13 @@ function clearCustomSeries() {
   const doc = new jsPDF('l', 'mm', 'a4');
   const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
+  let modPrefix = 'sl';
+  if (/domal/i.test(title)) modPrefix = 'dm';
+  else if (/casement/i.test(title)) modPrefix = 'cc';
+  else if (/door/i.test(title) && !/partition/i.test(title)) modPrefix = 'dr';
+  else if (/partition/i.test(title)) modPrefix = 'pt';
+  const aluSpecStr = getModuleAluLabel(modPrefix);
+
   drawDocHeaderWithLogo(doc, "ALUMINIUM MATERIAL PURCHASE LIST (" + title.toUpperCase() + ")", "", [15, 118, 110]);
 
   doc.setFillColor(240, 253, 250);
@@ -2932,7 +2986,7 @@ function clearCustomSeries() {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(19, 78, 74);
-  doc.text("DATE: " + today, 18, 36.5);
+  doc.text("DATE: " + today + "   |   ALU SPEC: " + aluSpecStr.toUpperCase(), 18, 36.5);
 
   const profileRows = [];
   let totalSticks = 0;
@@ -2949,18 +3003,19 @@ function clearCustomSeries() {
     profileRows.push([
       idx + 1,
       pName + " (" + pieces.length + " Cut Pcs)",
+      aluSpecStr,
       sticksCount + " Bars (" + ft + " ft)"
     ]);
   });
 
   profileRows.push([
-    { content: "TOTAL BARS", colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
+    { content: "TOTAL BARS", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
     { content: totalSticks + " Pcs", styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } }
   ]);
 
   doc.autoTable({
     startY: 41,
-    head: [['#', 'Aluminium Section / Profile Name', 'Required Quantity']],
+    head: [['#', 'Aluminium Section / Profile Name', 'Alu Thickness & Color', 'Required Quantity']],
     body: profileRows,
     theme: 'grid',
     headStyles: {
@@ -2977,9 +3032,10 @@ function clearCustomSeries() {
       textColor: [15, 23, 42]
     },
     columnStyles: {
-      0: { cellWidth: 25, halign: 'center' },
-      1: { cellWidth: 180 },
-      2: { cellWidth: 64, halign: 'center', textColor: [15, 118, 110] }
+      0: { cellWidth: 20, halign: 'center' },
+      1: { cellWidth: 115 },
+      2: { cellWidth: 85, halign: 'center', textColor: [15, 118, 110] },
+      3: { cellWidth: 49, halign: 'center', textColor: [15, 118, 110] }
     }
   });
 
@@ -3277,9 +3333,11 @@ function saveMeasurementData(projectType, outId, matId) {
  const h = safeEval(document.getElementById('sk_h').value);
  const w = safeEval(document.getElementById('sk_w').value);
  const qty = Math.max(1, parseInt(document.getElementById('sk_qty').value) || 1);
+ const aluColor = getModuleAluColor('sk');
+ const aluThick = getModuleAluThick('sk');
  const gType = document.getElementById('sk_glass') ? document.getElementById('sk_glass').value : 'Clear';
  const gThick = document.getElementById('sk_g_thick') ? document.getElementById('sk_g_thick').value : '5 mm';
- const glass = gThick + ' ' + gType;
+ const glass = aluThick + ' ' + aluColor + ' | ' + gThick + ' ' + gType;
 
  if (h === 0 || w === 0) {
  alert("Please enter valid Height and Width in inches.");
@@ -3290,7 +3348,7 @@ function saveMeasurementData(projectType, outId, matId) {
  const total_sqft = sq_ft_per_pc * qty;
  const labour_rate = getLabourRateForCategory(cat);
  const labour_cost = total_sqft * labour_rate;
- const est_rate = calculateSuggestedRate(cat, "1.5 mm", "Aluminium: Powder Coated Jet Black", gThick, gType, gType.includes("Toughened"));
+ const est_rate = calculateSuggestedRate(cat, aluThick, aluColor, gThick, gType, gType.includes("Toughened"));
  const est_price = total_sqft * est_rate;
 
  siteKhataItems.push({
@@ -3301,6 +3359,8 @@ function saveMeasurementData(projectType, outId, matId) {
  h: h,
  w: w,
  qty: qty,
+ alu_color: aluColor,
+ alu_thick: aluThick,
  glass_thick: gThick,
  glass_type: gType,
  glass: glass,
@@ -3415,8 +3475,8 @@ function saveMeasurementData(projectType, outId, matId) {
  billItems.push({
  type: itm.category,
  location: `${itm.room} [${itm.tag}]`,
- color: "Aluminium: Powder Coated Jet Black",
- thickness: "1.5 mm",
+ color: itm.alu_color || "Powder Coated Black",
+ thickness: itm.alu_thick || "1.2 mm",
  glass_thick: itm.glass_thick || "5 mm",
  glass_type: itm.glass_type || itm.glass,
  toughened: itm.glass.includes("Toughened"),
@@ -3755,7 +3815,7 @@ function saveMeasurementData(projectType, outId, matId) {
 
  function updateSuggestedRate() {
  const w_type = document.getElementById('q_type').value;
- const color = document.getElementById('q_color').value;
+ const color = getModuleAluColor('q');
  const thick = document.getElementById('q_thick').value;
  const g_thick = document.getElementById('q_g_thick').value;
  const g_type = document.getElementById('q_g_type').value;
@@ -3869,7 +3929,7 @@ function autofillCustomer() {
  const w = safeEval(document.getElementById('q_w').value);
  const qty = Math.max(1, parseInt(safeEval(document.getElementById('q_qty').value)) || 1);
  const w_type = document.getElementById('q_type').value;
- const color = document.getElementById('q_color').value;
+ const color = getModuleAluColor('q');
  const thick = document.getElementById('q_thick').value;
  const g_thick = document.getElementById('q_g_thick').value;
  const g_type = document.getElementById('q_g_type').value;
