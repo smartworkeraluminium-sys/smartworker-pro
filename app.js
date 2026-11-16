@@ -1,4 +1,179 @@
 
+function applyKhataSpecsToModule(prefix, itm) {
+  if (!itm) return;
+  if (itm.alu_thick && document.getElementById(prefix + '_alu_thick')) {
+    document.getElementById(prefix + '_alu_thick').value = itm.alu_thick;
+  }
+  if (itm.alu_color && document.getElementById(prefix + '_alu_color')) {
+    var sel = document.getElementById(prefix + '_alu_color');
+    var customInp = document.getElementById(prefix + '_alu_custom_color');
+    if (itm.alu_color.indexOf('Powder Coated (') === 0 && customInp) {
+      sel.value = 'Custom Color...';
+      customInp.style.display = 'block';
+      customInp.value = itm.alu_color.replace('Powder Coated (', '').replace(/\)$/, '');
+    } else {
+      sel.value = itm.alu_color;
+      if (customInp) customInp.style.display = 'none';
+    }
+  }
+  if (itm.glass_thick && document.getElementById(prefix + '_g_thick')) {
+    document.getElementById(prefix + '_g_thick').value = itm.glass_thick;
+  }
+  if (itm.glass_type && document.getElementById(prefix + '_g_type')) {
+    var cleanGt = itm.glass_type.replace(' + ACP Board', '');
+    document.getElementById(prefix + '_g_type').value = cleanGt;
+  }
+  if (prefix === 'pt' && itm.category) {
+    var c = itm.category;
+    var presetEl = document.getElementById('pt_tube_preset');
+    if (presetEl) {
+      if (c.indexOf('2x1') !== -1) presetEl.value = '2x1_edge';
+      else if (c.indexOf('1.75x1.75') !== -1) presetEl.value = '1.75x1.75';
+      else if (c.indexOf('3x1.5') !== -1) presetEl.value = '3x1.5_edge';
+      else if (c.indexOf('4x1.75') !== -1) presetEl.value = '4x1.75_base';
+      else presetEl.value = '2.5x1.5_edge';
+      applyPartitionTubePreset(presetEl.value);
+    }
+    var pmEl = document.getElementById('pt_panel_mode');
+    if (pmEl) {
+      if (c.indexOf('Full Glass') !== -1 && (!itm.glass_type || itm.glass_type.indexOf('ACP') === -1)) {
+        pmEl.value = 'EQUAL_DIVIDE';
+      } else {
+        pmEl.value = 'OPTIMIZED_4X8';
+      }
+    }
+  }
+}
+
+
+// =========================================================================
+// DIRECT 1-CLICK SEND CALCULATOR ITEM TO BILL (WITH ALU & GLASS SPECS)
+// =========================================================================
+function sendModuleToBill(prefix) {
+  var raw_h = safeEval(document.getElementById(prefix + '_h') ? document.getElementById(prefix + '_h').value : '0');
+  var raw_w = safeEval(document.getElementById(prefix + '_w') ? document.getElementById(prefix + '_w').value : '0');
+  if (raw_h <= 0 || raw_w <= 0) {
+    alert("Please enter Height and Width first, then tap + ADD TO BILL.");
+    return;
+  }
+
+  var unitSel = document.getElementById(prefix + '_unit');
+  var is_mm = unitSel && unitSel.value.indexOf('Millimeter') !== -1;
+  var h_in = is_mm ? (raw_h / 25.4) : raw_h;
+  var w_in = is_mm ? (raw_w / 25.4) : raw_w;
+  var h_ft = Number((h_in / 12.0).toFixed(2));
+  var w_ft = Number((w_in / 12.0).toFixed(2));
+  var sq_ft_one = (h_in * w_in) / 144.0;
+
+  var qtyEl = document.getElementById(prefix + '_qty');
+  var qty = qtyEl ? Math.max(1, parseInt(safeEval(qtyEl.value)) || 1) : 1;
+  var locEl = document.getElementById(prefix + '_loc');
+  var loc = locEl ? locEl.value.trim() : '';
+
+  var aluColor = getModuleAluColor(prefix);
+  var aluThick = getModuleAluThick(prefix);
+  var gThickEl = document.getElementById(prefix + '_g_thick');
+  var gTypeEl = document.getElementById(prefix + '_g_type');
+  var gThick = gThickEl ? gThickEl.value.trim() : '5 mm';
+  var gType = gTypeEl ? gTypeEl.value.trim() : 'Clear';
+
+  var itemType = 'Aluminium Work';
+  if (prefix === 'dm') {
+    var dmTrack = document.getElementById('dm_type') ? document.getElementById('dm_type').value.split(' ')[0] : '2-Track';
+    var dmHan = document.getElementById('dm_handle_hw') ? document.getElementById('dm_handle_hw').value.split(' ')[0] : '27x65';
+    itemType = 'Domal ' + dmHan + ' (' + dmTrack + ')';
+  } else if (prefix === 'sl') {
+    var slSys = document.getElementById('sl_sys') ? document.getElementById('sl_sys').value.replace(' System', '') : '18x40';
+    var slTrk = document.getElementById('sl_type') ? document.getElementById('sl_type').value : '2-Track';
+    itemType = 'Sliding ' + slSys + ' (' + slTrk + ')';
+  } else if (prefix === 'cc') {
+    var ccSer = document.getElementById('cc_series') ? document.getElementById('cc_series').value : '40 Series';
+    itemType = 'Casement ' + ccSer;
+  } else if (prefix === 'dr') {
+    var drType = document.getElementById('dr_type') ? document.getElementById('dr_type').value : 'Standard Door';
+    var hasMid = document.getElementById('dr_has_mid') ? (document.getElementById('dr_has_mid').value === 'yes') : true;
+    if (drType !== 'Domal System Door' && hasMid && gType.indexOf('ACP') === -1) {
+      gType = gType + ' + Bottom ACP Board';
+    }
+    itemType = drType;
+  } else if (prefix === 'pt') {
+    var ptType = document.getElementById('pt_type') ? document.getElementById('pt_type').value : 'Fixed Partition';
+    var tubeLbl = getPartitionTubeLabel();
+    var pMode = document.getElementById('pt_panel_mode') ? document.getElementById('pt_panel_mode').value : 'OPTIMIZED_4X8';
+    if (pMode !== 'EQUAL_DIVIDE' && gType.indexOf('ACP') === -1) {
+      gType = gType + ' + Bottom ACP Board';
+    }
+    itemType = ptType + ' (' + tubeLbl + ')';
+  }
+
+  var isTough = gType.indexOf('Toughened') !== -1;
+  var rate = calculateSuggestedRate(itemType, aluThick, aluColor, gThick, gType, isTough);
+  var totalArea = sq_ft_one * qty;
+  var totalPrice = totalArea * rate;
+
+  billItems.push({
+    type: itemType,
+    location: loc,
+    color: aluColor,
+    thickness: aluThick,
+    glass_thick: gThick,
+    glass_type: gType,
+    toughened: isTough,
+    h: h_ft,
+    w: w_ft,
+    unit: 'ft',
+    qty: qty,
+    rate: rate,
+    area: totalArea,
+    price: totalPrice
+  });
+
+  // Also sync the Quotation screen selectors to match what the user selected
+  if (document.getElementById('q_thick')) document.getElementById('q_thick').value = aluThick;
+  if (document.getElementById('q_g_thick')) document.getElementById('q_g_thick').value = gThick;
+
+  refreshQueueText();
+  autoCalcAdvance();
+  openScreen('quotation', 'PRO QUOTATION');
+}
+
+
+var dr_acp_list = [];
+var pt_acp_list = [];
+
+function applyPartitionTubePreset(preset) {
+  var faceEl = document.getElementById('pt_tube_face');
+  var botEl = document.getElementById('pt_bot_face');
+  if (!faceEl || !botEl) return;
+  if (preset === '2.5x1.5_edge') { faceEl.value = '1.5'; botEl.value = '1.5'; }
+  else if (preset === '2.5x1.5_flat') { faceEl.value = '2.5'; botEl.value = '2.5'; }
+  else if (preset === '2x1_edge') { faceEl.value = '1.0'; botEl.value = '1.0'; }
+  else if (preset === '2x1_flat') { faceEl.value = '2.0'; botEl.value = '2.0'; }
+  else if (preset === '1.75x1.75') { faceEl.value = '1.75'; botEl.value = '1.75'; }
+  else if (preset === '3x1.5_edge') { faceEl.value = '1.5'; botEl.value = '1.5'; }
+  else if (preset === '4x1.75_base') { faceEl.value = '1.75'; botEl.value = '4.0'; }
+  else if (preset === '4x1.5_base') { faceEl.value = '1.5'; botEl.value = '4.0'; }
+  else if (preset === '4x1.75_all') { faceEl.value = '4.0'; botEl.value = '4.0'; }
+  else if (preset === '2x2') { faceEl.value = '2.0'; botEl.value = '2.0'; }
+}
+
+function getPartitionTubeLabel() {
+  var sel = document.getElementById('pt_tube_preset');
+  var face = parseFloat(document.getElementById('pt_tube_face') ? document.getElementById('pt_tube_face').value : 1.5) || 1.5;
+  var bot = parseFloat(document.getElementById('pt_bot_face') ? document.getElementById('pt_bot_face').value : 1.5) || 1.5;
+  if (!sel) return '2.5"x1.5"';
+  var v = sel.value;
+  if (v.indexOf('2.5x1.5') === 0) return 'Jindal 2.5"x1.5"';
+  if (v.indexOf('2x1') === 0) return 'Jindal 2"x1"';
+  if (v === '1.75x1.75') return 'Jindal 1.75"x1.75"';
+  if (v.indexOf('3x1.5') === 0) return 'Jindal 3"x1.5"';
+  if (v.indexOf('4x1.75') === 0) return 'Jindal 4"x1.75"';
+  if (v.indexOf('4x1.5') === 0) return 'Jindal 4"x1.5"';
+  if (v === '2x2') return 'Jindal 2"x2"';
+  return 'Tube (' + face + '" Face, ' + bot + '" Base)';
+}
+
+
 // =========================================================================
 // SIMPLE GLASS SPEC HELPER & 4'x8' ACP BOARD CALCULATOR
 // =========================================================================
@@ -1994,16 +2169,27 @@ function calculateDoor() {
     const top_gh = top_open_h + 0.75;
     const bot_gh = bot_open_h + 0.75;
     const acpInfo = calcAcp4x8Requirement(bot_gh, panel_w, total_leaves);
+    const glassSqFt = ((top_gh * panel_w * total_leaves) / 144.0).toFixed(2);
 
-    out += `> [Top Glass] (${dr_gspec}): ${disp(top_gh)} x ${disp(panel_w)} (${total_leaves} pc)
+    out += `> [Top Glass] (${dr_gspec}): ${disp(top_gh)} x ${disp(panel_w)} (${total_leaves} pc | ${glassSqFt} Sq.Ft)
 `;
-    out += `> [Bottom ACP Cut Size]: ${disp(bot_gh)} x ${disp(panel_w)} (${total_leaves} pc) [Self Cut - Not in Glass PDF]
+    out += `> [Bottom ACP Cut Size]: ${disp(bot_gh)} x ${disp(panel_w)} (${total_leaves} pc)
 `;
-    out += `> [4'x8' ACP Board to Buy]: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet)
+    out += `> [Glass to Buy]: ${total_leaves} Pcs (${glassSqFt} Sq.Ft) -> Listed in 2. GLASS PDF
+`;
+    out += `> [4'x8' ACP Board to Buy]: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft) -> Listed in 3. ALU PURCHASE PDF
 `;
 
     const topKey = `${disp(top_gh)} x ${disp(panel_w)} (Top Door Glass) || ${dr_gspec}`;
     dr_glass_dict[topKey] = (dr_glass_dict[topKey] || 0) + total_leaves;
+    dr_acp_list.push({
+      cutStr: `${disp(bot_gh)} x ${disp(panel_w)}`,
+      h_in: bot_gh,
+      w_in: panel_w,
+      qty: total_leaves,
+      buyLabel: acpInfo.buyLabel,
+      areaSqFt: acpInfo.totalAreaSqFt
+    });
   } else {
     const full_open_h = Math.max(6.0, door_v - top_h - bot_h);
     const full_gh = full_open_h + 0.75;
@@ -2060,6 +2246,7 @@ function clearDoor() {
   dr_door_count = 0;
   dr_buckets = { "Door Outer Frame": [], "Door Verticals": [], "Door Top Rail": [], "Door Bottom Rail": [], "Door Middle Rail": [] };
   dr_glass_dict = {};
+  dr_acp_list = [];
   document.getElementById('dr_h').value = "";
   document.getElementById('dr_w').value = "";
   if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = "";
@@ -2097,8 +2284,16 @@ function clearDoor() {
 
  let out = "";
 
- // Frame height deductions: top 1.5", bottom 1.5", and (rows - 1) transoms (each 1.5")
- const frame_deduct = (rows + 1) * 1.5;
+ const tube_face = parseFloat(document.getElementById('pt_tube_face') ? document.getElementById('pt_tube_face').value : 1.5) || 1.5;
+ const bot_face = parseFloat(document.getElementById('pt_bot_face') ? document.getElementById('pt_bot_face').value : 1.5) || 1.5;
+ const tube_label = getPartitionTubeLabel();
+ const sg_key = `Single Glazing [${tube_label}]`;
+ const dg_key = `Double Glazing [${tube_label}]`;
+ if (!pt_buckets[sg_key]) pt_buckets[sg_key] = [];
+ if (!pt_buckets[dg_key]) pt_buckets[dg_key] = [];
+
+ // Frame height deductions: top (tube_face) + bottom (bot_face) + (rows - 1) transoms (each tube_face)
+ const frame_deduct = bot_face + (rows * tube_face);
  const total_open_h = Math.max(10, h - frame_deduct);
 
  let bottom_h = 0, mid_h = 0, top_h = 0;
@@ -2106,28 +2301,24 @@ function clearDoor() {
    if (panel_mode === "CUSTOM_BOTTOM_3FT") {
      bottom_h = 36.0;
      mid_h = 36.0;
-     top_h = Math.max(8.0, total_open_h - (bottom_h + mid_h));
+     top_h = Math.max(6.0, total_open_h - (bottom_h + mid_h));
    } else if (panel_mode === "CUSTOM_BOTTOM_2.5FT") {
      bottom_h = 30.0;
      mid_h = 30.0;
-     top_h = Math.max(8.0, total_open_h - (bottom_h + mid_h));
+     top_h = Math.max(6.0, total_open_h - (bottom_h + mid_h));
    } else if (panel_mode === "EQUAL_DIVIDE") {
      const eq = total_open_h / 3.0;
      bottom_h = eq; mid_h = eq; top_h = eq;
    } else {
      // OPTIMIZED_4X8: 4'x8' Sheet & 6" Glass Slab Protected
      if (h <= 88.0) {
-       bottom_h = 30.0; // 30" (2.5 ft slab)
-       mid_h = 30.0;    // Equal to bottom!
-       top_h = Math.max(8.0, total_open_h - 60.0); // Smaller top box (~18")
-     } else if (h <= 100.0) {
-       bottom_h = 36.0; // 36" (3 ft slab)
-       mid_h = 36.0;    // Equal to bottom!
-       top_h = Math.max(8.0, total_open_h - 72.0); // Smaller top box (~18")
+       bottom_h = 30.0;
+       mid_h = 30.0;
+       top_h = Math.max(6.0, total_open_h - 60.0);
      } else {
        bottom_h = 36.0;
        mid_h = 36.0;
-       top_h = Math.max(8.0, total_open_h - 72.0);
+       top_h = Math.max(6.0, total_open_h - 72.0);
      }
    }
  } else {
@@ -2136,32 +2327,41 @@ function clearDoor() {
  }
 
  if (p_type === "Fixed Partition") {
-   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
-   const outer_v = h, inter_v = h - 3.0, outer_h = w - 3.0;
-   const inner_h = (w - ((cols + 1) * 1.5)) / cols;
+   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
+   const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h = w - (2 * tube_face);
+   const inner_h = (w - ((cols + 1) * tube_face)) / cols;
 
    // 1. FRAME SECTIONS
    out += "-----------------------------------\n";
    out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
    out += "-----------------------------------\n";
-   out += `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
-   out += `> Outer Horizontals (Top/Bottom): ${disp(outer_h)} (2 pc)\n`;
-   pt_buckets["Single Glazing"].push(outer_v, outer_v, outer_h, outer_h);
+   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
+   if (Math.abs(bot_face - tube_face) > 0.05) {
+     out += `> Outer Top Horizontal (${disp(tube_face)} Face): ${disp(outer_h)} (1 pc)\n`;
+     out += `> Bottom Base Rail (${disp(bot_face)} Section): ${disp(outer_h)} (1 pc)\n`;
+     const base_key = `Bottom Base Tube [${disp(bot_face)}]`;
+     if (!pt_buckets[base_key]) pt_buckets[base_key] = [];
+     pt_buckets[sg_key].push(outer_v, outer_v, outer_h);
+     pt_buckets[base_key].push(outer_h);
+   } else {
+     out += `> Outer Horizontals Top/Bottom (${tube_label}): ${disp(outer_h)} (2 pc)\n`;
+     pt_buckets[sg_key].push(outer_v, outer_v, outer_h, outer_h);
+   }
 
    if (cols > 1) {
-     out += `> Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
-     for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
+     out += `> Intermediate Verticals (${tube_label}): ${disp(inter_v)} (${cols - 1} pc)\n`;
+     for (let i = 0; i < cols - 1; i++) pt_buckets[dg_key].push(inter_v);
    }
 
    const h_qty = cols * (rows - 1);
    if (h_qty > 0) {
-     out += `> Internal Transom Divider Tubes: ${disp(inner_h)} (${h_qty} pc)\n`;
-     for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
+     out += `> Horizontal Transoms (${tube_label}): ${disp(inner_h)} (${h_qty} pc)\n`;
+     for (let i = 0; i < h_qty; i++) pt_buckets[dg_key].push(inner_h);
    }
 
-   // 2. FRAME BOX CLEAR OPENINGS & VERTICAL PIPE MARKING GUIDE
-   const mark_bottom_transom = bottom_h + 1.5;
-   const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
+   // 2. CLEAR OPENINGS & MARKING GUIDE
+   const mark_bottom_transom = bottom_h + bot_face;
+   const mark_mid_transom = bottom_h + bot_face + mid_h + tube_face;
 
    out += "\n-----------------------------------\n";
    out += "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
@@ -2189,16 +2389,26 @@ function clearDoor() {
    const pt_gspec = getModuleGlassLabel('pt');
    if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
      const acpInfo = calcAcp4x8Requirement(bottom_cut_h, cut_w, cols);
+     const totalGlassSqFt = (((mid_cut_h * cut_w * cols) + (top_cut_h * cut_w * cols)) / 144.0).toFixed(2);
      out += "\n-----------------------------------\n";
-     out += "GLASS & 4'x8' ACP BOARD DETAILS\n";
+     out += "GLASS & 4'x8' ACP BOARD PURCHASE SUMMARY\n";
      out += "-----------------------------------\n";
      out += `> [Middle Glass] (${pt_gspec}): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `> [Top Header Glass] (${pt_gspec}): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc) [Self Cut - Not in Glass PDF]\n`;
-     out += `> [4'x8' ACP Board to Buy]: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet)\n`;
+     out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `• TOTAL GLASS TO BUY: ${cols * 2} Pcs (${totalGlassSqFt} Sq.Ft) -> In 2. GLASS PDF\n`;
+     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet) -> In 3. ALU PURCHASE PDF\n`;
 
      pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] || 0) + cols;
      pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] || 0) + cols;
+     pt_acp_list.push({
+       cutStr: `${disp(bottom_cut_h)} x ${disp(cut_w)}`,
+       h_in: bottom_cut_h,
+       w_in: cut_w,
+       qty: cols,
+       buyLabel: acpInfo.buyLabel,
+       areaSqFt: acpInfo.totalAreaSqFt
+     });
 
      out += "\n" + ("--- GLASS SHOP BILLING SLAB SAFE-GUARD ---\n");
      out += `• Middle Glass Billing Slab: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
@@ -2232,33 +2442,33 @@ function clearDoor() {
    const dh = is_mm ? raw_dh / 25.4 : raw_dh;
    const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
-   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
-   const outer_v = h, inter_v = h - 3.0, door_side_v = h - 1.5;
-   const outer_h_top = w - 3.0, rem_w = w - (dw + 3.0);
-   const inner_h = cols > 0 ? (rem_w - 3.0) / cols : 0;
+   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
+   const outer_v = h, inter_v = h - (tube_face + bot_face), door_side_v = h - tube_face;
+   const outer_h_top = w - (2 * tube_face), rem_w = w - (dw + (2 * tube_face));
+   const inner_h = cols > 0 ? (rem_w - ((cols + 1) * tube_face)) / cols : 0;
 
    out += "-----------------------------------\n";
    out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
    out += "-----------------------------------\n";
-   out += `> Outer Verticals: ${disp(outer_v)} (2 pc)\n`;
-   out += `> Door Post Vertical: ${disp(door_side_v)} (1 pc)\n`;
-   pt_buckets["Single Glazing"].push(outer_v, outer_v);
-   pt_buckets["Double Glazing"].push(door_side_v);
+   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
+   out += `> Door Post Vertical (${tube_label}): ${disp(door_side_v)} (1 pc)\n`;
+   pt_buckets[sg_key].push(outer_v, outer_v);
+   pt_buckets[dg_key].push(door_side_v);
 
    if (cols > 1) {
-     out += `> Side Intermediate Verticals: ${disp(inter_v)} (${cols - 1} pc)\n`;
-     for (let i = 0; i < cols - 1; i++) pt_buckets["Double Glazing"].push(inter_v);
+     out += `> Side Intermediate Verticals (${tube_label}): ${disp(inter_v)} (${cols - 1} pc)\n`;
+     for (let i = 0; i < cols - 1; i++) pt_buckets[dg_key].push(inter_v);
    }
 
-   out += `> Outer Top Horizontal: ${disp(outer_h_top)} (1 pc)\n`;
-   out += `> Door Top Transom Tube: ${disp(rem_w)} (1 pc)\n`;
-   pt_buckets["Single Glazing"].push(outer_h_top);
-   pt_buckets["Double Glazing"].push(rem_w);
+   out += `> Outer Top Horizontal (${tube_label}): ${disp(outer_h_top)} (1 pc)\n`;
+   out += `> Side Bottom Base Tube (${disp(bot_face)}): ${disp(rem_w)} (1 pc)\n`;
+   pt_buckets[sg_key].push(outer_h_top);
+   pt_buckets[dg_key].push(rem_w);
 
    const h_qty = cols * (rows - 1);
    if (h_qty > 0) {
-     out += `> Side Partition Transoms: ${disp(inner_h)} (${h_qty} pc)\n`;
-     for (let i = 0; i < h_qty; i++) pt_buckets["Double Glazing"].push(inner_h);
+     out += `> Side Partition Transoms (${tube_label}): ${disp(inner_h)} (${h_qty} pc)\n`;
+     for (let i = 0; i < h_qty; i++) pt_buckets[dg_key].push(inner_h);
    }
 
    // Door Frame & Sash
@@ -2308,10 +2518,20 @@ function clearDoor() {
 
    if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE") && cols > 0) {
      const acpInfo = calcAcp4x8Requirement(bottom_cut_h, cut_w, cols);
+     const totalGlassSqFt = (((dg_h * dg_w) + (transom_g_h * transom_g_w) + (mid_cut_h * cut_w * cols) + (top_cut_h * cut_w * cols)) / 144.0).toFixed(2);
      out += `> [Middle Glass] (${pt_gspec}): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `> [Top Header Glass] (${pt_gspec}): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc) [Self Cut - Not in Glass PDF]\n`;
-     out += `> [4'x8' ACP Board to Buy]: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet)\n`;
+     out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+     out += `• TOTAL GLASS TO BUY: ${(cols * 2) + 2} Pcs (${totalGlassSqFt} Sq.Ft) -> In 2. GLASS PDF\n`;
+     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet) -> In 3. ALU PURCHASE PDF\n`;
+     pt_acp_list.push({
+       cutStr: `${disp(bottom_cut_h)} x ${disp(cut_w)}`,
+       h_in: bottom_cut_h,
+       w_in: cut_w,
+       qty: cols,
+       buyLabel: acpInfo.buyLabel,
+       areaSqFt: acpInfo.totalAreaSqFt
+     });
 
      pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] || 0) + 1;
      pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Transom Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Transom Glass) || ${pt_gspec}`] || 0) + 1;
@@ -2347,6 +2567,7 @@ function clearDoor() {
  pt_part_count = 0;
  pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
  pt_glass_dict = {};
+ pt_acp_list = [];
  document.getElementById('pt_h').value = "";
  document.getElementById('pt_w').value = "";
  document.getElementById('pt_dh').value = "";
@@ -2777,7 +2998,7 @@ function clearCustomSeries() {
         const parts = clean.split(':');
         const pName = parts[0].trim();
         const pVal = parts.slice(1).join(':').trim();
-        if (/glass|board|beading|alu spec/i.test(pName)) return;
+        if (/glass|board|beading|alu spec|jindal section|acp/i.test(pName)) return;
         unitProfiles[pName] = pVal;
         if (allProfileHeaders.indexOf(pName) === -1) {
           allProfileHeaders.push(pName);
@@ -3009,9 +3230,28 @@ function clearCustomSeries() {
   });
 
   profileRows.push([
-    { content: "TOTAL BARS", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
-    { content: totalSticks + " Pcs", styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } }
+    { content: "TOTAL ALUMINIUM BARS", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 253, 250] } },
+    { content: totalSticks + " Bars", styles: { fontStyle: 'bold', halign: 'center', fillColor: [204, 251, 241] } }
   ]);
+
+  // Include 4'x8' ACP Board Purchase List if Door or Partition has ACP panels
+  let acpArr = [];
+  if (modPrefix === 'dr' && typeof dr_acp_list !== 'undefined') acpArr = dr_acp_list;
+  else if (modPrefix === 'pt' && typeof pt_acp_list !== 'undefined') acpArr = pt_acp_list;
+
+  if (acpArr && acpArr.length > 0) {
+    profileRows.push([
+      { content: "4'x8' ACP BOARD PURCHASE LIST (SELF CUT - NOT SENT TO GLASS SHOP)", colSpan: 4, styles: { halign: 'center', fontStyle: 'bold', fillColor: [254, 243, 199], textColor: [146, 64, 14] } }
+    ]);
+    acpArr.forEach(function(item, aIdx) {
+      profileRows.push([
+        "ACP-" + (aIdx + 1),
+        "ACP Sheet (Cut Size: " + item.cutStr + " | " + item.qty + " Pcs)",
+        "4'x8' ACP Board (" + item.areaSqFt.toFixed(1) + " Sq.Ft)",
+        item.buyLabel
+      ]);
+    });
+  }
 
   doc.autoTable({
     startY: 41,
@@ -3180,6 +3420,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('cc_w').value = itm.w;
  if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = itm.qty;
+ applyKhataSpecsToModule('cc', itm);
  calculateCasement();
  alert(`Loaded ${itm.room} (${cat}) into Casement Calculator!`);
  } else if (cat.includes("Partition")) {
@@ -3193,6 +3434,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('pt_dh').value = "80";
  document.getElementById('pt_dw').value = "32";
  }
+ applyKhataSpecsToModule('pt', itm);
  calculatePartition();
  alert(`Loaded ${itm.room} into Partition Calculator!`);
  } else if (cat.includes("Domal")) {
@@ -3204,6 +3446,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dm_w').value = itm.w;
  if (document.getElementById('dm_loc')) document.getElementById('dm_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dm_qty')) document.getElementById('dm_qty').value = itm.qty;
+ applyKhataSpecsToModule('dm', itm);
  calculateDomal();
  alert(`Loaded ${itm.room} into Domal Calculator!`);
  } else if (cat.includes("Sliding")) {
@@ -3216,6 +3459,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('sl_w').value = itm.w;
  if (document.getElementById('sl_loc')) document.getElementById('sl_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('sl_qty')) document.getElementById('sl_qty').value = itm.qty;
+ applyKhataSpecsToModule('sl', itm);
  calculateSliding();
  alert(`Loaded ${itm.room} into Sliding Calculator!`);
  } else if (cat.includes("Door")) {
@@ -3228,6 +3472,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dr_w').value = itm.w;
  if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dr_qty')) document.getElementById('dr_qty').value = itm.qty;
+ applyKhataSpecsToModule('dr', itm);
  calculateDoor();
  alert(`Loaded ${itm.room} into Door Calculator!`);
  } else if (cat.includes("Ceiling")) {
@@ -3266,6 +3511,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('cc_w').value = itm.w;
  if (document.getElementById('cc_loc')) document.getElementById('cc_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('cc_qty')) document.getElementById('cc_qty').value = itm.qty;
+ applyKhataSpecsToModule('cc', itm);
  calculateCasement();
  } else if (cat.includes("Partition")) {
  partitionCount += itm.qty;
@@ -3277,6 +3523,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('pt_dh').value = "80";
  document.getElementById('pt_dw').value = "32";
  }
+ applyKhataSpecsToModule('pt', itm);
  for (let pq = 0; pq < (itm.qty || 1); pq++) calculatePartition();
  } else if (cat.includes("Domal")) {
  domalCount += itm.qty;
@@ -3286,6 +3533,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dm_w').value = itm.w;
  if (document.getElementById('dm_loc')) document.getElementById('dm_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dm_qty')) document.getElementById('dm_qty').value = itm.qty;
+ applyKhataSpecsToModule('dm', itm);
  calculateDomal();
  } else if (cat.includes("Sliding")) {
  slidingCount += itm.qty;
@@ -3296,6 +3544,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('sl_w').value = itm.w;
  if (document.getElementById('sl_loc')) document.getElementById('sl_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('sl_qty')) document.getElementById('sl_qty').value = itm.qty;
+ applyKhataSpecsToModule('sl', itm);
  calculateSliding();
  } else if (cat.includes("Door")) {
  doorCount += itm.qty;
@@ -3306,6 +3555,7 @@ function saveMeasurementData(projectType, outId, matId) {
  document.getElementById('dr_w').value = itm.w;
  if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = `${itm.room} [${itm.tag}]`;
  if (document.getElementById('dr_qty')) document.getElementById('dr_qty').value = itm.qty;
+ applyKhataSpecsToModule('dr', itm);
  calculateDoor();
  }
  });
@@ -3725,33 +3975,43 @@ function saveMeasurementData(projectType, outId, matId) {
  else if (w_type.includes('2-Track')) base_wt = (is_domal ? 1.05 : 0.80) * (thick_val / 1.5);
  else if (w_type.includes('Casement')) base_wt = 1.15 * (thick_val / 1.5);
  else if (w_type.includes('Door')) base_wt = 1.35 * (thick_val / 1.5);
- else if (w_type.includes('Partition')) base_wt = 0.90 * (thick_val / 1.5);
+ else if (w_type.includes('Partition')) {
+   let p_base = 0.90;
+   if (w_type.includes('2x1') || w_type.includes('2"x1"')) p_base = 0.72;
+   else if (w_type.includes('1.75')) p_base = 0.82;
+   else if (w_type.includes('3x1.5') || w_type.includes('3"x1.5"')) p_base = 1.15;
+   else if (w_type.includes('4x1.75') || w_type.includes('4"x1.75"') || w_type.includes('4x1.5') || w_type.includes('4"x1.5"')) p_base = 1.45;
+   base_wt = p_base * (thick_val / 1.5);
+ }
  else if (w_type.includes('Ceiling')) return w_type.includes('Gypsum') ? 110.0 : 95.0;
 
  let alu_kg_rate = 260.0;
  if (is_domal) {
  if (color.includes('Wooden')) alu_kg_rate = parseFloat(cost_data['Domal Wooden Finish (Rs/Kg)']) || 365.0;
- else if (['Powder Coated', 'Black', 'White', 'Brown', 'Grey', 'Ivory', 'Charcoal'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Domal Powder Coated (Rs/Kg)']) || 310.0;
- else if (['Stainless Steel', 'SS', 'Gold'].some(c => color.includes(c))) alu_kg_rate = (parseFloat(cost_data['Domal Anodized (Rs/Kg)']) || 295.0) + 20.0;
- else if (['Anodized', 'Bronze', 'Champagne'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Domal Anodized (Rs/Kg)']) || 295.0;
+ else if (color.includes('Powder')) alu_kg_rate = parseFloat(cost_data['Domal Powder Coated (Rs/Kg)']) || 310.0;
+ else if (['Golden', 'Gold', 'Champagne', 'SS'].some(c => color.includes(c))) alu_kg_rate = (parseFloat(cost_data['Domal Anodized (Rs/Kg)']) || 295.0) + 15.0;
+ else if (color.includes('Anodized')) alu_kg_rate = parseFloat(cost_data['Domal Anodized (Rs/Kg)']) || 295.0;
  else alu_kg_rate = parseFloat(cost_data['Domal Mill/Natural (Rs/Kg)']) || 280.0;
  } else if (w_type.includes('Door')) {
  alu_kg_rate = parseFloat(cost_data['Door Master Material (Rs/Kg)']) || 270.0;
  if (color.includes('Wooden')) alu_kg_rate += 75.0;
  else if (color.includes('Powder')) alu_kg_rate += 25.0;
+ else if (color.includes('Golden') || color.includes('Champagne')) alu_kg_rate += 15.0;
  } else if (w_type.includes('Partition')) {
  alu_kg_rate = parseFloat(cost_data['Partition Material (Rs/Kg)']) || 265.0;
  if (color.includes('Wooden')) alu_kg_rate += 75.0;
  else if (color.includes('Powder')) alu_kg_rate += 25.0;
+ else if (color.includes('Golden') || color.includes('Champagne')) alu_kg_rate += 15.0;
  } else if (w_type.includes('Casement')) {
  alu_kg_rate = parseFloat(cost_data['Casement Material (Rs/Kg)']) || 275.0;
  if (color.includes('Wooden')) alu_kg_rate += 75.0;
  else if (color.includes('Powder')) alu_kg_rate += 25.0;
+ else if (color.includes('Golden') || color.includes('Champagne')) alu_kg_rate += 15.0;
  } else {
  if (color.includes('Wooden')) alu_kg_rate = parseFloat(cost_data['Sliding Wooden Finish (Rs/Kg)']) || 345.0;
- else if (['Powder Coated', 'Black', 'White', 'Brown', 'Grey', 'Ivory', 'Charcoal'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Sliding Powder Coated (Rs/Kg)']) || 290.0;
- else if (['Stainless Steel', 'SS', 'Gold'].some(c => color.includes(c))) alu_kg_rate = (parseFloat(cost_data['Sliding Anodized (Rs/Kg)']) || 275.0) + 15.0;
- else if (['Anodized', 'Bronze', 'Champagne'].some(c => color.includes(c))) alu_kg_rate = parseFloat(cost_data['Sliding Anodized (Rs/Kg)']) || 275.0;
+ else if (color.includes('Powder')) alu_kg_rate = parseFloat(cost_data['Sliding Powder Coated (Rs/Kg)']) || 290.0;
+ else if (['Golden', 'Gold', 'Champagne', 'SS'].some(c => color.includes(c))) alu_kg_rate = (parseFloat(cost_data['Sliding Anodized (Rs/Kg)']) || 275.0) + 15.0;
+ else if (color.includes('Anodized')) alu_kg_rate = parseFloat(cost_data['Sliding Anodized (Rs/Kg)']) || 275.0;
  else alu_kg_rate = parseFloat(cost_data['Sliding Mill/Natural (Rs/Kg)']) || 260.0;
  }
 
@@ -3779,6 +4039,9 @@ function saveMeasurementData(projectType, outId, matId) {
  glass_cost += 12.0;
  } else if (gtStr.includes('Frosted') || gtStr.includes('Pinhead') || gtStr.includes('Bajri')) {
  glass_cost += 10.0;
+ }
+ if (gtStr.includes('ACP') || String(w_type).includes('ACP')) {
+ glass_cost += 15.0;
  }
  }
 
@@ -3985,7 +4248,7 @@ function autofillCustomer() {
  const lines = [];
  billItems.forEach((itm, i) => {
  const loc_lbl = itm.location ? `[${itm.location}] ` : "";
- lines.push(`[${i + 1}] ${loc_lbl}${itm.type} | ${itm.h}x${itm.w} ${itm.unit} | Qty:${itm.qty} @ Rs.${itm.rate.toFixed(0)} | Rs:${itm.price.toFixed(2)}`);
+ lines.push(`[${i + 1}] ${loc_lbl}${itm.type} (${itm.thickness} ${itm.color} | ${itm.glass_thick} ${itm.glass_type}) | ${itm.h}x${itm.w} ${itm.unit} x ${itm.qty} @ Rs.${itm.rate.toFixed(0)} = Rs.${itm.price.toFixed(2)}`);
  });
  document.getElementById('bill_queue_text').textContent = lines.join('\n');
  }
@@ -4053,10 +4316,10 @@ function autofillCustomer() {
    autoCommitPendingBillItemIfNeeded();
    if (billItems && billItems.length > 0) return billItems;
    const w_type = document.getElementById('q_type') ? document.getElementById('q_type').value : "Aluminium & Glass Work";
-   const color = document.getElementById('q_color') ? document.getElementById('q_color').value : "Powder Coated";
+   const color = getModuleAluColor('q');
    const thick = document.getElementById('q_thick') ? document.getElementById('q_thick').value : "1.5 mm";
-   const g_thick = document.getElementById('q_g_thick') ? document.getElementById('q_g_thick').value : "5.0 mm Glass";
-   const g_type = document.getElementById('q_g_type') ? document.getElementById('q_g_type').value : "Clear Glass";
+   const g_thick = document.getElementById('q_g_thick') ? document.getElementById('q_g_thick').value : "5 mm";
+   const g_type = document.getElementById('q_g_type') ? document.getElementById('q_g_type').value : "Clear";
    const toughened = document.getElementById('q_tough') ? document.getElementById('q_tough').value.includes("Toughened") : false;
    const loc = document.getElementById('q_loc') ? document.getElementById('q_loc').value.trim() : "";
    const qty = Math.max(1, parseInt(safeEval(document.getElementById('q_qty') ? document.getElementById('q_qty').value : "1")) || 1);
@@ -4113,13 +4376,13 @@ function autofillCustomer() {
 
  let grand_total = 0.0;
  effectiveItems.forEach((item, i) => {
- const color = item.color || 'Jet Black';
+ const color = item.color || 'Powder Coated Black';
  const thick = item.thickness || '1.5 mm';
- const g_thick = item.glass_thick || '5.0 mm';
- const g_type = item.glass_type || 'Clear Float';
- const tough_txt = item.toughened ? " [TOUGHENED: YES]" : "";
+ const g_thick = item.glass_thick || '5 mm';
+ const g_type = item.glass_type || 'Clear';
+ const tough_txt = (item.toughened && !String(g_type).includes('Toughened')) ? " [TOUGHENED]" : "";
  const loc_txt = item.location ? `[${item.location}] ` : "";
- const desc = `${loc_txt}${item.type}\n Specs: ${color} (${thick}) | ${g_thick} ${g_type}${tough_txt}\n Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}`;
+ const desc = `${loc_txt}${item.type}\n Alu: ${thick} ${color} | Glass: ${g_thick} ${g_type}${tough_txt}\n Size: ${item.h}x${item.w} ${item.unit} @ Rs.${item.rate}/Sq.Ft`;
  bill += `${i + 1}. ${desc}\n ${item.qty} ${item.area.toFixed(1)} ${item.price.toFixed(2)}\n`;
  grand_total += item.price;
  });
@@ -4355,7 +4618,7 @@ function autofillCustomer() {
 
   const tableData = effectiveItems.map((itm, i) => [
     i + 1,
-    `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nSpecs: ${itm.color} (${itm.thickness})\nGlass: ${itm.glass_thick} ${itm.glass_type}${itm.toughened ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}`,
+    `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nAlu Spec: ${itm.thickness} | ${itm.color}\nGlass / Panel: ${itm.glass_thick} ${itm.glass_type}${(itm.toughened && !String(itm.glass_type).includes('Toughened')) ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}/Sq.Ft`,
     itm.qty,
     itm.area.toFixed(1),
     `Rs ${itm.rate}`,

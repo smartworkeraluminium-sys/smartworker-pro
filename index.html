@@ -24,11 +24,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v55') caches.delete(k);
+            if (k !== 'smart-worker-pro-v57') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=55').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=57').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=55">
+  <link rel="stylesheet" href="style.css?v=57">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1049,6 +1049,13 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
  </select>
  </div>
  <div class="form-group">
@@ -1070,7 +1077,8 @@
  <button class="action-btn btn-calc" style="flex:0.65; background:#1a80cc;" onclick="calculateDomal()">+ CALCULATE</button>
  </div>
  <div class="btn-row" style="margin-bottom:8px;">
- <button class="action-btn btn-save" style="flex:1;" onclick="saveMeasurementData('Domal Window', 'dm_alu_out', 'dm_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn btn-save" style="flex:0.48;" onclick="saveMeasurementData('Domal Window', 'dm_alu_out', 'dm_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn" style="flex:0.52; background:#9333ea;" onclick="sendModuleToBill('dm')"><i class="fa-solid fa-file-invoice-dollar"></i> + ADD TO BILL</button>
  </div>
  <!-- 4 Dedicated Professional PDFs Export Panel -->
  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:12px;">
@@ -1104,7 +1112,7 @@
  <div id="screen-sliding" class="screen">
  <div class="form-box">
  <div class="form-grid">
- <div class="form-group">
+ <div class="form-group" style="grid-column: span 2;">
  <label>System Size:</label>
  <select id="sl_sys">
  <option value="18x40 System">18x40 System</option>
@@ -1218,6 +1226,13 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
  </select>
  </div>
  <div class="form-group">
@@ -1239,7 +1254,8 @@
  <button class="action-btn btn-calc" style="flex:0.65; background:#cc661a;" onclick="calculateSliding()">+ CALCULATE</button>
  </div>
  <div class="btn-row" style="margin-bottom:8px;">
- <button class="action-btn btn-save" style="flex:1;" onclick="saveMeasurementData('Sliding Window', 'sl_out', 'sl_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn btn-save" style="flex:0.48;" onclick="saveMeasurementData('Sliding Window', 'sl_out', 'sl_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn" style="flex:0.52; background:#9333ea;" onclick="sendModuleToBill('sl')"><i class="fa-solid fa-file-invoice-dollar"></i> + ADD TO BILL</button>
  </div>
  <!-- 4 Dedicated Professional PDFs Export Panel -->
  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:12px;">
@@ -1402,6 +1418,13 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
  </select>
  </div>
  <div class="form-group">
@@ -1423,7 +1446,8 @@
  <button class="action-btn btn-calc" style="flex:0.65; background:#cc3366;" onclick="calculateCasement()">+ CALCULATE</button>
  </div>
  <div class="btn-row" style="margin-bottom:8px;">
- <button class="action-btn btn-save" style="flex:1;" onclick="saveMeasurementData('Custom Casement', 'cc_out', 'cc_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn btn-save" style="flex:0.48;" onclick="saveMeasurementData('Custom Casement', 'cc_out', 'cc_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn" style="flex:0.52; background:#9333ea;" onclick="sendModuleToBill('cc')"><i class="fa-solid fa-file-invoice-dollar"></i> + ADD TO BILL</button>
  </div>
  <!-- 4 Dedicated Professional PDFs Export Panel -->
  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:12px;">
@@ -1617,6 +1641,13 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
  </select>
  </div>
  <div class="form-group">
@@ -1638,7 +1669,8 @@
  <button class="action-btn btn-calc" style="flex:0.65; background:#b34d1a;" onclick="calculateDoor()">+ CALCULATE</button>
  </div>
  <div class="btn-row" style="margin-bottom:8px;">
- <button class="action-btn btn-save" style="flex:1;" onclick="saveMeasurementData('Door Master', 'dr_out', 'dr_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn btn-save" style="flex:0.48;" onclick="saveMeasurementData('Door Master', 'dr_out', 'dr_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn" style="flex:0.52; background:#9333ea;" onclick="sendModuleToBill('dr')"><i class="fa-solid fa-file-invoice-dollar"></i> + ADD TO BILL</button>
  </div>
  <!-- 4 Dedicated Professional PDFs Export Panel -->
  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:12px;">
@@ -1710,15 +1742,6 @@
  <input readonly inputmode="none" onclick="openKeypad('pt_dw')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dw')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
-  <div class="form-group">
- <label style="color:#2563eb; font-weight:bold;" data-i18n="lbl_panel_mode">Panel Division & 4'x8' Sheet Optimization:</label>
- <select id="pt_panel_mode">
- <option value="OPTIMIZED_4X8" selected data-i18n="opt_panel_4x8">✨ 4'x8' Sheet Optimized (Bottom & Middle Equal, Top Small - Zero Waste)</option>
- <option value="CUSTOM_BOTTOM_3FT" data-i18n="opt_panel_3ft">Bottom 3ft (36") ACP, Middle 3ft (36") Glass, Top Small</option>
- <option value="CUSTOM_BOTTOM_2.5FT" data-i18n="opt_panel_2_5ft">Bottom 2.5ft (30") ACP, Middle 2.5ft (30") Glass, Top Small</option>
- <option value="EQUAL_DIVIDE" data-i18n="opt_panel_equal">Equal 3 Rows Divide</option>
- </select>
- </div>
  <div class="form-group">
  <label>Horizontal Sections:</label>
  <input type="number" id="pt_cols" value="3">
@@ -1726,6 +1749,48 @@
  <div class="form-group">
  <label>Vertical Sections:</label>
  <input type="number" id="pt_rows" value="3">
+ </div>
+
+ <!-- Jindal Partition Tube Section & Panel Mode Box (Full Row) -->
+ <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px; margin-top:2px;">
+   <div style="font-size:0.76rem; font-weight:800; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+     <i class="fa-solid fa-ruler-combined" style="color:#0284c7;"></i>
+     <span>JINDAL PARTITION TUBE / SECTION SIZE:</span>
+   </div>
+   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+     <div style="grid-column: span 2;">
+       <select id="pt_tube_preset" onchange="applyPartitionTubePreset(this.value)" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; color:#0f172a; font-size:0.8rem; font-weight:700;">
+         <option value="2.5x1.5_edge" selected>2.5" x 1.5" Jindal Partition (1.5" Face)</option>
+         <option value="2.5x1.5_flat">2.5" x 1.5" Flat Mount (2.5" Face)</option>
+         <option value="2x1_edge">2" x 1" Jindal Tube (1.0" Face)</option>
+         <option value="2x1_flat">2" x 1" Flat Mount (2.0" Face)</option>
+         <option value="1.75x1.75">1.75" x 1.75" Square Tube (1.75" Face)</option>
+         <option value="3x1.5_edge">3" x 1.5" Heavy Tube (1.5" Face)</option>
+         <option value="4x1.75_base">4" x 1.75" Jumbo Tube (1.75" Face, 4" Base)</option>
+         <option value="4x1.5_base">4" x 1.5" Tube (1.5" Face, 4" Base)</option>
+         <option value="4x1.75_all">4" x 1.75" Full 4" Face Frame</option>
+         <option value="2x2">2" x 2" Square Tube (2.0" Face)</option>
+         <option value="custom">Custom Tube Size (Enter Inches Below)</option>
+       </select>
+     </div>
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Frame/Mullion Face (In):</label>
+       <input type="number" id="pt_tube_face" value="1.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+     <div>
+       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Bottom Base Tube (In):</label>
+       <input type="number" id="pt_bot_face" value="1.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
+     </div>
+   </div>
+   <div>
+     <label style="font-size:0.72rem; font-weight:800; color:#2563eb; display:block; margin-bottom:3px;">Panel Mode (Glass + ACP Sheet / Full Glass):</label>
+     <select id="pt_panel_mode" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; font-size:0.8rem; font-weight:700;">
+       <option value="OPTIMIZED_4X8" selected>Glass + ACP (4'x8' Optimized: Bottom ACP, Mid & Top Glass)</option>
+       <option value="CUSTOM_BOTTOM_3FT">Glass + ACP (Bottom 3ft / 36" ACP, Middle 36" Glass, Top Glass)</option>
+       <option value="CUSTOM_BOTTOM_2.5FT">Glass + ACP (Bottom 2.5ft / 30" ACP, Middle 30" Glass, Top Glass)</option>
+       <option value="EQUAL_DIVIDE">Full Glass Only (Equal Rows Divide - No ACP Board)</option>
+     </select>
+   </div>
  </div>
  <div class="form-group">
  <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
@@ -1794,6 +1859,13 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
  </select>
  </div>
  <div class="form-group">
@@ -1815,7 +1887,8 @@
  <button class="action-btn btn-calc" style="flex:0.65; background:#e64d4d;" onclick="calculatePartition()">+ CALCULATE</button>
  </div>
  <div class="btn-row" style="margin-bottom:8px;">
- <button class="action-btn btn-save" style="flex:1;" onclick="saveMeasurementData('Partition & Door', 'pt_out', 'pt_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn btn-save" style="flex:0.48;" onclick="saveMeasurementData('Partition & Door', 'pt_out', 'pt_mat_out')"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
+ <button class="action-btn" style="flex:0.52; background:#9333ea;" onclick="sendModuleToBill('pt')"><i class="fa-solid fa-file-invoice-dollar"></i> + ADD TO BILL</button>
  </div>
  <!-- 4 Dedicated Professional PDFs Export Panel -->
  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:12px;">
@@ -1954,12 +2027,15 @@
  <div class="form-group" style="grid-column: span 2;">
  <label>Type:</label>
  <select id="q_type" onchange="updateSuggestedRate()">
+ <optgroup label="DOMAL WINDOWS">
  <option value="Domal 27x65 (2-Track)" selected>Domal 27x65 (2-Track)</option>
  <option value="Domal 27x65 (3-Track)">Domal 27x65 (3-Track)</option>
  <option value="Domal 27x65 (4-Track)">Domal 27x65 (4-Track)</option>
  <option value="Domal 35x75 (2-Track)">Domal 35x75 (2-Track)</option>
  <option value="Domal 35x75 (3-Track)">Domal 35x75 (3-Track)</option>
  <option value="Domal 35x75 (4-Track)">Domal 35x75 (4-Track)</option>
+ </optgroup>
+ <optgroup label="SLIDING WINDOWS">
  <option value="Sliding 18x40 (2-Track)">Sliding 18x40 (2-Track)</option>
  <option value="Sliding 18x40 (3-Track)">Sliding 18x40 (3-Track)</option>
  <option value="Sliding 18x40 (4-Track)">Sliding 18x40 (4-Track)</option>
@@ -1975,26 +2051,64 @@
  <option value="Sliding 25x65 (2-Track)">Sliding 25x65 (2-Track)</option>
  <option value="Sliding 25x65 (3-Track)">Sliding 25x65 (3-Track)</option>
  <option value="Sliding 25x65 (4-Track)">Sliding 25x65 (4-Track)</option>
+ </optgroup>
+ <optgroup label="CASEMENT WINDOWS">
  <option value="Casement 34 Series">Casement 34 Series</option>
  <option value="Casement 40 Series">Casement 40 Series</option>
- <option value="Standard Door">Standard Door</option>
+ </optgroup>
+ <optgroup label="DOORS (GLASS & ACP)">
+ <option value="Standard Door (Glass + ACP)">Standard Door (Glass + ACP)</option>
+ <option value="Standard Door (Full Glass)">Standard Door (Full Glass)</option>
  <option value="Floor Spring Door">Floor Spring Door</option>
  <option value="Top Hung Door">Top Hung Door</option>
  <option value="Domal Door">Domal Door</option>
- <option value="Fixed Partition">Fixed Partition</option>
- <option value="Door Partition">Door Partition</option>
+ </optgroup>
+ <optgroup label="JINDAL PARTITIONS (GLASS & ACP)">
+ <option value="Partition Jindal 2.5x1.5 (Glass + ACP)">Partition Jindal 2.5"x1.5" (Glass + ACP)</option>
+ <option value="Partition Jindal 2.5x1.5 (Full Glass)">Partition Jindal 2.5"x1.5" (Full Glass)</option>
+ <option value="Partition Jindal 2x1 (Glass + ACP)">Partition Jindal 2"x1" (Glass + ACP)</option>
+ <option value="Partition Jindal 2x1 (Full Glass)">Partition Jindal 2"x1" (Full Glass)</option>
+ <option value="Partition Jindal 1.75x1.75">Partition Jindal 1.75"x1.75"</option>
+ <option value="Partition Jindal 3x1.5">Partition Jindal 3"x1.5" Heavy</option>
+ <option value="Partition Jindal 4x1.75">Partition Jindal 4"x1.75" Jumbo</option>
+ <option value="Partition Jindal 4x1.5">Partition Jindal 4"x1.5" Tube</option>
+ <option value="Door + Partition (Jindal 2.5x1.5)">Door + Partition (Jindal 2.5"x1.5")</option>
+ <option value="Door + Partition (Jindal 2x1)">Door + Partition (Jindal 2"x1")</option>
+ <option value="Door + Partition (Jindal 4x1.75)">Door + Partition (Jindal 4"x1.75")</option>
+ </optgroup>
+ <optgroup label="CEILING & OTHER">
  <option value="Gypsum Ceiling">Gypsum Ceiling</option>
  <option value="PVC Ceiling">PVC Ceiling</option>
  <option value="Other Work">Other Work</option>
+ </optgroup>
  </select>
  </div>
 
- <div class="form-group" style="grid-column: span 2;">
- <label>Room / Location:</label>
- <input type="text" id="q_loc" placeholder="e.g. Bed-1, Hall, Kitchen">
+ <div class="form-group">
+ <label>Height:</label>
+ <div class="input-wrapper">
+ <input readonly inputmode="none" onclick="openKeypad('q_h')" style="cursor:pointer; background:#fff;" type="text" id="q_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_h')"><i class="fa-solid fa-calculator"></i></button>
+ </div>
  </div>
 
- <div class="form-group" style="grid-column: span 2;">
+ <div class="form-group">
+ <label>Width:</label>
+ <div class="input-wrapper">
+ <input readonly inputmode="none" onclick="openKeypad('q_w')" style="cursor:pointer; background:#fff;" type="text" id="q_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_w')"><i class="fa-solid fa-calculator"></i></button>
+ </div>
+ </div>
+
+ <div class="form-group">
+ <label>Room / Location:</label>
+ <input type="text" id="q_loc" placeholder="e.g. Bed-1, Hall">
+ </div>
+
+ <div class="form-group">
+ <label>Qty (Pcs):</label>
+ <input type="number" id="q_qty" value="1">
+ </div>
+
+ <div class="form-group">
  <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
  <select id="q_color" onchange="toggleCustomAluColor('q'); updateSuggestedRate();">
  <option value="Silver (Natural)">Silver (Natural)</option>
@@ -2042,19 +2156,6 @@
  </div>
 
  <div class="form-group">
- <label style="color:#0284c7; font-weight:700;">Thickness (3.5 - 12mm):</label>
- <select id="q_g_thick" onchange="updateSuggestedRate()">
- <option value="3.5 mm">3.5 mm</option>
- <option value="4 mm">4 mm</option>
- <option value="5 mm" selected>5 mm</option>
- <option value="6 mm">6 mm</option>
- <option value="8 mm">8 mm</option>
- <option value="10 mm">10 mm</option>
- <option value="12 mm">12 mm</option>
- </select>
- </div>
-
- <div class="form-group" style="grid-column: span 2;">
  <label style="color:#0284c7; font-weight:700;">Glass Type:</label>
  <select id="q_g_type" onchange="updateSuggestedRate()">
  <option value="Clear" selected>Clear</option>
@@ -2076,6 +2177,26 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label style="color:#0284c7; font-weight:700;">Thickness (3.5 - 12mm):</label>
+ <select id="q_g_thick" onchange="updateSuggestedRate()">
+ <option value="3.5 mm">3.5 mm</option>
+ <option value="4 mm">4 mm</option>
+ <option value="5 mm" selected>5 mm</option>
+ <option value="6 mm">6 mm</option>
+ <option value="8 mm">8 mm</option>
+ <option value="10 mm">10 mm</option>
+ <option value="12 mm">12 mm</option>
  </select>
  </div>
 
@@ -2091,25 +2212,6 @@
  <label style="color:#2e7d32; font-weight:bold;">Rate (Rs/Sq.Ft):</label>
  <div class="input-wrapper">
  <input readonly inputmode="none" onclick="openKeypad('q_rate')" style="cursor:pointer; background:#fff;" type="text" id="q_rate" value="400" style="font-weight:bold;"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_rate')"><i class="fa-solid fa-calculator"></i></button>
- </div>
- </div>
-
- <div class="form-group">
- <label>Qty:</label>
- <input type="number" id="q_qty" value="1">
- </div>
-
- <div class="form-group">
- <label>Height:</label>
- <div class="input-wrapper">
- <input readonly inputmode="none" onclick="openKeypad('q_h')" style="cursor:pointer; background:#fff;" type="text" id="q_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_h')"><i class="fa-solid fa-calculator"></i></button>
- </div>
- </div>
-
- <div class="form-group" style="grid-column: span 2;">
- <label>Width:</label>
- <div class="input-wrapper">
- <input readonly inputmode="none" onclick="openKeypad('q_w')" style="cursor:pointer; background:#fff;" type="text" id="q_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('q_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  </div>
@@ -2736,16 +2838,22 @@
  <label style="color:#b45309;">Opening Tag / Name:</label>
  <input type="text" id="sk_tag" placeholder="e.g. W-1, W-2, D-1">
  </div>
- <div class="form-group" style="grid-column:span 2;">
+ <div class="form-group">
  <label>Work Category / Profile:</label>
  <select id="sk_category">
  <optgroup label="CASEMENT WINDOWS (40mm & 34mm)">
  <option value="Casement 40mm Series" selected>Casement 40mm Heavy Series (Openable/Fixed)</option>
  <option value="Casement 34mm Series">Casement 34mm Series (Openable/Fixed)</option>
  </optgroup>
- <optgroup label="PARTITION SYSTEMS">
- <option value="Fixed Partition">Aluminium Partition (Fixed Glazing Grid)</option>
- <option value="Door + Partition">Aluminium Partition (Door + Glazing Integrated)</option>
+ <optgroup label="JINDAL PARTITION SYSTEMS">
+ <option value="Partition Jindal 2.5x1.5 (Glass + ACP)">Partition Jindal 2.5"x1.5" (Glass + ACP)</option>
+ <option value="Partition Jindal 2.5x1.5 (Full Glass)">Partition Jindal 2.5"x1.5" (Full Glass)</option>
+ <option value="Partition Jindal 2x1 (Glass + ACP)">Partition Jindal 2"x1" (Glass + ACP)</option>
+ <option value="Partition Jindal 1.75x1.75">Partition Jindal 1.75"x1.75"</option>
+ <option value="Partition Jindal 3x1.5">Partition Jindal 3"x1.5" Heavy</option>
+ <option value="Partition Jindal 4x1.75">Partition Jindal 4"x1.75" Jumbo</option>
+ <option value="Door + Partition (Jindal 2.5x1.5)">Door + Partition (Jindal 2.5"x1.5")</option>
+ <option value="Door + Partition (Jindal 4x1.75)">Door + Partition (Jindal 4"x1.75")</option>
  </optgroup>
  <optgroup label="DOMAL SYSTEM WINDOWS">
  <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track Window)</option>
@@ -2770,6 +2878,10 @@
  </select>
  </div>
  <div class="form-group">
+ <label>Quantity (Pcs):</label>
+ <input type="number" id="sk_qty" value="1" min="1">
+ </div>
+ <div class="form-group">
  <label>Height (Inches):</label>
  <div class="input-wrapper">
  <input readonly inputmode="none" onclick="openKeypad('sk_h')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_h')"><i class="fa-solid fa-calculator"></i></button>
@@ -2780,10 +2892,6 @@
  <div class="input-wrapper">
  <input readonly inputmode="none" onclick="openKeypad('sk_w')" style="cursor:pointer; background:#fff;" type="text" id="sk_w" placeholder="Width"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
- </div>
- <div class="form-group">
- <label>Quantity (Pcs):</label>
- <input type="number" id="sk_qty" value="1" min="1">
  </div>
  <div class="form-group">
  <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
@@ -2852,6 +2960,13 @@
  <option value="Toughened Tinted">Toughened Tinted</option>
  <option value="Laminated">Laminated</option>
  <option value="DGU">DGU</option>
+ <option value="Clear + ACP Board">Clear + ACP Board</option>
+ <option value="Tinted Black + ACP Board">Tinted Black + ACP Board</option>
+ <option value="Tinted Blue + ACP Board">Tinted Blue + ACP Board</option>
+ <option value="Tinted Brown + ACP Board">Tinted Brown + ACP Board</option>
+ <option value="One Way + ACP Board">One Way + ACP Board</option>
+ <option value="Frosted + ACP Board">Frosted + ACP Board</option>
+ <option value="Full ACP Board">Full ACP Board</option>
  </select>
  </div>
  <div class="form-group">
@@ -3564,12 +3679,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=55"></script>
+  <script src="app.js?v=57"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=55').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=57').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

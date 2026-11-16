@@ -1265,3 +1265,14 @@ button, .pro-card, .menu-card, .nav-item, .k-btn, .action-btn, select, input, .g
   transform: translateX(20px);
   background-color: var(--calc-accent);
 }
+
+/* v56 Strict Side-by-Side Form Grid Alignment */
+.form-grid {
+  align-items: start;
+}
+.form-group label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
