@@ -1,5 +1,646 @@
 
 // =========================================================================
+// SMART WASTAGE / OFFCUT QR CODE GENERATOR, SCANNER & CUT-SIZE MATCHER (v64)
+// =========================================================================
+
+// Pure-JS ISO/IEC 18004 QR Code Matrix Generator (Versions 1 to 5, ECC Level L)
+function generateQrMatrix(text) {
+  var str = String(text || 'SW-WASTE');
+  var bytes = [];
+  for (var i = 0; i < str.length; i++) {
+    var c = str.charCodeAt(i);
+    bytes.push(c < 128 ? c : 63);
+  }
+  var VERS = [
+    null,
+    [21, 26, 7],
+    [25, 44, 10],
+    [29, 70, 15],
+    [33, 100, 20],
+    [37, 134, 26]
+  ];
+  var ver = 1;
+  while (ver < 5 && (bytes.length + 3) > (VERS[ver][1] - VERS[ver][2])) ver++;
+  var maxLen = VERS[ver][1] - VERS[ver][2] - 3;
+  if (bytes.length > maxLen) bytes = bytes.slice(0, maxLen);
+
+  var size = VERS[ver][0], totalCw = VERS[ver][1], ecCw = VERS[ver][2];
+  var dataCw = totalCw - ecCw;
+
+  var bits = [];
+  function pushBits(val, len) {
+    for (var b = len - 1; b >= 0; b--) bits.push((val >> b) & 1);
+  }
+  pushBits(4, 4);
+  pushBits(bytes.length, 8);
+  for (var k = 0; k < bytes.length; k++) pushBits(bytes[k], 8);
+  for (var t = 0; t < 4 && bits.length < dataCw * 8; t++) bits.push(0);
+  while (bits.length % 8 !== 0) bits.push(0);
+
+  var data = [];
+  for (var d = 0; d < bits.length; d += 8) {
+    var byteVal = 0;
+    for (var j = 0; j < 8; j++) byteVal = (byteVal << 1) | bits[d + j];
+    data.push(byteVal);
+  }
+  var padToggle = true;
+  while (data.length < dataCw) {
+    data.push(padToggle ? 0xEC : 0x11);
+    padToggle = !padToggle;
+  }
+
+  var exp = new Array(512), log = new Array(256);
+  var x = 1;
+  for (var e = 0; e < 255; e++) {
+    exp[e] = x;
+    log[x] = e;
+    x <<= 1;
+    if (x & 0x100) x ^= 0x11D;
+  }
+  for (var e2 = 255; e2 < 512; e2++) exp[e2] = exp[e2 - 255];
+  function gfMul(a, b) { return (a === 0 || b === 0) ? 0 : exp[log[a] + log[b]]; }
+
+  var poly = [1];
+  for (var p = 0; p < ecCw; p++) {
+    var next = new Array(poly.length + 1).fill(0);
+    for (var q = 0; q < poly.length; q++) {
+      next[q] ^= poly[q];
+      next[q + 1] ^= gfMul(poly[q], exp[p]);
+    }
+    poly = next;
+  }
+  var ec = new Array(ecCw).fill(0);
+  for (var di = 0; di < data.length; di++) {
+    var factor = data[di] ^ ec.shift();
+    ec.push(0);
+    for (var ej = 0; ej < ecCw; ej++) ec[ej] ^= gfMul(poly[ej + 1], factor);
+  }
+  var allCw = data.concat(ec);
+
+  var mat = [], isFunc = [];
+  for (var r = 0; r < size; r++) {
+    mat.push(new Array(size).fill(0));
+    isFunc.push(new Array(size).fill(false));
+  }
+
+  function setFinder(row, col) {
+    for (var dy = -1; dy <= 7; dy++) {
+      for (var dx = -1; dx <= 7; dx++) {
+        var yy = row + dy, xx = col + dx;
+        if (yy >= 0 && yy < size && xx >= 0 && xx < size) {
+          var in7 = (dy >= 0 && dy <= 6 && dx >= 0 && dx <= 6);
+          var onBorder = (dy === 0 || dy === 6 || dx === 0 || dx === 6);
+          var in3 = (dy >= 2 && dy <= 4 && dx >= 2 && dx <= 4);
+          mat[yy][xx] = (in7 && (onBorder || in3)) ? 1 : 0;
+          isFunc[yy][xx] = true;
+        }
+      }
+    }
+  }
+  setFinder(0, 0);
+  setFinder(0, size - 7);
+  setFinder(size - 7, 0);
+
+  for (var ti = 8; ti < size - 8; ti++) {
+    mat[6][ti] = mat[ti][6] = (ti % 2 === 0) ? 1 : 0;
+    isFunc[6][ti] = isFunc[ti][6] = true;
+  }
+  if (ver >= 2) {
+    var ac = size - 7;
+    for (var ady = -2; ady <= 2; ady++) {
+      for (var adx = -2; adx <= 2; adx++) {
+        mat[ac + ady][ac + adx] = (Math.abs(ady) === 2 || Math.abs(adx) === 2 || (ady === 0 && adx === 0)) ? 1 : 0;
+        isFunc[ac + ady][ac + adx] = true;
+      }
+    }
+  }
+  for (var fi = 0; fi < 9; fi++) {
+    if (fi < 8) {
+      isFunc[8][size - 1 - fi] = true;
+      isFunc[size - 1 - fi][8] = true;
+    }
+    isFunc[8][fi] = true;
+    isFunc[fi][8] = true;
+  }
+  mat[size - 8][8] = 1;
+  isFunc[size - 8][8] = true;
+
+  var msgBits = [];
+  for (var ci = 0; ci < allCw.length; ci++) {
+    for (var bi = 7; bi >= 0; bi--) msgBits.push((allCw[ci] >> bi) & 1);
+  }
+  var bitIdx = 0, up = true;
+  for (var right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) right = 5;
+    for (var v = 0; v < size; v++) {
+      var yy2 = up ? (size - 1 - v) : v;
+      for (var jj = 0; jj < 2; jj++) {
+        var xx2 = right - jj;
+        if (!isFunc[yy2][xx2]) {
+          var bitVal = bitIdx < msgBits.length ? msgBits[bitIdx++] : 0;
+          if ((yy2 + xx2) % 2 === 0) bitVal ^= 1;
+          mat[yy2][xx2] = bitVal;
+        }
+      }
+    }
+    up = !up;
+  }
+
+  var fmt = 0x77C4;
+  for (var f1 = 0; f1 <= 5; f1++) mat[8][f1] = (fmt >> (14 - f1)) & 1;
+  mat[8][7] = (fmt >> 8) & 1;
+  mat[8][8] = (fmt >> 7) & 1;
+  mat[7][8] = (fmt >> 6) & 1;
+  for (var f2 = 9; f2 < 15; f2++) mat[14 - f2][8] = (fmt >> (14 - f2)) & 1;
+  for (var f3 = 0; f3 < 8; f3++) mat[8][size - 1 - f3] = (fmt >> f3) & 1;
+  for (var f4 = 8; f4 < 15; f4++) mat[size - 15 + f4][8] = (fmt >> f4) & 1;
+  return mat;
+}
+
+function renderQrSvgString(payloadText, pxSize) {
+  pxSize = pxSize || 84;
+  var mat = generateQrMatrix(payloadText);
+  var n = mat.length;
+  var pad = 2;
+  var total = n + pad * 2;
+  var svg = '<svg viewBox="0 0 ' + total + ' ' + total + '" width="' + pxSize + '" height="' + pxSize + '" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; display:block;">';
+  for (var r = 0; r < n; r++) {
+    for (var c = 0; c < n; c++) {
+      if (mat[r][c]) {
+        svg += '<rect x="' + (c + pad) + '" y="' + (r + pad) + '" width="1" height="1" fill="#0f172a"/>';
+      }
+    }
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function getWastageQrStock() {
+  try {
+    return JSON.parse(localStorage.getItem('sw_wastage_qr_stock') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveWastageQrStock(list) {
+  localStorage.setItem('sw_wastage_qr_stock', JSON.stringify(list || []));
+}
+
+function generateNextWastageCode(list) {
+  var maxNum = 100;
+  (list || []).forEach(function(item) {
+    var m = String(item.code || '').match(/W-(\d+)/i);
+    if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]);
+  });
+  return 'W-' + (maxNum + 1);
+}
+
+// Compute what standard & custom panels can be cut from a leftover piece (h_in x w_in)
+function getPossibleCutsFromOffcut(h_in, w_in, needH, needW) {
+  var h = Number(h_in) || 0;
+  var w = Number(w_in) || 0;
+  var suggestions = [];
+
+  // 1. If user typed a specific required size (needH x needW), check if it fits!
+  var fitsTargetCount = 0;
+  var targetRemTxt = '';
+  if (needH > 0 && needW > 0) {
+    var fitNorm = Math.floor(h / needH) * Math.floor(w / needW);
+    var fitRot = Math.floor(h / needW) * Math.floor(w / needH);
+    fitsTargetCount = Math.max(fitNorm, fitRot);
+    if (fitsTargetCount > 0) {
+      var useRot = (fitRot > fitNorm);
+      var remH = useRot ? (h - Math.floor(h / needW) * needW) : (h - Math.floor(h / needH) * needH);
+      var remW = useRot ? (w - Math.floor(w / needH) * needH) : (w - Math.floor(w / needW) * needW);
+      targetRemTxt = fitsTargetCount + ' Pcs of ' + toFractionInch(needH) + ' x ' + toFractionInch(needW) + ' will come out! (Rem Trim: ' + toFractionInch(remH) + ' / ' + toFractionInch(remW) + ')';
+    }
+  }
+
+  // 2. Standard useful cuts that can come out of this leftover piece
+  var stdPanels = [
+    { name: 'Door Kickplate (30"x24")', ph: 30, pw: 24 },
+    { name: 'Partition Box (24"x24")', ph: 24, pw: 24 },
+    { name: 'Partition Box (30"x30")', ph: 30, pw: 30 },
+    { name: 'Top Box (15"x30")', ph: 15, pw: 30 },
+    { name: 'Top Box (12"x24")', ph: 12, pw: 24 },
+    { name: 'Small Panel (18"x24")', ph: 18, pw: 24 }
+  ];
+  stdPanels.forEach(function(sp) {
+    var c1 = Math.floor(h / sp.ph) * Math.floor(w / sp.pw);
+    var c2 = Math.floor(h / sp.pw) * Math.floor(w / sp.ph);
+    var cMax = Math.max(c1, c2);
+    if (cMax > 0) {
+      suggestions.push(cMax + ' Pc x ' + sp.name);
+    }
+  });
+
+  if (suggestions.length === 0) {
+    suggestions.push('Max Single Cut: ' + toFractionInch(h) + ' x ' + toFractionInch(w));
+  }
+
+  return {
+    fitsTargetCount: fitsTargetCount,
+    targetRemTxt: targetRemTxt,
+    suggestionsTxt: suggestions.slice(0, 3).join('  |  ')
+  };
+}
+
+// Auto-saves all usable offcuts (>= 4" width) from the current Partition or Door 4'x8' Sheet Layout into Wastage QR Stock!
+function saveSheetOffcutsToQrStock(modPrefix) {
+  var acpList = (modPrefix === 'dr') ? dr_acp_list : pt_acp_list;
+  var sheets = packPanelsOn4x8Sheets(acpList);
+  if (sheets.length === 0) {
+    alert("Please calculate a Partition or Door with ACP Board first!");
+    return;
+  }
+
+  var stock = getWastageQrStock();
+  var aluSpec = getModuleAluLabel(modPrefix);
+  var today = new Date().toLocaleDateString('en-GB');
+  var addedCount = 0;
+
+  sheets.forEach(function(sh) {
+    // 1. Right-side Offcut (wasteRight x 48")
+    if (sh.wasteRight >= 4.0) {
+      var code1 = generateNextWastageCode(stock);
+      var h1 = Number(sh.wasteRight.toFixed(2));
+      var w1 = 48.0;
+      stock.unshift({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        code: code1,
+        mat: 'ACP Board',
+        spec: aluSpec,
+        h_in: h1,
+        w_in: w1,
+        sizeStr: toFractionInch(h1) + ' x 48"',
+        sqft: Number(((h1 * w1) / 144.0).toFixed(2)),
+        source: (modPrefix === 'dr' ? 'Door' : 'Partition') + ' Sheet #' + sh.sheetNo,
+        date: today,
+        status: 'AVAILABLE'
+      });
+      addedCount++;
+    }
+    // 2. Bottom Offcut under the used columns (wasteBot x maxRightX)
+    if (sh.wasteBot >= 4.0 && sh.maxRightX >= 6.0) {
+      var code2 = generateNextWastageCode(stock);
+      var h2 = Number(sh.wasteBot.toFixed(2));
+      var w2 = Number(sh.maxRightX.toFixed(2));
+      stock.unshift({
+        id: Date.now() + Math.floor(Math.random() * 1000) + 1,
+        code: code2,
+        mat: 'ACP Board',
+        spec: aluSpec,
+        h_in: h2,
+        w_in: w2,
+        sizeStr: toFractionInch(h2) + ' x ' + toFractionInch(w2),
+        sqft: Number(((h2 * w2) / 144.0).toFixed(2)),
+        source: (modPrefix === 'dr' ? 'Door' : 'Partition') + ' Sheet #' + sh.sheetNo,
+        date: today,
+        status: 'AVAILABLE'
+      });
+      addedCount++;
+    }
+  });
+
+  if (addedCount === 0) {
+    alert("Zero big offcuts left on this sheet (all material was used within < 4 inches!). You can also add any offcut manually.");
+    openScreen('wastage_qr', 'WASTAGE QR STOCK');
+    renderWastageQrStockList();
+    return;
+  }
+
+  saveWastageQrStock(stock);
+  openScreen('wastage_qr', 'WASTAGE QR STOCK');
+  renderWastageQrStockList();
+  alert(addedCount + " Leftover Offcut Piece(s) saved with QR Codes! You can now print their QR Stickers or scan them anytime.");
+}
+
+function addManualWastagePiece() {
+  var mat = document.getElementById('wq_mat_type') ? document.getElementById('wq_mat_type').value : 'ACP Board';
+  var spec = document.getElementById('wq_spec') ? document.getElementById('wq_spec').value.trim() : '';
+  var h = safeEval(document.getElementById('wq_h') ? document.getElementById('wq_h').value : '0');
+  var w = safeEval(document.getElementById('wq_w') ? document.getElementById('wq_w').value : '0');
+
+  if (h <= 0 || w <= 0) {
+    alert("Please enter valid Height/Length and Width in inches.");
+    return;
+  }
+
+  var stock = getWastageQrStock();
+  var code = generateNextWastageCode(stock);
+  var today = new Date().toLocaleDateString('en-GB');
+
+  stock.unshift({
+    id: Date.now(),
+    code: code,
+    mat: mat,
+    spec: spec || 'Standard',
+    h_in: h,
+    w_in: w,
+    sizeStr: toFractionInch(h) + ' x ' + toFractionInch(w),
+    sqft: Number(((h * w) / 144.0).toFixed(2)),
+    source: 'Manual Entry',
+    date: today,
+    status: 'AVAILABLE'
+  });
+
+  saveWastageQrStock(stock);
+  if (document.getElementById('wq_h')) document.getElementById('wq_h').value = '';
+  if (document.getElementById('wq_w')) document.getElementById('wq_w').value = '';
+  renderWastageQrStockList();
+}
+
+function toggleWastageItemStatus(code) {
+  var stock = getWastageQrStock();
+  stock.forEach(function(item) {
+    if (item.code === code) {
+      item.status = (item.status === 'USED') ? 'AVAILABLE' : 'USED';
+    }
+  });
+  saveWastageQrStock(stock);
+  renderWastageQrStockList();
+}
+
+function deleteWastageItem(code) {
+  var stock = getWastageQrStock().filter(function(item) { return item.code !== code; });
+  saveWastageQrStock(stock);
+  renderWastageQrStockList();
+}
+
+function clearUsedWastageStock() {
+  var stock = getWastageQrStock().filter(function(item) { return item.status !== 'USED'; });
+  saveWastageQrStock(stock);
+  renderWastageQrStockList();
+}
+
+function buildQrPayloadForItem(item) {
+  return 'SWQR|' + item.code + '|' + item.mat + '|' + item.sizeStr + '|' + item.spec;
+}
+
+function renderWastageQrStockList() {
+  var container = document.getElementById('wq_stock_list_container');
+  if (!container) return;
+  var stock = getWastageQrStock();
+  var searchQ = (document.getElementById('wq_search_id') ? document.getElementById('wq_search_id').value.trim().toUpperCase() : '');
+  var needH = safeEval(document.getElementById('wq_check_h') ? document.getElementById('wq_check_h').value : '0');
+  var needW = safeEval(document.getElementById('wq_check_w') ? document.getElementById('wq_check_w').value : '0');
+
+  if (stock.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#64748b; padding:22px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; font-size:0.8rem;">No leftover/wastage pieces saved yet. Calculate a Partition/Door and tap <b>+ Save Offcut to QR Stock</b>, or add a piece above!</div>';
+    return;
+  }
+
+  var html = '';
+  stock.forEach(function(item) {
+    if (searchQ && item.code.toUpperCase().indexOf(searchQ) === -1 && item.mat.toUpperCase().indexOf(searchQ) === -1 && item.spec.toUpperCase().indexOf(searchQ) === -1) {
+      return;
+    }
+
+    var cutInfo = getPossibleCutsFromOffcut(item.h_in, item.w_in, needH, needW);
+    if (needH > 0 && needW > 0 && cutInfo.fitsTargetCount === 0) {
+      return; // Filter to only show pieces that can produce the requested size!
+    }
+
+    var isUsed = (item.status === 'USED');
+    var payload = buildQrPayloadForItem(item);
+    var qrSvg = renderQrSvgString(payload, 78);
+    var cardBg = isUsed ? '#f1f5f9' : '#ffffff';
+    var borderCol = (needH > 0 && needW > 0 && cutInfo.fitsTargetCount > 0) ? '#16a34a' : (isUsed ? '#cbd5e1' : '#0284c7');
+
+    html += '<div style="background:' + cardBg + '; border:2px solid ' + borderCol + '; border-radius:12px; padding:10px; display:flex; gap:10px; align-items:center; opacity:' + (isUsed ? '0.65' : '1') + ';">';
+    html += '<div style="flex-shrink:0; text-align:center;">' + qrSvg + '<div style="font-size:0.72rem; font-weight:800; color:#0f172a; margin-top:3px;">#' + item.code + '</div></div>';
+    html += '<div style="flex:1; min-width:0;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">';
+    html += '<span style="font-size:0.88rem; font-weight:800; color:#0f172a;">#' + item.code + ' • ' + item.mat + '</span>';
+    html += '<span style="font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:6px; background:' + (isUsed ? '#e2e8f0' : '#dcfce7') + '; color:' + (isUsed ? '#475569' : '#166534') + ';">' + item.status + '</span>';
+    html += '</div>';
+
+    html += '<div style="font-size:0.9rem; font-weight:800; color:#be123c; margin-bottom:2px;">Size: ' + item.sizeStr + ' (' + item.sqft + ' Sq.Ft)</div>';
+    html += '<div style="font-size:0.74rem; color:#334155; font-weight:700; margin-bottom:4px;">Spec: ' + item.spec + ' | From: ' + item.source + '</div>';
+
+    if (needH > 0 && needW > 0 && cutInfo.fitsTargetCount > 0) {
+      html += '<div style="background:#dcfce7; color:#166534; padding:4px 7px; border-radius:6px; font-size:0.74rem; font-weight:800; margin-bottom:4px;">✔ ' + cutInfo.targetRemTxt + '</div>';
+    } else {
+      html += '<div style="background:#f8fafc; border:1px solid #e2e8f0; color:#0369a1; padding:4px 7px; border-radius:6px; font-size:0.7rem; font-weight:700; margin-bottom:4px;"><b>Possible Cuts:</b> ' + cutInfo.suggestionsTxt + '</div>';
+    }
+
+    html += '<div style="display:flex; gap:6px; margin-top:6px;">';
+    html += '<button type="button" onclick="toggleWastageItemStatus(\'' + item.code + '\')" style="background:' + (isUsed ? '#0284c7' : '#16a34a') + '; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;">' + (isUsed ? 'Mark Available' : '✔ Mark Used') + '</button>';
+    html += '<button type="button" onclick="exportWastageQrStickersPdf(\'' + item.code + '\')" style="background:#b45309; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-print"></i> Print Sticker</button>';
+    html += '<button type="button" onclick="deleteWastageItem(\'' + item.code + '\')" style="background:#fee2e2; color:#dc2626; border:none; padding:5px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  if (!html) {
+    html = '<div style="text-align:center; color:#b45309; padding:16px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:0.8rem; font-weight:700;">No leftover piece in stock matches that size/filter.</div>';
+  }
+  container.innerHTML = html;
+}
+
+// Camera QR Code Scanner using HTML5 getUserMedia + BarcodeDetector (with fallback prompt)
+var wqCameraStream = null;
+var wqScanInterval = null;
+
+function startWastageQrCameraScanner() {
+  var camBox = document.getElementById('wq_camera_box');
+  var video = document.getElementById('wq_video');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    var manualCode = prompt("Enter the QR Code ID printed on the sticker (e.g. W-101):");
+    if (manualCode) handleDecodedWastageQr(manualCode.trim());
+    return;
+  }
+
+  camBox.style.display = 'block';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream) {
+    wqCameraStream = stream;
+    video.srcObject = stream;
+    video.play();
+
+    if ('BarcodeDetector' in window) {
+      var detector = new BarcodeDetector({ formats: ['qr_code'] });
+      wqScanInterval = setInterval(function() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          detector.detect(video).then(function(barcodes) {
+            if (barcodes && barcodes.length > 0) {
+              var rawVal = barcodes[0].rawValue;
+              stopWastageQrCameraScanner();
+              handleDecodedWastageQr(rawVal);
+            }
+          }).catch(function(){});
+        }
+      }, 350);
+    } else {
+      setTimeout(function() {
+        var code = prompt("Camera active! If your browser does not auto-detect, type the Sticker ID (e.g. W-101):");
+        stopWastageQrCameraScanner();
+        if (code) handleDecodedWastageQr(code.trim());
+      }, 1200);
+    }
+  }).catch(function() {
+    camBox.style.display = 'none';
+    var manualCode = prompt("Enter the QR Sticker ID (e.g. W-101):");
+    if (manualCode) handleDecodedWastageQr(manualCode.trim());
+  });
+}
+
+function stopWastageQrCameraScanner() {
+  if (wqScanInterval) { clearInterval(wqScanInterval); wqScanInterval = null; }
+  if (wqCameraStream) {
+    wqCameraStream.getTracks().forEach(function(t) { t.stop(); });
+    wqCameraStream = null;
+  }
+  var camBox = document.getElementById('wq_camera_box');
+  if (camBox) camBox.style.display = 'none';
+}
+
+function handleDecodedWastageQr(rawText) {
+  var clean = String(rawText || '').trim();
+  // Extract W-xxx code if formatted as SWQR|W-101|...
+  var m = clean.match(/W-\d+/i);
+  var lookupCode = m ? m[0].toUpperCase() : clean.toUpperCase();
+
+  var stock = getWastageQrStock();
+  var found = stock.find(function(item) { return item.code.toUpperCase() === lookupCode; });
+  var resCard = document.getElementById('wq_scanned_result_card');
+
+  if (found && resCard) {
+    var cutInfo = getPossibleCutsFromOffcut(found.h_in, found.w_in, 0, 0);
+    resCard.style.display = 'block';
+    resCard.innerHTML =
+      '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+      '<span style="font-size:0.92rem; font-weight:800; color:#166534;"><i class="fa-solid fa-circle-check"></i> QR SCANNED: #' + found.code + ' (' + found.mat + ')</span>' +
+      '<button type="button" onclick="this.parentElement.parentElement.style.display=\'none\'" style="background:none; border:none; font-weight:800; cursor:pointer;">✕</button>' +
+      '</div>' +
+      '<div style="font-size:1.0rem; font-weight:800; color:#be123c; margin-bottom:4px;">Available Size: ' + found.sizeStr + ' (' + found.sqft + ' Sq.Ft)</div>' +
+      '<div style="font-size:0.78rem; font-weight:700; color:#0f172a; margin-bottom:4px;">Spec / Color: ' + found.spec + ' | Source: ' + found.source + '</div>' +
+      '<div style="font-size:0.76rem; font-weight:800; color:#0369a1; background:#ffffff; padding:6px 8px; border-radius:6px; border:1px solid #bbf7d0;">Possible Cuts from this Piece: ' + cutInfo.suggestionsTxt + '</div>';
+    if (document.getElementById('wq_search_id')) {
+      document.getElementById('wq_search_id').value = found.code;
+      renderWastageQrStockList();
+    }
+  } else if (clean.indexOf('SWQR|') === 0) {
+    // Even if scanned on another phone where localStorage didn't have it, decode directly from the QR payload!
+    var parts = clean.split('|');
+    if (resCard) {
+      resCard.style.display = 'block';
+      resCard.innerHTML =
+        '<div style="font-size:0.92rem; font-weight:800; color:#166534; margin-bottom:4px;">QR DECODED: #' + (parts[1] || '') + ' (' + (parts[2] || '') + ')</div>' +
+        '<div style="font-size:1.0rem; font-weight:800; color:#be123c; margin-bottom:4px;">Piece Size: ' + (parts[3] || '') + '</div>' +
+        '<div style="font-size:0.8rem; font-weight:700; color:#0f172a;">Spec: ' + (parts[4] || '') + '</div>';
+    }
+  } else {
+    alert("No wastage piece found with QR Code: " + clean);
+  }
+}
+
+// Printable A4 QR Code Stickers PDF (Draws Vector QR Matrix + Piece Size & Spec)
+function exportWastageQrStickersPdf(singleCodeFilter) {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+
+  var stock = getWastageQrStock().filter(function(item) {
+    if (singleCodeFilter) return item.code === singleCodeFilter;
+    return item.status !== 'USED';
+  });
+
+  if (stock.length === 0) {
+    alert("No available offcut pieces in stock to print QR stickers!");
+    return;
+  }
+
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) {
+    alert("PDF library is loading, please try again in a moment.");
+    return;
+  }
+
+  var doc = new jsPDF('p', 'mm', 'a4');
+  drawDocHeaderWithLogo(doc, "WORKSHOP WASTAGE / OFFCUT QR STICKERS", "Cut & Stick on Leftover Boards / Pipes", [217, 119, 6]);
+
+  // 2 columns x 4 rows = 8 stickers per A4 page
+  var colW = 88, rowH = 52;
+  var startX = 14, startY = 38;
+  var gapX = 6, gapY = 6;
+
+  stock.forEach(function(item, idx) {
+    var posOnPage = idx % 8;
+    if (idx > 0 && posOnPage === 0) {
+      doc.addPage('a4', 'p');
+      drawDocHeaderWithLogo(doc, "WORKSHOP WASTAGE / OFFCUT QR STICKERS", "Cut & Stick on Leftover Boards / Pipes", [217, 119, 6]);
+    }
+
+    var col = posOnPage % 2;
+    var row = Math.floor(posOnPage / 2);
+    var x = startX + col * (colW + gapX);
+    var y = startY + row * (rowH + gapY);
+
+    // Sticker dashed border
+    doc.setFillColor(255, 251, 235);
+    doc.setDrawColor(217, 119, 6);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(x, y, colW, rowH, 2, 2, 'FD');
+
+    // Draw Vector QR Matrix inside sticker (34mm x 34mm)
+    var payload = buildQrPayloadForItem(item);
+    var mat = generateQrMatrix(payload);
+    var n = mat.length;
+    var qrBoxSize = 34.0;
+    var cellMm = qrBoxSize / (n + 2);
+    var qx = x + 4;
+    var qy = y + 9;
+
+    doc.setFillColor(255, 255, 255);
+    doc.rect(qx, qy, qrBoxSize, qrBoxSize, 'F');
+    doc.setFillColor(15, 23, 42);
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (mat[r][c]) {
+          doc.rect(qx + (c + 1) * cellMm, qy + (r + 1) * cellMm, cellMm + 0.04, cellMm + 0.04, 'F');
+        }
+      }
+    }
+
+    // Top Header Banner on Sticker
+    doc.setFillColor(217, 119, 6);
+    doc.rect(x, y, colW, 6.5, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("SMART WORKER OFFCUT TAG  •  #" + item.code, x + 4, y + 4.5);
+
+    // Right side text details
+    var tx = x + 41;
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text("ID: #" + item.code, tx, y + 15);
+
+    doc.setFontSize(9.5);
+    doc.setTextColor(190, 18, 60);
+    doc.text("SIZE: " + item.sizeStr, tx, y + 22);
+
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 118, 110);
+    doc.text("AREA: " + item.sqft + " Sq.Ft (" + item.mat + ")", tx, y + 28);
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(51, 65, 85);
+    var shortSpec = String(item.spec || '').substring(0, 26);
+    doc.text("Spec: " + shortSpec, tx, y + 34);
+    doc.text("From: " + item.source, tx, y + 39);
+    doc.text("Date: " + item.date, tx, y + 44);
+  });
+
+  doc.save((singleCodeFilter ? ("QR_Sticker_" + singleCodeFilter) : "Workshop_Wastage_QR_Stickers") + ".pdf");
+}
+
+
+// =========================================================================
 // INTERACTIVE MULTI-ROW (1 TO 8 ROWS) GLASS / ACP BUILDER & VISUAL WALL PREVIEW
 // Row index 0 = Bottom Row (Row 1), Row index (rows-1) = Top Row
 // =========================================================================
@@ -532,6 +1173,10 @@ function renderSheetLayoutBoxUI(containerId, acpList, titleLabel) {
     html += '</div>';
   });
 
+  var modPfx = (containerId.indexOf('dr_') === 0) ? 'dr' : 'pt';
+  html += '<button type="button" onclick="saveSheetOffcutsToQrStock(\'' + modPfx + '\')" style="width:100%; background:#d97706; color:#ffffff; border:none; border-radius:8px; padding:9px; font-size:0.78rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:4px;">';
+  html += '<i class="fa-solid fa-qrcode"></i> <span>+ SAVE OFFCUT TO QR STOCK & PRINT QR STICKER</span>';
+  html += '</button>';
   box.innerHTML = html;
 }
 
@@ -5894,6 +6539,8 @@ function autofillCustomer() {
  function openScreen(screenName, title) {
   if (screenName === 'partition') {
     setTimeout(function() { try { renderPartitionRowBuilder(); } catch(e){} }, 20);
+  } else if (screenName === 'wastage_qr') {
+    setTimeout(function() { try { renderWastageQrStockList(); } catch(e){} }, 20);
   }
  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
  const target = document.getElementById(`screen-${screenName}`);

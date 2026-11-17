@@ -1,9 +1,9 @@
-const CACHE_NAME = 'smart-worker-pro-v63';
+const CACHE_NAME = 'smart-worker-pro-v65';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './style.css?v=63',
-  './app.js?v=63',
+  './style.css?v=65',
+  './app.js?v=65',
   './manifest.json',
   './logo.png?v=34'
 ];
