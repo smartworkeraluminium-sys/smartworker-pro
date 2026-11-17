@@ -24,11 +24,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v57') caches.delete(k);
+            if (k !== 'smart-worker-pro-v61') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=57').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=61').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=57">
+  <link rel="stylesheet" href="style.css?v=61">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1691,9 +1691,15 @@
  <button class="action-btn" style="background:#b45309; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportHardwarePdf('Door_Hardware', 'Door Master', 'dr_out')">
  <i class="fa-solid fa-screwdriver-wrench"></i> <span>4. HARDWARE PDF</span>
  </button>
+ <button class="action-btn" style="grid-column: span 2; background:#be123c; padding:10px 6px; font-size:0.76rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="exportSheetLayoutPdf('Door_ACP_Drawing', 'Door Master 4x8 ACP Sheet', dr_acp_list)">
+ <i class="fa-solid fa-compass-drafting"></i> <span>5. SHEET CUTTING DRAWING PDF (SHEET 1, 2...)</span>
+ </button>
  </div>
  </div>
  </div>
+
+ <!-- Live In-App 4'x8' Sheet Cutting Labour Drawing Box -->
+ <div id="dr_sheet_layout_box" style="display:none; background:#ffffff; border:2px solid #0284c7; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(2,132,199,0.12);"></div>
 
  <div class="output-label" style="color:#b34d1a;">CUTTING SIZES:</div>
  <div class="output-area" id="dr_out"></div>
@@ -1783,12 +1789,13 @@
      </div>
    </div>
    <div>
-     <label style="font-size:0.72rem; font-weight:800; color:#2563eb; display:block; margin-bottom:3px;">Panel Mode (Glass + ACP Sheet / Full Glass):</label>
+     <label style="font-size:0.72rem; font-weight:800; color:#2563eb; display:block; margin-bottom:3px;">Panel Mode (2"-8" Max Waste & Min 12" Top Glass):</label>
      <select id="pt_panel_mode" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; font-size:0.8rem; font-weight:700;">
-       <option value="OPTIMIZED_4X8" selected>Glass + ACP (4'x8' Optimized: Bottom ACP, Mid & Top Glass)</option>
-       <option value="CUSTOM_BOTTOM_3FT">Glass + ACP (Bottom 3ft / 36" ACP, Middle 36" Glass, Top Glass)</option>
-       <option value="CUSTOM_BOTTOM_2.5FT">Glass + ACP (Bottom 2.5ft / 30" ACP, Middle 30" Glass, Top Glass)</option>
-       <option value="EQUAL_DIVIDE">Full Glass Only (Equal Rows Divide - No ACP Board)</option>
+       <option value="OPTIMIZED_4X8" selected>Auto 2"-8" Waste Guard (ACP + Mid Glass + Min 12" Top Glass)</option>
+       <option value="CUSTOM_BOTTOM_3FT">Bottom 3ft (36") ACP + Mid Glass + Top Glass (Min 12")</option>
+       <option value="CUSTOM_BOTTOM_2.5FT">Bottom 2.5ft (30"-31") ACP + Mid Glass + Top Glass (Min 12")</option>
+       <option value="CUSTOM_BOTTOM_2FT">Bottom 2ft (23"-24") ACP + Mid Glass + Top Glass (Min 12")</option>
+       <option value="EQUAL_DIVIDE">Full Glass Only (All Rows Equal Glass - No ACP)</option>
      </select>
    </div>
  </div>
@@ -1909,9 +1916,15 @@
  <button class="action-btn" style="background:#b45309; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportHardwarePdf('Partition_Hardware', 'Partition & Door', 'pt_out')">
  <i class="fa-solid fa-screwdriver-wrench"></i> <span>4. HARDWARE PDF</span>
  </button>
+ <button class="action-btn" style="grid-column: span 2; background:#be123c; padding:10px 6px; font-size:0.76rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="exportSheetLayoutPdf('Partition_Sheet_Drawing', 'Partition 4x8 ACP Sheet', pt_acp_list)">
+ <i class="fa-solid fa-compass-drafting"></i> <span>5. SHEET CUTTING DRAWING PDF (SHEET 1, 2...)</span>
+ </button>
  </div>
  </div>
  </div>
+
+ <!-- Live In-App 4'x8' Sheet Cutting Labour Drawing Box -->
+ <div id="pt_sheet_layout_box" style="display:none; background:#ffffff; border:2px solid #0284c7; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(2,132,199,0.12);"></div>
 
  <div class="output-label" style="color:#e64d4d;">CUTTING SIZES:</div>
  <div class="output-area" id="pt_out"></div>
@@ -3679,12 +3692,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=57"></script>
+  <script src="app.js?v=61"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=57').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=61').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

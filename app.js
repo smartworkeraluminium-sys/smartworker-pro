@@ -1,4 +1,448 @@
 
+// =========================================================================
+// 4'x8' (48" x 96") SHEET 2"-8" WASTE OPTIMIZER, 2D PACKER & LABOUR DRAWING ENGINE
+// =========================================================================
+
+// Evaluates how cleanly a panel (pH x pW) cuts from a 48"x96" sheet so edge trim is <= 8" (never ~12" 1-ft waste!)
+function scoreAcpCutWaste(pH, pW) {
+  var bestScore = 999;
+  var orientations = [
+    { w48: pW, l96: pH, rotated: false },
+    { w48: pH, l96: pW, rotated: true }
+  ];
+  orientations.forEach(function(o) {
+    if (o.w48 > 48.0 || o.l96 > 96.0) return;
+    var nx = Math.max(1, Math.floor(48.0 / o.w48));
+    var ny = Math.max(1, Math.floor(96.0 / o.l96));
+    var remW = 48.0 - (nx * o.w48);
+    var remL = 96.0 - (ny * o.l96);
+
+    // Penalty if remainder is in the awkward 8.25" .. 21.5" (~1 foot) unusable range
+    var penW = (remW > 8.0 && remW < 22.0) ? (40.0 + remW) : remW;
+    // Note: if remL >= 23.5" (e.g. 24" = 2'x4' reusable block), it is reusable!
+    var penL = (remL > 8.0 && remL < 22.0) ? (50.0 + remL) : (remL >= 23.5 ? (Math.abs(remL - 24.0) * 0.5) : remL);
+
+    // Prefer 2" to 8" waste along the cut edges
+    var totalPen = penL + (penW * 0.5) - (nx * ny * 3.0);
+    if (totalPen < bestScore) bestScore = totalPen;
+  });
+  return bestScore;
+}
+
+// Finds the best Bottom ACP clear opening height (bottom_h) so Top Glass >= 12.25" (1 ft) AND ACP waste is within 2"-8"
+function findBestPartitionHeights(total_open_h, cut_w, panel_mode) {
+  var MIN_TOP_OPEN = 12.25; // Guarantees Top Glass cut >= 12.0" (1 Foot)
+  var bottom_h = 30.0, mid_h = 36.0, top_h = 14.0;
+
+  if (panel_mode === "CUSTOM_BOTTOM_3FT") {
+    bottom_h = 36.0;
+  } else if (panel_mode === "CUSTOM_BOTTOM_2.5FT") {
+    // 31.0" clear -> 30.75" cut -> 3 pcs = 92.25" out of 96" -> only 3.75" waste (within 2"-8"!)
+    bottom_h = 31.0;
+  } else if (panel_mode === "CUSTOM_BOTTOM_2FT") {
+    // 23.75" clear -> 23.5" cut -> 2 pcs = 47" out of 48" (1" waste) or 4 pcs = 94" out of 96" (2" waste!)
+    bottom_h = 23.75;
+  } else {
+    // OPTIMIZED_4X8: Search candidate bottom_h values (in 0.5" steps) that leave >= 12.25" Top Glass and minimize 1-ft waste
+    var candidates = [23.5, 24.0, 30.0, 30.5, 31.0, 31.5, 32.0, 36.0];
+    var bestCand = 31.0;
+    var bestCandScore = 9999;
+    candidates.forEach(function(cand) {
+      var remGlass = total_open_h - cand;
+      if (remGlass < (MIN_TOP_OPEN + 20.0)) return; // Ensure enough room for Middle Glass + 12.25" Top Glass
+      var cutH = cand - 0.25;
+      var sc = scoreAcpCutWaste(cutH, cut_w);
+      // Prefer standard waist height around 30"-32" when wall is tall enough
+      if (total_open_h >= 74.0 && cand < 29.0) sc += 8.0;
+      if (sc < bestCandScore) {
+        bestCandScore = sc;
+        bestCand = cand;
+      }
+    });
+    bottom_h = bestCand;
+  }
+
+  // Now compute Middle Glass (mid_h) and Top Header Glass (top_h >= 12.25")
+  var rem = total_open_h - bottom_h;
+  if (rem < (MIN_TOP_OPEN + 18.0)) {
+    // Wall is short: scale bottom_h down to 23.5" so Top Glass stays >= 12.25"
+    bottom_h = Math.min(bottom_h, 23.5);
+    rem = total_open_h - bottom_h;
+  }
+
+  // Also check if Middle Glass height can avoid 1-ft waste on glass slabs (multiples of 6" minus 0.25" or clean 30"/36"/42")
+  var preferredMidCuts = [35.75, 29.75, 41.75, 33.75, 27.75, 23.75];
+  var chosenMid = 0;
+  for (var i = 0; i < preferredMidCuts.length; i++) {
+    var mClear = preferredMidCuts[i] + 0.25;
+    var tClear = rem - mClear;
+    if (tClear >= MIN_TOP_OPEN && tClear <= 22.0) {
+      chosenMid = mClear;
+      break;
+    }
+  }
+  if (chosenMid > 0) {
+    mid_h = chosenMid;
+    top_h = rem - mid_h;
+  } else {
+    top_h = Math.max(MIN_TOP_OPEN, Math.min(18.25, rem * 0.30));
+    mid_h = rem - top_h;
+  }
+
+  return { bottom_h: bottom_h, mid_h: mid_h, top_h: top_h };
+}
+
+// Packs a list of ACP cut panels onto 4'x8' (96" x 48" horizontal) sheets and returns exact 2D coordinates for each sheet
+function packPanelsOn4x8Sheets(acpList) {
+  var allPieces = [];
+  (acpList || []).forEach(function(grp) {
+    var h = Math.max(1, Number(grp.h_in) || 0);
+    var w = Math.max(1, Number(grp.w_in) || 0);
+    var q = Math.max(1, parseInt(grp.qty) || 1);
+    for (var i = 0; i < q; i++) {
+      allPieces.push({
+        h: h,
+        w: w,
+        cutStr: grp.cutStr || (toFractionInch(h) + ' x ' + toFractionInch(w)),
+        idx: allPieces.length + 1
+      });
+    }
+  });
+
+  if (allPieces.length === 0) return [];
+
+  // Represent the 4'x8' sheet horizontally: Length = 96" (X-axis), Width = 48" (Y-axis)
+  var SHEET_L = 96.0;
+  var SHEET_W = 48.0;
+  var sheets = [];
+  var remaining = allPieces.slice();
+
+  while (remaining.length > 0) {
+    var sample = remaining[0];
+    var pH = sample.h, pW = sample.w;
+
+    // Test Orientation A: pH along 96" length (X), pW across 48" width (Y)
+    var colsA = Math.floor(SHEET_L / pH);
+    var rowsA = Math.floor(SHEET_W / pW);
+    var fitA = colsA * rowsA;
+    var remLA = SHEET_L - (colsA * pH);
+    var remWA = SHEET_W - (rowsA * pW);
+
+    // Test Orientation B (Rotated 90 deg): pW along 96" length (X), pH across 48" width (Y)
+    var colsB = Math.floor(SHEET_L / pW);
+    var rowsB = Math.floor(SHEET_W / pH);
+    var fitB = colsB * rowsB;
+    var remLB = SHEET_L - (colsB * pW);
+    var remWB = SHEET_W - (rowsB * pH);
+
+    // Choose orientation that fits more pieces, or avoids 9"-20" (1-ft) waste strip
+    var useB = false;
+    if (fitB > fitA) {
+      useB = true;
+    } else if (fitB === fitA && fitB > 0) {
+      var badA = (remLA > 8.0 && remLA < 22.0) || (remWA > 8.0 && remWA < 22.0);
+      var badB = (remLB > 8.0 && remLB < 22.0) || (remWB > 8.0 && remWB < 22.0);
+      if (badA && !badB) useB = true;
+    }
+
+    var stepX = useB ? pW : pH;
+    var stepY = useB ? pH : pW;
+    var maxCols = Math.max(1, useB ? colsB : colsA);
+    var maxRows = Math.max(1, useB ? rowsB : rowsA);
+
+    var placed = [];
+    var usedCols = 0;
+    var usedRows = 0;
+
+    for (var r = 0; r < maxRows && remaining.length > 0; r++) {
+      for (var c = 0; c < maxCols && remaining.length > 0; c++) {
+        var pc = remaining.shift();
+        var x = c * stepX;
+        var y = r * stepY;
+        placed.push({
+          pieceNum: pc.idx,
+          x: x,
+          y: y,
+          w: stepX,
+          h: stepY,
+          cutStr: pc.cutStr,
+          dimXStr: toFractionInch(stepX),
+          dimYStr: toFractionInch(stepY)
+        });
+        if (c + 1 > usedCols) usedCols = c + 1;
+        if (r + 1 > usedRows) usedRows = r + 1;
+      }
+    }
+
+    // Check if an extra rotated piece fits in the right-side remainder (96 - usedCols*stepX)
+    var usedWidthX = usedCols * stepX;
+    var usedHeightY = usedRows * stepY;
+    var rightRemX = SHEET_L - usedWidthX;
+    var rotX = stepY, rotY = stepX;
+    if (remaining.length > 0 && rightRemX >= rotX && SHEET_W >= rotY) {
+      var extraCols = Math.floor(rightRemX / rotX);
+      var extraRows = Math.floor(SHEET_W / rotY);
+      for (var er = 0; er < extraRows && remaining.length > 0; er++) {
+        for (var ec = 0; ec < extraCols && remaining.length > 0; ec++) {
+          var pc2 = remaining.shift();
+          placed.push({
+            pieceNum: pc2.idx,
+            x: usedWidthX + (ec * rotX),
+            y: er * rotY,
+            w: rotX,
+            h: rotY,
+            cutStr: pc2.cutStr + " (Rot)",
+            dimXStr: toFractionInch(rotX),
+            dimYStr: toFractionInch(rotY)
+          });
+        }
+      }
+      usedWidthX += extraCols * rotX;
+    }
+
+    // Compute waste / offcut strips on this 96" x 48" sheet
+    var maxRightX = 0, maxBotY = 0;
+    placed.forEach(function(pr) {
+      if (pr.x + pr.w > maxRightX) maxRightX = pr.x + pr.w;
+      if (pr.y + pr.h > maxBotY) maxBotY = pr.y + pr.h;
+    });
+
+    var wasteRight = Math.max(0, SHEET_L - maxRightX);
+    var wasteBot = Math.max(0, SHEET_W - maxBotY);
+    var isHalfSheetOnly = (maxRightX <= 48.0);
+
+    sheets.push({
+      sheetNo: sheets.length + 1,
+      sheetL: SHEET_L,
+      sheetW: SHEET_W,
+      placed: placed,
+      maxRightX: maxRightX,
+      maxBotY: maxBotY,
+      wasteRight: wasteRight,
+      wasteBot: wasteBot,
+      isHalfSheetOnly: isHalfSheetOnly
+    });
+  }
+
+  return sheets;
+}
+
+// Renders the Live Visual Sheet Cutting Drawing Box inside the App UI (SVG)
+function renderSheetLayoutBoxUI(containerId, acpList, titleLabel) {
+  var box = document.getElementById(containerId);
+  if (!box) return;
+  var sheets = packPanelsOn4x8Sheets(acpList);
+  if (sheets.length === 0) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  box.style.display = 'block';
+  var html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1.5px solid #e2e8f0; padding-bottom:6px;">';
+  html += '<div style="font-size:0.82rem; font-weight:800; color:#0f172a;"><i class="fa-solid fa-compass-drafting" style="color:#be123c;"></i> 4x8 ACP SHEET CUTTING LABOUR DRAWING (' + sheets.length + (sheets.length === 1 ? ' SHEET' : ' SHEETS') + ')</div>';
+  html += '<span style="font-size:0.7rem; font-weight:800; background:#ffe4e6; color:#be123c; padding:2px 7px; border-radius:6px;">96" x 48" Board</span>';
+  html += '</div>';
+
+  sheets.forEach(function(sh) {
+    var badgeTxt = sh.isHalfSheetOnly ? 'Fits in Half Sheet (4x4 / 48"x48")' : 'Full 4x8 Sheet (96" x 48")';
+    html += '<div style="margin-bottom:12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; font-weight:800; color:#1e3a8a; margin-bottom:6px;">';
+    html += '<span>SHEET #' + sh.sheetNo + ' CUTTING LAYOUT (' + sh.placed.length + ' Pcs)</span>';
+    html += '<span style="color:#0f766e;">' + badgeTxt + '</span>';
+    html += '</div>';
+
+    // Responsive SVG representing 96" x 48" (2:1 aspect ratio)
+    var svgW = 480, svgH = 240;
+    var scale = 5.0; // 96 * 5 = 480, 48 * 5 = 240
+    html += '<svg viewBox="0 0 ' + (svgW + 20) + ' ' + (svgH + 28) + '" style="width:100%; height:auto; background:#ffffff; border:1px solid #94a3b8; border-radius:6px;">';
+
+    // Outer 96" x 48" sheet background (Waste/Offcut area shaded light amber/grey)
+    html += '<rect x="10" y="18" width="' + svgW + '" height="' + svgH + '" fill="#fef3c7" stroke="#0f172a" stroke-width="2"/>';
+
+    // Top & Left board dimension labels
+    html += '<text x="' + (10 + svgW / 2) + '" y="13" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">8 Feet / 96" Sheet Length</text>';
+
+    // Draw each placed ACP piece
+    sh.placed.forEach(function(p) {
+      var rx = 10 + (p.x * scale);
+      var ry = 18 + (p.y * scale);
+      var rw = p.w * scale;
+      var rh = p.h * scale;
+      html += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.8" stroke-dasharray="none"/>';
+      var cx = rx + rw / 2;
+      var cy = ry + rh / 2;
+      html += '<text x="' + cx + '" y="' + (cy - 5) + '" font-size="11" font-weight="bold" fill="#1e3a8a" text-anchor="middle">ACP #' + p.pieceNum + '</text>';
+      html += '<text x="' + cx + '" y="' + (cy + 9) + '" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="middle">' + p.dimXStr + ' x ' + p.dimYStr + '</text>';
+    });
+
+    // Draw Half-Sheet (48") center line if it fits in Half Sheet
+    if (sh.isHalfSheetOnly) {
+      var hx = 10 + (48.0 * scale);
+      html += '<line x1="' + hx + '" y1="18" x2="' + hx + '" y2="' + (18 + svgH) + '" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,4"/>';
+      html += '<text x="' + (hx + 6) + '" y="36" font-size="10" font-weight="bold" fill="#dc2626">4x4 Half Cut Line</text>';
+    }
+
+    // Label Right Waste / Offcut strip if >= 0.5"
+    if (sh.wasteRight >= 0.5) {
+      var wx = 10 + (sh.maxRightX * scale) + (sh.wasteRight * scale / 2);
+      var wy = 18 + (sh.maxBotY * scale / 2);
+      var wLabel = sh.wasteRight >= 23.5 ? ('Reusable: ' + toFractionInch(sh.wasteRight) + ' x 48"') : ('Trim: ' + toFractionInch(sh.wasteRight));
+      html += '<text x="' + wx + '" y="' + wy + '" font-size="10" font-weight="bold" fill="#92400e" text-anchor="middle">' + wLabel + '</text>';
+    }
+
+    // Label Bottom Waste / Offcut strip if >= 0.5"
+    if (sh.wasteBot >= 0.5) {
+      var bwx = 10 + (sh.maxRightX * scale / 2);
+      var bwy = 18 + (sh.maxBotY * scale) + (sh.wasteBot * scale / 2) + 4;
+      html += '<text x="' + bwx + '" y="' + bwy + '" font-size="10" font-weight="bold" fill="#92400e" text-anchor="middle">Bottom Trim: ' + toFractionInch(sh.wasteBot) + ' x ' + toFractionInch(sh.maxRightX) + '</text>';
+    }
+
+    html += '</svg>';
+    html += '<div style="font-size:0.72rem; color:#334155; margin-top:4px; display:flex; justify-content:space-between; flex-wrap:wrap;">';
+    html += '<span><b>Cut Size:</b> ' + (sh.placed[0] ? sh.placed[0].cutStr : '') + '</span>';
+    html += '<span style="color:#b45309; font-weight:700;">Edge Trim: ' + toFractionInch(sh.wasteRight) + ' (Length) | ' + toFractionInch(sh.wasteBot) + ' (Width)</span>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  box.innerHTML = html;
+}
+
+// 5. DEDICATED SHEET CUTTING DRAWING PDF (Visual Diagrams Only: Sheet #1, Sheet #2...)
+function exportSheetLayoutPdf(filename, title, acpList) {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+
+  var sheets = packPanelsOn4x8Sheets(acpList);
+  if (sheets.length === 0) {
+    alert("No ACP Sheet panels calculated yet! Please calculate a Partition or Door with ACP Board first.");
+    return;
+  }
+
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) {
+    alert("PDF library is loading, please try again in a moment.");
+    return;
+  }
+
+  var doc = new jsPDF('l', 'mm', 'a4');
+  var today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+  sheets.forEach(function(sh, idx) {
+    if (idx > 0) doc.addPage('a4', 'l');
+
+    drawDocHeaderWithLogo(doc, "4'x8' SHEET CUTTING LABOUR DRAWING - SHEET #" + sh.sheetNo, title, [190, 18, 60]);
+
+    // Info Bar
+    doc.setFillColor(255, 241, 242);
+    doc.rect(14, 32, 269, 7, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(159, 18, 57);
+    var modeTxt = sh.isHalfSheetOnly ? 'HALF SHEET NEEDED (4x4 / 48" x 48")' : 'FULL SHEET (4x8 / 96" x 48")';
+    doc.text("SHEET #" + sh.sheetNo + " OF " + sheets.length + "   |   BOARD: " + modeTxt + "   |   PIECES ON THIS SHEET: " + sh.placed.length + " PCS   |   DATE: " + today, 18, 36.8);
+
+    // Draw the 96" x 48" board to exact scale on Landscape A4
+    // Scale: 1 inch = 2.5 mm -> 96" = 240 mm wide, 48" = 120 mm high
+    var startX = 28.5;
+    var startY = 50.0;
+    var scaleMm = 2.5;
+    var boardW = 96.0 * scaleMm; // 240 mm
+    var boardH = 48.0 * scaleMm; // 120 mm
+
+    // Outer 4'x8' Board Rectangle (Shaded light yellow/amber for offcut/trim area)
+    doc.setFillColor(254, 243, 199);
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.7);
+    doc.rect(startX, startY, boardW, boardH, 'FD');
+
+    // Board Top & Left Dimension Callouts
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    doc.text("<---  8 FEET (96 INCHES) FULL BOARD LENGTH  --->", startX + (boardW / 2), startY - 3.5, { align: "center" });
+    doc.text('4 FT (48")', startX - 3, startY + (boardH / 2), { align: "right" });
+
+    // Draw each Cut Panel inside the 96" x 48" Board
+    sh.placed.forEach(function(p) {
+      var rx = startX + (p.x * scaleMm);
+      var ry = startY + (p.y * scaleMm);
+      var rw = p.w * scaleMm;
+      var rh = p.h * scaleMm;
+
+      doc.setFillColor(219, 234, 254);
+      doc.setDrawColor(29, 78, 216);
+      doc.setLineWidth(0.5);
+      doc.rect(rx, ry, rw, rh, 'FD');
+
+      var cx = rx + (rw / 2);
+      var cy = ry + (rh / 2);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(30, 58, 138);
+      doc.text("PANEL #" + p.pieceNum, cx, cy - 3, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Cut: " + p.dimXStr + " x " + p.dimYStr, cx, cy + 3.5, { align: "center" });
+    });
+
+    // Draw Half Sheet 48" Cut Line if applicable
+    if (sh.isHalfSheetOnly) {
+      var halfX = startX + (48.0 * scaleMm);
+      doc.setDrawColor(220, 38, 38);
+      doc.setLineWidth(0.6);
+      doc.line(halfX, startY, halfX, startY + boardH);
+      doc.setFontSize(9.5);
+      doc.setTextColor(220, 38, 38);
+      doc.text('4x4 HALF SHEET CUT LINE (48")', halfX + 3, startY + 10);
+    }
+
+    // Label Right Offcut / Trim Area
+    if (sh.wasteRight >= 0.5) {
+      var wx = startX + (sh.maxRightX * scaleMm) + ((sh.wasteRight * scaleMm) / 2);
+      var wy = startY + ((sh.maxBotY * scaleMm) / 2);
+      doc.setFontSize(9.5);
+      doc.setTextColor(146, 64, 14);
+      var rTitle = sh.wasteRight >= 23.5 ? "REUSABLE BOARD" : "SIDE TRIM";
+      doc.text(rTitle, wx, wy - 2, { align: "center" });
+      doc.text(toFractionInch(sh.wasteRight) + ' x 48"', wx, wy + 3.5, { align: "center" });
+    }
+
+    // Label Bottom Offcut / Trim Area
+    if (sh.wasteBot >= 0.5) {
+      var bwx = startX + ((sh.maxRightX * scaleMm) / 2);
+      var bwy = startY + (sh.maxBotY * scaleMm) + ((sh.wasteBot * scaleMm) / 2) + 1.5;
+      doc.setFontSize(9);
+      doc.setTextColor(146, 64, 14);
+      doc.text("BOTTOM TRIM / OFFCUT: " + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX), bwx, bwy, { align: "center" });
+    }
+
+    // Footer instruction box for Labour
+    var footY = startY + boardH + 8;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(startX, footY, boardW, 16, 2, 2, 'FD');
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    var firstCut = sh.placed[0] ? sh.placed[0].cutStr : "-";
+    doc.text("LABOUR CUTTING SUMMARY (SHEET #" + sh.sheetNo + "):   Cut " + sh.placed.length + " Pcs of size [ " + firstCut + " ]", startX + 5, footY + 6.5);
+    doc.setTextColor(180, 83, 9);
+    doc.text("Remaining Right Offcut: " + toFractionInch(sh.wasteRight) + ' x 48"   |   Remaining Bottom Offcut: ' + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX), startX + 5, footY + 12.5);
+  });
+
+  doc.save(filename + ".pdf");
+}
+
+
 function applyKhataSpecsToModule(prefix, itm) {
   if (!itm) return;
   if (itm.alu_thick && document.getElementById(prefix + '_alu_thick')) {
@@ -241,17 +685,22 @@ function calcAcp4x8Requirement(panel_h_in, panel_w_in, qty) {
   var totalAreaSqFt = (h * w * n) / 144.0;
   var sheetsNeeded = Math.ceil(n / pcsPerSheet);
   var buyLabel = sheetsNeeded + (sheetsNeeded === 1 ? " Full Sheet (4'x8')" : " Full Sheets (4'x8')");
+  var boughtAreaSqFt = sheetsNeeded * 32.0;
 
   if (n <= pcsPerHalf && pcsPerHalf >= 1) {
     buyLabel = "0.5 Sheet (4'x4' Half Board)";
+    boughtAreaSqFt = 16.0;
   } else if (sheetsNeeded > 1 && ((n % pcsPerSheet) > 0) && ((n % pcsPerSheet) <= pcsPerHalf)) {
     buyLabel = (sheetsNeeded - 1) + ".5 Sheets (" + (sheetsNeeded - 1) + " Full + 1 Half 4'x4' Board)";
+    boughtAreaSqFt = ((sheetsNeeded - 1) * 32.0) + 16.0;
   }
 
+  var offcutSqFt = Math.max(0, boughtAreaSqFt - totalAreaSqFt);
   return {
     pcsPerSheet: pcsPerSheet,
     sheetsNeeded: sheetsNeeded,
     totalAreaSqFt: totalAreaSqFt,
+    offcutSqFt: offcutSqFt,
     buyLabel: buyLabel
   };
 }
@@ -2240,6 +2689,7 @@ function calculateDoor() {
   const prevOut = document.getElementById('dr_out').textContent;
   document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
   document.getElementById('dr_mat_out').textContent = generateMaterialList(dr_buckets);
+  renderSheetLayoutBoxUI('dr_sheet_layout_box', dr_acp_list, 'Door');
 }
 
 function clearDoor() {
@@ -2252,6 +2702,7 @@ function clearDoor() {
   if (document.getElementById('dr_loc')) document.getElementById('dr_loc').value = "";
   document.getElementById('dr_out').textContent = "";
   document.getElementById('dr_mat_out').textContent = "";
+  renderSheetLayoutBoxUI('dr_sheet_layout_box', [], 'Door');
 }
 
  // ========================================================
@@ -2297,29 +2748,17 @@ function clearDoor() {
  const total_open_h = Math.max(10, h - frame_deduct);
 
  let bottom_h = 0, mid_h = 0, top_h = 0;
+ const approx_inner_w = (w - ((cols + 1) * tube_face)) / cols;
+ const approx_cut_w = Math.max(6.0, approx_inner_w - 0.25);
  if (rows === 3) {
-   if (panel_mode === "CUSTOM_BOTTOM_3FT") {
-     bottom_h = 36.0;
-     mid_h = 36.0;
-     top_h = Math.max(6.0, total_open_h - (bottom_h + mid_h));
-   } else if (panel_mode === "CUSTOM_BOTTOM_2.5FT") {
-     bottom_h = 30.0;
-     mid_h = 30.0;
-     top_h = Math.max(6.0, total_open_h - (bottom_h + mid_h));
-   } else if (panel_mode === "EQUAL_DIVIDE") {
+   if (panel_mode === "EQUAL_DIVIDE") {
      const eq = total_open_h / 3.0;
      bottom_h = eq; mid_h = eq; top_h = eq;
    } else {
-     // OPTIMIZED_4X8: 4'x8' Sheet & 6" Glass Slab Protected
-     if (h <= 88.0) {
-       bottom_h = 30.0;
-       mid_h = 30.0;
-       top_h = Math.max(6.0, total_open_h - 60.0);
-     } else {
-       bottom_h = 36.0;
-       mid_h = 36.0;
-       top_h = Math.max(6.0, total_open_h - 72.0);
-     }
+     const bestH = findBestPartitionHeights(total_open_h, approx_cut_w, panel_mode);
+     bottom_h = bestH.bottom_h;
+     mid_h = bestH.mid_h;
+     top_h = bestH.top_h;
    }
  } else {
    const eq = total_open_h / rows;
@@ -2397,7 +2836,7 @@ function clearDoor() {
      out += `> [Top Header Glass] (${pt_gspec}): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `• TOTAL GLASS TO BUY: ${cols * 2} Pcs (${totalGlassSqFt} Sq.Ft) -> In 2. GLASS PDF\n`;
-     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet) -> In 3. ALU PURCHASE PDF\n`;
+     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (Used: ${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | Reusable Offcut: ${acpInfo.offcutSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE PDF\n`;
 
      pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] || 0) + cols;
      pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] || 0) + cols;
@@ -2523,7 +2962,7 @@ function clearDoor() {
      out += `> [Top Header Glass] (${pt_gspec}): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
      out += `• TOTAL GLASS TO BUY: ${(cols * 2) + 2} Pcs (${totalGlassSqFt} Sq.Ft) -> In 2. GLASS PDF\n`;
-     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | ${acpInfo.pcsPerSheet} pcs/sheet) -> In 3. ALU PURCHASE PDF\n`;
+     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (Used: ${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | Reusable Offcut: ${acpInfo.offcutSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE PDF\n`;
      pt_acp_list.push({
        cutStr: `${disp(bottom_cut_h)} x ${disp(cut_w)}`,
        h_in: bottom_cut_h,
@@ -2541,7 +2980,7 @@ function clearDoor() {
      out += "\n" + ("--- GLASS SHOP BILLING SLAB SAFE-GUARD ---\n");
      out += `• Middle Glass Slab: ${mid_guard.slab}" x ${w_guard.slab}" | Top Header Glass Slab: ${top_guard.slab}" x ${w_guard.slab}"\n`;
    } else {
-     const raw_part_h = ((h - ((rows + 1) * 1.5)) / rows) - 0.25;
+     const raw_part_h = (total_open_h / rows) - 0.25;
      const part_guard = safeGlassSlabCap(raw_part_h);
      const part_g_qty = cols * rows;
      if (part_g_qty > 0) {
@@ -2561,6 +3000,7 @@ function clearDoor() {
  const prevOut = document.getElementById('pt_out').textContent;
  document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
  document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
+ renderSheetLayoutBoxUI('pt_sheet_layout_box', pt_acp_list, 'Partition');
 }
 
  function clearPartition() {
@@ -2574,6 +3014,7 @@ function clearDoor() {
  document.getElementById('pt_dw').value = "";
  document.getElementById('pt_out').textContent = "";
  document.getElementById('pt_mat_out').textContent = "";
+ renderSheetLayoutBoxUI('pt_sheet_layout_box', [], 'Partition');
  }
 
  // ========================================================
