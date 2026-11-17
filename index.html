@@ -24,11 +24,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v61') caches.delete(k);
+            if (k !== 'smart-worker-pro-v63') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=61').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=63').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=61">
+  <link rel="stylesheet" href="style.css?v=63">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1749,12 +1749,12 @@
  </div>
  </div>
  <div class="form-group">
- <label>Horizontal Sections:</label>
- <input type="number" id="pt_cols" value="3">
+ <label style="color:#0284c7; font-weight:700;">Horizontal Divide (Cols):</label>
+ <input type="number" id="pt_cols" value="3" min="1" max="10" oninput="renderPartitionRowBuilder()">
  </div>
  <div class="form-group">
- <label>Vertical Sections:</label>
- <input type="number" id="pt_rows" value="3">
+ <label style="color:#b45309; font-weight:700;">Vertical Divide (Rows):</label>
+ <input type="number" id="pt_rows" value="3" min="1" max="8" oninput="renderPartitionRowBuilder()">
  </div>
 
  <!-- Jindal Partition Tube Section & Panel Mode Box (Full Row) -->
@@ -1765,18 +1765,17 @@
    </div>
    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
      <div style="grid-column: span 2;">
-       <select id="pt_tube_preset" onchange="applyPartitionTubePreset(this.value)" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; color:#0f172a; font-size:0.8rem; font-weight:700;">
-         <option value="2.5x1.5_edge" selected>2.5" x 1.5" Jindal Partition (1.5" Face)</option>
-         <option value="2.5x1.5_flat">2.5" x 1.5" Flat Mount (2.5" Face)</option>
-         <option value="2x1_edge">2" x 1" Jindal Tube (1.0" Face)</option>
-         <option value="2x1_flat">2" x 1" Flat Mount (2.0" Face)</option>
-         <option value="1.75x1.75">1.75" x 1.75" Square Tube (1.75" Face)</option>
-         <option value="3x1.5_edge">3" x 1.5" Heavy Tube (1.5" Face)</option>
-         <option value="4x1.75_base">4" x 1.75" Jumbo Tube (1.75" Face, 4" Base)</option>
-         <option value="4x1.5_base">4" x 1.5" Tube (1.5" Face, 4" Base)</option>
-         <option value="4x1.75_all">4" x 1.75" Full 4" Face Frame</option>
-         <option value="2x2">2" x 2" Square Tube (2.0" Face)</option>
-         <option value="custom">Custom Tube Size (Enter Inches Below)</option>
+       <select id="pt_tube_preset" onchange="applyPartitionTubePreset(this.value)" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; color:#0f172a; font-size:0.84rem; font-weight:700;">
+         <option value="2.5x1.5_edge" selected>2.5" x 1.5" Tube</option>
+         <option value="2.5x1.5_flat">2.5" x 1.5" Tube (2.5" Front)</option>
+         <option value="2x1_edge">2" x 1" Tube</option>
+         <option value="2x1_flat">2" x 1" Tube (2" Front)</option>
+         <option value="1.75x1.75">1.75" x 1.75" Tube</option>
+         <option value="3x1.5_edge">3" x 1.5" Tube</option>
+         <option value="4x1.75_base">4" x 1.75" Tube</option>
+         <option value="4x1.5_base">4" x 1.5" Tube</option>
+         <option value="2x2">2" x 2" Tube</option>
+         <option value="custom">Custom Tube Size</option>
        </select>
      </div>
      <div>
@@ -1788,15 +1787,23 @@
        <input type="number" id="pt_bot_face" value="1.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
      </div>
    </div>
-   <div>
-     <label style="font-size:0.72rem; font-weight:800; color:#2563eb; display:block; margin-bottom:3px;">Panel Mode (2"-8" Max Waste & Min 12" Top Glass):</label>
-     <select id="pt_panel_mode" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; font-size:0.8rem; font-weight:700;">
-       <option value="OPTIMIZED_4X8" selected>Auto 2"-8" Waste Guard (ACP + Mid Glass + Min 12" Top Glass)</option>
-       <option value="CUSTOM_BOTTOM_3FT">Bottom 3ft (36") ACP + Mid Glass + Top Glass (Min 12")</option>
-       <option value="CUSTOM_BOTTOM_2.5FT">Bottom 2.5ft (30"-31") ACP + Mid Glass + Top Glass (Min 12")</option>
-       <option value="CUSTOM_BOTTOM_2FT">Bottom 2ft (23"-24") ACP + Mid Glass + Top Glass (Min 12")</option>
-       <option value="EQUAL_DIVIDE">Full Glass Only (All Rows Equal Glass - No ACP)</option>
-     </select>
+   <div style="border-top:1px solid #e2e8f0; padding-top:8px; margin-top:4px;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
+       <label style="font-size:0.76rem; font-weight:800; color:#1e3a8a;">SELECT GLASS OR ACP FOR EACH ROW (TOP TO BOTTOM):</label>
+       <select id="pt_panel_mode" onchange="applyQuickPartitionPattern(this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #0284c7; background:#eff6ff; color:#0369a1; font-size:0.76rem; font-weight:800;">
+         <option value="BOT_TOP_ACP" selected>Top ACP + Mid Glass + Bot ACP</option>
+         <option value="OPTIMIZED_4X8">Top Glass + Mid Glass + Bot ACP</option>
+         <option value="EQUAL_DIVIDE">All Glass (Every Row Glass)</option>
+         <option value="ALL_ACP">All ACP Board (Every Row ACP)</option>
+         <option value="CUSTOM_ROWS">Custom Row Setup</option>
+       </select>
+     </div>
+
+     <!-- Dynamic Row-by-Row Glass/ACP & Height Table -->
+     <div id="pt_rows_builder_container" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
+
+     <!-- Live Visual Wall Grid Preview (Shows Top, Middle, Bottom boxes with Glass/ACP colors) -->
+     <div id="pt_wall_visual_preview" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:8px; text-align:center;"></div>
    </div>
  </div>
  <div class="form-group">
@@ -3692,12 +3699,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=61"></script>
+  <script src="app.js?v=63"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=61').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=63').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

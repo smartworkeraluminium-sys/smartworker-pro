@@ -1,5 +1,218 @@
 
 // =========================================================================
+// INTERACTIVE MULTI-ROW (1 TO 8 ROWS) GLASS / ACP BUILDER & VISUAL WALL PREVIEW
+// Row index 0 = Bottom Row (Row 1), Row index (rows-1) = Top Row
+// =========================================================================
+var pt_row_configs = [
+  { mat: 'ACP', h_val: 30.0 },   // Row 1 (Bottom)
+  { mat: 'GLASS', h_val: 0 },    // Row 2 (Middle - 0 means Auto Remaining)
+  { mat: 'ACP', h_val: 15.0 }    // Row 3 (Top)
+];
+
+function ensurePtRowConfigsCount(numRows) {
+  numRows = Math.max(1, Math.min(8, parseInt(numRows) || 3));
+  while (pt_row_configs.length < numRows) {
+    // Insert new middle glass rows before the top row
+    var topItem = pt_row_configs.pop() || { mat: 'ACP', h_val: 15.0 };
+    pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
+    pt_row_configs.push(topItem);
+  }
+  if (pt_row_configs.length > numRows) {
+    pt_row_configs = pt_row_configs.slice(0, numRows);
+  }
+}
+
+function applyQuickPartitionPattern(mode) {
+  var rowsEl = document.getElementById('pt_rows');
+  var numRows = rowsEl ? Math.max(1, parseInt(rowsEl.value) || 3) : 3;
+  pt_row_configs = [];
+  for (var r = 0; r < numRows; r++) {
+    if (mode === 'EQUAL_DIVIDE') {
+      pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
+    } else if (mode === 'ALL_ACP') {
+      pt_row_configs.push({ mat: 'ACP', h_val: 0 });
+    } else if (mode === 'BOT_TOP_ACP') {
+      if (r === 0) pt_row_configs.push({ mat: 'ACP', h_val: 30.0 });
+      else if (r === numRows - 1 && numRows >= 3) pt_row_configs.push({ mat: 'ACP', h_val: 15.0 });
+      else pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
+    } else {
+      // OPTIMIZED_4X8: Bottom ACP, rest Glass (Top Glass min 14"-15")
+      if (r === 0) pt_row_configs.push({ mat: 'ACP', h_val: 30.0 });
+      else if (r === numRows - 1 && numRows >= 3) pt_row_configs.push({ mat: 'GLASS', h_val: 15.0 });
+      else pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
+    }
+  }
+  renderPartitionRowBuilder();
+}
+
+function togglePtRowMaterial(rIdx) {
+  if (!pt_row_configs[rIdx]) return;
+  pt_row_configs[rIdx].mat = (pt_row_configs[rIdx].mat === 'ACP') ? 'GLASS' : 'ACP';
+  var pm = document.getElementById('pt_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderPartitionRowBuilder();
+}
+
+function updatePtRowHeightInput(rIdx, valStr) {
+  if (!pt_row_configs[rIdx]) return;
+  var v = parseFloat(valStr);
+  pt_row_configs[rIdx].h_val = (isNaN(v) || v <= 0) ? 0 : v;
+  var pm = document.getElementById('pt_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderPartitionWallVisualOnly();
+}
+
+function getRowPositionName(rIdx, totalRows) {
+  if (totalRows === 1) return 'Full Row 1';
+  if (rIdx === 0) return 'Row 1 (Bottom / নিচ)';
+  if (rIdx === totalRows - 1) return 'Row ' + totalRows + ' (Top / ওপর)';
+  if (totalRows === 3 && rIdx === 1) return 'Row 2 (Middle / মধ্যিখান)';
+  return 'Row ' + (rIdx + 1) + ' (Middle)';
+}
+
+function getRowShortEnglishName(rIdx, totalRows) {
+  if (totalRows === 1) return 'Full Panel';
+  if (rIdx === 0) return 'Bottom Row 1';
+  if (rIdx === totalRows - 1) return 'Top Row ' + totalRows;
+  if (totalRows === 3 && rIdx === 1) return 'Middle Row 2';
+  return 'Middle Row ' + (rIdx + 1);
+}
+
+// Computes the resolved clear opening height (in inches) for each row [0 .. numRows-1]
+function resolvePartitionRowHeights(total_open_h, numRows, cut_w) {
+  ensurePtRowConfigsCount(numRows);
+  var heights = new Array(numRows).fill(0);
+  var autoIndices = [];
+  var usedFixed = 0;
+
+  for (var r = 0; r < numRows; r++) {
+    var cfg = pt_row_configs[r];
+    var hVal = Number(cfg.h_val) || 0;
+    if (hVal > 0 && numRows > 1) {
+      heights[r] = hVal;
+      usedFixed += hVal;
+    } else {
+      autoIndices.push(r);
+    }
+  }
+
+  // If fixed heights exceed or leave < 8" per auto row, scale or auto-adjust
+  var minPerAuto = 12.25;
+  var remH = total_open_h - usedFixed;
+  if (autoIndices.length > 0 && remH < (autoIndices.length * minPerAuto)) {
+    // Re-balance so top row is at least 12.25" (1 ft) and middle row gets comfortable space
+    if (numRows >= 3 && heights[numRows - 1] > 0 && heights[0] > 0) {
+      heights[numRows - 1] = Math.max(12.25, Math.min(heights[numRows - 1], total_open_h * 0.20));
+      heights[0] = Math.min(heights[0], total_open_h * 0.38);
+      usedFixed = 0;
+      for (var i = 0; i < numRows; i++) {
+        if (autoIndices.indexOf(i) === -1) usedFixed += heights[i];
+      }
+      remH = Math.max(autoIndices.length * 10.0, total_open_h - usedFixed);
+    }
+  }
+
+  if (autoIndices.length > 0) {
+    var eachAuto = Math.max(6.0, remH / autoIndices.length);
+    autoIndices.forEach(function(idx) {
+      heights[idx] = eachAuto;
+    });
+  } else if (numRows > 0 && Math.abs(usedFixed - total_open_h) > 0.1) {
+    // All rows had fixed numbers typed: give any difference to the middle row (or top row) so total matches wall height!
+    var midIdx = Math.floor(numRows / 2);
+    heights[midIdx] = Math.max(8.0, heights[midIdx] + (total_open_h - usedFixed));
+  }
+
+  return heights;
+}
+
+function renderPartitionRowBuilder() {
+  var container = document.getElementById('pt_rows_builder_container');
+  if (!container) return;
+  var rowsEl = document.getElementById('pt_rows');
+  var numRows = rowsEl ? Math.max(1, Math.min(8, parseInt(rowsEl.value) || 3)) : 3;
+  ensurePtRowConfigsCount(numRows);
+
+  var html = '';
+  // Display from Top Row (numRows - 1) down to Bottom Row (0) so it matches the physical wall from Top to Bottom!
+  for (var r = numRows - 1; r >= 0; r--) {
+    var cfg = pt_row_configs[r];
+    var isAcp = (cfg.mat === 'ACP');
+    var btnBg = isAcp ? '#ea580c' : '#0284c7';
+    var btnIcon = isAcp ? 'fa-layer-group' : 'fa-border-all';
+    var rowLabel = getRowShortEnglishName(r, numRows);
+    var hValStr = (cfg.h_val && cfg.h_val > 0) ? String(cfg.h_val) : '';
+    var placeholderTxt = (cfg.h_val && cfg.h_val > 0) ? '' : 'Auto Height';
+
+    html += '<div style="display:grid; grid-template-columns: 1.25fr 1fr 1fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
+    html += '<div style="font-size:0.76rem; font-weight:800; color:#0f172a;">' + rowLabel + '</div>';
+    html += '<button type="button" onclick="togglePtRowMaterial(' + r + ')" style="background:' + btnBg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">';
+    html += '<i class="fa-solid ' + btnIcon + '"></i> <span>' + (isAcp ? 'ACP Board' : 'Glass') + '</span>';
+    html += '</button>';
+    html += '<div style="display:flex; align-items:center; gap:3px;">';
+    html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" oninput="updatePtRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
+    html += '<span style="font-size:0.68rem; font-weight:700; color:#64748b;">In</span>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+  renderPartitionWallVisualOnly();
+}
+
+function renderPartitionWallVisualOnly() {
+  var prevBox = document.getElementById('pt_wall_visual_preview');
+  if (!prevBox) return;
+  var rowsEl = document.getElementById('pt_rows');
+  var colsEl = document.getElementById('pt_cols');
+  var numRows = rowsEl ? Math.max(1, Math.min(8, parseInt(rowsEl.value) || 3)) : 3;
+  var numCols = colsEl ? Math.max(1, Math.min(10, parseInt(colsEl.value) || 3)) : 3;
+  ensurePtRowConfigsCount(numRows);
+
+  var raw_h = safeEval(document.getElementById('pt_h') ? document.getElementById('pt_h').value : '96') || 96;
+  var raw_w = safeEval(document.getElementById('pt_w') ? document.getElementById('pt_w').value : '120') || 120;
+  var is_mm = document.getElementById('pt_unit') && document.getElementById('pt_unit').value.indexOf('Millimeter') !== -1;
+  var h_in = is_mm ? (raw_h / 25.4) : raw_h;
+  var w_in = is_mm ? (raw_w / 25.4) : raw_w;
+  var tube_face = parseFloat(document.getElementById('pt_tube_face') ? document.getElementById('pt_tube_face').value : 1.5) || 1.5;
+  var bot_face = parseFloat(document.getElementById('pt_bot_face') ? document.getElementById('pt_bot_face').value : 1.5) || 1.5;
+
+  var frame_deduct = bot_face + (numRows * tube_face);
+  var total_open_h = Math.max(12, h_in - frame_deduct);
+  var inner_w = Math.max(6, (w_in - ((numCols + 1) * tube_face)) / numCols);
+  var rowHeights = resolvePartitionRowHeights(total_open_h, numRows, inner_w - 0.25);
+
+  var html = '<div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between;">';
+  html += '<span>LIVE PARTITION WALL PREVIEW (' + numCols + ' Cols x ' + numRows + ' Rows)</span>';
+  html += '<span style="color:#0284c7;">Tap any row to switch Glass / ACP</span>';
+  html += '</div>';
+
+  html += '<div style="display:flex; flex-direction:column; gap:3px; background:#334155; padding:5px; border-radius:6px;">';
+  for (var r = numRows - 1; r >= 0; r--) {
+    var cfg = pt_row_configs[r];
+    var isAcp = (cfg.mat === 'ACP');
+    var rh = rowHeights[r];
+    var cutH = Math.max(1, rh - 0.25);
+    var cutW = Math.max(1, inner_w - 0.25);
+    var bg = isAcp ? '#fed7aa' : '#bae6fd';
+    var fg = isAcp ? '#9a3412' : '#0369a1';
+    var bd = isAcp ? '#ea580c' : '#0284c7';
+
+    html += '<div onclick="togglePtRowMaterial(' + r + ')" style="display:grid; grid-template-columns: repeat(' + numCols + ', 1fr); gap:3px; cursor:pointer;">';
+    for (var c = 0; c < numCols; c++) {
+      html += '<div style="background:' + bg + '; color:' + fg + '; border:1.5px solid ' + bd + '; border-radius:4px; padding:6px 2px; font-size:0.68rem; font-weight:800; text-align:center;">';
+      html += '<div>' + (isAcp ? 'ACP' : 'GLASS') + '</div>';
+      html += '<div style="font-size:0.62rem; color:#0f172a;">' + toFractionInch(cutH) + ' x ' + toFractionInch(cutW) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  prevBox.innerHTML = html;
+}
+
+
+// =========================================================================
 // 4'x8' (48" x 96") SHEET 2"-8" WASTE OPTIMIZER, 2D PACKER & LABOUR DRAWING ENGINE
 // =========================================================================
 
@@ -92,17 +305,19 @@ function findBestPartitionHeights(total_open_h, cut_w, panel_mode) {
   return { bottom_h: bottom_h, mid_h: mid_h, top_h: top_h };
 }
 
-// Packs a list of ACP cut panels onto 4'x8' (96" x 48" horizontal) sheets and returns exact 2D coordinates for each sheet
+// Packs a list of ACP cut panels (including multi-row Bottom ACP + Top ACP of different sizes!) onto 4'x8' (96" x 48") sheets
 function packPanelsOn4x8Sheets(acpList) {
   var allPieces = [];
   (acpList || []).forEach(function(grp) {
     var h = Math.max(1, Number(grp.h_in) || 0);
     var w = Math.max(1, Number(grp.w_in) || 0);
     var q = Math.max(1, parseInt(grp.qty) || 1);
+    var tag = grp.rowTag || 'ACP';
     for (var i = 0; i < q; i++) {
       allPieces.push({
         h: h,
         w: w,
+        tag: tag,
         cutStr: grp.cutStr || (toFractionInch(h) + ' x ' + toFractionInch(w)),
         idx: allPieces.length + 1
       });
@@ -111,96 +326,107 @@ function packPanelsOn4x8Sheets(acpList) {
 
   if (allPieces.length === 0) return [];
 
-  // Represent the 4'x8' sheet horizontally: Length = 96" (X-axis), Width = 48" (Y-axis)
+  // Sort pieces largest area first so main panels place first and smaller Top ACP panels nest into the remaining spaces!
+  allPieces.sort(function(a, b) { return (b.h * b.w) - (a.h * a.w); });
+
   var SHEET_L = 96.0;
   var SHEET_W = 48.0;
   var sheets = [];
   var remaining = allPieces.slice();
 
   while (remaining.length > 0) {
-    var sample = remaining[0];
-    var pH = sample.h, pW = sample.w;
-
-    // Test Orientation A: pH along 96" length (X), pW across 48" width (Y)
-    var colsA = Math.floor(SHEET_L / pH);
-    var rowsA = Math.floor(SHEET_W / pW);
-    var fitA = colsA * rowsA;
-    var remLA = SHEET_L - (colsA * pH);
-    var remWA = SHEET_W - (rowsA * pW);
-
-    // Test Orientation B (Rotated 90 deg): pW along 96" length (X), pH across 48" width (Y)
-    var colsB = Math.floor(SHEET_L / pW);
-    var rowsB = Math.floor(SHEET_W / pH);
-    var fitB = colsB * rowsB;
-    var remLB = SHEET_L - (colsB * pW);
-    var remWB = SHEET_W - (rowsB * pH);
-
-    // Choose orientation that fits more pieces, or avoids 9"-20" (1-ft) waste strip
-    var useB = false;
-    if (fitB > fitA) {
-      useB = true;
-    } else if (fitB === fitA && fitB > 0) {
-      var badA = (remLA > 8.0 && remLA < 22.0) || (remWA > 8.0 && remWA < 22.0);
-      var badB = (remLB > 8.0 && remLB < 22.0) || (remWB > 8.0 && remWB < 22.0);
-      if (badA && !badB) useB = true;
-    }
-
-    var stepX = useB ? pW : pH;
-    var stepY = useB ? pH : pW;
-    var maxCols = Math.max(1, useB ? colsB : colsA);
-    var maxRows = Math.max(1, useB ? rowsB : rowsA);
-
     var placed = [];
-    var usedCols = 0;
-    var usedRows = 0;
+    // Maintain a list of free rectangular spaces on this 96" x 48" sheet
+    var freeRects = [{ x: 0, y: 0, w: SHEET_L, h: SHEET_W }];
 
-    for (var r = 0; r < maxRows && remaining.length > 0; r++) {
-      for (var c = 0; c < maxCols && remaining.length > 0; c++) {
-        var pc = remaining.shift();
-        var x = c * stepX;
-        var y = r * stepY;
-        placed.push({
-          pieceNum: pc.idx,
-          x: x,
-          y: y,
-          w: stepX,
-          h: stepY,
-          cutStr: pc.cutStr,
-          dimXStr: toFractionInch(stepX),
-          dimYStr: toFractionInch(stepY)
-        });
-        if (c + 1 > usedCols) usedCols = c + 1;
-        if (r + 1 > usedRows) usedRows = r + 1;
-      }
-    }
+    var madeProgress = true;
+    while (madeProgress && remaining.length > 0) {
+      madeProgress = false;
+      for (var i = 0; i < remaining.length; i++) {
+        var pc = remaining[i];
+        var bestRectIdx = -1;
+        var bestRot = false;
+        var bestScore = 999999;
 
-    // Check if an extra rotated piece fits in the right-side remainder (96 - usedCols*stepX)
-    var usedWidthX = usedCols * stepX;
-    var usedHeightY = usedRows * stepY;
-    var rightRemX = SHEET_L - usedWidthX;
-    var rotX = stepY, rotY = stepX;
-    if (remaining.length > 0 && rightRemX >= rotX && SHEET_W >= rotY) {
-      var extraCols = Math.floor(rightRemX / rotX);
-      var extraRows = Math.floor(SHEET_W / rotY);
-      for (var er = 0; er < extraRows && remaining.length > 0; er++) {
-        for (var ec = 0; ec < extraCols && remaining.length > 0; ec++) {
-          var pc2 = remaining.shift();
+        for (var f = 0; f < freeRects.length; f++) {
+          var fr = freeRects[f];
+          // Try Normal (pc.h along X, pc.w along Y) and Rotated (pc.w along X, pc.h along Y)
+          var tries = [
+            { dx: pc.h, dy: pc.w, rot: false },
+            { dx: pc.w, dy: pc.h, rot: true }
+          ];
+          for (var t = 0; t < tries.length; t++) {
+            var tr = tries[t];
+            if (tr.dx <= fr.w + 0.01 && tr.dy <= fr.h + 0.01) {
+              var remX = fr.w - tr.dx;
+              var remY = fr.h - tr.dy;
+              // Prefer orientations where remainder is either <= 8" (small trim) or big enough (>= 12") to fit another piece!
+              var penX = (remX > 8.0 && remX < 12.0) ? 50 : 0;
+              var penY = (remY > 8.0 && remY < 12.0) ? 50 : 0;
+              var score = (fr.x * 10) + fr.y + penX + penY;
+              if (score < bestScore) {
+                bestScore = score;
+                bestRectIdx = f;
+                bestRot = tr.rot;
+              }
+            }
+          }
+        }
+
+        if (bestRectIdx !== -1) {
+          var chosenFr = freeRects.splice(bestRectIdx, 1)[0];
+          var useDx = bestRot ? pc.w : pc.h;
+          var useDy = bestRot ? pc.h : pc.w;
+
           placed.push({
-            pieceNum: pc2.idx,
-            x: usedWidthX + (ec * rotX),
-            y: er * rotY,
-            w: rotX,
-            h: rotY,
-            cutStr: pc2.cutStr + " (Rot)",
-            dimXStr: toFractionInch(rotX),
-            dimYStr: toFractionInch(rotY)
+            pieceNum: pc.idx,
+            tag: pc.tag,
+            x: chosenFr.x,
+            y: chosenFr.y,
+            w: useDx,
+            h: useDy,
+            cutStr: pc.cutStr,
+            dimXStr: toFractionInch(useDx),
+            dimYStr: toFractionInch(useDy)
           });
+
+          // Split chosenFr into two remaining free rectangles (Guillotine split)
+          var rightW = chosenFr.w - useDx;
+          var botH = chosenFr.h - useDy;
+
+          // Split along the axis that leaves the largest usable rectangle for remaining pieces
+          if (botH >= 4.0) {
+            freeRects.push({ x: chosenFr.x, y: chosenFr.y + useDy, w: useDx, h: botH });
+          }
+          if (rightW >= 4.0) {
+            freeRects.push({ x: chosenFr.x + useDx, y: chosenFr.y, w: rightW, h: chosenFr.h });
+          }
+
+          remaining.splice(i, 1);
+          madeProgress = true;
+          break;
         }
       }
-      usedWidthX += extraCols * rotX;
     }
 
-    // Compute waste / offcut strips on this 96" x 48" sheet
+    // Safety fallback if a piece is larger than 96" x 48"
+    if (placed.length === 0 && remaining.length > 0) {
+      var huge = remaining.shift();
+      var ux = Math.min(SHEET_L, Math.max(huge.h, huge.w));
+      var uy = Math.min(SHEET_W, Math.min(huge.h, huge.w));
+      placed.push({
+        pieceNum: huge.idx,
+        tag: huge.tag,
+        x: 0,
+        y: 0,
+        w: ux,
+        h: uy,
+        cutStr: huge.cutStr,
+        dimXStr: toFractionInch(ux),
+        dimYStr: toFractionInch(uy)
+      });
+    }
+
     var maxRightX = 0, maxBotY = 0;
     placed.forEach(function(pr) {
       if (pr.x + pr.w > maxRightX) maxRightX = pr.x + pr.w;
@@ -385,7 +611,7 @@ function exportSheetLayoutPdf(filename, title, acpList) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(30, 58, 138);
-      doc.text("PANEL #" + p.pieceNum, cx, cy - 3, { align: "center" });
+      doc.text((p.tag || "PANEL") + " #" + p.pieceNum, cx, cy - 3, { align: "center" });
 
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);
@@ -1863,6 +2089,9 @@ function openKeypad(targetId) {
 }
 
 function closeKeypadModal() {
+  if (keypadTarget && (keypadTarget.id === 'pt_h' || keypadTarget.id === 'pt_w')) {
+    try { renderPartitionWallVisualOnly(); } catch(e){}
+  }
   var modal = document.getElementById("keypadModal");
   if (modal) {
     modal.classList.remove("active");
@@ -2746,33 +2975,19 @@ function clearDoor() {
  // Frame height deductions: top (tube_face) + bottom (bot_face) + (rows - 1) transoms (each tube_face)
  const frame_deduct = bot_face + (rows * tube_face);
  const total_open_h = Math.max(10, h - frame_deduct);
-
- let bottom_h = 0, mid_h = 0, top_h = 0;
  const approx_inner_w = (w - ((cols + 1) * tube_face)) / cols;
- const approx_cut_w = Math.max(6.0, approx_inner_w - 0.25);
- if (rows === 3) {
-   if (panel_mode === "EQUAL_DIVIDE") {
-     const eq = total_open_h / 3.0;
-     bottom_h = eq; mid_h = eq; top_h = eq;
-   } else {
-     const bestH = findBestPartitionHeights(total_open_h, approx_cut_w, panel_mode);
-     bottom_h = bestH.bottom_h;
-     mid_h = bestH.mid_h;
-     top_h = bestH.top_h;
-   }
- } else {
-   const eq = total_open_h / rows;
-   bottom_h = eq; mid_h = eq; top_h = eq;
- }
+ const rowHeights = resolvePartitionRowHeights(total_open_h, rows, approx_inner_w - 0.25);
+ renderPartitionWallVisualOnly();
+ const pt_gspec = getModuleGlassLabel('pt');
 
  if (p_type === "Fixed Partition") {
-   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)})]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
+   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)}) | ${cols} Cols x ${rows} Rows]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
    const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h = w - (2 * tube_face);
    const inner_h = (w - ((cols + 1) * tube_face)) / cols;
 
    // 1. FRAME SECTIONS
    out += "-----------------------------------\n";
-   out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
+   out += "1. ALUMINIUM FRAME CUTTING SIZES\n";
    out += "-----------------------------------\n";
    out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
    if (Math.abs(bot_face - tube_face) > 0.05) {
@@ -2798,73 +3013,96 @@ function clearDoor() {
      for (let i = 0; i < h_qty; i++) pt_buckets[dg_key].push(inner_h);
    }
 
-   // 2. CLEAR OPENINGS & MARKING GUIDE
-   const mark_bottom_transom = bottom_h + bot_face;
-   const mark_mid_transom = bottom_h + bot_face + mid_h + tube_face;
-
+   // 2. ROW BY ROW CLEAR OPENINGS & TRANSOM MARKING FROM FLOOR
    out += "\n-----------------------------------\n";
-   out += "📐 CLEAR FRAME OPENINGS & VERTICAL MARKING GUIDE\n";
+   out += "2. ROW OPENINGS & PIPE MARKING (BOTTOM TO TOP)\n";
    out += "-----------------------------------\n";
-   out += `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP Board]\n`;
-   out += `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
-   out += `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
+   let runningMark = bot_face;
+   for (let r = 0; r < rows; r++) {
+     const rName = getRowShortEnglishName(r, rows);
+     const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
+     const rH = rowHeights[r];
+     out += `• ${rName} [${rMat}]: Clear Opening ${disp(rH)} x ${disp(inner_h)}`;
+     if (r < rows - 1) {
+       runningMark += rH;
+       out += ` -> Transom Mark at ${disp(runningMark)} from Floor\n`;
+       runningMark += tube_face;
+     } else {
+       out += ` (Top Row to Ceiling)\n`;
+     }
+   }
 
-   out += "📍 Vertical Pipe Transom Marking Levels:\n";
-   out += `  1. First Transom (Bottom Level): Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
-   out += `  2. Second Transom (Middle Level): First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
-   out += `  3. Top Box (Header Level): Second Transom to Ceiling ${disp(top_h)} clear\n`;
-
-   // 3. GLASS & ACP CUTTING WITH SLAB SAFE-GUARD
+   // 3. ROW BY ROW GLASS & ACP CUTTING SIZES
    const raw_cut_w = inner_h - 0.25;
    const w_guard = safeGlassSlabCap(raw_cut_w);
    const cut_w = w_guard.cut;
 
-   const bottom_cut_h = bottom_h - 0.25;
-   const mid_guard = safeGlassSlabCap(mid_h - 0.25);
-   const mid_cut_h = mid_guard.cut;
-   const top_guard = safeGlassSlabCap(top_h - 0.25);
-   const top_cut_h = top_guard.cut;
+   out += "\n-----------------------------------\n";
+   out += "3. GLASS & ACP CUTTING SIZES (BY ROW)\n";
+   out += "-----------------------------------\n";
 
-   const pt_gspec = getModuleGlassLabel('pt');
-   if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE")) {
-     const acpInfo = calcAcp4x8Requirement(bottom_cut_h, cut_w, cols);
-     const totalGlassSqFt = (((mid_cut_h * cut_w * cols) + (top_cut_h * cut_w * cols)) / 144.0).toFixed(2);
-     out += "\n-----------------------------------\n";
-     out += "GLASS & 4'x8' ACP BOARD PURCHASE SUMMARY\n";
-     out += "-----------------------------------\n";
-     out += `> [Middle Glass] (${pt_gspec}): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `> [Top Header Glass] (${pt_gspec}): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `• TOTAL GLASS TO BUY: ${cols * 2} Pcs (${totalGlassSqFt} Sq.Ft) -> In 2. GLASS PDF\n`;
-     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (Used: ${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | Reusable Offcut: ${acpInfo.offcutSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE PDF\n`;
+   let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
+   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
 
-     pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] || 0) + cols;
-     pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] || 0) + cols;
-     pt_acp_list.push({
-       cutStr: `${disp(bottom_cut_h)} x ${disp(cut_w)}`,
-       h_in: bottom_cut_h,
-       w_in: cut_w,
-       qty: cols,
-       buyLabel: acpInfo.buyLabel,
-       areaSqFt: acpInfo.totalAreaSqFt
-     });
+   for (let r = rows - 1; r >= 0; r--) {
+     const rName = getRowShortEnglishName(r, rows);
+     const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
+     const rH = rowHeights[r];
 
-     out += "\n" + ("--- GLASS SHOP BILLING SLAB SAFE-GUARD ---\n");
-     out += `• Middle Glass Billing Slab: ${mid_guard.slab}" x ${w_guard.slab}" (${((mid_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
-     out += `• Top Header Glass Billing Slab: ${top_guard.slab}" x ${w_guard.slab}" (${((top_guard.slab * w_guard.slab)/144).toFixed(2)} Sq.Ft/pc)\n`;
-   } else {
-     const raw_gap = (h - ((rows + 1) * 1.5)) / rows - 0.25;
-     const g_guard = safeGlassSlabCap(raw_gap);
-     const glass_qty = cols * rows;
-     out += `--- GLASS SIZES ---\n> Glass (${pt_gspec}): ${disp(g_guard.cut)} x ${disp(cut_w)} (${glass_qty} pc)\n`;
-     out += `> Shop Billing Slab: ${g_guard.slab}" x ${w_guard.slab}"\n`;
-     const gKey = `${disp(g_guard.cut)} x ${disp(cut_w)} || ${pt_gspec}`;
-     pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + glass_qty;
+     if (rMat === 'ACP') {
+       const acp_cut_h = Math.max(2.0, rH - 0.25);
+       const shortTag = (r === 0) ? 'Bot ACP' : (r === rows - 1 ? 'Top ACP' : ('Row' + (r + 1) + ' ACP'));
+       out += `> [${rName} - ACP Board]: ${disp(acp_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+       totalAcpPcs += cols;
+       totalAcpAreaSqFt += (acp_cut_h * cut_w * cols) / 144.0;
+       pt_acp_list.push({
+         rowTag: shortTag,
+         cutStr: `${disp(acp_cut_h)} x ${disp(cut_w)}`,
+         h_in: acp_cut_h,
+         w_in: cut_w,
+         qty: cols,
+         buyLabel: '',
+         areaSqFt: (acp_cut_h * cut_w * cols) / 144.0
+       });
+     } else {
+       const g_guard = safeGlassSlabCap(Math.max(2.0, rH - 0.25));
+       const g_cut_h = g_guard.cut;
+       out += `> [${rName} - Glass (${pt_gspec})]: ${disp(g_cut_h)} x ${disp(cut_w)} (${cols} pc) [Slab: ${g_guard.slab}" x ${w_guard.slab}"]\n`;
+       totalGlassPcs += cols;
+       totalGlassAreaSqFt += (g_cut_h * cut_w * cols) / 144.0;
+       const gKey = `${disp(g_cut_h)} x ${disp(cut_w)} (${rName}) || ${pt_gspec}`;
+       pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + cols;
+     }
    }
 
-   // 4. HARDWARE
-   const beading_rft = Math.round(((bottom_h + inner_h)*2 + (mid_h + inner_h)*2 + (top_h + inner_h)*2) * cols / 12);
-   out += "\n" + ("--- HARDWARE & ACCESSORIES ---\n");
+   // Consolidate 4'x8' Sheet Count across ALL ACP rows (e.g. Bottom ACP + Top ACP nested together!)
+   const packedSheets = packPanelsOn4x8Sheets(pt_acp_list);
+   let sheetsSummaryTxt = "0 Sheets";
+   if (packedSheets.length > 0) {
+     const lastSh = packedSheets[packedSheets.length - 1];
+     if (packedSheets.length === 1 && lastSh.isHalfSheetOnly) {
+       sheetsSummaryTxt = "0.5 Sheet (4'x4' Half Board)";
+     } else if (packedSheets.length > 1 && lastSh.isHalfSheetOnly) {
+       sheetsSummaryTxt = (packedSheets.length - 1) + ".5 Sheets (" + (packedSheets.length - 1) + " Full + 1 Half 4'x4' Board)";
+     } else {
+       sheetsSummaryTxt = packedSheets.length + (packedSheets.length === 1 ? " Full Sheet (4'x8')" : " Full Sheets (4'x8')");
+     }
+     pt_acp_list.forEach(function(item) { item.buyLabel = sheetsSummaryTxt; });
+   }
+
+   out += "\n-----------------------------------\n";
+   out += "4. TOTAL GLASS & 4'x8' ACP PURCHASE SUMMARY\n";
+   out += "-----------------------------------\n";
+   out += `• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF\n`;
+   if (totalAcpPcs > 0) {
+     out += `• TOTAL ACP BOARD TO BUY: ${sheetsSummaryTxt} (${totalAcpPcs} Cut Pcs | ${totalAcpAreaSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE & 5. DRAWING PDF\n`;
+   } else {
+     out += `• TOTAL ACP BOARD TO BUY: None (Full Glass Partition)\n`;
+   }
+
+   // 5. HARDWARE
+   const beading_rft = Math.round((total_open_h + (rows * inner_h)) * 2 * cols / 12);
+   out += "\n--- HARDWARE & ACCESSORIES ---\n";
    out += `> Square Clip (Beading): Approx ${beading_rft} Running Feet\n`;
    out += `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
    out += `> Corner Cleats & Screws Set\n`;
@@ -2881,13 +3119,13 @@ function clearDoor() {
    const dh = is_mm ? raw_dh / 25.4 : raw_dh;
    const dw = is_mm ? raw_dw / 25.4 : raw_dw;
 
-   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)})]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
+   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)}) | ${cols} Side Cols x ${rows} Rows]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
    const outer_v = h, inter_v = h - (tube_face + bot_face), door_side_v = h - tube_face;
    const outer_h_top = w - (2 * tube_face), rem_w = w - (dw + (2 * tube_face));
    const inner_h = cols > 0 ? (rem_w - ((cols + 1) * tube_face)) / cols : 0;
 
    out += "-----------------------------------\n";
-   out += "🔨 ALUMINIUM FRAME CUTTING SIZES (FRAME SECTIONS)\n";
+   out += "1. ALUMINIUM FRAME CUTTING SIZES\n";
    out += "-----------------------------------\n";
    out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
    out += `> Door Post Vertical (${tube_label}): ${disp(door_side_v)} (1 pc)\n`;
@@ -2914,89 +3152,84 @@ function clearDoor() {
    const door_v = dh - 1.75, door_tb = dw - 6.75;
    const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
 
-   out += "\n" + ("--- DOOR SASH & FRAME ---\n");
+   out += "\n--- DOOR SASH & FRAME ---\n";
    out += `> Door Sash Verticals: ${disp(door_v)} (2 pc)\n`;
    out += `> Door Sash Top/Bottom: ${disp(door_tb)} (2 pc)\n`;
-   out += `> Door Glass/Board Size: ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
+   out += `> Door Glass (${pt_gspec}): ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
    pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
 
-   const transom_g_h = (h - dh - 1.5) - 0.25, transom_g_w = dw - 0.25;
+   const transom_g_h = Math.max(4.0, (h - dh - tube_face) - 0.25), transom_g_w = dw - 0.25;
+   pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] || 0) + 1;
+   pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Door Top Transom Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Door Top Transom Glass) || ${pt_gspec}`] || 0) + 1;
 
-   // Marking Guide
-   const mark_bottom_transom = bottom_h + 1.5;
-   const mark_mid_transom = bottom_h + 1.5 + mid_h + 1.5;
-
-   out += "\n-----------------------------------\n";
-   out += "📐 FRAME OPENINGS & MARKING GUIDE\n";
-   out += "-----------------------------------\n";
-   out += `• Bottom Box Clear Opening: ${disp(bottom_h)} x ${disp(inner_h)} [Bottom ACP]\n`;
-   out += `• Middle Box Clear Opening: ${disp(mid_h)} x ${disp(inner_h)} [Middle Glass - Identical Size]\n`;
-   out += `• Top Header Clear Opening: ${disp(top_h)} x ${disp(inner_h)} [Top Small Glass]\n\n`;
-
-   out += "📍 Vertical Pipe Marking Levels:\n";
-   out += `  1. Door Header Level: Floor to ${disp(dh)} clear\n`;
-   out += `  2. Side First Transom: Floor to ${disp(bottom_h)} clear (Mark at ${disp(mark_bottom_transom)})\n`;
-   out += `  3. Side Second Transom: First Transom to ${disp(mid_h)} clear (Mark at ${disp(mark_mid_transom)})\n`;
-
-   const raw_cut_w = inner_h - 0.25;
+   const raw_cut_w = Math.max(4.0, inner_h - 0.25);
    const w_guard = safeGlassSlabCap(raw_cut_w);
    const cut_w = w_guard.cut;
 
-   const bottom_cut_h = bottom_h - 0.25;
-   const mid_guard = safeGlassSlabCap(mid_h - 0.25);
-   const mid_cut_h = mid_guard.cut;
-   const top_guard = safeGlassSlabCap(top_h - 0.25);
-   const top_cut_h = top_guard.cut;
-
-   const pt_gspec = getModuleGlassLabel('pt');
    out += "\n-----------------------------------\n";
-   out += "GLASS & 4'x8' ACP BOARD DETAILS\n";
+   out += "2. GLASS & ACP CUTTING SIZES (BY ROW)\n";
    out += "-----------------------------------\n";
-   out += `> Door Glass (${pt_gspec}): ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
-   out += `> Door Top Transom Glass (${pt_gspec}): ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
+   out += `> [Door Top Transom Glass (${pt_gspec})]: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
 
-   if (rows === 3 && (panel_mode !== "EQUAL_DIVIDE") && cols > 0) {
-     const acpInfo = calcAcp4x8Requirement(bottom_cut_h, cut_w, cols);
-     const totalGlassSqFt = (((dg_h * dg_w) + (transom_g_h * transom_g_w) + (mid_cut_h * cut_w * cols) + (top_cut_h * cut_w * cols)) / 144.0).toFixed(2);
-     out += `> [Middle Glass] (${pt_gspec}): ${disp(mid_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `> [Top Header Glass] (${pt_gspec}): ${disp(top_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `> [Bottom ACP Cut Size]: ${disp(bottom_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-     out += `• TOTAL GLASS TO BUY: ${(cols * 2) + 2} Pcs (${totalGlassSqFt} Sq.Ft) -> In 2. GLASS PDF\n`;
-     out += `• TOTAL ACP BOARD TO BUY: ${acpInfo.buyLabel} (Used: ${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft | Reusable Offcut: ${acpInfo.offcutSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE PDF\n`;
-     pt_acp_list.push({
-       cutStr: `${disp(bottom_cut_h)} x ${disp(cut_w)}`,
-       h_in: bottom_cut_h,
-       w_in: cut_w,
-       qty: cols,
-       buyLabel: acpInfo.buyLabel,
-       areaSqFt: acpInfo.totalAreaSqFt
-     });
+   let totalGlassPcs = 2;
+   let totalGlassAreaSqFt = ((dg_h * dg_w) + (transom_g_h * transom_g_w)) / 144.0;
+   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
 
-     pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] || 0) + 1;
-     pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Transom Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Transom Glass) || ${pt_gspec}`] || 0) + 1;
-     pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(mid_cut_h)} x ${disp(cut_w)} (Middle Glass) || ${pt_gspec}`] || 0) + cols;
-     pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(top_cut_h)} x ${disp(cut_w)} (Top Glass) || ${pt_gspec}`] || 0) + cols;
+   if (cols > 0) {
+     for (let r = rows - 1; r >= 0; r--) {
+       const rName = getRowShortEnglishName(r, rows);
+       const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
+       const rH = rowHeights[r];
 
-     out += "\n" + ("--- GLASS SHOP BILLING SLAB SAFE-GUARD ---\n");
-     out += `• Middle Glass Slab: ${mid_guard.slab}" x ${w_guard.slab}" | Top Header Glass Slab: ${top_guard.slab}" x ${w_guard.slab}"\n`;
-   } else {
-     const raw_part_h = (total_open_h / rows) - 0.25;
-     const part_guard = safeGlassSlabCap(raw_part_h);
-     const part_g_qty = cols * rows;
-     if (part_g_qty > 0) {
-       out += `> Partition Grid Glass (${pt_gspec}): ${disp(part_guard.cut)} x ${disp(cut_w)} (${part_g_qty} pc)\n`;
-     }
-     pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] || 0) + 1;
-     pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Transom Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Transom Glass) || ${pt_gspec}`] || 0) + 1;
-     if (part_g_qty > 0) {
-       pt_glass_dict[`${disp(part_guard.cut)} x ${disp(cut_w)} (Partition Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(part_guard.cut)} x ${disp(cut_w)} (Partition Glass) || ${pt_gspec}`] || 0) + part_g_qty;
+       if (rMat === 'ACP') {
+         const acp_cut_h = Math.max(2.0, rH - 0.25);
+         const shortTag = (r === 0) ? 'Bot ACP' : (r === rows - 1 ? 'Top ACP' : ('Row' + (r + 1) + ' ACP'));
+         out += `> [${rName} - ACP Board]: ${disp(acp_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+         totalAcpPcs += cols;
+         totalAcpAreaSqFt += (acp_cut_h * cut_w * cols) / 144.0;
+         pt_acp_list.push({
+           rowTag: shortTag,
+           cutStr: `${disp(acp_cut_h)} x ${disp(cut_w)}`,
+           h_in: acp_cut_h,
+           w_in: cut_w,
+           qty: cols,
+           buyLabel: '',
+           areaSqFt: (acp_cut_h * cut_w * cols) / 144.0
+         });
+       } else {
+         const g_guard = safeGlassSlabCap(Math.max(2.0, rH - 0.25));
+         const g_cut_h = g_guard.cut;
+         out += `> [${rName} - Glass (${pt_gspec})]: ${disp(g_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
+         totalGlassPcs += cols;
+         totalGlassAreaSqFt += (g_cut_h * cut_w * cols) / 144.0;
+         const gKey = `${disp(g_cut_h)} x ${disp(cut_w)} (${rName}) || ${pt_gspec}`;
+         pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + cols;
+       }
      }
    }
 
-   out += "\n" + ("--- HARDWARE & FITTINGS ---\n");
+   const packedSheets = packPanelsOn4x8Sheets(pt_acp_list);
+   let sheetsSummaryTxt = "0 Sheets";
+   if (packedSheets.length > 0) {
+     const lastSh = packedSheets[packedSheets.length - 1];
+     if (packedSheets.length === 1 && lastSh.isHalfSheetOnly) {
+       sheetsSummaryTxt = "0.5 Sheet (4'x4' Half Board)";
+     } else if (packedSheets.length > 1 && lastSh.isHalfSheetOnly) {
+       sheetsSummaryTxt = (packedSheets.length - 1) + ".5 Sheets (" + (packedSheets.length - 1) + " Full + 1 Half 4'x4' Board)";
+     } else {
+       sheetsSummaryTxt = packedSheets.length + (packedSheets.length === 1 ? " Full Sheet (4'x8')" : " Full Sheets (4'x8')");
+     }
+     pt_acp_list.forEach(function(item) { item.buyLabel = sheetsSummaryTxt; });
+   }
+
+   out += `• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF\n`;
+   if (totalAcpPcs > 0) {
+     out += `• TOTAL ACP BOARD TO BUY: ${sheetsSummaryTxt} (${totalAcpPcs} Cut Pcs | ${totalAcpAreaSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE & 5. DRAWING PDF\n`;
+   }
+
+   out += "\n--- HARDWARE & FITTINGS ---\n";
    out += "> Door Lock: 1 Set\n> Floor Spring / Pivot: 1 Set\n> Door Handle: 1 Set\n";
  }
-
  const prevOut = document.getElementById('pt_out').textContent;
  document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
  document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
@@ -5659,6 +5892,9 @@ function autofillCustomer() {
 // =========================================================================
 
  function openScreen(screenName, title) {
+  if (screenName === 'partition') {
+    setTimeout(function() { try { renderPartitionRowBuilder(); } catch(e){} }, 20);
+  }
  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
  const target = document.getElementById(`screen-${screenName}`);
  if (target) target.classList.add('active');
