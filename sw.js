@@ -1,11 +1,12 @@
-const CACHE_NAME = 'smart-worker-pro-v65';
+const CACHE_NAME = 'smart-worker-pro-v66';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './style.css?v=65',
-  './app.js?v=65',
+  './style.css?v=66',
+  './app.js?v=66',
   './manifest.json',
-  './logo.png?v=34'
+  './logo.png?v=34',
+  './icon-192.png'
 ];
 
 self.addEventListener('install', function(event) {
