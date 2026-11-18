@@ -206,9 +206,9 @@ function renderCasementSectionDesigner() {
   box.innerHTML = html;
 }
 
-function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
-  svgWidth = svgWidth || 320;
-  svgHeight = svgHeight || 205;
+function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
+  svgWidth = svgWidth || 360;
+  svgHeight = svgHeight || 220;
 
   var aluColor = getModuleAluColor(prefix);
   var aluThick = getModuleAluThick(prefix);
@@ -222,7 +222,10 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
   var globalIsJali = gType.toLowerCase().indexOf('jali') !== -1 || gType.toLowerCase().indexOf('mesh') !== -1;
 
   var uid = prefix + '_' + Math.floor(Math.random() * 10000);
-  var svg = '<svg viewBox="0 0 360 220" width="100%" style="max-height:' + svgHeight + 'px; display:block; margin:0 auto;">';
+  var svgStyle = isFullScreen
+    ? 'width:100%; height:100%; max-height:100%; display:block; margin:0 auto;'
+    : ('max-height:' + svgHeight + 'px; display:block; margin:0 auto;');
+  var svg = '<svg viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet" width="100%" style="' + svgStyle + '">';
   svg += '<defs>';
   svg += '<linearGradient id="aluGrad_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">';
   svg += '<stop offset="0%" stop-color="' + aluPal.c1 + '"/>';
@@ -243,7 +246,16 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
 
   var drawPanelFill = function(x, y, w, h, matType, badgeTxt, clickAttr) {
     var out = '<g ' + (clickAttr || '') + ' style="' + (clickAttr ? 'cursor:pointer;' : '') + '">';
-    if (matType === 'ACP') {
+    if (matType === 'WINDOW') {
+      out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.3"/>';
+      var gx = x + 5, gy = y + 5, gw = Math.max(4, w - 10), gh = Math.max(4, h - 10);
+      out += '<rect x="' + gx + '" y="' + gy + '" width="' + gw + '" height="' + gh + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
+      out += '<polyline points="' + gx + ',' + gy + ' ' + (gx + gw) + ',' + (gy + gh / 2) + ' ' + gx + ',' + (gy + gh) + '" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-dasharray="3,2" stroke-opacity="0.85"/>';
+      out += '<rect x="' + (x + w - 4.5) + '" y="' + (y + h / 2 - 5) + '" width="2.2" height="10" rx="1" fill="#fbbf24" stroke="#78350f" stroke-width="0.5"/>';
+      if (gw >= 22) {
+        out += '<text x="' + (x + w / 2) + '" y="' + (y + h - 7) + '" font-size="6.5" font-weight="bold" fill="#5b21b6" text-anchor="middle">WIN</text>';
+      }
+    } else if (matType === 'ACP') {
       out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
       out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 3.5) + '" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="middle">' + (badgeTxt || 'ACP') + '</text>';
     } else if (matType === 'JALI' || (matType === 'GLASS' && globalIsJali)) {
@@ -273,6 +285,19 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
     var numParts = (prefix === 'dr' && document.getElementById('dr_rows')) ? Math.max(1, Math.min(6, parseInt(document.getElementById('dr_rows').value) || 2)) : 2;
     if (prefix === 'dr' && typeof ensureDrRowConfigsCount === 'function') ensureDrRowConfigsCount(numParts);
 
+    // Resolve PROPORTIONAL heights for each Door part!
+    var raw_dh = safeEval(document.getElementById('dr_h') ? document.getElementById('dr_h').value : '84') || 84;
+    var is_d_mm = document.getElementById('dr_unit') && document.getElementById('dr_unit').value.indexOf('Millimeter') !== -1;
+    var d_h_in = is_d_mm ? (raw_dh / 25.4) : raw_dh;
+    var top_h = parseFloat(document.getElementById('dr_top_h')?.value) || 2.5;
+    var bot_h = parseFloat(document.getElementById('dr_bot_h')?.value) || 4.0;
+    var mid_h = parseFloat(document.getElementById('dr_mid_h')?.value) || 2.5;
+    var total_open_h = Math.max(12, d_h_in - 1.75 - top_h - bot_h - ((numParts - 1) * mid_h));
+    var resolvedH = (typeof resolveRowHeightsGeneric === 'function' && prefix === 'dr')
+      ? resolveRowHeightsGeneric(dr_row_configs, total_open_h, numParts)
+      : Array(numParts).fill(total_open_h / numParts);
+    var sumResH = resolvedH.reduce((a, b) => a + b, 0) || 1;
+
     var dx = palla === 1 ? 115 : 65;
     var dw = palla === 1 ? 130 : 230;
     var dh = 200;
@@ -290,16 +315,19 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
       var innerW = leafW - 16;
       var availH = lh - 16;
       var railGap = 5;
-      var partH = (availH - ((numParts - 1) * railGap)) / numParts;
+      var totalGaps = (numParts - 1) * railGap;
+      var drawAvailH = availH - totalGaps;
+      var curY = ly + 8;
 
       for (var r = 0; r < numParts; r++) {
         var cfgIdx = numParts - 1 - r;
         var matType = (prefix === 'dr' && typeof dr_row_configs !== 'undefined' && dr_row_configs[cfgIdx])
           ? dr_row_configs[cfgIdx].mat
           : (r === numParts - 1 && numParts > 1 ? 'ACP' : 'GLASS');
-        var py = ly + 8 + (r * (partH + railGap));
+        var partH = Math.max(14, (resolvedH[cfgIdx] / sumResH) * drawAvailH);
         var clickH = (prefix === 'dr') ? ('onclick="toggleDrRowMaterial(' + cfgIdx + ')"') : '';
-        svg += drawPanelFill(innerX, py, innerW, partH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickH);
+        svg += drawPanelFill(innerX, curY, innerW, partH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickH);
+        curY += partH + railGap;
       }
 
       var hx = (l === 0 && palla === 2) ? (lx + leafW - 6) : (lx + 3.5);
@@ -359,6 +387,17 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
     var ptRows = (prefix === 'pt' && document.getElementById('pt_rows')) ? Math.max(1, Math.min(8, parseInt(document.getElementById('pt_rows').value) || 3)) : 3;
     if (prefix === 'pt' && typeof ensurePtRowConfigsCount === 'function') ensurePtRowConfigsCount(ptRows);
 
+    var raw_ph = safeEval(document.getElementById('pt_h') ? document.getElementById('pt_h').value : '96') || 96;
+    var is_pmm = document.getElementById('pt_unit') && document.getElementById('pt_unit').value.indexOf('Millimeter') !== -1;
+    var p_h_in = is_pmm ? (raw_ph / 25.4) : raw_ph;
+    var t_face = parseFloat(document.getElementById('pt_tube_face')?.value) || 1.5;
+    var b_face = parseFloat(document.getElementById('pt_bot_face')?.value) || 1.5;
+    var pt_open_h = Math.max(12, p_h_in - b_face - (ptRows * t_face));
+    var ptResH = (prefix === 'pt' && typeof resolvePartitionRowHeights === 'function')
+      ? resolvePartitionRowHeights(pt_open_h, ptRows, 30)
+      : Array(ptRows).fill(pt_open_h / ptRows);
+    var sumPtH = ptResH.reduce((a, b) => a + b, 0) || 1;
+
     var wx = 18, wy = 10, ww = 324, wh = 200;
     svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
     var innerX = wx + 7, innerY = wy + 7, innerW = ww - 14, innerH = wh - 14;
@@ -366,16 +405,21 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
 
     var gapX = 5, gapY = 5;
     var cellW = (innerW - ((ptCols - 1) * gapX)) / ptCols;
-    var cellH = (innerH - ((ptRows - 1) * gapY)) / ptRows;
+    var drawPtAvailH = innerH - ((ptRows - 1) * gapY);
+    var curY = innerY;
+
     for (var r = 0; r < ptRows; r++) {
       var cfgIdx = ptRows - 1 - r;
-      var matType = (prefix === 'pt' && typeof pt_row_configs !== 'undefined' && pt_row_configs[cfgIdx]) ? pt_row_configs[cfgIdx].mat : 'GLASS';
-      var cy = innerY + r * (cellH + gapY);
-      var clickP = (prefix === 'pt') ? ('onclick="togglePtRowMaterial(' + cfgIdx + ')"') : '';
+      var cellH = Math.max(12, (ptResH[cfgIdx] / sumPtH) * drawPtAvailH);
       for (var c = 0; c < ptCols; c++) {
         var cx = innerX + c * (cellW + gapX);
-        svg += drawPanelFill(cx, cy, cellW, cellH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickP);
+        var matType = (prefix === 'pt' && pt_cell_overrides[cfgIdx + '_' + c])
+          ? pt_cell_overrides[cfgIdx + '_' + c]
+          : ((prefix === 'pt' && typeof pt_row_configs !== 'undefined' && pt_row_configs[cfgIdx]) ? pt_row_configs[cfgIdx].mat : 'GLASS');
+        var clickP = (prefix === 'pt') ? ('onclick="togglePtCellMaterial(' + cfgIdx + ',' + c + ')"') : '';
+        svg += drawPanelFill(cx, curY, cellW, cellH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : (matType === 'WINDOW' ? 'WIN' : '')), clickP);
       }
+      curY += cellH + gapY;
     }
   } else {
     var numCols = 2;
@@ -411,12 +455,12 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
 function renderLiveColorGlassPreview(prefix) {
   var box = document.getElementById(prefix + '_color_preview_box');
   if (!box) return;
-  var info = buildWindowDoorSvgPreview(prefix, 360, 205);
+  var info = buildWindowDoorSvgPreview(prefix, 360, 205, false);
 
   var html = '<div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 10px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">';
   html += '<span style="font-size:0.74rem; font-weight:800; color:#0f172a;"><i class="fa-solid fa-palette" style="color:#0284c7;"></i> LIVE COLOR & GLASS PREVIEW</span>';
-  html += '<button type="button" onclick="openCustomerShowroomModal(\'' + prefix + '\')" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-expand"></i> Big Customer View</button>';
+  html += '<button type="button" onclick="openCustomerShowroomModal(\'' + prefix + '\')" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-expand"></i> Full-Screen View</button>';
   html += '</div>';
   html += info.svg;
   html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.71rem; font-weight:700; color:#334155; margin-top:6px; border-top:1px solid #e2e8f0; padding-top:4px;">';
@@ -443,19 +487,19 @@ function openCustomerShowroomModal(prefix) {
   var badges = document.getElementById('csm_specs_badges');
   if (!modal || !holder) return;
 
-  var info = buildWindowDoorSvgPreview(prefix, 680, 380);
+  var info = buildWindowDoorSvgPreview(prefix, 680, 520, true);
   holder.style.transform = 'scale(1)';
   holder.innerHTML = info.svg;
   if (sub) sub.textContent = info.aluColor + '  +  ' + info.gThick + ' ' + info.gType;
   if (badges) {
     badges.innerHTML =
-      '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px;">' +
-      '<div style="font-size:0.68rem; color:#166534; font-weight:700;">ALUMINIUM FRAME</div>' +
-      '<div style="font-size:0.84rem; color:#0f172a; font-weight:800;">' + info.aluColor + ' (' + info.aluThick + ')</div>' +
+      '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:7px 9px;">' +
+      '<div style="font-size:0.65rem; color:#166534; font-weight:700;">ALUMINIUM FRAME</div>' +
+      '<div style="font-size:0.8rem; color:#0f172a; font-weight:800;">' + info.aluColor + ' (' + info.aluThick + ')</div>' +
       '</div>' +
-      '<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:8px;">' +
-      '<div style="font-size:0.68rem; color:#0369a1; font-weight:700;">GLASS / JALI SPECIFICATION</div>' +
-      '<div style="font-size:0.84rem; color:#0f172a; font-weight:800;">' + info.gThick + ' ' + info.gType + '</div>' +
+      '<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:7px 9px;">' +
+      '<div style="font-size:0.65rem; color:#0369a1; font-weight:700;">GLASS / JALI SPECIFICATION</div>' +
+      '<div style="font-size:0.8rem; color:#0f172a; font-weight:800;">' + info.gThick + ' ' + info.gType + '</div>' +
       '</div>';
   }
   modal.style.display = 'flex';
@@ -2224,16 +2268,35 @@ var dr_row_configs = [
   { mat: 'GLASS', h_val: 0 }     // Part 2 (Top - 0 means Auto Remaining)
 ];
 
+var pt_cell_overrides = {}; // e.g. {"1_1": "WINDOW"} for clicking individual partition cells!
+
 function getMatButtonStyle(mat) {
   if (mat === 'ACP') return { bg: '#ea580c', icon: 'fa-layer-group', label: 'ACP Board', boxBg: '#fed7aa', boxFg: '#9a3412', boxBd: '#ea580c', shortLbl: 'ACP' };
-  if (mat === 'JALI') return { bg: '#16a34a', icon: 'fa-Table-cells', label: 'Jali / Mesh', boxBg: '#bbf7d0', boxFg: '#14532d', boxBd: '#16a34a', shortLbl: 'JALI / MESH' };
+  if (mat === 'JALI') return { bg: '#16a34a', icon: 'fa-table-cells', label: 'Jali / Mesh', boxBg: '#bbf7d0', boxFg: '#14532d', boxBd: '#16a34a', shortLbl: 'JALI / MESH' };
+  if (mat === 'WINDOW') return { bg: '#7c3aed', icon: 'fa-window-restore', label: 'Window (Open)', boxBg: '#ede9fe', boxFg: '#5b21b6', boxBd: '#7c3aed', shortLbl: 'WINDOW' };
   return { bg: '#0284c7', icon: 'fa-border-all', label: 'Glass', boxBg: '#bae6fd', boxFg: '#0369a1', boxBd: '#0284c7', shortLbl: 'GLASS' };
 }
 
-function nextPanelMaterial(curr) {
+function nextPanelMaterial(curr, allowWindow) {
   if (curr === 'GLASS') return 'ACP';
   if (curr === 'ACP') return 'JALI';
+  if (curr === 'JALI' && allowWindow) return 'WINDOW';
   return 'GLASS';
+}
+
+function togglePtCellMaterial(rIdx, cIdx) {
+  var key = rIdx + '_' + cIdx;
+  var curr = pt_cell_overrides[key] || (pt_row_configs[rIdx] ? pt_row_configs[rIdx].mat : 'GLASS');
+  var nxt = nextPanelMaterial(curr, true);
+  pt_cell_overrides[key] = nxt;
+  var pm = document.getElementById('pt_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderPartitionWallVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
+  var modal = document.getElementById('customerShowroomModal');
+  if (modal && modal.style.display === 'flex' && csmCurrentPrefix === 'pt') {
+    openCustomerShowroomModal('pt');
+  }
 }
 
 function ensurePtRowConfigsCount(numRows) {
@@ -2249,6 +2312,7 @@ function ensurePtRowConfigsCount(numRows) {
 }
 
 function applyQuickPartitionPattern(mode) {
+  pt_cell_overrides = {};
   var rowsEl = document.getElementById('pt_rows');
   var numRows = rowsEl ? Math.max(1, parseInt(rowsEl.value) || 3) : 3;
   if (mode === 'CUSTOM_ROWS') {
@@ -2300,6 +2364,7 @@ function updatePtRowHeightInput(rIdx, valStr) {
   var pm = document.getElementById('pt_panel_mode');
   if (pm) pm.value = 'CUSTOM_ROWS';
   renderPartitionWallVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
 }
 
 function getRowPositionName(rIdx, totalRows) {
@@ -2400,6 +2465,7 @@ function renderPartitionRowBuilder() {
     html += '<option value="GLASS" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'GLASS' ? 'selected' : '') + '>Glass</option>';
     html += '<option value="ACP" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'ACP' ? 'selected' : '') + '>ACP Board</option>';
     html += '<option value="JALI" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'JALI' ? 'selected' : '') + '>Jali / Mesh</option>';
+    html += '<option value="WINDOW" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'WINDOW' ? 'selected' : '') + '>Window (Open)</option>';
     html += '</select>';
     html += '<div style="display:flex; align-items:center; gap:3px;">';
     html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" oninput="updatePtRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
@@ -2410,6 +2476,7 @@ function renderPartitionRowBuilder() {
 
   container.innerHTML = html;
   renderPartitionWallVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
 }
 
 function renderPartitionWallVisualOnly() {
@@ -2436,25 +2503,27 @@ function renderPartitionWallVisualOnly() {
 
   var html = '<div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">';
   html += '<span>LIVE PARTITION PREVIEW (' + numCols + ' Cols x ' + numRows + ' Rows)</span>';
-  html += '<span style="color:#0284c7;">Tap row: Glass ➔ ACP ➔ Jali / Mesh</span>';
+  html += '<span style="color:#0284c7;">Tap any box: Glass ➔ ACP ➔ Jali ➔ Window</span>';
   html += '</div>';
 
   html += '<div style="display:flex; flex-direction:column; gap:3px; background:#334155; padding:5px; border-radius:6px;">';
   for (var r = numRows - 1; r >= 0; r--) {
-    var cfg = pt_row_configs[r];
-    var st = getMatButtonStyle(cfg.mat);
     var rh = rowHeights[r];
     var cutH = Math.max(1, rh - 0.25);
     var cutW = Math.max(1, inner_w - 0.25);
-    var meshBg = (cfg.mat === 'JALI')
-      ? 'repeating-linear-gradient(45deg, rgba(16,185,129,0.22) 0, rgba(16,185,129,0.22) 2px, #ecfdf5 2px, #ecfdf5 6px), repeating-linear-gradient(-45deg, rgba(6,95,70,0.22) 0, rgba(6,95,70,0.22) 2px, transparent 2px, transparent 6px)'
-      : st.boxBg;
+    var flexWt = Math.max(0.4, rh / total_open_h);
+    var minPx = Math.max(26, Math.round(flexWt * 145));
 
-    html += '<div onclick="togglePtRowMaterial(' + r + ')" style="display:grid; grid-template-columns: repeat(' + numCols + ', 1fr); gap:3px; cursor:pointer;">';
+    html += '<div style="display:grid; grid-template-columns: repeat(' + numCols + ', 1fr); gap:3px;">';
     for (var c = 0; c < numCols; c++) {
-      html += '<div style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; padding:6px 2px; font-size:0.68rem; font-weight:800; text-align:center;">';
+      var cellMat = pt_cell_overrides[r + '_' + c] || (pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS');
+      var st = getMatButtonStyle(cellMat);
+      var meshBg = (cellMat === 'JALI')
+        ? 'repeating-linear-gradient(45deg, rgba(16,185,129,0.22) 0, rgba(16,185,129,0.22) 2px, #ecfdf5 2px, #ecfdf5 6px), repeating-linear-gradient(-45deg, rgba(6,95,70,0.22) 0, rgba(6,95,70,0.22) 2px, transparent 2px, transparent 6px)'
+        : st.boxBg;
+      html += '<div onclick="togglePtCellMaterial(' + r + ',' + c + ')" style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; min-height:' + minPx + 'px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3px 2px; font-size:0.68rem; font-weight:800; text-align:center; cursor:pointer;">';
       html += '<div>' + st.shortLbl + '</div>';
-      html += '<div style="font-size:0.62rem; color:#0f172a;">' + toFractionInch(cutH) + ' x ' + toFractionInch(cutW) + '</div>';
+      html += '<div style="font-size:0.6rem; color:#0f172a;">' + toFractionInch(cutH) + ' x ' + toFractionInch(cutW) + '</div>';
       html += '</div>';
     }
     html += '</div>';
@@ -2541,6 +2610,7 @@ function updateDrRowHeightInput(rIdx, valStr) {
   var pm = document.getElementById('dr_panel_mode');
   if (pm) pm.value = 'CUSTOM_ROWS';
   renderDoorVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('dr');
 }
 
 function setDrRowMaterial(rIdx, matVal) {
@@ -2576,6 +2646,7 @@ function renderDoorRowBuilder() {
     html += '<option value="GLASS" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'GLASS' ? 'selected' : '') + '>Glass</option>';
     html += '<option value="ACP" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'ACP' ? 'selected' : '') + '>ACP Board</option>';
     html += '<option value="JALI" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'JALI' ? 'selected' : '') + '>Jali / Mesh</option>';
+    html += '<option value="WINDOW" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'WINDOW' ? 'selected' : '') + '>Window (Open)</option>';
     html += '</select>';
     html += '<div style="display:flex; align-items:center; gap:3px;">';
     html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" ' + (numRows === 1 ? 'disabled' : '') + ' oninput="updateDrRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
@@ -2585,6 +2656,7 @@ function renderDoorRowBuilder() {
   }
   container.innerHTML = html;
   renderDoorVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('dr');
 }
 
 function renderDoorVisualOnly() {
@@ -2616,7 +2688,7 @@ function renderDoorVisualOnly() {
 
   var html = '<div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">';
   html += '<span>LIVE ' + (palla === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR') + ' DESIGN (' + numRows + (numRows === 1 ? ' Part' : ' Parts') + ')</span>';
-  html += '<span style="color:#0284c7;">Tap panel: Glass ➔ ACP ➔ Jali / Mesh</span>';
+  html += '<span style="color:#0284c7;">Proportional Heights Shown</span>';
   html += '</div>';
 
   html += '<div style="display:grid; grid-template-columns: repeat(' + palla + ', 1fr); gap:6px; max-width:' + (palla === 2 ? '340px' : '210px') + '; margin:0 auto; background:#1e293b; padding:7px; border-radius:8px; border:2px solid #475569;">';
@@ -2626,10 +2698,11 @@ function renderDoorVisualOnly() {
       var cfg = dr_row_configs[r];
       var st = getMatButtonStyle(cfg.mat);
       var cutH = Math.max(2, rowHeights[r] + 0.75);
+      var minPx = Math.max(26, Math.round((rowHeights[r] / total_open_h) * 140));
       var meshBg = (cfg.mat === 'JALI')
         ? 'repeating-linear-gradient(45deg, rgba(16,185,129,0.22) 0, rgba(16,185,129,0.22) 2px, #ecfdf5 2px, #ecfdf5 6px), repeating-linear-gradient(-45deg, rgba(6,95,70,0.22) 0, rgba(6,95,70,0.22) 2px, transparent 2px, transparent 6px)'
         : st.boxBg;
-      html += '<div onclick="toggleDrRowMaterial(' + r + ')" style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; padding:8px 3px; font-size:0.68rem; font-weight:800; text-align:center; cursor:pointer;">';
+      html += '<div onclick="toggleDrRowMaterial(' + r + ')" style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; min-height:' + minPx + 'px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 3px; font-size:0.68rem; font-weight:800; text-align:center; cursor:pointer;">';
       html += '<div>' + st.shortLbl + '</div>';
       html += '<div style="font-size:0.61rem; color:#0f172a;">' + toFractionInch(cutH) + ' x ' + toFractionInch(panel_w) + '</div>';
       html += '</div>';
@@ -5517,13 +5590,33 @@ function clearDoor() {
    let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
    let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
    let totalJaliPcs = 0, totalJaliAreaSqFt = 0;
+   let totalWinPcs = 0;
 
    for (let r = rows - 1; r >= 0; r--) {
      const rName = getRowShortEnglishName(r, rows);
      const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
      const rH = rowHeights[r];
+     let cellWinCount = 0;
+     for (let cc = 0; cc < cols; cc++) {
+       if ((pt_cell_overrides[r + '_' + cc] || rMat) === 'WINDOW') cellWinCount++;
+     }
+     if (cellWinCount > 0 && rMat !== 'WINDOW') {
+       const winG_h = Math.max(4.0, rH - 3.5);
+       const winG_w = Math.max(4.0, inner_h - 3.5);
+       out += `> [${rName} - Openable Window (${cellWinCount} pc)]: Sash ${disp(rH - 0.5)} x ${disp(inner_h - 0.5)} | Window Glass: ${disp(winG_h)} x ${disp(winG_w)} (${cellWinCount} pc)\n`;
+       totalWinPcs += cellWinCount;
+       pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] || 0) + cellWinCount;
+     }
 
-     if (rMat === 'ACP') {
+     if (rMat === 'WINDOW') {
+       const winG_h = Math.max(4.0, rH - 3.5);
+       const winG_w = Math.max(4.0, inner_h - 3.5);
+       out += `> [${rName} - Openable Window (${cols} pc)]: Sash ${disp(rH - 0.5)} x ${disp(inner_h - 0.5)} | Window Glass: ${disp(winG_h)} x ${disp(winG_w)} (${cols} pc)\n`;
+       totalWinPcs += cols;
+       totalGlassPcs += cols;
+       totalGlassAreaSqFt += (winG_h * winG_w * cols) / 144.0;
+       pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] || 0) + cols;
+     } else if (rMat === 'ACP') {
        const acp_cut_h = Math.max(2.0, rH - 0.25);
        const shortTag = (r === 0) ? 'Bot ACP' : (r === rows - 1 ? 'Top ACP' : ('Row' + (r + 1) + ' ACP'));
        out += `> [${rName} - ACP Board]: ${disp(acp_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
@@ -5659,6 +5752,7 @@ function clearDoor() {
    let totalGlassAreaSqFt = ((dg_h * dg_w) + (transom_g_h * transom_g_w)) / 144.0;
    let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
    let totalJaliPcs = 0, totalJaliAreaSqFt = 0;
+   let totalWinPcs = 0;
 
    if (cols > 0) {
      for (let r = rows - 1; r >= 0; r--) {
@@ -11930,7 +12024,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v75') === -1) caches.delete(k);
+                if (k.indexOf('v76') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPartitionRowBuilder(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
