@@ -107,15 +107,39 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
   svg += '<stop offset="55%" stop-color="' + glsPal.g2 + '" stop-opacity="' + glsPal.op + '"/>';
   svg += '<stop offset="100%" stop-color="' + glsPal.g1 + '" stop-opacity="' + glsPal.op + '"/>';
   svg += '</linearGradient>';
+  // Crisp Jali / Mesh Criss-Cross SVG Pattern
+  svg += '<pattern id="jaliMesh_' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse">';
+  svg += '<rect width="7" height="7" fill="#ecfdf5"/>';
+  svg += '<path d="M 0 0 L 7 7 M 7 0 L 0 7" stroke="#065f46" stroke-width="0.9" stroke-opacity="0.75"/>';
+  svg += '<path d="M 3.5 0 L 3.5 7 M 0 3.5 L 7 3.5" stroke="#10b981" stroke-width="0.45" stroke-opacity="0.5"/>';
+  svg += '</pattern>';
   svg += '</defs>';
 
-  // Determine how many panels/leaves to draw
+  var drawPanelFill = function(x, y, w, h, matType) {
+    var out = '';
+    if (matType === 'ACP') {
+      out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 3) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
+    } else if (matType === 'JALI') {
+      out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#jaliMesh_' + uid + ')" stroke="#059669" stroke-width="1.2"/>';
+      out += '<rect x="' + (x + w / 2 - 14) + '" y="' + (y + h / 2 - 5) + '" width="28" height="10" rx="2" fill="#ffffff" fill-opacity="0.85"/>';
+      out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 2.5) + '" font-size="6.5" font-weight="bold" fill="#065f46" text-anchor="middle">JALI</text>';
+    } else {
+      out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      out += '<line x1="' + (x + 5) + '" y1="' + (y + h - 5) + '" x2="' + (x + w - 5) + '" y2="' + (y + 5) + '" stroke="' + glsPal.shine + '" stroke-width="1.8" stroke-opacity="0.6"/>';
+    }
+    return out;
+  };
+
   var isDoor = (prefix === 'dr') || (prefix === 'q' && document.getElementById('q_type') && document.getElementById('q_type').value.indexOf('Door') !== -1 && document.getElementById('q_type').value.indexOf('Partition') === -1);
   var isPart = (prefix === 'pt') || (prefix === 'q' && document.getElementById('q_type') && document.getElementById('q_type').value.indexOf('Partition') !== -1);
+  var isCasement = (prefix === 'cc');
 
   if (isDoor) {
     var palla = (document.getElementById('dr_palla') && document.getElementById('dr_palla').value === '1') ? 1 : 2;
-    var hasMid = (!document.getElementById('dr_has_mid') || document.getElementById('dr_has_mid').value === 'yes');
+    var numParts = (prefix === 'dr' && document.getElementById('dr_rows')) ? Math.max(1, Math.min(6, parseInt(document.getElementById('dr_rows').value) || 2)) : 2;
+    if (prefix === 'dr' && typeof ensureDrRowConfigsCount === 'function') ensureDrRowConfigsCount(numParts);
+
     var dx = palla === 1 ? 105 : 65;
     var dw = palla === 1 ? 110 : 190;
     var dh = 144;
@@ -128,26 +152,99 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
       var lx = dx + 7 + (l * leafW);
       var ly = dy + 7;
       var lh = dh - 14;
-      // Sash Stile & Rails
       svg += '<rect x="' + lx + '" y="' + ly + '" width="' + leafW + '" height="' + lh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.5"/>';
-      if (hasMid) {
-        // Top Glass + Bottom ACP
-        var topGh = Math.round(lh * 0.56);
-        var botAh = lh - topGh - 22;
-        svg += '<rect x="' + (lx + 8) + '" y="' + (ly + 8) + '" width="' + (leafW - 16) + '" height="' + topGh + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-        svg += '<line x1="' + (lx + 14) + '" y1="' + (ly + 14 + topGh * 0.6) + '" x2="' + (lx + leafW - 18) + '" y2="' + (ly + 14) + '" stroke="' + glsPal.shine + '" stroke-width="2" stroke-opacity="0.65"/>';
-        // Bottom ACP Panel
-        svg += '<rect x="' + (lx + 8) + '" y="' + (ly + topGh + 14) + '" width="' + (leafW - 16) + '" height="' + botAh + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-        svg += '<text x="' + (lx + leafW / 2) + '" y="' + (ly + topGh + 14 + botAh / 2 + 3) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
-      } else {
-        svg += '<rect x="' + (lx + 8) + '" y="' + (ly + 8) + '" width="' + (leafW - 16) + '" height="' + (lh - 18) + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+
+      var innerX = lx + 7;
+      var innerW = leafW - 14;
+      var availH = lh - 14;
+      var railGap = 4;
+      var partH = (availH - ((numParts - 1) * railGap)) / numParts;
+
+      for (var r = 0; r < numParts; r++) {
+        // r=0 is top in SVG drawing, which corresponds to dr_row_configs[numParts - 1 - r]
+        var cfgIdx = numParts - 1 - r;
+        var matType = (prefix === 'dr' && typeof dr_row_configs !== 'undefined' && dr_row_configs[cfgIdx])
+          ? dr_row_configs[cfgIdx].mat
+          : (r === numParts - 1 && numParts > 1 ? 'ACP' : 'GLASS');
+        var py = ly + 7 + (r * (partH + railGap));
+        svg += drawPanelFill(innerX, py, innerW, partH, matType);
       }
+
       // Door Handle
-      var hx = (l === 0 && palla === 2) ? (lx + leafW - 6) : (lx + 5);
-      svg += '<rect x="' + hx + '" y="' + (ly + lh * 0.48) + '" width="3" height="16" rx="1.5" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
+      var hx = (l === 0 && palla === 2) ? (lx + leafW - 5.5) : (lx + 3.5);
+      svg += '<rect x="' + hx + '" y="' + (ly + lh * 0.48) + '" width="2.8" height="16" rx="1.4" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
+    }
+  } else if (isCasement) {
+    var topCols = Math.max(1, Math.min(8, parseInt(document.getElementById('cc_top_cols')?.value) || 1));
+    var topOpen = Math.max(0, Math.min(topCols, parseInt(document.getElementById('cc_top_open')?.value) || 0));
+    var botCols = Math.max(0, Math.min(8, parseInt(document.getElementById('cc_bot_cols')?.value) || 0));
+    var botOpen = Math.max(0, Math.min(botCols, parseInt(document.getElementById('cc_bot_open')?.value) || 0));
+
+    var wx = 20, wy = 10, ww = 280, wh = 140;
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
+
+    var innerX = wx + 7, innerY = wy + 7, innerW = ww - 14, innerH = wh - 14;
+    svg += '<rect x="' + innerX + '" y="' + innerY + '" width="' + innerW + '" height="' + innerH + '" fill="#0f172a"/>';
+
+    var hasBottom = (botCols > 0);
+    var transomH = hasBottom ? 5 : 0;
+    var topH = hasBottom ? Math.round((innerH - transomH) * 0.62) : innerH;
+    var botH = hasBottom ? (innerH - transomH - topH) : 0;
+
+    var drawCasementRow = function(rowY, rowH, colsCount, openCount) {
+      var gap = 4;
+      var secW = (innerW - ((colsCount - 1) * gap)) / colsCount;
+      for (var c = 0; c < colsCount; c++) {
+        var sx = innerX + c * (secW + gap);
+        if (c > 0) {
+          // Vertical Mullion
+          svg += '<rect x="' + (sx - gap) + '" y="' + rowY + '" width="' + gap + '" height="' + rowH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.6"/>';
+        }
+        var isOpenable = (c < openCount);
+        if (isOpenable) {
+          // Draw Sash Frame inside Section
+          svg += '<rect x="' + (sx + 1) + '" y="' + (rowY + 1) + '" width="' + (secW - 2) + '" height="' + (rowH - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+          var gx = sx + 5, gy = rowY + 5, gw = Math.max(4, secW - 10), gh = Math.max(4, rowH - 10);
+          svg += drawPanelFill(gx, gy, gw, gh, 'GLASS');
+          // Casement Hinge Opening Lines (dashed triangle pointing to handle)
+          svg += '<polyline points="' + gx + ',' + gy + ' ' + (gx + gw) + ',' + (gy + gh / 2) + ' ' + gx + ',' + (gy + gh) + '" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="3,2" stroke-opacity="0.8"/>';
+          svg += '<rect x="' + (sx + secW - 4.5) + '" y="' + (rowY + rowH / 2 - 5) + '" width="2.2" height="10" rx="1" fill="#fbbf24" stroke="#78350f" stroke-width="0.5"/>';
+        } else {
+          // Fixed Glass Pane
+          svg += drawPanelFill(sx + 1, rowY + 1, secW - 2, rowH - 2, 'GLASS');
+        }
+      }
+    };
+
+    drawCasementRow(innerY, topH, topCols, topOpen);
+    if (hasBottom) {
+      svg += '<rect x="' + innerX + '" y="' + (innerY + topH) + '" width="' + innerW + '" height="' + transomH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
+      drawCasementRow(innerY + topH + transomH, botH, botCols, botOpen);
+    }
+  } else if (isPart) {
+    var ptCols = (prefix === 'pt' && document.getElementById('pt_cols')) ? Math.max(1, Math.min(10, parseInt(document.getElementById('pt_cols').value) || 3)) : 3;
+    var ptRows = (prefix === 'pt' && document.getElementById('pt_rows')) ? Math.max(1, Math.min(8, parseInt(document.getElementById('pt_rows').value) || 3)) : 3;
+    if (prefix === 'pt' && typeof ensurePtRowConfigsCount === 'function') ensurePtRowConfigsCount(ptRows);
+
+    var wx = 20, wy = 10, ww = 280, wh = 140;
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
+    var innerX = wx + 6, innerY = wy + 6, innerW = ww - 12, innerH = wh - 12;
+    svg += '<rect x="' + innerX + '" y="' + innerY + '" width="' + innerW + '" height="' + innerH + '" fill="url(#aluGrad_' + uid + ')"/>';
+
+    var gapX = 4, gapY = 4;
+    var cellW = (innerW - ((ptCols - 1) * gapX)) / ptCols;
+    var cellH = (innerH - ((ptRows - 1) * gapY)) / ptRows;
+    for (var r = 0; r < ptRows; r++) {
+      var cfgIdx = ptRows - 1 - r;
+      var matType = (prefix === 'pt' && typeof pt_row_configs !== 'undefined' && pt_row_configs[cfgIdx]) ? pt_row_configs[cfgIdx].mat : 'GLASS';
+      var cy = innerY + r * (cellH + gapY);
+      for (var c = 0; c < ptCols; c++) {
+        var cx = innerX + c * (cellW + gapX);
+        svg += drawPanelFill(cx, cy, cellW, cellH, matType);
+      }
     }
   } else {
-    // Window or Partition Preview (2, 3, or 4 tracks/columns)
+    // Domal / Sliding Window Preview (2, 3, or 4 tracks)
     var numCols = 2;
     if (prefix === 'dm' && document.getElementById('dm_type')) {
       var dt = document.getElementById('dm_type').value;
@@ -155,43 +252,26 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
     } else if (prefix === 'sl' && document.getElementById('sl_type')) {
       var st = document.getElementById('sl_type').value;
       numCols = st.indexOf('4-Track') !== -1 || st.indexOf('Center') !== -1 ? 4 : (st.indexOf('3-Track') !== -1 ? 3 : 2);
-    } else if (prefix === 'cc' && document.getElementById('cc_top_cols')) {
-      numCols = Math.max(1, Math.min(4, parseInt(document.getElementById('cc_top_cols').value) || 2));
-    } else if (isPart) {
-      numCols = 3;
     }
 
     var wx = 24, wy = 10, ww = 272, wh = 140;
-    // Outer Frame with mitre lines
     svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
     svg += '<rect x="' + (wx + 8) + '" y="' + (wy + 8) + '" width="' + (ww - 16) + '" height="' + (wh - 16) + '" fill="#0f172a" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
 
-    var sashAreaW = ww - 18;
-    var sashAreaH = wh - 18;
-    var eachW = sashAreaW / numCols;
-
+    var paneW = (ww - 16) / numCols;
     for (var c = 0; c < numCols; c++) {
-      var sx = wx + 9 + (c * eachW);
-      var sy = wy + 9;
-      // Sash Frame
-      svg += '<rect x="' + sx + '" y="' + sy + '" width="' + eachW + '" height="' + sashAreaH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.6"/>';
-      // Glass Pane inside Sash
-      var gx = sx + 7, gy = sy + 7, gw = eachW - 14, gh = sashAreaH - 14;
-      svg += '<rect x="' + gx + '" y="' + gy + '" width="' + gw + '" height="' + gh + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-      // Diagonal Glass Reflection Shine
-      svg += '<line x1="' + (gx + 8) + '" y1="' + (gy + gh - 12) + '" x2="' + (gx + gw - 10) + '" y2="' + (gy + 12) + '" stroke="' + glsPal.shine + '" stroke-width="2.5" stroke-opacity="0.65"/>';
-      svg += '<line x1="' + (gx + 16) + '" y1="' + (gy + gh - 8) + '" x2="' + (gx + gw - 6) + '" y2="' + (gy + 22) + '" stroke="' + glsPal.shine + '" stroke-width="1.2" stroke-opacity="0.5"/>';
+      var px = wx + 8 + (c * paneW);
+      var py = wy + 8;
+      var ph = wh - 16;
+      svg += '<rect x="' + (px + 1) + '" y="' + (py + 1) + '" width="' + (paneW - 2) + '" height="' + (ph - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      svg += drawPanelFill(px + 6, py + 6, paneW - 12, ph - 12, 'GLASS');
+      svg += '<rect x="' + (px + paneW - 9) + '" y="' + (py + ph * 0.42) + '" width="2.5" height="18" rx="1.2" fill="#e2e8f0" stroke="#334155" stroke-width="0.5"/>';
+      svg += '<text x="' + (px + paneW / 2) + '" y="' + (py + ph / 2 + 4) + '" font-size="11" font-weight="bold" fill="#ffffff" fill-opacity="0.7" text-anchor="middle">' + (c % 2 === 0 ? '⇄' : '⇄') + '</text>';
     }
   }
 
   svg += '</svg>';
-  return {
-    svg: svg,
-    aluColor: aluColor,
-    aluThick: aluThick,
-    gType: gType,
-    gThick: gThick
-  };
+  return { svg: svg, aluColor: aluColor, aluThick: aluThick, gType: gType, gThick: gThick };
 }
 
 function renderLiveColorGlassPreview(prefix) {
@@ -2213,7 +2293,7 @@ function renderPartitionWallVisualOnly() {
     var cutH = Math.max(1, rh - 0.25);
     var cutW = Math.max(1, inner_w - 0.25);
     var meshBg = (cfg.mat === 'JALI')
-      ? 'repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 4px, #86efac 4px, #86efac 8px)'
+      ? 'repeating-linear-gradient(45deg, rgba(16,185,129,0.22) 0, rgba(16,185,129,0.22) 2px, #ecfdf5 2px, #ecfdf5 6px), repeating-linear-gradient(-45deg, rgba(6,95,70,0.22) 0, rgba(6,95,70,0.22) 2px, transparent 2px, transparent 6px)'
       : st.boxBg;
 
     html += '<div onclick="togglePtRowMaterial(' + r + ')" style="display:grid; grid-template-columns: repeat(' + numCols + ', 1fr); gap:3px; cursor:pointer;">';
@@ -2382,7 +2462,7 @@ function renderDoorVisualOnly() {
       var st = getMatButtonStyle(cfg.mat);
       var cutH = Math.max(2, rowHeights[r] + 0.75);
       var meshBg = (cfg.mat === 'JALI')
-        ? 'repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 4px, #86efac 4px, #86efac 8px)'
+        ? 'repeating-linear-gradient(45deg, rgba(16,185,129,0.22) 0, rgba(16,185,129,0.22) 2px, #ecfdf5 2px, #ecfdf5 6px), repeating-linear-gradient(-45deg, rgba(6,95,70,0.22) 0, rgba(6,95,70,0.22) 2px, transparent 2px, transparent 6px)'
         : st.boxBg;
       html += '<div onclick="toggleDrRowMaterial(' + r + ')" style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; padding:8px 3px; font-size:0.68rem; font-weight:800; text-align:center; cursor:pointer;">';
       html += '<div>' + st.shortLbl + '</div>';
@@ -6009,12 +6089,15 @@ function clearCustomSeries() {
 
  // 2. DEDICATED GLASS CUTTING PDF (Horizontal, Only Glass Measurements & Qty, Zero Side Clutter)
  function exportGlassPdf(filename, title, glassDict, outId) {
-    const doc = initPdfDoc('l');
-    const u = document.getElementById(outId)?.getAttribute('data-unit') || 'inch';
-    let lastY = drawPdfHeader(doc, `${title} - GLASS CUTTING JOB CARD`, 'l');
+    if (!isAppActivated()) {
+        alert("PRO activation is required to generate PDF documents.");
+        openScreen('activation', 'PRO UPGRADE & PLANS');
+        return;
+    }
 
+    const u = document.getElementById(outId)?.getAttribute('data-unit') || 'inch';
     let body = [], sl = 1, totG = 0;
-    for (let [k, q] of Object.entries(glassDict)) {
+    for (let [k, q] of Object.entries(glassDict || {})) {
         if (k.toUpperCase().includes('ACP BOARD')) continue;
         let sizePart = k;
         let specPart = '5 mm Clear Glass';
@@ -6028,27 +6111,44 @@ function clearCustomSeries() {
     }
 
     if (body.length === 0) {
-        alert("No Glass panels found! (All panels in this job are set to ACP Board. Check 3. ALU PURCHASE PDF for ACP Board purchase & cutting list.)");
+        alert("No Glass panels found! Please calculate first (or if all panels are ACP Board / Jali, check 3. ALU PURCHASE PDF).");
         return;
     }
+
+    var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+    if (!jsPDF) {
+        alert("PDF library is loading, please try again in a moment.");
+        return;
+    }
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    drawDocHeaderWithLogo(doc, `${String(title || 'GLASS').toUpperCase()} - GLASS CUTTING JOB CARD`, "", [2, 132, 199]);
+
+    const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+    doc.setFillColor(224, 242, 254);
+    doc.rect(14, 32, 269, 6.5, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(3, 105, 161);
+    doc.text("DATE: " + today + "   |   TOTAL GLASS PANELS: " + totG + " PCS", 18, 36.5);
 
     const orderQrPayload = buildGlassOrderQrPayload(title, glassDict);
     window.lastGeneratedGlassOrderCode = orderQrPayload;
 
     doc.autoTable({
-        startY: lastY + 8,
+        startY: 41,
         head: [['SL', `GLASS CUTTING SIZE (H x W) [${u.toUpperCase()}]`, 'GLASS TYPE & THICKNESS', 'TOTAL QTY', 'GLASS SHOP CHECKLIST']],
         body: body,
         foot: [['', 'TOTAL GLASS PANELS REQUIRED', '', `${totG} Pcs`, '']],
         theme: 'grid',
-        headStyles: { fillColor: [2, 132, 199], textColor: 255, fontStyle: 'bold', fontSize: 11, halign: 'center' },
-        footStyles: { fillColor: [224, 242, 254], textColor: [3, 105, 161], fontStyle: 'bold', fontSize: 12, halign: 'center' },
-        bodyStyles: { fontStyle: 'bold', fontSize: 12, textColor: [15, 23, 42] },
+        headStyles: { fillColor: [2, 132, 199], textColor: 255, fontStyle: 'bold', fontSize: 10.5, halign: 'center' },
+        footStyles: { fillColor: [224, 242, 254], textColor: [3, 105, 161], fontStyle: 'bold', fontSize: 11.5, halign: 'center' },
+        bodyStyles: { fontStyle: 'bold', fontSize: 11, textColor: [15, 23, 42] },
         columnStyles: { 0: { halign: 'center', cellWidth: 16 }, 1: { halign: 'center', textColor: [3, 105, 161] }, 2: { halign: 'center', textColor: [15, 118, 110] }, 3: { halign: 'center', cellWidth: 32 }, 4: { halign: 'center', cellWidth: 68 } }
     });
 
-    if (orderQrPayload) {
-        let boxY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 8 : lastY + 50;
+    if (orderQrPayload && typeof generateQrMatrix === 'function') {
+        let boxY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 8 : 90;
         const pageH = doc.internal.pageSize.getHeight();
         const pageW = doc.internal.pageSize.getWidth();
         const boxH = 44;
@@ -6080,25 +6180,25 @@ function clearCustomSeries() {
 
         const textX = qrX + qrSizeMm + 7;
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
+        doc.setFontSize(10.5);
         doc.setTextColor(3, 105, 161);
-        doc.text("SMART GLASS FABRICATOR QR SYNC (1-SCAN AUTO-LOAD TO 4'x8' SHEET CHART)", textX, boxY + 9);
+        doc.text("SMART GLASS FABRICATOR QR SYNC (1-SCAN AUTO-LOAD TO 4x8 SHEET CHART)", textX, boxY + 9);
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9.5);
+        doc.setFontSize(9);
         doc.setTextColor(30, 41, 59);
-        doc.text('1. Glass Shop / Glass Cutter: Open Smart Worker Pro -> "Glass Cutting (4x8 Sheet Chart)".', textX, boxY + 16);
-        doc.text('2. Tap "Scan PDF QR Code" (or paste the Order Code below) to auto-load all glass sizes, quantities & thicknesses', textX, boxY + 22);
-        doc.text('   and immediately generate the 4x8 Minimum-Waste Sheet Cutting Layout Drawing!', textX, boxY + 27.5);
+        doc.text('1. Glass Shop / Glass Cutter: Open Smart Worker Pro -> "Glass Cutting (4x8 Sheet)".', textX, boxY + 16);
+        doc.text('2. Tap "SCAN PDF QR CODE" (or paste the Order Code below) to auto-load all glass sizes, quantities & thicknesses', textX, boxY + 21.5);
+        doc.text('   and immediately generate the 4x8 Minimum-Waste Sheet Cutting Layout Drawing!', textX, boxY + 27);
 
         doc.setFont('courier', 'bold');
-        doc.setFontSize(7.8);
+        doc.setFontSize(7.6);
         doc.setTextColor(15, 118, 110);
         const wrappedCode = doc.splitTextToSize(`ORDER CODE: ${orderQrPayload}`, pageW - textX - 18);
-        doc.text(wrappedCode.slice(0, 2), textX, boxY + 34.5);
+        doc.text(wrappedCode.slice(0, 2), textX, boxY + 34);
     }
 
-    addWatermarkAndSave(doc, `${filename}_${Date.now()}.pdf`);
+    doc.save(`${filename}_${Date.now()}.pdf`);
 }
 // ============================================================================
 // B2B FABRICATOR-TO-GLASS-SHOP SMART QR BRIDGE (SWG|...)
@@ -11663,7 +11763,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v73') === -1) caches.delete(k);
+                if (k.indexOf('v74') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPartitionRowBuilder(); } catch(e){}
             });
         }).catch(() => {});
