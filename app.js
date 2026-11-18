@@ -1,5 +1,829 @@
 
 // =========================================================================
+// 1-CLICK BLUETOOTH & 58MM ROLL THERMAL QR STICKER PRINTER ENGINE (v68)
+// Supports:
+//  1. Direct Web Bluetooth ESC/POS Thermal Printers (58mm / 80mm)
+//  2. Instant 58mm x 45mm Thermal Label Roll Print Dialog / RawBT / Thermal PDF
+// =========================================================================
+var btThermalDevice = null;
+var btThermalChar = null;
+
+function updateThermalPrinterBadge(isConnected, nameStr) {
+  var badge = document.getElementById('thermalPrinterStatusBadge');
+  if (!badge) return;
+  if (isConnected) {
+    badge.style.background = '#dcfce7';
+    badge.style.color = '#166534';
+    badge.style.borderColor = '#86efac';
+    badge.innerHTML = '<i class="fa-brands fa-bluetooth"></i> Connected: ' + (nameStr || 'Thermal Printer');
+  } else {
+    badge.style.background = '#f1f5f9';
+    badge.style.color = '#475569';
+    badge.style.borderColor = '#cbd5e1';
+    badge.innerHTML = '<i class="fa-brands fa-bluetooth-b"></i> Thermal Ready (58mm)';
+  }
+}
+
+async function connectBluetoothThermalPrinter() {
+  if (!navigator.bluetooth) {
+    alert("Direct Bluetooth works in Chrome on Android. Using Instant 58mm Thermal Roll Print mode!");
+    return false;
+  }
+  try {
+    var device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [
+        '000018f0-0000-1000-8000-00805f9b34fb',
+        'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+        '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+        0x18f0,
+        0xff00,
+        0xffe0
+      ]
+    });
+    btThermalDevice = device;
+    var server = await device.gatt.connect();
+    var services = await server.getPrimaryServices();
+    for (var s = 0; s < services.length; s++) {
+      var chars = await services[s].getCharacteristics();
+      for (var c = 0; c < chars.length; c++) {
+        if (chars[c].properties.write || chars[c].properties.writeWithoutResponse) {
+          btThermalChar = chars[c];
+          break;
+        }
+      }
+      if (btThermalChar) break;
+    }
+    if (btThermalChar) {
+      updateThermalPrinterBadge(true, device.name || 'BT Printer');
+      alert("Thermal Printer Connected: " + (device.name || 'Bluetooth Printer') + "! Now tap 1-Click Thermal QR Print anytime.");
+      return true;
+    } else {
+      alert("Printer found, using Instant 58mm Thermal Roll Print mode.");
+      return false;
+    }
+  } catch (err) {
+    return false;
+  }
+}
+
+// Encodes ESC/POS commands for a 58mm Thermal QR Sticker (Native ESC/POS QR + Bold Size/ID Text)
+function buildEscPosQrStickerBytes(item) {
+  var payload = buildQrPayloadForItem(item);
+  var enc = new TextEncoder();
+  var chunks = [];
+  function pushArr(arr) { chunks.push(new Uint8Array(arr)); }
+  function pushStr(str) { chunks.push(enc.encode(str)); }
+
+  // Initialize printer & center align
+  pushArr([0x1B, 0x40]);       // ESC @
+  pushArr([0x1B, 0x61, 0x01]); // ESC a 1 (Center)
+
+  // Bold Header: ID & Material
+  pushArr([0x1B, 0x45, 0x01]); // Bold ON
+  pushArr([0x1D, 0x21, 0x11]); // Double height & width
+  pushStr("#" + item.code + " (" + item.mat.split(' ')[0] + ")\n");
+
+  // Normal size bold for Size
+  pushArr([0x1D, 0x21, 0x01]); // Double height
+  pushStr("SIZE: " + item.sizeStr + "\n");
+
+  pushArr([0x1D, 0x21, 0x00]); // Normal size
+  pushStr(item.spec + " | " + item.sqft + " Sq.Ft\n");
+
+  // ESC/POS Native QR Code: GS ( k
+  var qrBytes = enc.encode(payload);
+  var storeLen = qrBytes.length + 3;
+  var pL = storeLen & 0xFF;
+  var pH = (storeLen >> 8) & 0xFF;
+
+  // 1. Select QR model 2
+  pushArr([0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]);
+  // 2. Set module size (size 6 for crisp 58mm scan)
+  pushArr([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06]);
+  // 3. Set ECC level L (48)
+  pushArr([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]);
+  // 4. Store QR data
+  pushArr([0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30]);
+  chunks.push(qrBytes);
+  // 5. Print QR code
+  pushArr([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
+
+  pushStr("\nFrom: " + item.source + " (" + item.date + ")\n");
+  pushStr("--------------------------------\n\n\n");
+
+  // Merge chunks
+  var totalLen = 0;
+  chunks.forEach(function(c) { totalLen += c.length; });
+  var out = new Uint8Array(totalLen);
+  var offset = 0;
+  chunks.forEach(function(c) {
+    out.set(c, offset);
+    offset += c.length;
+  });
+  return out;
+}
+
+async function sendBytesToBtPrinter(dataBytes) {
+  if (!btThermalChar) return false;
+  try {
+    var chunkSize = 120;
+    for (var i = 0; i < dataBytes.length; i += chunkSize) {
+      var slice = dataBytes.slice(i, i + chunkSize);
+      if (btThermalChar.properties.writeWithoutResponse) {
+        await btThermalChar.writeValueWithoutResponse(slice);
+      } else {
+        await btThermalChar.writeValue(slice);
+      }
+    }
+    return true;
+  } catch (e) {
+    btThermalChar = null;
+    updateThermalPrinterBadge(false);
+    return false;
+  }
+}
+
+// Instant 58mm x 45mm Thermal Roll Print (Works with ALL Bluetooth/USB Thermal Printers via Android Print / RawBT / Browser Print!)
+function print58mmThermalRollDirect(itemsToPrint) {
+  if (!itemsToPrint || itemsToPrint.length === 0) return;
+
+  // Also generate a exact 58mm x 50mm Thermal Label Roll PDF (1 sticker per page) so it opens in any Thermal Printer app or prints directly!
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (jsPDF) {
+    // 58mm wide x 50mm high thermal label roll!
+    var doc = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: [58, 50]
+    });
+
+    itemsToPrint.forEach(function(item, idx) {
+      if (idx > 0) doc.addPage([58, 50], 'p');
+
+      // Top Black Header Bar for Thermal Contrast
+      doc.setFillColor(0, 0, 0);
+      doc.rect(2, 1.5, 54, 5.5, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text("#" + item.code + "  •  " + item.mat.toUpperCase(), 29, 5.3, { align: "center" });
+
+      // Huge Size Text right below header
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10.5);
+      doc.text("SIZE: " + item.sizeStr, 29, 11.2, { align: "center" });
+
+      // High-Contrast Black & White Vector QR Code in Center (26mm x 26mm)
+      var payload = buildQrPayloadForItem(item);
+      var mat = generateQrMatrix(payload);
+      var n = mat.length;
+      var qrSize = 26.0;
+      var cellMm = qrSize / (n + 2);
+      var qx = (58.0 - qrSize) / 2.0;
+      var qy = 12.5;
+
+      doc.setFillColor(0, 0, 0);
+      for (var r = 0; r < n; r++) {
+        for (var c = 0; c < n; c++) {
+          if (mat[r][c]) {
+            doc.rect(qx + (c + 1) * cellMm, qy + (r + 1) * cellMm, cellMm + 0.05, cellMm + 0.05, 'F');
+          }
+        }
+      }
+
+      // Bottom Spec & Area line
+      doc.setFontSize(7.5);
+      doc.text(item.spec + " (" + item.sqft + " Sq.Ft)", 29, 42.5, { align: "center" });
+      doc.setFontSize(6.5);
+      doc.text(item.source + " | " + item.date, 29, 46.5, { align: "center" });
+    });
+
+    var fName = itemsToPrint.length === 1 ? ("Thermal_QR_" + itemsToPrint[0].code + ".pdf") : "Thermal_58mm_QR_Roll.pdf";
+    doc.save(fName);
+  }
+}
+
+// 1-Click Print Single or Multiple Wastage Items to Thermal Printer
+async function oneClickThermalPrintItems(itemsList) {
+  if (!itemsList || itemsList.length === 0) {
+    alert("No offcut QR items to print!");
+    return;
+  }
+
+  // If Bluetooth Thermal Printer is connected, send ESC/POS bytes directly in 1 click!
+  if (btThermalChar) {
+    for (var i = 0; i < itemsList.length; i++) {
+      var bytes = buildEscPosQrStickerBytes(itemsList[i]);
+      var ok = await sendBytesToBtPrinter(bytes);
+      if (!ok) {
+        print58mmThermalRollDirect(itemsList);
+        return;
+      }
+    }
+    alert("Printed " + itemsList.length + " QR Sticker(s) on Bluetooth Thermal Printer!");
+    return;
+  }
+
+  // Otherwise, immediately output the 58mm x 50mm Thermal Label Roll PDF (ready for any 2-inch/58mm Thermal Printer!)
+  print58mmThermalRollDirect(itemsList);
+}
+
+function oneClickThermalPrintSingle(code) {
+  var stock = getWastageQrStock();
+  var found = stock.filter(function(item) { return item.code === code; });
+  oneClickThermalPrintItems(found);
+}
+
+function oneClickThermalPrintStock() {
+  var stock = getWastageQrStock().filter(function(item) { return item.status !== 'USED'; });
+  if (stock.length === 0) {
+    alert("No available offcuts in stock to print!");
+    return;
+  }
+  oneClickThermalPrintItems(stock);
+}
+
+// 1-CLICK INSTANT OFFCUT QR PRINT RIGHT FROM GLASS CUTTING, PARTITION OR DOOR CHART!
+function instantPrintChartOffcutQr(modPrefix) {
+  var sheets = [];
+  var matName = 'ACP Board';
+  var specStr = 'Standard';
+  var srcPrefix = 'Partition';
+
+  if (modPrefix === 'gc') {
+    if (gc_items_list.length === 0) { alert("Please calculate a Glass Sheet first!"); return; }
+    var stockDim = getSelectedGlassStockSheetDims();
+    sheets = packGlassPanelsMinWaste(gc_items_list, stockDim.sL, stockDim.sW);
+    var gt = document.getElementById('gc_g_type') ? document.getElementById('gc_g_type').value : 'Clear';
+    var gth = document.getElementById('gc_g_thick') ? document.getElementById('gc_g_thick').value : '5 mm';
+    matName = (gt === 'ACP Board') ? 'ACP Board' : 'Glass Piece';
+    specStr = gth + ' ' + gt;
+    srcPrefix = 'Glass Sheet';
+  } else {
+    var acpList = (modPrefix === 'dr') ? dr_acp_list : pt_acp_list;
+    sheets = packPanelsOn4x8Sheets(acpList);
+    if (sheets.length === 0) { alert("Please calculate a Partition or Door with ACP Board first!"); return; }
+    matName = 'ACP Board';
+    specStr = getModuleAluLabel(modPrefix);
+    srcPrefix = (modPrefix === 'dr') ? 'Door' : 'Partition';
+  }
+
+  var stock = getWastageQrStock();
+  var today = new Date().toLocaleDateString('en-GB');
+  var newlyCreated = [];
+
+  sheets.forEach(function(sh) {
+    var sW = sh.sheetW || 48.0;
+    if (sh.wasteRight >= 2.0) {
+      var code1 = generateNextWastageCode(stock);
+      var h1 = Number(sh.wasteRight.toFixed(2));
+      var w1 = Number(sW.toFixed(2));
+      var item1 = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        code: code1,
+        mat: matName,
+        spec: specStr,
+        h_in: h1,
+        w_in: w1,
+        sizeStr: toFractionInch(h1) + ' x ' + toFractionInch(w1),
+        sqft: Number(((h1 * w1) / 144.0).toFixed(2)),
+        source: srcPrefix + ' #' + sh.sheetNo,
+        date: today,
+        status: 'AVAILABLE'
+      };
+      stock.unshift(item1);
+      newlyCreated.push(item1);
+    }
+    if (sh.wasteBot >= 2.0 && sh.maxRightX >= 6.0) {
+      var code2 = generateNextWastageCode(stock);
+      var h2 = Number(sh.wasteBot.toFixed(2));
+      var w2 = Number(sh.maxRightX.toFixed(2));
+      var item2 = {
+        id: Date.now() + Math.floor(Math.random() * 1000) + 1,
+        code: code2,
+        mat: matName,
+        spec: specStr,
+        h_in: h2,
+        w_in: w2,
+        sizeStr: toFractionInch(h2) + ' x ' + toFractionInch(w2),
+        sqft: Number(((h2 * w2) / 144.0).toFixed(2)),
+        source: srcPrefix + ' #' + sh.sheetNo,
+        date: today,
+        status: 'AVAILABLE'
+      };
+      stock.unshift(item2);
+      newlyCreated.push(item2);
+    }
+  });
+
+  if (newlyCreated.length === 0) {
+    alert("Zero waste/offcut left on this sheet (100% of sheet used)!");
+    return;
+  }
+
+  saveWastageQrStock(stock);
+  // Immediately print the newly created offcut QR stickers to the Thermal Printer!
+  oneClickThermalPrintItems(newlyCreated);
+}
+
+
+// =========================================================================
+// 7B. DEDICATED GLASS CUTTING & 4'x8' SHEET MINIMUM-WASTE OPTIMIZER (v67)
+// =========================================================================
+var gc_items_list = [];
+var gc_glass_dict = {};
+
+function getSelectedGlassStockSheetDims() {
+  var sel = document.getElementById('gc_sheet_size');
+  var val = sel ? sel.value : '96x48';
+  var parts = val.split('x');
+  var sL = parseFloat(parts[0]) || 96.0;
+  var sW = parseFloat(parts[1]) || 48.0;
+  var label = Math.round(sW / 12) + "'x" + Math.round(sL / 12) + "' (" + sL + '" x ' + sW + '")';
+  return { sL: sL, sW: sW, label: label };
+}
+
+// Minimum-Waste 2D Guillotine Sheet Packer for Glass & ACP Sheets
+// Tests both Normal and Rotated-first strategies to ensure MAXIMUM pieces per sheet and MINIMUM offcut waste!
+function packGlassPanelsMinWaste(itemsList, sheetL, sheetW) {
+  sheetL = Number(sheetL) || 96.0;
+  sheetW = Number(sheetW) || 48.0;
+  var allPieces = [];
+  (itemsList || []).forEach(function(grp) {
+    var h = Math.max(1, Number(grp.h_in) || 0);
+    var w = Math.max(1, Number(grp.w_in) || 0);
+    var q = Math.max(1, parseInt(grp.qty) || 1);
+    var tag = grp.rowTag || 'Glass';
+    for (var i = 0; i < q; i++) {
+      allPieces.push({
+        h: h,
+        w: w,
+        tag: tag,
+        spec: grp.spec || '5 mm Clear',
+        cutStr: grp.cutStr || (toFractionInch(h) + ' x ' + toFractionInch(w)),
+        idx: allPieces.length + 1
+      });
+    }
+  });
+
+  if (allPieces.length === 0) return [];
+
+  // Helper: Run a single pass of Guillotine packing with a given orientation preference ('AUTO_BEST', 'FORCE_NORM', 'FORCE_ROT')
+  function runGuillotinePass(piecesInput, mode) {
+    var remList = piecesInput.slice();
+    remList.sort(function(a, b) { return (b.h * b.w) - (a.h * a.w); });
+    var sheetsOut = [];
+
+    while (remList.length > 0) {
+      var placed = [];
+      var freeRects = [{ x: 0, y: 0, w: sheetL, h: sheetW }];
+      var progress = true;
+
+      while (progress && remList.length > 0) {
+        progress = false;
+        for (var i = 0; i < remList.length; i++) {
+          var pc = remList[i];
+          var bestIdx = -1;
+          var bestRot = false;
+          var bestScore = 9999999;
+
+          for (var f = 0; f < freeRects.length; f++) {
+            var fr = freeRects[f];
+            // Check how many identical pieces of `pc` could tile inside `fr` in Normal vs Rotated
+            var gridNorm = Math.floor((fr.w + 0.01) / pc.h) * Math.floor((fr.h + 0.01) / pc.w);
+            var gridRot  = Math.floor((fr.w + 0.01) / pc.w) * Math.floor((fr.h + 0.01) / pc.h);
+
+            var tries = [
+              { dx: pc.h, dy: pc.w, rot: false, gridFit: gridNorm },
+              { dx: pc.w, dy: pc.h, rot: true,  gridFit: gridRot }
+            ];
+
+            for (var t = 0; t < tries.length; t++) {
+              var tr = tries[t];
+              if (tr.dx <= fr.w + 0.01 && tr.dy <= fr.h + 0.01) {
+                var remX = fr.w - tr.dx;
+                var remY = fr.h - tr.dy;
+                // Avoid awkward 8.5"..20" waste strips when another orientation leaves <= 8" or fits more pieces!
+                var wastePen = 0;
+                if (remX > 8.0 && remX < 18.0) wastePen += 35;
+                if (remY > 8.0 && remY < 18.0) wastePen += 35;
+                if (mode === 'FORCE_NORM' && tr.rot) wastePen += 15;
+                if (mode === 'FORCE_ROT' && !tr.rot) wastePen += 15;
+
+                // Strongly reward the orientation that tiles MORE pieces onto this free rectangle!
+                var fitBonus = Math.min(remList.length, tr.gridFit) * 60;
+                var score = (fr.x * 5) + fr.y + wastePen - fitBonus;
+                if (score < bestScore) {
+                  bestScore = score;
+                  bestIdx = f;
+                  bestRot = tr.rot;
+                }
+              }
+            }
+          }
+
+          if (bestIdx !== -1) {
+            var chosenFr = freeRects.splice(bestIdx, 1)[0];
+            var useDx = bestRot ? pc.w : pc.h;
+            var useDy = bestRot ? pc.h : pc.w;
+
+            placed.push({
+              pieceNum: pc.idx,
+              tag: pc.tag,
+              spec: pc.spec,
+              x: chosenFr.x,
+              y: chosenFr.y,
+              w: useDx,
+              h: useDy,
+              cutStr: pc.cutStr + (bestRot ? ' (Rot)' : ''),
+              dimXStr: toFractionInch(useDx),
+              dimYStr: toFractionInch(useDy)
+            });
+
+            var rightW = chosenFr.w - useDx;
+            var botH = chosenFr.h - useDy;
+            if (botH >= 3.0) {
+              freeRects.push({ x: chosenFr.x, y: chosenFr.y + useDy, w: useDx, h: botH });
+            }
+            if (rightW >= 3.0) {
+              freeRects.push({ x: chosenFr.x + useDx, y: chosenFr.y, w: rightW, h: chosenFr.h });
+            }
+
+            remList.splice(i, 1);
+            progress = true;
+            break;
+          }
+        }
+      }
+
+      if (placed.length === 0 && remList.length > 0) {
+        var huge = remList.shift();
+        var ux = Math.min(sheetL, Math.max(huge.h, huge.w));
+        var uy = Math.min(sheetW, Math.min(huge.h, huge.w));
+        placed.push({
+          pieceNum: huge.idx,
+          tag: huge.tag,
+          spec: huge.spec,
+          x: 0,
+          y: 0,
+          w: ux,
+          h: uy,
+          cutStr: huge.cutStr,
+          dimXStr: toFractionInch(ux),
+          dimYStr: toFractionInch(uy)
+        });
+      }
+
+      var maxRightX = 0, maxBotY = 0, usedArea = 0;
+      placed.forEach(function(pr) {
+        if (pr.x + pr.w > maxRightX) maxRightX = pr.x + pr.w;
+        if (pr.y + pr.h > maxBotY) maxBotY = pr.y + pr.h;
+        usedArea += (pr.w * pr.h);
+      });
+
+      var wasteRight = Math.max(0, sheetL - maxRightX);
+      var wasteBot = Math.max(0, sheetW - maxBotY);
+      var isHalfSheetOnly = (maxRightX <= (sheetL / 2.0));
+
+      sheetsOut.push({
+        sheetNo: sheetsOut.length + 1,
+        sheetL: sheetL,
+        sheetW: sheetW,
+        placed: placed,
+        maxRightX: maxRightX,
+        maxBotY: maxBotY,
+        wasteRight: wasteRight,
+        wasteBot: wasteBot,
+        usedSqFt: usedArea / 144.0,
+        sheetSqFt: (sheetL * sheetW) / 144.0,
+        isHalfSheetOnly: isHalfSheetOnly
+      });
+    }
+    return sheetsOut;
+  }
+
+  // Run all 3 strategies and pick the one that uses the fewest sheets and smallest bounding width!
+  var p1 = runGuillotinePass(allPieces, 'AUTO_BEST');
+  var p2 = runGuillotinePass(allPieces, 'FORCE_NORM');
+  var p3 = runGuillotinePass(allPieces, 'FORCE_ROT');
+
+  var best = p1;
+  [p2, p3].forEach(function(cand) {
+    if (cand.length < best.length) {
+      best = cand;
+    } else if (cand.length === best.length && cand.length > 0) {
+      var lastCand = cand[cand.length - 1];
+      var lastBest = best[best.length - 1];
+      if (lastCand.maxRightX < lastBest.maxRightX) best = cand;
+    }
+  });
+
+  return best;
+}
+
+function addGlassCuttingItem() {
+  var raw_h = safeEval(document.getElementById('gc_h') ? document.getElementById('gc_h').value : '0');
+  var raw_w = safeEval(document.getElementById('gc_w') ? document.getElementById('gc_w').value : '0');
+  if (raw_h <= 0 || raw_w <= 0) {
+    alert("Please enter Glass Height and Width.");
+    return;
+  }
+
+  var is_mm = document.getElementById('gc_unit') && document.getElementById('gc_unit').value.indexOf('Millimeter') !== -1;
+  var h_in = is_mm ? (raw_h / 25.4) : raw_h;
+  var w_in = is_mm ? (raw_w / 25.4) : raw_w;
+  var qty = Math.max(1, parseInt(safeEval(document.getElementById('gc_qty') ? document.getElementById('gc_qty').value : '1')) || 1);
+  var tag = document.getElementById('gc_tag') ? document.getElementById('gc_tag').value.trim() : '';
+  var gType = document.getElementById('gc_g_type') ? document.getElementById('gc_g_type').value : 'Clear';
+  var gThick = document.getElementById('gc_g_thick') ? document.getElementById('gc_g_thick').value : '5 mm';
+  var gSpec = gThick + ' ' + gType;
+
+  var disp = function(v) { return is_mm ? toMmStr(v) : toFractionInch(v); };
+  var rowTag = tag || ('G' + (gc_items_list.length + 1));
+
+  gc_items_list.push({
+    rowTag: rowTag,
+    h_in: h_in,
+    w_in: w_in,
+    qty: qty,
+    spec: gSpec,
+    is_mm: is_mm,
+    cutStr: disp(h_in) + ' x ' + disp(w_in)
+  });
+
+  if (document.getElementById('gc_h')) document.getElementById('gc_h').value = '';
+  if (document.getElementById('gc_w')) document.getElementById('gc_w').value = '';
+  if (document.getElementById('gc_qty')) document.getElementById('gc_qty').value = '1';
+  if (document.getElementById('gc_tag')) document.getElementById('gc_tag').value = '';
+
+  recalculateGlassCuttingSheets();
+}
+
+function removeLastGlassCuttingItem() {
+  if (gc_items_list.length === 0) return;
+  gc_items_list.pop();
+  recalculateGlassCuttingSheets();
+}
+
+function clearGlassCutting() {
+  gc_items_list = [];
+  gc_glass_dict = {};
+  if (document.getElementById('gc_h')) document.getElementById('gc_h').value = '';
+  if (document.getElementById('gc_w')) document.getElementById('gc_w').value = '';
+  if (document.getElementById('gc_out')) document.getElementById('gc_out').textContent = '';
+  var box = document.getElementById('gc_sheet_layout_box');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+
+function recalculateGlassCuttingSheets() {
+  gc_glass_dict = {};
+  var box = document.getElementById('gc_sheet_layout_box');
+  var outEl = document.getElementById('gc_out');
+  if (gc_items_list.length === 0) {
+    if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+    if (outEl) outEl.textContent = '';
+    return;
+  }
+
+  var stockDim = getSelectedGlassStockSheetDims();
+  var sheets = packGlassPanelsMinWaste(gc_items_list, stockDim.sL, stockDim.sW);
+
+  // Build text summary and gc_glass_dict
+  var totalPcs = 0, totalCutSqFt = 0, totalBillingSlabSqFt = 0;
+  var out = "===================================\n";
+  out += "4'x8' GLASS SHEET CUTTING SUMMARY\n";
+  out += "Stock Sheet: " + stockDim.label + "\n";
+  out += "===================================\n";
+
+  gc_items_list.forEach(function(itm, idx) {
+    var areaSqFt = (itm.h_in * itm.w_in * itm.qty) / 144.0;
+    var hSlab = safeGlassSlabCap(itm.h_in).slab;
+    var wSlab = safeGlassSlabCap(itm.w_in).slab;
+    var slabSqFt = (hSlab * wSlab * itm.qty) / 144.0;
+
+    totalPcs += itm.qty;
+    totalCutSqFt += areaSqFt;
+    totalBillingSlabSqFt += slabSqFt;
+
+    out += (idx + 1) + ". [" + itm.rowTag + "] Cut Size: " + itm.cutStr + " (" + itm.qty + " Pcs) | " + itm.spec + "\n";
+    out += "   Net Area: " + areaSqFt.toFixed(2) + " Sq.Ft | Billing Slab (" + hSlab + '\"x' + wSlab + '\"): ' + slabSqFt.toFixed(2) + " Sq.Ft\n";
+
+    var gKey = itm.cutStr + " (" + itm.rowTag + ") || " + itm.spec;
+    gc_glass_dict[gKey] = (gc_glass_dict[gKey] || 0) + itm.qty;
+  });
+
+  var lastSh = sheets[sheets.length - 1];
+  var sheetsBuyLabel = sheets.length + (sheets.length === 1 ? " Full Sheet" : " Full Sheets");
+  var totalSheetArea = sheets.length * ((stockDim.sL * stockDim.sW) / 144.0);
+  if (sheets.length === 1 && lastSh.isHalfSheetOnly) {
+    sheetsBuyLabel = "0.5 Sheet (Half Board " + Math.round(stockDim.sW) + '\"x' + Math.round(stockDim.sL / 2) + '\")';
+    totalSheetArea = ((stockDim.sL * stockDim.sW) / 144.0) * 0.5;
+  } else if (sheets.length > 1 && lastSh.isHalfSheetOnly) {
+    sheetsBuyLabel = (sheets.length - 1) + ".5 Sheets (" + (sheets.length - 1) + " Full + 1 Half Sheet)";
+    totalSheetArea = ((sheets.length - 0.5) * ((stockDim.sL * stockDim.sW) / 144.0));
+  }
+  var totalOffcutSqFt = Math.max(0, totalSheetArea - totalCutSqFt);
+
+  out += "-----------------------------------\n";
+  out += "• TOTAL PIECES TO CUT: " + totalPcs + " Pcs\n";
+  out += "• TOTAL SHEETS REQUIRED: " + sheetsBuyLabel + " of " + stockDim.label + "\n";
+  out += "• NET GLASS USED: " + totalCutSqFt.toFixed(2) + " Sq.Ft | REMAINING OFFCUT: " + totalOffcutSqFt.toFixed(2) + " Sq.Ft\n";
+  out += "• SHOP BILLING SLAB AREA: " + totalBillingSlabSqFt.toFixed(2) + " Sq.Ft\n";
+
+  sheets.forEach(function(sh) {
+    out += "\n[SHEET #" + sh.sheetNo + " CUTTING PLAN - " + sh.placed.length + " Pcs]:\n";
+    out += "  > Used Area: " + toFractionInch(sh.maxRightX) + " x " + toFractionInch(sh.maxBotY) + "\n";
+    out += "  > Right Side Offcut (ছাঁট): " + toFractionInch(sh.wasteRight) + " x " + Math.round(sh.sheetW) + '\"\n';
+    out += "  > Bottom Offcut (ছাঁট): " + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX) + "\n";
+  });
+
+  if (outEl) outEl.textContent = out;
+
+  // Render Live SVG Visual Drawing Box for Glass Sheets
+  if (box) {
+    box.style.display = 'block';
+    var html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1.5px solid #e2e8f0; padding-bottom:6px; flex-wrap:wrap; gap:4px;">';
+    html += '<div style="font-size:0.82rem; font-weight:800; color:#0f172a;"><i class="fa-solid fa-compass-drafting" style="color:#0284c7;"></i> GLASS SHEET CUTTING DRAWING (' + sheetsBuyLabel + ')</div>';
+    html += '<span style="font-size:0.7rem; font-weight:800; background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:6px;">' + stockDim.label + '</span>';
+    html += '</div>';
+
+    sheets.forEach(function(sh) {
+      var badgeTxt = sh.isHalfSheetOnly ? 'Fits in Half Sheet (' + Math.round(sh.sheetL / 2) + '"x' + Math.round(sh.sheetW) + '")' : ('Full Sheet (' + Math.round(sh.sheetL) + '"x' + Math.round(sh.sheetW) + '")');
+      html += '<div style="margin-bottom:12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px;">';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; font-weight:800; color:#1e3a8a; margin-bottom:6px;">';
+      html += '<span>SHEET #' + sh.sheetNo + ' CUTTING LAYOUT (' + sh.placed.length + ' Pcs)</span>';
+      html += '<span style="color:#0f766e;">' + badgeTxt + '</span>';
+      html += '</div>';
+
+      var scale = 480.0 / sh.sheetL;
+      var svgW = Math.round(sh.sheetL * scale);
+      var svgH = Math.round(sh.sheetW * scale);
+      html += '<svg viewBox="0 0 ' + (svgW + 20) + ' ' + (svgH + 28) + '" style="width:100%; height:auto; background:#ffffff; border:1px solid #94a3b8; border-radius:6px;">';
+      html += '<rect x="10" y="18" width="' + svgW + '" height="' + svgH + '" fill="#fef3c7" stroke="#0f172a" stroke-width="2"/>';
+      html += '<text x="' + (10 + svgW / 2) + '" y="13" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">Sheet Length: ' + Math.round(sh.sheetL) + '" (' + (sh.sheetL / 12).toFixed(0) + ' Ft)  |  Height: ' + Math.round(sh.sheetW) + '" (' + (sh.sheetW / 12).toFixed(0) + ' Ft)</text>';
+
+      sh.placed.forEach(function(p) {
+        var rx = 10 + (p.x * scale);
+        var ry = 18 + (p.y * scale);
+        var rw = p.w * scale;
+        var rh = p.h * scale;
+        html += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.8"/>';
+        var cx = rx + rw / 2;
+        var cy = ry + rh / 2;
+        html += '<text x="' + cx + '" y="' + (cy - 4) + '" font-size="10.5" font-weight="bold" fill="#0369a1" text-anchor="middle">' + p.tag + ' #' + p.pieceNum + '</text>';
+        html += '<text x="' + cx + '" y="' + (cy + 9) + '" font-size="9.5" font-weight="bold" fill="#0f172a" text-anchor="middle">' + p.dimXStr + ' x ' + p.dimYStr + '</text>';
+      });
+
+      if (sh.isHalfSheetOnly) {
+        var hx = 10 + ((sh.sheetL / 2.0) * scale);
+        html += '<line x1="' + hx + '" y1="18" x2="' + hx + '" y2="' + (18 + svgH) + '" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,4"/>';
+        html += '<text x="' + (hx + 6) + '" y="36" font-size="10" font-weight="bold" fill="#dc2626">Half Sheet Cut Line (' + Math.round(sh.sheetL / 2) + '")</text>';
+      }
+
+      if (sh.wasteRight >= 0.5) {
+        var wx = 10 + (sh.maxRightX * scale) + (sh.wasteRight * scale / 2);
+        var wy = 18 + (sh.maxBotY * scale / 2);
+        var wLabel = sh.wasteRight >= 18.0 ? ('Offcut: ' + toFractionInch(sh.wasteRight) + ' x ' + Math.round(sh.sheetW) + '"') : ('Trim: ' + toFractionInch(sh.wasteRight));
+        html += '<text x="' + wx + '" y="' + wy + '" font-size="10" font-weight="bold" fill="#92400e" text-anchor="middle">' + wLabel + '</text>';
+      }
+
+      if (sh.wasteBot >= 0.5) {
+        var bwx = 10 + (sh.maxRightX * scale / 2);
+        var bwy = 18 + (sh.maxBotY * scale) + (sh.wasteBot * scale / 2) + 4;
+        html += '<text x="' + bwx + '" y="' + bwy + '" font-size="10" font-weight="bold" fill="#92400e" text-anchor="middle">Bottom Offcut: ' + toFractionInch(sh.wasteBot) + ' x ' + toFractionInch(sh.maxRightX) + '</text>';
+      }
+
+      html += '</svg>';
+      html += '<div style="font-size:0.72rem; color:#334155; margin-top:4px; display:flex; justify-content:space-between; flex-wrap:wrap;">';
+      html += '<span><b>Used:</b> ' + sh.usedSqFt.toFixed(1) + ' Sq.Ft / ' + sh.sheetSqFt.toFixed(1) + ' Sq.Ft</span>';
+      html += '<span style="color:#b45309; font-weight:700;">Right Offcut: ' + toFractionInch(sh.wasteRight) + ' x ' + Math.round(sh.sheetW) + '" | Bot Offcut: ' + toFractionInch(sh.wasteBot) + '</span>';
+      html += '</div>';
+      html += '</div>';
+    });
+
+    html += '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">';
+    html += '<button type="button" onclick="instantPrintChartOffcutQr(\'gc\')" style="background:#16a34a; color:#ffffff; border:none; border-radius:8px; padding:10px 6px; font-size:0.76rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">';
+    html += '<i class="fa-solid fa-print"></i> <span>1-CLICK THERMAL QR PRINT</span>';
+    html += '</button>';
+    html += '<button type="button" onclick="saveGlassSheetOffcutsToQrStock()" style="background:#d97706; color:#ffffff; border:none; border-radius:8px; padding:10px 6px; font-size:0.76rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">';
+    html += '<i class="fa-solid fa-qrcode"></i> <span>VIEW QR STOCK</span>';
+    html += '</button>';
+    html += '</div>';
+    box.innerHTML = html;
+  }
+}
+
+function exportGlassSheetDrawingPdf() {
+  if (gc_items_list.length === 0) {
+    alert("Please enter Glass Height & Width and tap + CALCULATE first!");
+    return;
+  }
+  exportSheetLayoutPdf('Glass_Sheet_Cutting_Drawing', '4x8 Glass Sheet Cutting Plan', gc_items_list);
+}
+
+function saveGlassSheetOffcutsToQrStock() {
+  if (gc_items_list.length === 0) {
+    alert("Please calculate a Glass Sheet first!");
+    return;
+  }
+  var stockDim = getSelectedGlassStockSheetDims();
+  var sheets = packGlassPanelsMinWaste(gc_items_list, stockDim.sL, stockDim.sW);
+  var stock = getWastageQrStock();
+  var gType = document.getElementById('gc_g_type') ? document.getElementById('gc_g_type').value : 'Clear';
+  var gThick = document.getElementById('gc_g_thick') ? document.getElementById('gc_g_thick').value : '5 mm';
+  var gSpec = gThick + ' ' + gType;
+  var today = new Date().toLocaleDateString('en-GB');
+  var added = 0;
+
+  sheets.forEach(function(sh) {
+    if (sh.wasteRight >= 4.0) {
+      var code1 = generateNextWastageCode(stock);
+      var h1 = Number(sh.wasteRight.toFixed(2));
+      var w1 = Number(sh.sheetW.toFixed(2));
+      stock.unshift({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        code: code1,
+        mat: gType === 'ACP Board' ? 'ACP Board' : 'Glass Piece',
+        spec: gSpec,
+        h_in: h1,
+        w_in: w1,
+        sizeStr: toFractionInch(h1) + ' x ' + toFractionInch(w1),
+        sqft: Number(((h1 * w1) / 144.0).toFixed(2)),
+        source: 'Glass Sheet #' + sh.sheetNo,
+        date: today,
+        status: 'AVAILABLE'
+      });
+      added++;
+    }
+    if (sh.wasteBot >= 4.0 && sh.maxRightX >= 6.0) {
+      var code2 = generateNextWastageCode(stock);
+      var h2 = Number(sh.wasteBot.toFixed(2));
+      var w2 = Number(sh.maxRightX.toFixed(2));
+      stock.unshift({
+        id: Date.now() + Math.floor(Math.random() * 1000) + 1,
+        code: code2,
+        mat: gType === 'ACP Board' ? 'ACP Board' : 'Glass Piece',
+        spec: gSpec,
+        h_in: h2,
+        w_in: w2,
+        sizeStr: toFractionInch(h2) + ' x ' + toFractionInch(w2),
+        sqft: Number(((h2 * w2) / 144.0).toFixed(2)),
+        source: 'Glass Sheet #' + sh.sheetNo,
+        date: today,
+        status: 'AVAILABLE'
+      });
+      added++;
+    }
+  });
+
+  saveWastageQrStock(stock);
+  openScreen('wastage_qr', 'WASTAGE QR STOCK');
+  renderWastageQrStockList();
+  alert(added + " Glass Offcut Piece(s) saved with QR Codes!");
+}
+
+function sendGlassCuttingToBill() {
+  if (gc_items_list.length === 0) {
+    addGlassCuttingItem();
+    if (gc_items_list.length === 0) return;
+  }
+  gc_items_list.forEach(function(itm) {
+    var h_ft = Number((itm.h_in / 12.0).toFixed(2));
+    var w_ft = Number((itm.w_in / 12.0).toFixed(2));
+    var area = (itm.h_in * itm.w_in * itm.qty) / 144.0;
+    var gParts = itm.spec.split(' ');
+    var gThick = gParts[0] + ' ' + (gParts[1] || 'mm');
+    var gType = gParts.slice(2).join(' ') || 'Clear';
+    var rate = 95;
+    if (gType.indexOf('Toughened') !== -1) rate = 145;
+    else if (gType.indexOf('One Way') !== -1 || gType.indexOf('Tinted') !== -1) rate = 115;
+
+    billItems.push({
+      type: 'Glass Cutting & Supply',
+      location: itm.rowTag,
+      color: 'Glass Order',
+      thickness: gThick,
+      glass_thick: gThick,
+      glass_type: gType,
+      toughened: gType.indexOf('Toughened') !== -1,
+      h: h_ft,
+      w: w_ft,
+      unit: 'ft',
+      qty: itm.qty,
+      rate: rate,
+      area: area,
+      price: area * rate
+    });
+  });
+
+  refreshQueueText();
+  autoCalcAdvance();
+  openScreen('quotation', 'PRO QUOTATION');
+}
+
+
+// =========================================================================
 // SMART WASTAGE / OFFCUT QR CODE GENERATOR, SCANNER & CUT-SIZE MATCHER (v64)
 // =========================================================================
 
@@ -427,7 +1251,7 @@ function renderWastageQrStockList() {
 
     html += '<div style="display:flex; gap:6px; margin-top:6px;">';
     html += '<button type="button" onclick="toggleWastageItemStatus(\'' + item.code + '\')" style="background:' + (isUsed ? '#0284c7' : '#16a34a') + '; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;">' + (isUsed ? 'Mark Available' : '✔ Mark Used') + '</button>';
-    html += '<button type="button" onclick="exportWastageQrStickersPdf(\'' + item.code + '\')" style="background:#b45309; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-print"></i> Print Sticker</button>';
+    html += '<button type="button" onclick="oneClickThermalPrintSingle(\'' + item.code + '\')" style="background:#0f172a; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-print"></i> Thermal QR</button>';
     html += '<button type="button" onclick="deleteWastageItem(\'' + item.code + '\')" style="background:#fee2e2; color:#dc2626; border:none; padding:5px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>';
     html += '</div>';
     html += '</div>';
@@ -1174,9 +1998,14 @@ function renderSheetLayoutBoxUI(containerId, acpList, titleLabel) {
   });
 
   var modPfx = (containerId.indexOf('dr_') === 0) ? 'dr' : 'pt';
-  html += '<button type="button" onclick="saveSheetOffcutsToQrStock(\'' + modPfx + '\')" style="width:100%; background:#d97706; color:#ffffff; border:none; border-radius:8px; padding:9px; font-size:0.78rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:4px;">';
-  html += '<i class="fa-solid fa-qrcode"></i> <span>+ SAVE OFFCUT TO QR STOCK & PRINT QR STICKER</span>';
+  html += '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">';
+  html += '<button type="button" onclick="instantPrintChartOffcutQr(\'' + modPfx + '\')" style="background:#16a34a; color:#ffffff; border:none; border-radius:8px; padding:10px 6px; font-size:0.76rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">';
+  html += '<i class="fa-solid fa-print"></i> <span>1-CLICK THERMAL QR PRINT</span>';
   html += '</button>';
+  html += '<button type="button" onclick="saveSheetOffcutsToQrStock(\'' + modPfx + '\')" style="background:#d97706; color:#ffffff; border:none; border-radius:8px; padding:10px 6px; font-size:0.76rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">';
+  html += '<i class="fa-solid fa-qrcode"></i> <span>VIEW QR STOCK</span>';
+  html += '</button>';
+  html += '</div>';
   box.innerHTML = html;
 }
 
