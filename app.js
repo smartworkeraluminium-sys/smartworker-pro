@@ -1274,156 +1274,219 @@ function sendGlassCuttingToBill() {
 
 // Pure-JS ISO/IEC 18004 QR Code Matrix Generator (Versions 1 to 5, ECC Level L)
 function generateQrMatrix(text) {
-  var str = String(text || 'SW-WASTE');
-  var bytes = [];
-  for (var i = 0; i < str.length; i++) {
-    var c = str.charCodeAt(i);
-    bytes.push(c < 128 ? c : 63);
-  }
-  var VERS = [
-    null,
-    [21, 26, 7],
-    [25, 44, 10],
-    [29, 70, 15],
-    [33, 100, 20],
-    [37, 134, 26]
-  ];
-  var ver = 1;
-  while (ver < 5 && (bytes.length + 3) > (VERS[ver][1] - VERS[ver][2])) ver++;
-  var maxLen = VERS[ver][1] - VERS[ver][2] - 3;
-  if (bytes.length > maxLen) bytes = bytes.slice(0, maxLen);
-
-  var size = VERS[ver][0], totalCw = VERS[ver][1], ecCw = VERS[ver][2];
-  var dataCw = totalCw - ecCw;
-
-  var bits = [];
-  function pushBits(val, len) {
-    for (var b = len - 1; b >= 0; b--) bits.push((val >> b) & 1);
-  }
-  pushBits(4, 4);
-  pushBits(bytes.length, 8);
-  for (var k = 0; k < bytes.length; k++) pushBits(bytes[k], 8);
-  for (var t = 0; t < 4 && bits.length < dataCw * 8; t++) bits.push(0);
-  while (bits.length % 8 !== 0) bits.push(0);
-
-  var data = [];
-  for (var d = 0; d < bits.length; d += 8) {
-    var byteVal = 0;
-    for (var j = 0; j < 8; j++) byteVal = (byteVal << 1) | bits[d + j];
-    data.push(byteVal);
-  }
-  var padToggle = true;
-  while (data.length < dataCw) {
-    data.push(padToggle ? 0xEC : 0x11);
-    padToggle = !padToggle;
-  }
-
-  var exp = new Array(512), log = new Array(256);
-  var x = 1;
-  for (var e = 0; e < 255; e++) {
-    exp[e] = x;
-    log[x] = e;
-    x <<= 1;
-    if (x & 0x100) x ^= 0x11D;
-  }
-  for (var e2 = 255; e2 < 512; e2++) exp[e2] = exp[e2 - 255];
-  function gfMul(a, b) { return (a === 0 || b === 0) ? 0 : exp[log[a] + log[b]]; }
-
-  var poly = [1];
-  for (var p = 0; p < ecCw; p++) {
-    var next = new Array(poly.length + 1).fill(0);
-    for (var q = 0; q < poly.length; q++) {
-      next[q] ^= poly[q];
-      next[q + 1] ^= gfMul(poly[q], exp[p]);
+    const str = String(text || 'SW');
+    const utf8 = [];
+    for (let i = 0; i < str.length; i++) {
+        let c = str.charCodeAt(i);
+        if (c < 0x80) utf8.push(c);
+        else if (c < 0x800) { utf8.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f)); }
+        else { utf8.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f)); }
     }
-    poly = next;
-  }
-  var ec = new Array(ecCw).fill(0);
-  for (var di = 0; di < data.length; di++) {
-    var factor = data[di] ^ ec.shift();
-    ec.push(0);
-    for (var ej = 0; ej < ecCw; ej++) ec[ej] ^= gfMul(poly[ej + 1], factor);
-  }
-  var allCw = data.concat(ec);
+    const V_TAB = [
+        [1,  19,  7, 1, 19, 0,  0, []],
+        [2,  34, 10, 1, 34, 0,  0, [6, 18]],
+        [3,  55, 15, 1, 55, 0,  0, [6, 22]],
+        [4,  80, 20, 1, 80, 0,  0, [6, 26]],
+        [5, 108, 26, 1,108, 0,  0, [6, 30]],
+        [6, 136, 18, 2, 68, 0,  0, [6, 34]],
+        [7, 156, 20, 2, 78, 0,  0, [6, 22, 38]],
+        [8, 194, 24, 2, 97, 0,  0, [6, 24, 42]],
+        [9, 232, 30, 2,116, 0,  0, [6, 26, 46]],
+        [10,274, 18, 2, 68, 2, 69, [6, 28, 50]]
+    ];
+    let vRow = V_TAB[V_TAB.length - 1];
+    for (let i = 0; i < V_TAB.length; i++) {
+        const lenBits = V_TAB[i][0] <= 9 ? 8 : 16;
+        const maxBytes = V_TAB[i][1] - Math.ceil((4 + lenBits) / 8);
+        if (utf8.length <= maxBytes) { vRow = V_TAB[i]; break; }
+    }
+    const ver = vRow[0], totalData = vRow[1], ecPerBlock = vRow[2];
+    const nb1 = vRow[3], db1 = vRow[4], nb2 = vRow[5], db2 = vRow[6], align = vRow[7];
+    const lenBits = ver <= 9 ? 8 : 16;
+    const maxBytes = totalData - Math.ceil((4 + lenBits) / 8);
+    const bytes = utf8.slice(0, maxBytes);
 
-  var mat = [], isFunc = [];
-  for (var r = 0; r < size; r++) {
-    mat.push(new Array(size).fill(0));
-    isFunc.push(new Array(size).fill(false));
-  }
+    const bits = [];
+    const pushBits = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    pushBits(0b0100, 4);
+    pushBits(bytes.length, lenBits);
+    bytes.forEach(b => pushBits(b, 8));
+    const maxDataBits = totalData * 8;
+    pushBits(0, Math.min(4, maxDataBits - bits.length));
+    while (bits.length % 8 !== 0) bits.push(0);
+    const dataWords = [];
+    for (let i = 0; i < bits.length; i += 8) {
+        let b = 0;
+        for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+        dataWords.push(b);
+    }
+    let padToggle = true;
+    while (dataWords.length < totalData) {
+        dataWords.push(padToggle ? 0xEC : 0x11);
+        padToggle = !padToggle;
+    }
 
-  function setFinder(row, col) {
-    for (var dy = -1; dy <= 7; dy++) {
-      for (var dx = -1; dx <= 7; dx++) {
-        var yy = row + dy, xx = col + dx;
-        if (yy >= 0 && yy < size && xx >= 0 && xx < size) {
-          var in7 = (dy >= 0 && dy <= 6 && dx >= 0 && dx <= 6);
-          var onBorder = (dy === 0 || dy === 6 || dx === 0 || dx === 6);
-          var in3 = (dy >= 2 && dy <= 4 && dx >= 2 && dx <= 4);
-          mat[yy][xx] = (in7 && (onBorder || in3)) ? 1 : 0;
-          isFunc[yy][xx] = true;
+    const gfExp = new Uint8Array(512);
+    const gfLog = new Uint8Array(256);
+    let x = 1;
+    for (let i = 0; i < 255; i++) {
+        gfExp[i] = x;
+        gfLog[x] = i;
+        x <<= 1;
+        if (x & 0x100) x ^= 0x11d;
+    }
+    for (let i = 255; i < 512; i++) gfExp[i] = gfExp[i - 255];
+    const gfMul = (a, b) => (a === 0 || b === 0) ? 0 : gfExp[gfLog[a] + gfLog[b]];
+
+    let gen = [1];
+    for (let i = 0; i < ecPerBlock; i++) {
+        const next = new Array(gen.length + 1).fill(0);
+        const factor = gfExp[i];
+        for (let j = 0; j < gen.length; j++) {
+            next[j] ^= gen[j];
+            next[j + 1] ^= gfMul(gen[j], factor);
         }
-      }
+        gen = next;
     }
-  }
-  setFinder(0, 0);
-  setFinder(0, size - 7);
-  setFinder(size - 7, 0);
 
-  for (var ti = 8; ti < size - 8; ti++) {
-    mat[6][ti] = mat[ti][6] = (ti % 2 === 0) ? 1 : 0;
-    isFunc[6][ti] = isFunc[ti][6] = true;
-  }
-  if (ver >= 2) {
-    var ac = size - 7;
-    for (var ady = -2; ady <= 2; ady++) {
-      for (var adx = -2; adx <= 2; adx++) {
-        mat[ac + ady][ac + adx] = (Math.abs(ady) === 2 || Math.abs(adx) === 2 || (ady === 0 && adx === 0)) ? 1 : 0;
-        isFunc[ac + ady][ac + adx] = true;
-      }
-    }
-  }
-  for (var fi = 0; fi < 9; fi++) {
-    if (fi < 8) {
-      isFunc[8][size - 1 - fi] = true;
-      isFunc[size - 1 - fi][8] = true;
-    }
-    isFunc[8][fi] = true;
-    isFunc[fi][8] = true;
-  }
-  mat[size - 8][8] = 1;
-  isFunc[size - 8][8] = true;
-
-  var msgBits = [];
-  for (var ci = 0; ci < allCw.length; ci++) {
-    for (var bi = 7; bi >= 0; bi--) msgBits.push((allCw[ci] >> bi) & 1);
-  }
-  var bitIdx = 0, up = true;
-  for (var right = size - 1; right >= 1; right -= 2) {
-    if (right === 6) right = 5;
-    for (var v = 0; v < size; v++) {
-      var yy2 = up ? (size - 1 - v) : v;
-      for (var jj = 0; jj < 2; jj++) {
-        var xx2 = right - jj;
-        if (!isFunc[yy2][xx2]) {
-          var bitVal = bitIdx < msgBits.length ? msgBits[bitIdx++] : 0;
-          if ((yy2 + xx2) % 2 === 0) bitVal ^= 1;
-          mat[yy2][xx2] = bitVal;
+    const computeEC = (block) => {
+        const ec = new Array(ecPerBlock).fill(0);
+        for (let i = 0; i < block.length; i++) {
+            const factor = block[i] ^ ec[0];
+            ec.shift();
+            ec.push(0);
+            for (let j = 0; j < ecPerBlock; j++) {
+                ec[j] ^= gfMul(gen[j + 1], factor);
+            }
         }
-      }
-    }
-    up = !up;
-  }
+        return ec;
+    };
 
-  var fmt = 0x77C4;
-  for (var f1 = 0; f1 <= 5; f1++) mat[8][f1] = (fmt >> (14 - f1)) & 1;
-  mat[8][7] = (fmt >> 8) & 1;
-  mat[8][8] = (fmt >> 7) & 1;
-  mat[7][8] = (fmt >> 6) & 1;
-  for (var f2 = 9; f2 < 15; f2++) mat[14 - f2][8] = (fmt >> (14 - f2)) & 1;
-  for (var f3 = 0; f3 < 8; f3++) mat[8][size - 1 - f3] = (fmt >> f3) & 1;
-  for (var f4 = 8; f4 < 15; f4++) mat[size - 15 + f4][8] = (fmt >> f4) & 1;
-  return mat;
+    const dataBlocks = [];
+    const ecBlocks = [];
+    let offset = 0;
+    for (let b = 0; b < nb1; b++) {
+        const blk = dataWords.slice(offset, offset + db1);
+        offset += db1;
+        dataBlocks.push(blk);
+        ecBlocks.push(computeEC(blk));
+    }
+    for (let b = 0; b < nb2; b++) {
+        const blk = dataWords.slice(offset, offset + db2);
+        offset += db2;
+        dataBlocks.push(blk);
+        ecBlocks.push(computeEC(blk));
+    }
+
+    const allWords = [];
+    const maxBlkLen = Math.max(db1, db2);
+    for (let i = 0; i < maxBlkLen; i++) {
+        for (let b = 0; b < dataBlocks.length; b++) {
+            if (i < dataBlocks[b].length) allWords.push(dataBlocks[b][i]);
+        }
+    }
+    for (let i = 0; i < ecPerBlock; i++) {
+        for (let b = 0; b < ecBlocks.length; b++) {
+            allWords.push(ecBlocks[b][i]);
+        }
+    }
+
+    const size = 17 + 4 * ver;
+    const matrix = Array.from({ length: size }, () => new Int8Array(size).fill(-1));
+    const isFunc = Array.from({ length: size }, () => new Uint8Array(size).fill(0));
+    const setMod = (r, c, val, func = true) => {
+        if (r >= 0 && r < size && c >= 0 && c < size) {
+            matrix[r][c] = val ? 1 : 0;
+            if (func) isFunc[r][c] = 1;
+        }
+    };
+
+    const drawFinder = (r0, c0) => {
+        for (let dr = -1; dr <= 7; dr++) {
+            for (let dc = -1; dc <= 7; dc++) {
+                const r = r0 + dr, c = c0 + dc;
+                if (r < 0 || r >= size || c < 0 || c >= size) continue;
+                const inOuter = (dr >= 0 && dr <= 6 && (dc === 0 || dc === 6)) || (dc >= 0 && dc <= 6 && (dr === 0 || dr === 6));
+                const inInner = (dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4);
+                setMod(r, c, inOuter || inInner ? 1 : 0, true);
+            }
+        }
+    };
+    drawFinder(0, 0);
+    drawFinder(0, size - 7);
+    drawFinder(size - 7, 0);
+
+    for (let i = 0; i < align.length; i++) {
+        for (let j = 0; j < align.length; j++) {
+            if ((i === 0 && j === 0) || (i === 0 && j === align.length - 1) || (i === align.length - 1 && j === 0)) continue;
+            const r0 = align[i], c0 = align[j];
+            for (let dr = -2; dr <= 2; dr++) {
+                for (let dc = -2; dc <= 2; dc++) {
+                    const dist = Math.max(Math.abs(dr), Math.abs(dc));
+                    setMod(r0 + dr, c0 + dc, dist === 2 || dist === 0 ? 1 : 0, true);
+                }
+            }
+        }
+    }
+
+    for (let i = 8; i < size - 8; i++) {
+        if (!isFunc[6][i]) setMod(6, i, i % 2 === 0 ? 1 : 0, true);
+        if (!isFunc[i][6]) setMod(i, 6, i % 2 === 0 ? 1 : 0, true);
+    }
+    setMod(4 * ver + 9, 8, 1, true);
+
+    if (ver >= 7) {
+        let rem = ver;
+        for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+        const vBits = (ver << 12) | rem;
+        for (let i = 0; i < 18; i++) {
+            const bit = (vBits >>> i) & 1;
+            const a = size - 11 + (i % 3), b = Math.floor(i / 3);
+            setMod(b, a, bit, true);
+            setMod(a, b, bit, true);
+        }
+    }
+
+    for (let i = 0; i < 9; i++) {
+        if (!isFunc[8][i]) setMod(8, i, 0, true);
+        if (!isFunc[i][8]) setMod(i, 8, 0, true);
+    }
+    for (let i = 0; i < 8; i++) {
+        if (!isFunc[8][size - 1 - i]) setMod(8, size - 1 - i, 0, true);
+        if (!isFunc[size - 1 - i][8]) setMod(size - 1 - i, 8, 0, true);
+    }
+
+    const streamBits = [];
+    allWords.forEach(w => { for (let i = 7; i >= 0; i--) streamBits.push((w >>> i) & 1); });
+
+    let bitIdx = 0;
+    let upward = true;
+    for (let right = size - 1; right >= 1; right -= 2) {
+        if (right === 6) right = 5;
+        for (let vert = 0; vert < size; vert++) {
+            const r = upward ? (size - 1 - vert) : vert;
+            for (let j = 0; j < 2; j++) {
+                const c = right - j;
+                if (!isFunc[r][c]) {
+                    const bit = bitIdx < streamBits.length ? streamBits[bitIdx++] : 0;
+                    const masked = ((r + c) % 2 === 0) ? (bit ^ 1) : bit;
+                    matrix[r][c] = masked;
+                }
+            }
+        }
+        upward = !upward;
+    }
+
+    const fmt = 0x77c4;
+    const fmtBits = [];
+    for (let i = 0; i < 15; i++) fmtBits.push((fmt >>> i) & 1);
+    const fCoords1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+    const fCoords2 = [[size-1,8],[size-2,8],[size-3,8],[size-4,8],[size-5,8],[size-6,8],[size-7,8],[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
+    for (let i = 0; i < 15; i++) {
+        matrix[fCoords1[i][0]][fCoords1[i][1]] = fmtBits[i];
+        matrix[fCoords2[i][0]][fCoords2[i][1]] = fmtBits[i];
+    }
+    return matrix.map(row => Array.from(row, v => v === 1 ? 1 : 0));
 }
 
 function renderQrSvgString(payloadText, pxSize) {
@@ -5683,86 +5746,395 @@ function clearCustomSeries() {
 
  // 2. DEDICATED GLASS CUTTING PDF (Horizontal, Only Glass Measurements & Qty, Zero Side Clutter)
  function exportGlassPdf(filename, title, glassDict, outId) {
-  if (!isAppActivated()) {
-    alert("PRO activation is required to generate PDF documents.");
-    openScreen('activation', 'PRO UPGRADE & PLANS');
-    return;
-  }
+    const doc = initPdfDoc('l');
+    const u = document.getElementById(outId)?.getAttribute('data-unit') || 'inch';
+    let lastY = drawPdfHeader(doc, `${title} - GLASS CUTTING JOB CARD`, 'l');
 
-  const keys = Object.keys(glassDict || {});
-  if (keys.length === 0) {
-    alert("No glass sizes calculated yet! Please calculate windows first.");
-    return;
-  }
-
-  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
-  if (!jsPDF) {
-    alert("PDF library is loading, please try again in a moment.");
-    return;
-  }
-
-  const doc = new jsPDF('l', 'mm', 'a4');
-  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-
-  drawDocHeaderWithLogo(doc, "GLASS CUTTING JOB CARD (" + title.toUpperCase() + ")", "", [2, 132, 199]);
-
-  doc.setFillColor(240, 249, 255);
-  doc.rect(14, 32, 269, 6.5, 'F');
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(3, 105, 161);
-  doc.text("DATE: " + today, 18, 36.5);
-
-  let totalPanes = 0;
-  const filteredKeys = keys.filter(function(k) { return !/acp|board/i.test(k); });
-  const glassRows = filteredKeys.map(function(rawKey, idx) {
-    const qty = glassDict[rawKey];
-    totalPanes += qty;
-    const parts = rawKey.split('||');
-    const szOnly = parts[0].trim();
-    const specOnly = parts[1] ? parts[1].trim() : '5 mm Clear';
-    return [
-      idx + 1,
-      szOnly,
-      specOnly,
-      qty + " Pcs"
-    ];
-  });
-
-  glassRows.push([
-    { content: "TOTAL GLASS PIECES", colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 249, 255] } },
-    { content: totalPanes + " Pcs", styles: { fontStyle: 'bold', halign: 'center', fillColor: [186, 230, 253] } }
-  ]);
-
-  doc.autoTable({
-    startY: 41,
-    head: [['#', 'Glass Cutting Size (Height x Width)', 'Glass Type & Thickness', 'Quantity']],
-    body: glassRows,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [2, 132, 199],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 9,
-      halign: 'center'
-    },
-    styles: {
-      fontSize: 9.5,
-      cellPadding: 3,
-      fontStyle: 'bold',
-      halign: 'center',
-      textColor: [15, 23, 42]
-    },
-    columnStyles: {
-      0: { cellWidth: 20, halign: 'center' },
-      1: { cellWidth: 115, halign: 'center' },
-      2: { cellWidth: 90, halign: 'center', textColor: [3, 105, 161] },
-      3: { cellWidth: 44, halign: 'center', textColor: [2, 132, 199] }
+    let body = [], sl = 1, totG = 0;
+    for (let [k, q] of Object.entries(glassDict)) {
+        if (k.toUpperCase().includes('ACP BOARD')) continue;
+        let sizePart = k;
+        let specPart = '5 mm Clear Glass';
+        if (k.includes('||')) {
+            let parts = k.split('||');
+            sizePart = parts[0].trim();
+            specPart = parts[1].trim();
+        }
+        body.push([sl++, sizePart, specPart, `${q} Pcs`, `[   ] Cut   [   ] Edge Polished`]);
+        totG += q;
     }
-  });
 
-  doc.save(filename + ".pdf");
- }
+    if (body.length === 0) {
+        alert("No Glass panels found! (All panels in this job are set to ACP Board. Check 3. ALU PURCHASE PDF for ACP Board purchase & cutting list.)");
+        return;
+    }
+
+    const orderQrPayload = buildGlassOrderQrPayload(title, glassDict);
+    window.lastGeneratedGlassOrderCode = orderQrPayload;
+
+    doc.autoTable({
+        startY: lastY + 8,
+        head: [['SL', `GLASS CUTTING SIZE (H x W) [${u.toUpperCase()}]`, 'GLASS TYPE & THICKNESS', 'TOTAL QTY', 'GLASS SHOP CHECKLIST']],
+        body: body,
+        foot: [['', 'TOTAL GLASS PANELS REQUIRED', '', `${totG} Pcs`, '']],
+        theme: 'grid',
+        headStyles: { fillColor: [2, 132, 199], textColor: 255, fontStyle: 'bold', fontSize: 11, halign: 'center' },
+        footStyles: { fillColor: [224, 242, 254], textColor: [3, 105, 161], fontStyle: 'bold', fontSize: 12, halign: 'center' },
+        bodyStyles: { fontStyle: 'bold', fontSize: 12, textColor: [15, 23, 42] },
+        columnStyles: { 0: { halign: 'center', cellWidth: 16 }, 1: { halign: 'center', textColor: [3, 105, 161] }, 2: { halign: 'center', textColor: [15, 118, 110] }, 3: { halign: 'center', cellWidth: 32 }, 4: { halign: 'center', cellWidth: 68 } }
+    });
+
+    if (orderQrPayload) {
+        let boxY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 8 : lastY + 50;
+        const pageH = doc.internal.pageSize.getHeight();
+        const pageW = doc.internal.pageSize.getWidth();
+        const boxH = 44;
+        if (boxY + boxH > pageH - 14) {
+            doc.addPage('a4', 'l');
+            boxY = 18;
+        }
+        doc.setDrawColor(2, 132, 199);
+        doc.setLineWidth(0.6);
+        doc.setFillColor(240, 249, 255);
+        doc.roundedRect(14, boxY, pageW - 28, boxH, 3, 3, 'FD');
+
+        const qrMatrix = generateQrMatrix(orderQrPayload);
+        const qrSizeMm = 36;
+        const qrX = 18;
+        const qrY = boxY + 4;
+        doc.setFillColor(255, 255, 255);
+        doc.rect(qrX - 1.5, qrY - 1.5, qrSizeMm + 3, qrSizeMm + 3, 'F');
+        const n = qrMatrix.length;
+        const cellMm = qrSizeMm / n;
+        doc.setFillColor(15, 23, 42);
+        for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+                if (qrMatrix[r][c]) {
+                    doc.rect(qrX + c * cellMm, qrY + r * cellMm, cellMm + 0.04, cellMm + 0.04, 'F');
+                }
+            }
+        }
+
+        const textX = qrX + qrSizeMm + 7;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(3, 105, 161);
+        doc.text("SMART GLASS FABRICATOR QR SYNC (1-SCAN AUTO-LOAD TO 4'x8' SHEET CHART)", textX, boxY + 9);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(30, 41, 59);
+        doc.text('1. Glass Shop / Glass Cutter: Open Smart Worker Pro -> "Glass Cutting (4x8 Sheet Chart)".', textX, boxY + 16);
+        doc.text('2. Tap "Scan PDF QR Code" (or paste the Order Code below) to auto-load all glass sizes, quantities & thicknesses', textX, boxY + 22);
+        doc.text('   and immediately generate the 4x8 Minimum-Waste Sheet Cutting Layout Drawing!', textX, boxY + 27.5);
+
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(7.8);
+        doc.setTextColor(15, 118, 110);
+        const wrappedCode = doc.splitTextToSize(`ORDER CODE: ${orderQrPayload}`, pageW - textX - 18);
+        doc.text(wrappedCode.slice(0, 2), textX, boxY + 34.5);
+    }
+
+    addWatermarkAndSave(doc, `${filename}_${Date.now()}.pdf`);
+}
+// ============================================================================
+// B2B FABRICATOR-TO-GLASS-SHOP SMART QR BRIDGE (SWG|...)
+// ============================================================================
+function parseGlassKeyDimensionToInch(dimToken) {
+    if (!dimToken) return 0;
+    const s = String(dimToken).trim();
+    if (s.toLowerCase().includes('mm')) {
+        const num = parseFloat(s.replace(/[^0-9.]/g, '')) || 0;
+        return parseFloat((num / 25.4).toFixed(2));
+    }
+    const clean = s.replace(/"/g, '').trim();
+    const parts = clean.split(/\s+/);
+    let total = 0;
+    parts.forEach(p => {
+        if (p.includes('/')) {
+            const [n, d] = p.split('/').map(Number);
+            if (d) total += (n / d);
+        } else {
+            const v = parseFloat(p);
+            if (!isNaN(v)) total += v;
+        }
+    });
+    return parseFloat(total.toFixed(2));
+}
+
+function parseGlassDictToStructuredItems(glassDict) {
+    const items = [];
+    for (const [rawKey, qty] of Object.entries(glassDict || {})) {
+        if (rawKey.toUpperCase().includes('ACP BOARD')) continue;
+        let sizeText = rawKey;
+        let specText = '5 mm Clear';
+        if (rawKey.includes('||')) {
+            const parts = rawKey.split('||');
+            sizeText = parts[0].trim();
+            specText = parts[1].trim() || '5 mm Clear';
+        }
+        let rowTag = '';
+        const tagMatch = sizeText.match(/\(([^)]+)\)/);
+        if (tagMatch) {
+            rowTag = tagMatch[1].replace(/Glass/i, '').trim();
+            sizeText = sizeText.replace(/\([^)]+\)/g, '').trim();
+        }
+        const hwParts = sizeText.split(/\s*[xX×]\s*/);
+        const hIn = parseGlassKeyDimensionToInch(hwParts[0] || '0');
+        const wIn = parseGlassKeyDimensionToInch(hwParts[1] || '0');
+        if (hIn > 0 && wIn > 0 && qty > 0) {
+            items.push({
+                h_in: hIn,
+                w_in: wIn,
+                qty: parseInt(qty, 10) || 1,
+                spec: specText,
+                tag: rowTag
+            });
+        }
+    }
+    return items;
+}
+
+function buildGlassOrderQrPayload(title, glassDict) {
+    const items = parseGlassDictToStructuredItems(glassDict);
+    if (!items.length) return '';
+    const shortTitle = String(title || 'GLASS ORDER')
+        .replace(/GLASS CUTTING/i, '')
+        .replace(/[^A-Za-z0-9 _-]/g, '')
+        .trim()
+        .slice(0, 18) || 'ORDER';
+    const firstSpec = items[0].spec || '5 mm Clear';
+    const itemTokens = items.map(it => {
+        const hStr = Number(it.h_in.toFixed(2));
+        const wStr = Number(it.w_in.toFixed(2));
+        const specCode = (it.spec && it.spec !== firstSpec) ? `~${it.spec}` : '';
+        const tagCode = it.tag ? `@${it.tag.slice(0, 10)}` : '';
+        return `${hStr}x${wStr}*${it.qty}${specCode}${tagCode}`;
+    });
+    return `SWG|${shortTitle}|${firstSpec}|${itemTokens.join(';')}`;
+}
+
+window.lastGeneratedGlassOrderCode = '';
+
+function shareGlassOrderCodeWhatsApp(orderCode, title) {
+    const code = orderCode || window.lastGeneratedGlassOrderCode;
+    if (!code) {
+        alert('Please calculate or generate a Glass Cutting list first.');
+        return;
+    }
+    const parsed = parseSwgOrderPayload(code);
+    if (!parsed) return;
+    let msg = `*SMART WORKER PRO - GLASS CUTTING ORDER*\n`;
+    msg += `*Job / Party:* ${parsed.title || title || 'Glass Order'}\n`;
+    msg += `*Glass Spec:* ${parsed.defaultSpec || '5 mm Clear'}\n`;
+    msg += `--------------------------------\n`;
+    let totalPcs = 0;
+    parsed.items.forEach((it, idx) => {
+        totalPcs += it.qty;
+        msg += `${idx + 1}. *${formatInch(it.h_in)} x ${formatInch(it.w_in)}*  -->  *${it.qty} Pcs* ${it.tag ? '(' + it.tag + ')' : ''}\n`;
+    });
+    msg += `--------------------------------\n`;
+    msg += `*Total Glass:* ${totalPcs} Pcs\n\n`;
+    msg += `*1-Click Glass Cutter Auto-Load Code (Copy & Paste or Scan PDF QR in Smart Worker Pro -> Glass Cutting):*\n`;
+    msg += `${code}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function parseSwgOrderPayload(rawText) {
+    if (!rawText) return null;
+    const text = String(rawText).trim();
+    const swgIndex = text.indexOf('SWG|');
+    if (swgIndex === -1) return null;
+    const cleanLine = text.slice(swgIndex).split(/[\r\n]+/)[0].trim();
+    const parts = cleanLine.split('|');
+    if (parts.length < 4 || parts[0] !== 'SWG') return null;
+    const title = parts[1] || 'Glass Order';
+    const defaultSpec = parts[2] || '5 mm Clear';
+    const itemsRaw = parts.slice(3).join('|').split(';');
+    const items = [];
+    itemsRaw.forEach(tok => {
+        const t = tok.trim();
+        if (!t) return;
+        let mainPart = t;
+        let tag = '';
+        if (mainPart.includes('@')) {
+            const atSplit = mainPart.split('@');
+            mainPart = atSplit[0];
+            tag = atSplit[1] || '';
+        }
+        let spec = defaultSpec;
+        if (mainPart.includes('~')) {
+            const tildeSplit = mainPart.split('~');
+            mainPart = tildeSplit[0];
+            spec = tildeSplit[1] || defaultSpec;
+        }
+        const [hwPart, qtyPart] = mainPart.split('*');
+        if (!hwPart) return;
+        const [hVal, wVal] = hwPart.split(/[xX×]/).map(Number);
+        const qtyVal = parseInt(qtyPart || '1', 10) || 1;
+        if (hVal > 0 && wVal > 0) {
+            items.push({
+                h_in: parseFloat(hVal.toFixed(2)),
+                w_in: parseFloat(wVal.toFixed(2)),
+                qty: qtyVal,
+                spec: spec,
+                tag: tag
+            });
+        }
+    });
+    if (!items.length) return null;
+    return { title, defaultSpec, items, rawCode: cleanLine };
+}
+
+function importGlassOrderQrPayload(rawText) {
+    const parsed = parseSwgOrderPayload(rawText);
+    if (!parsed) {
+        alert('Invalid Glass Order QR / Code. Please scan a valid Smart Worker Pro Glass PDF QR Code (starts with SWG|...).');
+        return false;
+    }
+    const gcScreen = document.getElementById('screen-glass_cutting');
+    if (gcScreen && !gcScreen.classList.contains('active')) {
+        navTo('glass_cutting');
+    }
+    const specStr = parsed.defaultSpec || '5 mm Clear';
+    const thickMatch = specStr.match(/^([0-9.]+\s*mm)\s+(.*)$/i);
+    if (thickMatch) {
+        const thickVal = thickMatch[1].trim();
+        const typeVal = thickMatch[2].trim();
+        const thickSel = document.getElementById('gc_g_thick');
+        const typeSel = document.getElementById('gc_g_type');
+        if (thickSel) {
+            for (let i = 0; i < thickSel.options.length; i++) {
+                if (thickSel.options[i].value.toLowerCase() === thickVal.toLowerCase()) {
+                    thickSel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        if (typeSel) {
+            for (let i = 0; i < typeSel.options.length; i++) {
+                if (typeSel.options[i].value.toLowerCase() === typeVal.toLowerCase()) {
+                    typeSel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+    gc_items_list = parsed.items.map(it => ({
+        h_in: it.h_in,
+        w_in: it.w_in,
+        qty: it.qty,
+        label: it.tag ? `${it.tag} (${parsed.title})` : parsed.title
+    }));
+    window.lastGeneratedGlassOrderCode = parsed.rawCode;
+    renderGlassCuttingItemsList();
+    recalculateGlassCuttingSheets();
+
+    const banner = document.getElementById('gc_qr_import_status');
+    const totalPcs = parsed.items.reduce((s, i) => s + i.qty, 0);
+    if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = `<i class="fa-solid fa-circle-check"></i> <b>Auto-Loaded from Fabricator QR:</b> ${parsed.title} (${parsed.items.length} sizes, <b>${totalPcs} Pcs</b> of ${parsed.defaultSpec}) — 4'x8' Sheet Cutting Layout Ready below!`;
+    }
+    const outBox = document.getElementById('out-glass_cutting');
+    if (outBox) outBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+}
+
+function promptImportGlassOrderCode() {
+    const prefill = window.lastGeneratedGlassOrderCode || '';
+    const input = prompt('Paste or Enter the Fabricator Glass Order Code (starts with SWG|...) from WhatsApp or 2. GLASS PDF:', prefill);
+    if (!input) return;
+    importGlassOrderQrPayload(input);
+}
+
+function shareCurrentGlassListToCutterWhatsApp() {
+    if (!gc_items_list || !gc_items_list.length) {
+        alert('Please add glass sizes or load a sample/order first.');
+        return;
+    }
+    const gType = document.getElementById('gc_g_type')?.value || 'Clear';
+    const gThick = document.getElementById('gc_g_thick')?.value || '5 mm';
+    const spec = `${gThick} ${gType}`;
+    const dict = {};
+    gc_items_list.forEach((it, idx) => {
+        const tag = it.label ? ` (${it.label})` : ` (G${idx + 1})`;
+        const key = `${formatInch(it.h_in)} x ${formatInch(it.w_in)}${tag} || ${spec}`;
+        dict[key] = (dict[key] || 0) + (it.qty || 1);
+    });
+    const code = buildGlassOrderQrPayload('GLASS ORDER', dict);
+    window.lastGeneratedGlassOrderCode = code;
+    shareGlassOrderCodeWhatsApp(code, 'GLASS CUTTING ORDER');
+}
+
+let gcQrScannerStream = null;
+function stopGlassOrderQrScanner() {
+    if (gcQrScannerStream) {
+        gcQrScannerStream.getTracks().forEach(t => t.stop());
+        gcQrScannerStream = null;
+    }
+    const box = document.getElementById('gc_qr_camera_box');
+    if (box) box.style.display = 'none';
+}
+
+async function startGlassOrderQrScanner() {
+    const box = document.getElementById('gc_qr_camera_box');
+    const video = document.getElementById('gc_qr_video');
+    if (!box || !video) return;
+    box.style.display = 'block';
+    try {
+        gcQrScannerStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        });
+        video.srcObject = gcQrScannerStream;
+        await video.play();
+        if ('BarcodeDetector' in window) {
+            const detector = new BarcodeDetector({ formats: ['qr_code'] });
+            const scanLoop = async () => {
+                if (!gcQrScannerStream) return;
+                try {
+                    const codes = await detector.detect(video);
+                    if (codes && codes.length > 0) {
+                        const raw = codes[0].rawValue || '';
+                        if (raw.includes('SWG|')) {
+                            stopGlassOrderQrScanner();
+                            importGlassOrderQrPayload(raw);
+                            return;
+                        }
+                    }
+                } catch (e) {}
+                if (gcQrScannerStream) requestAnimationFrame(scanLoop);
+            };
+            requestAnimationFrame(scanLoop);
+        } else {
+            alert('Camera opened! If your phone browser does not auto-detect QR in live video, tap "Paste Order Code" or "Scan from Image" right next to it.');
+        }
+    } catch (err) {
+        box.style.display = 'none';
+        alert('Camera permission denied or unavailable. You can use "Paste Order Code" or "Scan from Image" instead.');
+    }
+}
+
+async function scanGlassQrFromImageFile(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    try {
+        if ('BarcodeDetector' in window) {
+            const bmp = await createImageBitmap(file);
+            const detector = new BarcodeDetector({ formats: ['qr_code'] });
+            const codes = await detector.detect(bmp);
+            if (codes && codes.length > 0 && codes[0].rawValue) {
+                importGlassOrderQrPayload(codes[0].rawValue);
+                event.target.value = '';
+                return;
+            }
+        }
+        alert('Could not detect a QR code directly from that image on this browser. Please tap "Paste Order Code" and paste the SWG|... code printed below the QR on the PDF or WhatsApp message.');
+    } catch (err) {
+        alert('Please use "Paste Order Code" to paste the SWG|... code from the PDF.');
+    }
+    event.target.value = '';
+}
 
  // 3. DEDICATED ALUMINIUM SECTION PDF (Horizontal, Clean Section Name & Bars Only)
  function exportAluPurchasePdf(filename, title, buckets) {
