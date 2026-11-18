@@ -1,5 +1,450 @@
 
 // =========================================================================
+// 1. LIVE CUSTOMER 2D ALUMINIUM COLOR & GLASS SHADE VISUALIZER (v69)
+// =========================================================================
+function getAluVisualPalette(aluColorStr) {
+  var s = String(aluColorStr || 'Powder Coated Black').toLowerCase();
+  if (s.indexOf('golden') !== -1 || s.indexOf('gold') !== -1) {
+    return { c1: '#f59e0b', c2: '#fde68a', c3: '#b45309', stroke: '#78350f', name: aluColorStr };
+  }
+  if (s.indexOf('champagne') !== -1) {
+    return { c1: '#d6c7a1', c2: '#f5ebd6', c3: '#9c8858', stroke: '#5c4d2c', name: aluColorStr };
+  }
+  if (s.indexOf('wooden') !== -1 && s.indexOf('walnut') !== -1) {
+    return { c1: '#5c2c16', c2: '#7c3f23', c3: '#3e1c0c', stroke: '#271006', name: aluColorStr };
+  }
+  if (s.indexOf('wooden') !== -1 || s.indexOf('teak') !== -1) {
+    return { c1: '#9a5226', c2: '#c2713d', c3: '#6e3614', stroke: '#431e08', name: aluColorStr };
+  }
+  if (s.indexOf('white') !== -1) {
+    return { c1: '#f8fafc', c2: '#ffffff', c3: '#cbd5e1', stroke: '#64748b', name: aluColorStr };
+  }
+  if (s.indexOf('ivory') !== -1 || s.indexOf('cream') !== -1) {
+    return { c1: '#fef9c3', c2: '#fefce8', c3: '#fde047', stroke: '#a16207', name: aluColorStr };
+  }
+  if (s.indexOf('brown') !== -1) {
+    return { c1: '#451a03', c2: '#78350f', c3: '#290f02', stroke: '#1c0a00', name: aluColorStr };
+  }
+  if (s.indexOf('grey') !== -1 || s.indexOf('charcoal') !== -1) {
+    return { c1: '#475569', c2: '#64748b', c3: '#334155', stroke: '#0f172a', name: aluColorStr };
+  }
+  if (s.indexOf('red') !== -1) {
+    return { c1: '#b91c1c', c2: '#ef4444', c3: '#7f1d1d', stroke: '#450a0a', name: aluColorStr };
+  }
+  if (s.indexOf('blue') !== -1) {
+    return { c1: '#1d4ed8', c2: '#3b82f6', c3: '#1e3a8a', stroke: '#172554', name: aluColorStr };
+  }
+  if (s.indexOf('green') !== -1) {
+    return { c1: '#15803d', c2: '#22c55e', c3: '#14532d', stroke: '#052e16', name: aluColorStr };
+  }
+  if (s.indexOf('silver') !== -1 || s.indexOf('natural') !== -1) {
+    return { c1: '#cbd5e1', c2: '#f1f5f9', c3: '#94a3b8', stroke: '#475569', name: aluColorStr };
+  }
+  // Default: Jet Black / Anodized Black
+  return { c1: '#1e293b', c2: '#334155', c3: '#0f172a', stroke: '#020617', name: aluColorStr };
+}
+
+function getGlassVisualPalette(glassTypeStr) {
+  var g = String(glassTypeStr || 'Clear').toLowerCase();
+  if (g.indexOf('black') !== -1) {
+    return { g1: '#1e293b', g2: '#475569', op: '0.82', shine: '#94a3b8', label: glassTypeStr };
+  }
+  if (g.indexOf('one way blue') !== -1) {
+    return { g1: '#0284c7', g2: '#38bdf8', op: '0.92', shine: '#e0f2fe', label: glassTypeStr };
+  }
+  if (g.indexOf('blue') !== -1) {
+    return { g1: '#0369a1', g2: '#7dd3fc', op: '0.78', shine: '#e0f2fe', label: glassTypeStr };
+  }
+  if (g.indexOf('one way brown') !== -1 || g.indexOf('brown') !== -1) {
+    return { g1: '#78350f', g2: '#d97706', op: '0.82', shine: '#fef3c7', label: glassTypeStr };
+  }
+  if (g.indexOf('one way green') !== -1 || g.indexOf('green') !== -1) {
+    return { g1: '#047857', g2: '#34d399', op: '0.82', shine: '#d1fae5', label: glassTypeStr };
+  }
+  if (g.indexOf('one way gold') !== -1 || g.indexOf('gold') !== -1) {
+    return { g1: '#b45309', g2: '#fbbf24', op: '0.90', shine: '#fef9c3', label: glassTypeStr };
+  }
+  if (g.indexOf('one way silver') !== -1 || g.indexOf('reflective') !== -1) {
+    return { g1: '#64748b', g2: '#e2e8f0', op: '0.92', shine: '#ffffff', label: glassTypeStr };
+  }
+  if (g.indexOf('grey') !== -1) {
+    return { g1: '#475569', g2: '#94a3b8', op: '0.78', shine: '#f1f5f9', label: glassTypeStr };
+  }
+  if (g.indexOf('frosted') !== -1 || g.indexOf('pinhead') !== -1 || g.indexOf('bajri') !== -1) {
+    return { g1: '#e2e8f0', g2: '#f8fafc', op: '0.94', shine: '#ffffff', frosted: true, label: glassTypeStr };
+  }
+  if (g.indexOf('extra clear') !== -1) {
+    return { g1: '#e0f2fe', g2: '#f8fafc', op: '0.55', shine: '#ffffff', label: glassTypeStr };
+  }
+  // Default Clear Glass
+  return { g1: '#bae6fd', g2: '#e0f2fe', op: '0.68', shine: '#ffffff', label: glassTypeStr };
+}
+
+function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
+  svgWidth = svgWidth || 320;
+  svgHeight = svgHeight || 155;
+
+  var aluColor = getModuleAluColor(prefix);
+  var aluThick = getModuleAluThick(prefix);
+  var gTypeEl = document.getElementById(prefix + '_g_type');
+  var gThickEl = document.getElementById(prefix + '_g_thick');
+  var gType = gTypeEl ? gTypeEl.value : 'Clear';
+  var gThick = gThickEl ? gThickEl.value : '5 mm';
+
+  var aluPal = getAluVisualPalette(aluColor);
+  var glsPal = getGlassVisualPalette(gType);
+
+  var uid = prefix + '_' + Math.floor(Math.random() * 10000);
+  var svg = '<svg viewBox="0 0 320 160" width="100%" style="max-height:' + svgHeight + 'px; display:block; margin:0 auto;">';
+  svg += '<defs>';
+  svg += '<linearGradient id="aluGrad_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">';
+  svg += '<stop offset="0%" stop-color="' + aluPal.c1 + '"/>';
+  svg += '<stop offset="50%" stop-color="' + aluPal.c2 + '"/>';
+  svg += '<stop offset="100%" stop-color="' + aluPal.c3 + '"/>';
+  svg += '</linearGradient>';
+  svg += '<linearGradient id="glsGrad_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">';
+  svg += '<stop offset="0%" stop-color="' + glsPal.g1 + '" stop-opacity="' + glsPal.op + '"/>';
+  svg += '<stop offset="55%" stop-color="' + glsPal.g2 + '" stop-opacity="' + glsPal.op + '"/>';
+  svg += '<stop offset="100%" stop-color="' + glsPal.g1 + '" stop-opacity="' + glsPal.op + '"/>';
+  svg += '</linearGradient>';
+  svg += '</defs>';
+
+  // Determine how many panels/leaves to draw
+  var isDoor = (prefix === 'dr') || (prefix === 'q' && document.getElementById('q_type') && document.getElementById('q_type').value.indexOf('Door') !== -1 && document.getElementById('q_type').value.indexOf('Partition') === -1);
+  var isPart = (prefix === 'pt') || (prefix === 'q' && document.getElementById('q_type') && document.getElementById('q_type').value.indexOf('Partition') !== -1);
+
+  if (isDoor) {
+    var palla = (document.getElementById('dr_palla') && document.getElementById('dr_palla').value === '1') ? 1 : 2;
+    var hasMid = (!document.getElementById('dr_has_mid') || document.getElementById('dr_has_mid').value === 'yes');
+    var dx = palla === 1 ? 105 : 65;
+    var dw = palla === 1 ? 110 : 190;
+    var dh = 144;
+    var dy = 8;
+
+    // Outer Door Frame
+    svg += '<rect x="' + dx + '" y="' + dy + '" width="' + dw + '" height="' + dh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2"/>';
+    var leafW = (dw - 14) / palla;
+    for (var l = 0; l < palla; l++) {
+      var lx = dx + 7 + (l * leafW);
+      var ly = dy + 7;
+      var lh = dh - 14;
+      // Sash Stile & Rails
+      svg += '<rect x="' + lx + '" y="' + ly + '" width="' + leafW + '" height="' + lh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.5"/>';
+      if (hasMid) {
+        // Top Glass + Bottom ACP
+        var topGh = Math.round(lh * 0.56);
+        var botAh = lh - topGh - 22;
+        svg += '<rect x="' + (lx + 8) + '" y="' + (ly + 8) + '" width="' + (leafW - 16) + '" height="' + topGh + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+        svg += '<line x1="' + (lx + 14) + '" y1="' + (ly + 14 + topGh * 0.6) + '" x2="' + (lx + leafW - 18) + '" y2="' + (ly + 14) + '" stroke="' + glsPal.shine + '" stroke-width="2" stroke-opacity="0.65"/>';
+        // Bottom ACP Panel
+        svg += '<rect x="' + (lx + 8) + '" y="' + (ly + topGh + 14) + '" width="' + (leafW - 16) + '" height="' + botAh + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+        svg += '<text x="' + (lx + leafW / 2) + '" y="' + (ly + topGh + 14 + botAh / 2 + 3) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
+      } else {
+        svg += '<rect x="' + (lx + 8) + '" y="' + (ly + 8) + '" width="' + (leafW - 16) + '" height="' + (lh - 18) + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      }
+      // Door Handle
+      var hx = (l === 0 && palla === 2) ? (lx + leafW - 6) : (lx + 5);
+      svg += '<rect x="' + hx + '" y="' + (ly + lh * 0.48) + '" width="3" height="16" rx="1.5" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
+    }
+  } else {
+    // Window or Partition Preview (2, 3, or 4 tracks/columns)
+    var numCols = 2;
+    if (prefix === 'dm' && document.getElementById('dm_type')) {
+      var dt = document.getElementById('dm_type').value;
+      numCols = dt.indexOf('4-Track') !== -1 || dt.indexOf('Center') !== -1 ? 4 : (dt.indexOf('3-Track') !== -1 ? 3 : 2);
+    } else if (prefix === 'sl' && document.getElementById('sl_type')) {
+      var st = document.getElementById('sl_type').value;
+      numCols = st.indexOf('4-Track') !== -1 || st.indexOf('Center') !== -1 ? 4 : (st.indexOf('3-Track') !== -1 ? 3 : 2);
+    } else if (prefix === 'cc' && document.getElementById('cc_top_cols')) {
+      numCols = Math.max(1, Math.min(4, parseInt(document.getElementById('cc_top_cols').value) || 2));
+    } else if (isPart) {
+      numCols = 3;
+    }
+
+    var wx = 24, wy = 10, ww = 272, wh = 140;
+    // Outer Frame with mitre lines
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
+    svg += '<rect x="' + (wx + 8) + '" y="' + (wy + 8) + '" width="' + (ww - 16) + '" height="' + (wh - 16) + '" fill="#0f172a" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+
+    var sashAreaW = ww - 18;
+    var sashAreaH = wh - 18;
+    var eachW = sashAreaW / numCols;
+
+    for (var c = 0; c < numCols; c++) {
+      var sx = wx + 9 + (c * eachW);
+      var sy = wy + 9;
+      // Sash Frame
+      svg += '<rect x="' + sx + '" y="' + sy + '" width="' + eachW + '" height="' + sashAreaH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.6"/>';
+      // Glass Pane inside Sash
+      var gx = sx + 7, gy = sy + 7, gw = eachW - 14, gh = sashAreaH - 14;
+      svg += '<rect x="' + gx + '" y="' + gy + '" width="' + gw + '" height="' + gh + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      // Diagonal Glass Reflection Shine
+      svg += '<line x1="' + (gx + 8) + '" y1="' + (gy + gh - 12) + '" x2="' + (gx + gw - 10) + '" y2="' + (gy + 12) + '" stroke="' + glsPal.shine + '" stroke-width="2.5" stroke-opacity="0.65"/>';
+      svg += '<line x1="' + (gx + 16) + '" y1="' + (gy + gh - 8) + '" x2="' + (gx + gw - 6) + '" y2="' + (gy + 22) + '" stroke="' + glsPal.shine + '" stroke-width="1.2" stroke-opacity="0.5"/>';
+    }
+  }
+
+  svg += '</svg>';
+  return {
+    svg: svg,
+    aluColor: aluColor,
+    aluThick: aluThick,
+    gType: gType,
+    gThick: gThick
+  };
+}
+
+function renderLiveColorGlassPreview(prefix) {
+  var box = document.getElementById(prefix + '_color_preview_box');
+  if (!box) return;
+  var info = buildWindowDoorSvgPreview(prefix, 290, 125);
+
+  var html = '<div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 10px;">';
+  html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">';
+  html += '<span style="font-size:0.74rem; font-weight:800; color:#0f172a;"><i class="fa-solid fa-palette" style="color:#0284c7;"></i> LIVE COLOR & GLASS PREVIEW</span>';
+  html += '<button type="button" onclick="openCustomerShowroomModal(\'' + prefix + '\')" style="background:#0284c7; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-expand"></i> Show Customer</button>';
+  html += '</div>';
+  html += info.svg;
+  html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.71rem; font-weight:700; color:#334155; margin-top:6px; border-top:1px solid #e2e8f0; padding-top:4px;">';
+  html += '<span><b style="color:#0f766e;">Alu:</b> ' + info.aluThick + ' ' + info.aluColor + '</span>';
+  html += '<span><b style="color:#0284c7;">Glass:</b> ' + info.gThick + ' ' + info.gType + '</span>';
+  html += '</div>';
+  html += '</div>';
+
+  box.innerHTML = html;
+}
+
+function openCustomerShowroomModal(prefix) {
+  var modal = document.getElementById('customerShowroomModal');
+  var holder = document.getElementById('csm_svg_holder');
+  var sub = document.getElementById('csm_subtitle');
+  var badges = document.getElementById('csm_specs_badges');
+  if (!modal || !holder) return;
+
+  var info = buildWindowDoorSvgPreview(prefix, 460, 230);
+  holder.innerHTML = info.svg;
+  if (sub) sub.textContent = info.aluColor + '  +  ' + info.gThick + ' ' + info.gType + ' Glass';
+  if (badges) {
+    badges.innerHTML =
+      '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px;">' +
+      '<div style="font-size:0.68rem; color:#166534; font-weight:700;">ALUMINIUM FRAME</div>' +
+      '<div style="font-size:0.84rem; color:#0f172a; font-weight:800;">' + info.aluColor + ' (' + info.aluThick + ')</div>' +
+      '</div>' +
+      '<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:8px;">' +
+      '<div style="font-size:0.68rem; color:#0369a1; font-weight:700;">GLASS SPECIFICATION</div>' +
+      '<div style="font-size:0.84rem; color:#0f172a; font-weight:800;">' + info.gThick + ' ' + info.gType + '</div>' +
+      '</div>';
+  }
+  modal.style.display = 'flex';
+}
+
+
+// =========================================================================
+// 2. WORK ORDER TRACKER & DELIVERY LIST ENGINE (v69)
+// =========================================================================
+var currentOrderStageFilter = 'ALL';
+var ORDER_STAGES = [
+  '1. Measured',
+  '2. Material Ordered',
+  '3. Cutting in Workshop',
+  '4. Ready for Delivery',
+  '5. Fitted & Completed'
+];
+
+function getWorkOrders() {
+  try {
+    return JSON.parse(localStorage.getItem('sw_work_orders') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveWorkOrders(list) {
+  localStorage.setItem('sw_work_orders', JSON.stringify(list || []));
+}
+
+function addNewWorkOrder() {
+  var client = document.getElementById('ot_client') ? document.getElementById('ot_client').value.trim() : '';
+  var phone = document.getElementById('ot_phone') ? document.getElementById('ot_phone').value.trim() : '';
+  var site = document.getElementById('ot_site') ? document.getElementById('ot_site').value.trim() : '';
+  var deliv = document.getElementById('ot_delivery_date') ? document.getElementById('ot_delivery_date').value : '';
+  var details = document.getElementById('ot_details') ? document.getElementById('ot_details').value.trim() : '';
+  var stage = document.getElementById('ot_stage') ? document.getElementById('ot_stage').value : '1. Measured';
+
+  if (!client) {
+    alert("Please enter Customer Name.");
+    return;
+  }
+
+  var orders = getWorkOrders();
+  orders.unshift({
+    id: Date.now(),
+    createdDate: new Date().toLocaleDateString('en-GB'),
+    client: client,
+    phone: phone || 'N/A',
+    site: site || 'General Site',
+    deliveryDate: deliv || 'Not Set',
+    details: details || 'Aluminium & Glass Work',
+    stage: stage
+  });
+
+  saveWorkOrders(orders);
+  if (document.getElementById('ot_client')) document.getElementById('ot_client').value = '';
+  if (document.getElementById('ot_phone')) document.getElementById('ot_phone').value = '';
+  if (document.getElementById('ot_site')) document.getElementById('ot_site').value = '';
+  if (document.getElementById('ot_details')) document.getElementById('ot_details').value = '';
+  renderOrderTrackerList();
+}
+
+function updateWorkOrderStage(orderId, newStage) {
+  var orders = getWorkOrders();
+  orders.forEach(function(o) {
+    if (String(o.id) === String(orderId)) {
+      o.stage = newStage;
+    }
+  });
+  saveWorkOrders(orders);
+  renderOrderTrackerList();
+}
+
+function deleteWorkOrder(orderId) {
+  var orders = getWorkOrders().filter(function(o) { return String(o.id) !== String(orderId); });
+  saveWorkOrders(orders);
+  renderOrderTrackerList();
+}
+
+function filterOrdersByStage(filterMode) {
+  currentOrderStageFilter = filterMode || 'ALL';
+  renderOrderTrackerList();
+}
+
+function sendOrderStatusWhatsApp(orderId) {
+  var orders = getWorkOrders();
+  var ord = orders.find(function(o) { return String(o.id) === String(orderId); });
+  if (!ord) return;
+  var profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+  var shop = profile.shop_name || 'Smart Worker Aluminium';
+  var msg = '*' + shop.toUpperCase() + ' - ORDER UPDATE*\n' +
+            '--------------------------------\n' +
+            'Customer: *' + ord.client + '*\n' +
+            'Site: ' + ord.site + '\n' +
+            'Work: ' + ord.details + '\n' +
+            'Current Status: *' + ord.stage + '*\n' +
+            (ord.deliveryDate && ord.deliveryDate !== 'Not Set' ? ('Expected Delivery: *' + ord.deliveryDate + '*\n') : '') +
+            '--------------------------------\n' +
+            'Thank you for choosing ' + shop + '!';
+  var cleanPhone = String(ord.phone || '').replace(/\D/g, '');
+  var waUrl = cleanPhone.length >= 10
+    ? ('https://wa.me/91' + cleanPhone.slice(-10) + '?text=' + encodeURIComponent(msg))
+    : ('https://wa.me/?text=' + encodeURIComponent(msg));
+  window.open(waUrl, '_blank');
+}
+
+function renderOrderTrackerList() {
+  var container = document.getElementById('ot_orders_list_container');
+  if (!container) return;
+  var orders = getWorkOrders();
+  var q = document.getElementById('ot_search') ? document.getElementById('ot_search').value.trim().toLowerCase() : '';
+
+  var cAll = orders.length, cMeas = 0, cWork = 0, cDone = 0;
+  orders.forEach(function(o) {
+    var st = String(o.stage || '');
+    if (st.indexOf('1.') === 0) cMeas++;
+    else if (st.indexOf('5.') === 0) cDone++;
+    else cWork++;
+  });
+
+  if (document.getElementById('ot_count_all')) document.getElementById('ot_count_all').textContent = cAll;
+  if (document.getElementById('ot_count_measured')) document.getElementById('ot_count_measured').textContent = cMeas;
+  if (document.getElementById('ot_count_working')) document.getElementById('ot_count_working').textContent = cWork;
+  if (document.getElementById('ot_count_done')) document.getElementById('ot_count_done').textContent = cDone;
+
+  if (orders.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#64748b; padding:20px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; font-size:0.8rem;">No work orders added yet. Add a work order above or save a Bill in Pro Quotation!</div>';
+    return;
+  }
+
+  var html = '';
+  orders.forEach(function(o) {
+    var st = String(o.stage || '1. Measured');
+    if (currentOrderStageFilter === 'MEASURED' && st.indexOf('1.') !== 0) return;
+    if (currentOrderStageFilter === 'DELIVERED' && st.indexOf('5.') !== 0) return;
+    if (currentOrderStageFilter === 'WORKING' && (st.indexOf('1.') === 0 || st.indexOf('5.') === 0)) return;
+
+    if (q && o.client.toLowerCase().indexOf(q) === -1 && o.site.toLowerCase().indexOf(q) === -1 && o.details.toLowerCase().indexOf(q) === -1) {
+      return;
+    }
+
+    var stageNum = parseInt(st.charAt(0)) || 1;
+    var pct = stageNum * 20;
+    var badgeCol = stageNum === 5 ? '#16a34a' : (stageNum >= 3 ? '#d97706' : '#0284c7');
+
+    html += '<div style="background:#ffffff; border:1.5px solid #cbd5e1; border-left:5px solid ' + badgeCol + '; border-radius:10px; padding:10px;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">';
+    html += '<div><div style="font-size:0.9rem; font-weight:800; color:#0f172a;">' + o.client + ' <span style="font-size:0.75rem; color:#64748b;">(' + o.phone + ')</span></div>';
+    html += '<div style="font-size:0.74rem; font-weight:700; color:#0369a1;">📍 Site: ' + o.site + '  |  🚚 Delivery: <b style="color:#be123c;">' + (o.deliveryDate || 'Not Set') + '</b></div></div>';
+    html += '<span style="font-size:0.7rem; font-weight:800; background:' + badgeCol + '; color:#fff; padding:2px 8px; border-radius:12px;">' + pct + '%</span>';
+    html += '</div>';
+
+    html += '<div style="font-size:0.78rem; color:#334155; font-weight:700; background:#f8fafc; padding:5px 8px; border-radius:6px; margin-bottom:6px;">' + o.details + '</div>';
+
+    // Progress Bar
+    html += '<div style="width:100%; height:6px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-bottom:8px;">';
+    html += '<div style="width:' + pct + '%; height:100%; background:' + badgeCol + ';"></div>';
+    html += '</div>';
+
+    // Stage Selector + WhatsApp + Delete
+    html += '<div style="display:flex; gap:6px; align-items:center;">';
+    html += '<select onchange="updateWorkOrderStage(\'' + o.id + '\', this.value)" style="flex:1; padding:6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.75rem; font-weight:800; color:#0f172a;">';
+    ORDER_STAGES.forEach(function(stg) {
+      html += '<option value="' + stg + '"' + (stg === st ? ' selected' : '') + '>' + stg + '</option>';
+    });
+    html += '</select>';
+    html += '<button type="button" onclick="sendOrderStatusWhatsApp(\'' + o.id + '\')" style="background:#16a34a; color:#fff; border:none; padding:6px 10px; border-radius:6px; font-size:0.74rem; font-weight:800; cursor:pointer;"><i class="fa-brands fa-whatsapp"></i> Update</button>';
+    html += '<button type="button" onclick="deleteWorkOrder(\'' + o.id + '\')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 8px; border-radius:6px; font-size:0.74rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  if (!html) {
+    html = '<div style="text-align:center; color:#64748b; padding:16px; font-size:0.8rem;">No matching orders found.</div>';
+  }
+  container.innerHTML = html;
+}
+
+function exportOrderTrackerPdf() {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+  var orders = getWorkOrders();
+  if (orders.length === 0) {
+    alert("No orders in list to export!");
+    return;
+  }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) return;
+  var doc = new jsPDF('l', 'mm', 'a4');
+  drawDocHeaderWithLogo(doc, "WORK ORDER & DELIVERY STATUS LIST", "Active Fabrication & Fitting Schedule", [22, 163, 74]);
+
+  var rows = orders.map(function(o, i) {
+    return [i + 1, o.client + " (" + o.phone + ")", o.site, o.details, o.deliveryDate || "-", o.stage];
+  });
+
+  doc.autoTable({
+    startY: 38,
+    head: [['#', 'Customer & Phone', 'Site Location', 'Work Summary', 'Delivery Date', 'Current Status']],
+    body: rows,
+    theme: 'grid',
+    headStyles: { fillColor: [22, 163, 74], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+    styles: { fontSize: 8.5, cellPadding: 3, fontStyle: 'bold' }
+  });
+  doc.save("Workshop_Order_Delivery_List.pdf");
+}
+
+
+// =========================================================================
 // 1-CLICK BLUETOOTH & 58MM ROLL THERMAL QR STICKER PRINTER ENGINE (v68)
 // Supports:
 //  1. Direct Web Bluetooth ESC/POS Thermal Printers (58mm / 80mm)
@@ -2322,6 +2767,7 @@ function getPartitionTubeLabel() {
 // SIMPLE GLASS SPEC HELPER & 4'x8' ACP BOARD CALCULATOR
 // =========================================================================
 function toggleCustomAluColor(prefix) {
+  setTimeout(function() { try { renderLiveColorGlassPreview(prefix); } catch(e){} }, 10);
   var selId = (prefix === 'q') ? 'q_color' : (prefix + '_alu_color');
   var inpId = prefix + '_alu_custom_color';
   var sel = document.getElementById(selId);
@@ -6665,7 +7111,21 @@ function autofillCustomer() {
  if (typeof syncAllDataToCloud === 'function') {
    syncAllDataToCloud();
  }
- alert("🎉 Bill generated and saved to Customer Khata successfully!");
+  try {
+    var existingOrders = getWorkOrders();
+    existingOrders.unshift({
+      id: Date.now() + 5,
+      createdDate: today,
+      client: c_name,
+      phone: c_phone || 'N/A',
+      site: c_addr || 'Site',
+      deliveryDate: 'Pending',
+      details: billItems.length + ' Item(s) | Total: Rs ' + Math.round(final_total),
+      stage: '1. Measured'
+    });
+    saveWorkOrders(existingOrders);
+  } catch(e){}
+  alert("🎉 Bill generated, saved to Customer Khata & added to Order Tracker!");
 }
 
  function shareToWhatsApp() {
@@ -7370,6 +7830,12 @@ function autofillCustomer() {
     setTimeout(function() { try { renderPartitionRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'wastage_qr') {
     setTimeout(function() { try { renderWastageQrStockList(); } catch(e){} }, 20);
+  } else if (screenName === 'order_tracker') {
+    setTimeout(function() { try { renderOrderTrackerList(); } catch(e){} }, 20);
+  }
+  var mapScreenToPfx = { domal: 'dm', sliding: 'sl', casement: 'cc', door: 'dr', partition: 'pt', quotation: 'q' };
+  if (mapScreenToPfx[screenName]) {
+    setTimeout(function() { try { renderLiveColorGlassPreview(mapScreenToPfx[screenName]); } catch(e){} }, 25);
   }
  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
  const target = document.getElementById(`screen-${screenName}`);
