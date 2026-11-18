@@ -80,9 +80,135 @@ function getGlassVisualPalette(glassTypeStr) {
   return { g1: '#bae6fd', g2: '#e0f2fe', op: '0.68', shine: '#ffffff', label: glassTypeStr };
 }
 
+// =========================================================================
+// CUSTOM CASEMENT INTERACTIVE SECTION DESIGNER (ANY POSITION FIX/OPEN/JALI/ACP)
+// =========================================================================
+var cc_top_sections = ['OPEN'];
+var cc_bot_sections = [];
+var csmCurrentPrefix = 'cc';
+var csmCurrentZoom = 1.0;
+
+function getCasementSecStyle(secType) {
+  if (secType === 'OPEN') return { bg: '#0284c7', fg: '#fff', lbl: 'OPEN', full: 'Open Sash (Glass)' };
+  if (secType === 'JALI_OPEN') return { bg: '#16a34a', fg: '#fff', lbl: 'JALI (O)', full: 'Open Jali Sash' };
+  if (secType === 'JALI_FIX') return { bg: '#0d9488', fg: '#fff', lbl: 'JALI (F)', full: 'Fix Jali / Mesh' };
+  if (secType === 'ACP') return { bg: '#ea580c', fg: '#fff', lbl: 'ACP', full: 'Fix ACP Board' };
+  return { bg: '#475569', fg: '#fff', lbl: 'FIX', full: 'Fix Glass' };
+}
+
+function nextCasementSecType(curr) {
+  var order = ['FIX', 'OPEN', 'JALI_OPEN', 'JALI_FIX', 'ACP'];
+  var idx = order.indexOf(curr);
+  return order[(idx + 1) % order.length];
+}
+
+function syncCasementSectionsFromInputs() {
+  var topCols = Math.max(1, Math.min(8, parseInt(document.getElementById('cc_top_cols')?.value) || 1));
+  var topOpen = Math.max(0, Math.min(topCols, parseInt(document.getElementById('cc_top_open')?.value) || 0));
+  var botCols = Math.max(0, Math.min(8, parseInt(document.getElementById('cc_bot_cols')?.value) || 0));
+  var botOpen = Math.max(0, Math.min(botCols, parseInt(document.getElementById('cc_bot_open')?.value) || 0));
+
+  cc_top_sections = [];
+  for (var i = 0; i < topCols; i++) {
+    // Smart default: if 4 cols & 2 open, place open in middle; otherwise first topOpen
+    if (topCols >= 3 && topOpen > 0 && topOpen < topCols) {
+      var leftFix = Math.floor((topCols - topOpen) / 2);
+      cc_top_sections.push((i >= leftFix && i < leftFix + topOpen) ? 'OPEN' : 'FIX');
+    } else {
+      cc_top_sections.push(i < topOpen ? 'OPEN' : 'FIX');
+    }
+  }
+  cc_bot_sections = [];
+  for (var j = 0; j < botCols; j++) {
+    if (botCols >= 3 && botOpen > 0 && botOpen < botCols) {
+      var leftBFix = Math.floor((botCols - botOpen) / 2);
+      cc_bot_sections.push((j >= leftBFix && j < leftBFix + botOpen) ? 'OPEN' : 'FIX');
+    } else {
+      cc_bot_sections.push(j < botOpen ? 'OPEN' : 'FIX');
+    }
+  }
+  renderCasementSectionDesigner();
+  renderLiveColorGlassPreview('cc');
+}
+
+function ensureCasementSectionsCount() {
+  var topCols = Math.max(1, Math.min(8, parseInt(document.getElementById('cc_top_cols')?.value) || 1));
+  var botCols = Math.max(0, Math.min(8, parseInt(document.getElementById('cc_bot_cols')?.value) || 0));
+  while (cc_top_sections.length < topCols) cc_top_sections.push('FIX');
+  if (cc_top_sections.length > topCols) cc_top_sections = cc_top_sections.slice(0, topCols);
+  while (cc_bot_sections.length < botCols) cc_bot_sections.push('FIX');
+  if (cc_bot_sections.length > botCols) cc_bot_sections = cc_bot_sections.slice(0, botCols);
+}
+
+function toggleCasementSection(rowName, idx) {
+  ensureCasementSectionsCount();
+  if (rowName === 'top' && cc_top_sections[idx] !== undefined) {
+    cc_top_sections[idx] = nextCasementSecType(cc_top_sections[idx]);
+    var openCount = cc_top_sections.filter(s => s === 'OPEN' || s === 'JALI_OPEN').length;
+    if (document.getElementById('cc_top_open')) document.getElementById('cc_top_open').value = String(openCount);
+  } else if (rowName === 'bot' && cc_bot_sections[idx] !== undefined) {
+    cc_bot_sections[idx] = nextCasementSecType(cc_bot_sections[idx]);
+    var bOpenCount = cc_bot_sections.filter(s => s === 'OPEN' || s === 'JALI_OPEN').length;
+    if (document.getElementById('cc_bot_open')) document.getElementById('cc_bot_open').value = String(bOpenCount);
+  }
+  renderCasementSectionDesigner();
+  renderLiveColorGlassPreview('cc');
+  var modal = document.getElementById('customerShowroomModal');
+  if (modal && modal.style.display === 'flex' && csmCurrentPrefix === 'cc') {
+    openCustomerShowroomModal('cc');
+  }
+}
+
+function applyCasementPreset(mode) {
+  ensureCasementSectionsCount();
+  var n = cc_top_sections.length;
+  var nb = cc_bot_sections.length;
+  if (mode === 'mid_open') {
+    var openN = Math.max(1, n >= 3 ? n - 2 : 1);
+    var leftFix = Math.floor((n - openN) / 2);
+    cc_top_sections = cc_top_sections.map((_, i) => (i >= leftFix && i < leftFix + openN) ? 'OPEN' : 'FIX');
+    cc_bot_sections = cc_bot_sections.map(() => 'FIX');
+  } else if (mode === 'sides_open') {
+    cc_top_sections = cc_top_sections.map((_, i) => (i === 0 || i === n - 1) ? 'OPEN' : 'FIX');
+    cc_bot_sections = cc_bot_sections.map(() => 'FIX');
+  } else if (mode === 'all_jali') {
+    cc_top_sections = cc_top_sections.map(() => 'JALI_OPEN');
+    cc_bot_sections = cc_bot_sections.map(() => 'JALI_FIX');
+  }
+  if (document.getElementById('cc_top_open')) {
+    document.getElementById('cc_top_open').value = String(cc_top_sections.filter(s => s === 'OPEN' || s === 'JALI_OPEN').length);
+  }
+  if (document.getElementById('cc_bot_open')) {
+    document.getElementById('cc_bot_open').value = String(cc_bot_sections.filter(s => s === 'OPEN' || s === 'JALI_OPEN').length);
+  }
+  renderCasementSectionDesigner();
+  renderLiveColorGlassPreview('cc');
+}
+
+function renderCasementSectionDesigner() {
+  var box = document.getElementById('cc_section_grid_controls');
+  if (!box) return;
+  ensureCasementSectionsCount();
+  var html = '<div style="display:grid; grid-template-columns:repeat(' + cc_top_sections.length + ', 1fr); gap:4px;">';
+  cc_top_sections.forEach(function(sec, idx) {
+    var st = getCasementSecStyle(sec);
+    html += '<button type="button" onclick="toggleCasementSection(\'top\',' + idx + ')" style="background:' + st.bg + '; color:' + st.fg + '; border:none; border-radius:6px; padding:6px 2px; font-size:0.68rem; font-weight:800; cursor:pointer;">T' + (idx + 1) + ': ' + st.lbl + '</button>';
+  });
+  html += '</div>';
+  if (cc_bot_sections.length > 0) {
+    html += '<div style="display:grid; grid-template-columns:repeat(' + cc_bot_sections.length + ', 1fr); gap:4px;">';
+    cc_bot_sections.forEach(function(sec, idx) {
+      var st = getCasementSecStyle(sec);
+      html += '<button type="button" onclick="toggleCasementSection(\'bot\',' + idx + ')" style="background:' + st.bg + '; color:' + st.fg + '; border:none; border-radius:6px; padding:6px 2px; font-size:0.68rem; font-weight:800; cursor:pointer;">B' + (idx + 1) + ': ' + st.lbl + '</button>';
+    });
+    html += '</div>';
+  }
+  box.innerHTML = html;
+}
+
 function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
   svgWidth = svgWidth || 320;
-  svgHeight = svgHeight || 155;
+  svgHeight = svgHeight || 205;
 
   var aluColor = getModuleAluColor(prefix);
   var aluThick = getModuleAluThick(prefix);
@@ -93,9 +219,10 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
 
   var aluPal = getAluVisualPalette(aluColor);
   var glsPal = getGlassVisualPalette(gType);
+  var globalIsJali = gType.toLowerCase().indexOf('jali') !== -1 || gType.toLowerCase().indexOf('mesh') !== -1;
 
   var uid = prefix + '_' + Math.floor(Math.random() * 10000);
-  var svg = '<svg viewBox="0 0 320 160" width="100%" style="max-height:' + svgHeight + 'px; display:block; margin:0 auto;">';
+  var svg = '<svg viewBox="0 0 360 220" width="100%" style="max-height:' + svgHeight + 'px; display:block; margin:0 auto;">';
   svg += '<defs>';
   svg += '<linearGradient id="aluGrad_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">';
   svg += '<stop offset="0%" stop-color="' + aluPal.c1 + '"/>';
@@ -107,27 +234,33 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
   svg += '<stop offset="55%" stop-color="' + glsPal.g2 + '" stop-opacity="' + glsPal.op + '"/>';
   svg += '<stop offset="100%" stop-color="' + glsPal.g1 + '" stop-opacity="' + glsPal.op + '"/>';
   svg += '</linearGradient>';
-  // Crisp Jali / Mesh Criss-Cross SVG Pattern
-  svg += '<pattern id="jaliMesh_' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse">';
-  svg += '<rect width="7" height="7" fill="#ecfdf5"/>';
-  svg += '<path d="M 0 0 L 7 7 M 7 0 L 0 7" stroke="#065f46" stroke-width="0.9" stroke-opacity="0.75"/>';
-  svg += '<path d="M 3.5 0 L 3.5 7 M 0 3.5 L 7 3.5" stroke="#10b981" stroke-width="0.45" stroke-opacity="0.5"/>';
+  svg += '<pattern id="jaliMesh_' + uid + '" width="8" height="8" patternUnits="userSpaceOnUse">';
+  svg += '<rect width="8" height="8" fill="#ecfdf5"/>';
+  svg += '<path d="M 0 0 L 8 8 M 8 0 L 0 8" stroke="#065f46" stroke-width="1.05" stroke-opacity="0.8"/>';
+  svg += '<path d="M 4 0 L 4 8 M 0 4 L 8 4" stroke="#10b981" stroke-width="0.5" stroke-opacity="0.55"/>';
   svg += '</pattern>';
   svg += '</defs>';
 
-  var drawPanelFill = function(x, y, w, h, matType) {
-    var out = '';
+  var drawPanelFill = function(x, y, w, h, matType, badgeTxt, clickAttr) {
+    var out = '<g ' + (clickAttr || '') + ' style="' + (clickAttr ? 'cursor:pointer;' : '') + '">';
     if (matType === 'ACP') {
       out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-      out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 3) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
-    } else if (matType === 'JALI') {
-      out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#jaliMesh_' + uid + ')" stroke="#059669" stroke-width="1.2"/>';
-      out += '<rect x="' + (x + w / 2 - 14) + '" y="' + (y + h / 2 - 5) + '" width="28" height="10" rx="2" fill="#ffffff" fill-opacity="0.85"/>';
-      out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 2.5) + '" font-size="6.5" font-weight="bold" fill="#065f46" text-anchor="middle">JALI</text>';
+      out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 3.5) + '" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="middle">' + (badgeTxt || 'ACP') + '</text>';
+    } else if (matType === 'JALI' || (matType === 'GLASS' && globalIsJali)) {
+      out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#jaliMesh_' + uid + ')" stroke="#059669" stroke-width="1.3"/>';
+      var bw = Math.min(w - 4, 34);
+      if (bw >= 18) {
+        out += '<rect x="' + (x + w / 2 - bw / 2) + '" y="' + (y + h / 2 - 6) + '" width="' + bw + '" height="12" rx="3" fill="#ffffff" fill-opacity="0.88"/>';
+        out += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 3) + '" font-size="7.5" font-weight="bold" fill="#065f46" text-anchor="middle">' + (badgeTxt || 'JALI') + '</text>';
+      }
     } else {
       out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="url(#glsGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-      out += '<line x1="' + (x + 5) + '" y1="' + (y + h - 5) + '" x2="' + (x + w - 5) + '" y2="' + (y + 5) + '" stroke="' + glsPal.shine + '" stroke-width="1.8" stroke-opacity="0.6"/>';
+      out += '<line x1="' + (x + 6) + '" y1="' + (y + h - 6) + '" x2="' + (x + w - 6) + '" y2="' + (y + 6) + '" stroke="' + glsPal.shine + '" stroke-width="2" stroke-opacity="0.6"/>';
+      if (badgeTxt) {
+        out += '<text x="' + (x + w / 2) + '" y="' + (y + h - 6) + '" font-size="7" font-weight="bold" fill="#0f172a" fill-opacity="0.7" text-anchor="middle">' + badgeTxt + '</text>';
+      }
     }
+    out += '</g>';
     return out;
   };
 
@@ -140,111 +273,111 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
     var numParts = (prefix === 'dr' && document.getElementById('dr_rows')) ? Math.max(1, Math.min(6, parseInt(document.getElementById('dr_rows').value) || 2)) : 2;
     if (prefix === 'dr' && typeof ensureDrRowConfigsCount === 'function') ensureDrRowConfigsCount(numParts);
 
-    var dx = palla === 1 ? 105 : 65;
-    var dw = palla === 1 ? 110 : 190;
-    var dh = 144;
-    var dy = 8;
+    var dx = palla === 1 ? 115 : 65;
+    var dw = palla === 1 ? 130 : 230;
+    var dh = 200;
+    var dy = 10;
 
-    // Outer Door Frame
-    svg += '<rect x="' + dx + '" y="' + dy + '" width="' + dw + '" height="' + dh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2"/>';
-    var leafW = (dw - 14) / palla;
+    svg += '<rect x="' + dx + '" y="' + dy + '" width="' + dw + '" height="' + dh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
+    var leafW = (dw - 16) / palla;
     for (var l = 0; l < palla; l++) {
-      var lx = dx + 7 + (l * leafW);
-      var ly = dy + 7;
-      var lh = dh - 14;
-      svg += '<rect x="' + lx + '" y="' + ly + '" width="' + leafW + '" height="' + lh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.5"/>';
+      var lx = dx + 8 + (l * leafW);
+      var ly = dy + 8;
+      var lh = dh - 16;
+      svg += '<rect x="' + lx + '" y="' + ly + '" width="' + leafW + '" height="' + lh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.6"/>';
 
-      var innerX = lx + 7;
-      var innerW = leafW - 14;
-      var availH = lh - 14;
-      var railGap = 4;
+      var innerX = lx + 8;
+      var innerW = leafW - 16;
+      var availH = lh - 16;
+      var railGap = 5;
       var partH = (availH - ((numParts - 1) * railGap)) / numParts;
 
       for (var r = 0; r < numParts; r++) {
-        // r=0 is top in SVG drawing, which corresponds to dr_row_configs[numParts - 1 - r]
         var cfgIdx = numParts - 1 - r;
         var matType = (prefix === 'dr' && typeof dr_row_configs !== 'undefined' && dr_row_configs[cfgIdx])
           ? dr_row_configs[cfgIdx].mat
           : (r === numParts - 1 && numParts > 1 ? 'ACP' : 'GLASS');
-        var py = ly + 7 + (r * (partH + railGap));
-        svg += drawPanelFill(innerX, py, innerW, partH, matType);
+        var py = ly + 8 + (r * (partH + railGap));
+        var clickH = (prefix === 'dr') ? ('onclick="toggleDrRowMaterial(' + cfgIdx + ')"') : '';
+        svg += drawPanelFill(innerX, py, innerW, partH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickH);
       }
 
-      // Door Handle
-      var hx = (l === 0 && palla === 2) ? (lx + leafW - 5.5) : (lx + 3.5);
-      svg += '<rect x="' + hx + '" y="' + (ly + lh * 0.48) + '" width="2.8" height="16" rx="1.4" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
+      var hx = (l === 0 && palla === 2) ? (lx + leafW - 6) : (lx + 3.5);
+      svg += '<rect x="' + hx + '" y="' + (ly + lh * 0.46) + '" width="3.2" height="20" rx="1.6" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
     }
   } else if (isCasement) {
-    var topCols = Math.max(1, Math.min(8, parseInt(document.getElementById('cc_top_cols')?.value) || 1));
-    var topOpen = Math.max(0, Math.min(topCols, parseInt(document.getElementById('cc_top_open')?.value) || 0));
-    var botCols = Math.max(0, Math.min(8, parseInt(document.getElementById('cc_bot_cols')?.value) || 0));
-    var botOpen = Math.max(0, Math.min(botCols, parseInt(document.getElementById('cc_bot_open')?.value) || 0));
+    ensureCasementSectionsCount();
+    var topCols = cc_top_sections.length;
+    var botCols = cc_bot_sections.length;
 
-    var wx = 20, wy = 10, ww = 280, wh = 140;
-    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
+    var wx = 18, wy = 10, ww = 324, wh = 200;
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
 
-    var innerX = wx + 7, innerY = wy + 7, innerW = ww - 14, innerH = wh - 14;
+    var innerX = wx + 8, innerY = wy + 8, innerW = ww - 16, innerH = wh - 16;
     svg += '<rect x="' + innerX + '" y="' + innerY + '" width="' + innerW + '" height="' + innerH + '" fill="#0f172a"/>';
 
     var hasBottom = (botCols > 0);
-    var transomH = hasBottom ? 5 : 0;
+    var transomH = hasBottom ? 6 : 0;
     var topH = hasBottom ? Math.round((innerH - transomH) * 0.62) : innerH;
     var botH = hasBottom ? (innerH - transomH - topH) : 0;
 
-    var drawCasementRow = function(rowY, rowH, colsCount, openCount) {
-      var gap = 4;
+    var drawCasementRow = function(rowName, rowY, rowH, secArr) {
+      var colsCount = secArr.length;
+      var gap = 5;
       var secW = (innerW - ((colsCount - 1) * gap)) / colsCount;
       for (var c = 0; c < colsCount; c++) {
         var sx = innerX + c * (secW + gap);
         if (c > 0) {
-          // Vertical Mullion
-          svg += '<rect x="' + (sx - gap) + '" y="' + rowY + '" width="' + gap + '" height="' + rowH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.6"/>';
+          svg += '<rect x="' + (sx - gap) + '" y="' + rowY + '" width="' + gap + '" height="' + rowH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.7"/>';
         }
-        var isOpenable = (c < openCount);
-        if (isOpenable) {
-          // Draw Sash Frame inside Section
-          svg += '<rect x="' + (sx + 1) + '" y="' + (rowY + 1) + '" width="' + (secW - 2) + '" height="' + (rowH - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
-          var gx = sx + 5, gy = rowY + 5, gw = Math.max(4, secW - 10), gh = Math.max(4, rowH - 10);
-          svg += drawPanelFill(gx, gy, gw, gh, 'GLASS');
-          // Casement Hinge Opening Lines (dashed triangle pointing to handle)
-          svg += '<polyline points="' + gx + ',' + gy + ' ' + (gx + gw) + ',' + (gy + gh / 2) + ' ' + gx + ',' + (gy + gh) + '" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="3,2" stroke-opacity="0.8"/>';
-          svg += '<rect x="' + (sx + secW - 4.5) + '" y="' + (rowY + rowH / 2 - 5) + '" width="2.2" height="10" rx="1" fill="#fbbf24" stroke="#78350f" stroke-width="0.5"/>';
+        var secType = secArr[c];
+        var clickAttr = 'onclick="toggleCasementSection(\'' + rowName + '\',' + c + ')"';
+        var isOpen = (secType === 'OPEN' || secType === 'JALI_OPEN');
+        var matType = (secType === 'JALI_OPEN' || secType === 'JALI_FIX') ? 'JALI' : (secType === 'ACP' ? 'ACP' : 'GLASS');
+
+        if (isOpen) {
+          svg += '<g ' + clickAttr + ' style="cursor:pointer;">';
+          svg += '<rect x="' + (sx + 1) + '" y="' + (rowY + 1) + '" width="' + (secW - 2) + '" height="' + (rowH - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.4"/>';
+          var gx = sx + 6, gy = rowY + 6, gw = Math.max(6, secW - 12), gh = Math.max(6, rowH - 12);
+          svg += drawPanelFill(gx, gy, gw, gh, matType, matType === 'JALI' ? 'JALI (OPEN)' : 'OPEN', '');
+          svg += '<polyline points="' + gx + ',' + gy + ' ' + (gx + gw) + ',' + (gy + gh / 2) + ' ' + gx + ',' + (gy + gh) + '" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-dasharray="4,2.5" stroke-opacity="0.85"/>';
+          svg += '<rect x="' + (sx + secW - 5) + '" y="' + (rowY + rowH / 2 - 7) + '" width="2.6" height="14" rx="1.2" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
+          svg += '</g>';
         } else {
-          // Fixed Glass Pane
-          svg += drawPanelFill(sx + 1, rowY + 1, secW - 2, rowH - 2, 'GLASS');
+          svg += drawPanelFill(sx + 1, rowY + 1, secW - 2, rowH - 2, matType, matType === 'JALI' ? 'JALI (FIX)' : (matType === 'ACP' ? 'ACP' : 'FIX'), clickAttr);
         }
       }
     };
 
-    drawCasementRow(innerY, topH, topCols, topOpen);
+    drawCasementRow('top', innerY, topH, cc_top_sections);
     if (hasBottom) {
-      svg += '<rect x="' + innerX + '" y="' + (innerY + topH) + '" width="' + innerW + '" height="' + transomH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
-      drawCasementRow(innerY + topH + transomH, botH, botCols, botOpen);
+      svg += '<rect x="' + innerX + '" y="' + (innerY + topH) + '" width="' + innerW + '" height="' + transomH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
+      drawCasementRow('bot', innerY + topH + transomH, botH, cc_bot_sections);
     }
   } else if (isPart) {
     var ptCols = (prefix === 'pt' && document.getElementById('pt_cols')) ? Math.max(1, Math.min(10, parseInt(document.getElementById('pt_cols').value) || 3)) : 3;
     var ptRows = (prefix === 'pt' && document.getElementById('pt_rows')) ? Math.max(1, Math.min(8, parseInt(document.getElementById('pt_rows').value) || 3)) : 3;
     if (prefix === 'pt' && typeof ensurePtRowConfigsCount === 'function') ensurePtRowConfigsCount(ptRows);
 
-    var wx = 20, wy = 10, ww = 280, wh = 140;
-    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="3" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
-    var innerX = wx + 6, innerY = wy + 6, innerW = ww - 12, innerH = wh - 12;
+    var wx = 18, wy = 10, ww = 324, wh = 200;
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
+    var innerX = wx + 7, innerY = wy + 7, innerW = ww - 14, innerH = wh - 14;
     svg += '<rect x="' + innerX + '" y="' + innerY + '" width="' + innerW + '" height="' + innerH + '" fill="url(#aluGrad_' + uid + ')"/>';
 
-    var gapX = 4, gapY = 4;
+    var gapX = 5, gapY = 5;
     var cellW = (innerW - ((ptCols - 1) * gapX)) / ptCols;
     var cellH = (innerH - ((ptRows - 1) * gapY)) / ptRows;
     for (var r = 0; r < ptRows; r++) {
       var cfgIdx = ptRows - 1 - r;
       var matType = (prefix === 'pt' && typeof pt_row_configs !== 'undefined' && pt_row_configs[cfgIdx]) ? pt_row_configs[cfgIdx].mat : 'GLASS';
       var cy = innerY + r * (cellH + gapY);
+      var clickP = (prefix === 'pt') ? ('onclick="togglePtRowMaterial(' + cfgIdx + ')"') : '';
       for (var c = 0; c < ptCols; c++) {
         var cx = innerX + c * (cellW + gapX);
-        svg += drawPanelFill(cx, cy, cellW, cellH, matType);
+        svg += drawPanelFill(cx, cy, cellW, cellH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickP);
       }
     }
   } else {
-    // Domal / Sliding Window Preview (2, 3, or 4 tracks)
     var numCols = 2;
     if (prefix === 'dm' && document.getElementById('dm_type')) {
       var dt = document.getElementById('dm_type').value;
@@ -254,8 +387,8 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
       numCols = st.indexOf('4-Track') !== -1 || st.indexOf('Center') !== -1 ? 4 : (st.indexOf('3-Track') !== -1 ? 3 : 2);
     }
 
-    var wx = 24, wy = 10, ww = 272, wh = 140;
-    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.2"/>';
+    var wx = 20, wy = 10, ww = 320, wh = 200;
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
     svg += '<rect x="' + (wx + 8) + '" y="' + (wy + 8) + '" width="' + (ww - 16) + '" height="' + (wh - 16) + '" fill="#0f172a" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
 
     var paneW = (ww - 16) / numCols;
@@ -263,10 +396,11 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
       var px = wx + 8 + (c * paneW);
       var py = wy + 8;
       var ph = wh - 16;
-      svg += '<rect x="' + (px + 1) + '" y="' + (py + 1) + '" width="' + (paneW - 2) + '" height="' + (ph - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
-      svg += drawPanelFill(px + 6, py + 6, paneW - 12, ph - 12, 'GLASS');
-      svg += '<rect x="' + (px + paneW - 9) + '" y="' + (py + ph * 0.42) + '" width="2.5" height="18" rx="1.2" fill="#e2e8f0" stroke="#334155" stroke-width="0.5"/>';
-      svg += '<text x="' + (px + paneW / 2) + '" y="' + (py + ph / 2 + 4) + '" font-size="11" font-weight="bold" fill="#ffffff" fill-opacity="0.7" text-anchor="middle">' + (c % 2 === 0 ? '⇄' : '⇄') + '</text>';
+      svg += '<rect x="' + (px + 1) + '" y="' + (py + 1) + '" width="' + (paneW - 2) + '" height="' + (ph - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.3"/>';
+      var isJaliTrack = (gType.toLowerCase().indexOf('glass + jali') !== -1 && c === numCols - 1);
+      svg += drawPanelFill(px + 7, py + 7, paneW - 14, ph - 14, isJaliTrack ? 'JALI' : 'GLASS', isJaliTrack ? 'JALI' : '');
+      svg += '<rect x="' + (px + paneW - 9.5) + '" y="' + (py + ph * 0.42) + '" width="2.8" height="20" rx="1.4" fill="#e2e8f0" stroke="#334155" stroke-width="0.6"/>';
+      svg += '<text x="' + (px + paneW / 2) + '" y="' + (py + ph / 2 + 4) + '" font-size="13" font-weight="bold" fill="#ffffff" fill-opacity="0.75" text-anchor="middle">⇄</text>';
     }
   }
 
@@ -277,33 +411,42 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight) {
 function renderLiveColorGlassPreview(prefix) {
   var box = document.getElementById(prefix + '_color_preview_box');
   if (!box) return;
-  var info = buildWindowDoorSvgPreview(prefix, 290, 125);
+  var info = buildWindowDoorSvgPreview(prefix, 360, 205);
 
   var html = '<div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 10px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">';
   html += '<span style="font-size:0.74rem; font-weight:800; color:#0f172a;"><i class="fa-solid fa-palette" style="color:#0284c7;"></i> LIVE COLOR & GLASS PREVIEW</span>';
-  html += '<button type="button" onclick="openCustomerShowroomModal(\'' + prefix + '\')" style="background:#0284c7; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-expand"></i> Show Customer</button>';
+  html += '<button type="button" onclick="openCustomerShowroomModal(\'' + prefix + '\')" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-expand"></i> Big Customer View</button>';
   html += '</div>';
   html += info.svg;
   html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.71rem; font-weight:700; color:#334155; margin-top:6px; border-top:1px solid #e2e8f0; padding-top:4px;">';
   html += '<span><b style="color:#0f766e;">Alu:</b> ' + info.aluThick + ' ' + info.aluColor + '</span>';
-  html += '<span><b style="color:#0284c7;">Glass:</b> ' + info.gThick + ' ' + info.gType + '</span>';
+  html += '<span><b style="color:#0284c7;">Glass/Mesh:</b> ' + info.gThick + ' ' + info.gType + '</span>';
   html += '</div>';
   html += '</div>';
 
   box.innerHTML = html;
 }
 
+function zoomCustomerModal(delta) {
+  csmCurrentZoom = Math.max(0.8, Math.min(2.2, parseFloat((csmCurrentZoom + delta).toFixed(2))));
+  var holder = document.getElementById('csm_svg_holder');
+  if (holder) holder.style.transform = 'scale(' + csmCurrentZoom + ')';
+}
+
 function openCustomerShowroomModal(prefix) {
+  csmCurrentPrefix = prefix;
+  csmCurrentZoom = 1.0;
   var modal = document.getElementById('customerShowroomModal');
   var holder = document.getElementById('csm_svg_holder');
   var sub = document.getElementById('csm_subtitle');
   var badges = document.getElementById('csm_specs_badges');
   if (!modal || !holder) return;
 
-  var info = buildWindowDoorSvgPreview(prefix, 460, 230);
+  var info = buildWindowDoorSvgPreview(prefix, 680, 380);
+  holder.style.transform = 'scale(1)';
   holder.innerHTML = info.svg;
-  if (sub) sub.textContent = info.aluColor + '  +  ' + info.gThick + ' ' + info.gType + ' Glass';
+  if (sub) sub.textContent = info.aluColor + '  +  ' + info.gThick + ' ' + info.gType;
   if (badges) {
     badges.innerHTML =
       '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px;">' +
@@ -311,7 +454,7 @@ function openCustomerShowroomModal(prefix) {
       '<div style="font-size:0.84rem; color:#0f172a; font-weight:800;">' + info.aluColor + ' (' + info.aluThick + ')</div>' +
       '</div>' +
       '<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:8px;">' +
-      '<div style="font-size:0.68rem; color:#0369a1; font-weight:700;">GLASS SPECIFICATION</div>' +
+      '<div style="font-size:0.68rem; color:#0369a1; font-weight:700;">GLASS / JALI SPECIFICATION</div>' +
       '<div style="font-size:0.84rem; color:#0f172a; font-weight:800;">' + info.gThick + ' ' + info.gType + '</div>' +
       '</div>';
   }
@@ -2227,6 +2370,15 @@ function resolvePartitionRowHeights(total_open_h, numRows, cut_w) {
   return resolveRowHeightsGeneric(pt_row_configs, total_open_h, numRows);
 }
 
+function setPtRowMaterial(rIdx, matVal) {
+  if (!pt_row_configs[rIdx]) return;
+  pt_row_configs[rIdx].mat = matVal;
+  var pm = document.getElementById('pt_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderPartitionRowBuilder();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
+}
+
 function renderPartitionRowBuilder() {
   var container = document.getElementById('pt_rows_builder_container');
   if (!container) return;
@@ -2242,11 +2394,13 @@ function renderPartitionRowBuilder() {
     var hValStr = (cfg.h_val && cfg.h_val > 0) ? String(cfg.h_val) : '';
     var placeholderTxt = (cfg.h_val && cfg.h_val > 0) ? '' : 'Auto Height';
 
-    html += '<div style="display:grid; grid-template-columns: 1.2fr 1.05fr 0.95fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
+    html += '<div style="display:grid; grid-template-columns: 1.1fr 1.15fr 0.95fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
     html += '<div style="font-size:0.75rem; font-weight:800; color:#0f172a;">' + rowLabel + '</div>';
-    html += '<button type="button" onclick="togglePtRowMaterial(' + r + ')" style="background:' + st.bg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.74rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">';
-    html += '<i class="fa-solid ' + st.icon.toLowerCase() + '"></i> <span>' + st.label + '</span>';
-    html += '</button>';
+    html += '<select onchange="setPtRowMaterial(' + r + ', this.value)" style="background:' + st.bg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.74rem; font-weight:800; cursor:pointer;">';
+    html += '<option value="GLASS" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'GLASS' ? 'selected' : '') + '>Glass</option>';
+    html += '<option value="ACP" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'ACP' ? 'selected' : '') + '>ACP Board</option>';
+    html += '<option value="JALI" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'JALI' ? 'selected' : '') + '>Jali / Mesh</option>';
+    html += '</select>';
     html += '<div style="display:flex; align-items:center; gap:3px;">';
     html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" oninput="updatePtRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
     html += '<span style="font-size:0.68rem; font-weight:700; color:#64748b;">In</span>';
@@ -2389,6 +2543,15 @@ function updateDrRowHeightInput(rIdx, valStr) {
   renderDoorVisualOnly();
 }
 
+function setDrRowMaterial(rIdx, matVal) {
+  if (!dr_row_configs[rIdx]) return;
+  dr_row_configs[rIdx].mat = matVal;
+  var pm = document.getElementById('dr_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderDoorRowBuilder();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('dr');
+}
+
 function renderDoorRowBuilder() {
   var container = document.getElementById('dr_rows_builder_container');
   if (!container) return;
@@ -2407,11 +2570,13 @@ function renderDoorRowBuilder() {
     var hValStr = (cfg.h_val && cfg.h_val > 0 && numRows > 1) ? String(cfg.h_val) : '';
     var placeholderTxt = (numRows === 1) ? 'Full Height' : ((cfg.h_val && cfg.h_val > 0) ? '' : 'Auto Height');
 
-    html += '<div style="display:grid; grid-template-columns: 1.2fr 1.05fr 0.95fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
+    html += '<div style="display:grid; grid-template-columns: 1.1fr 1.15fr 0.95fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
     html += '<div style="font-size:0.75rem; font-weight:800; color:#0f172a;">' + partLabel + '</div>';
-    html += '<button type="button" onclick="toggleDrRowMaterial(' + r + ')" style="background:' + st.bg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.74rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">';
-    html += '<i class="fa-solid ' + st.icon.toLowerCase() + '"></i> <span>' + st.label + '</span>';
-    html += '</button>';
+    html += '<select onchange="setDrRowMaterial(' + r + ', this.value)" style="background:' + st.bg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.74rem; font-weight:800; cursor:pointer;">';
+    html += '<option value="GLASS" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'GLASS' ? 'selected' : '') + '>Glass</option>';
+    html += '<option value="ACP" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'ACP' ? 'selected' : '') + '>ACP Board</option>';
+    html += '<option value="JALI" style="background:#fff; color:#0f172a;" ' + (cfg.mat === 'JALI' ? 'selected' : '') + '>Jali / Mesh</option>';
+    html += '</select>';
     html += '<div style="display:flex; align-items:center; gap:3px;">';
     html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" ' + (numRows === 1 ? 'disabled' : '') + ' oninput="updateDrRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
     html += '<span style="font-size:0.68rem; font-weight:700; color:#64748b;">In</span>';
@@ -8697,6 +8862,8 @@ function autofillCustomer() {
     setTimeout(function() { try { renderPartitionRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'door') {
     setTimeout(function() { try { renderDoorRowBuilder(); } catch(e){} }, 20);
+  } else if (screenName === 'casement') {
+    setTimeout(function() { try { renderCasementSectionDesigner(); } catch(e){} }, 20);
   } else if (screenName === 'wastage_qr') {
     setTimeout(function() { try { renderWastageQrStockList(); } catch(e){} }, 20);
   } else if (screenName === 'order_tracker') {
@@ -11763,8 +11930,8 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v74') === -1) caches.delete(k);
-    try { renderDoorRowBuilder(); renderPartitionRowBuilder(); } catch(e){}
+                if (k.indexOf('v75') === -1) caches.delete(k);
+    try { renderDoorRowBuilder(); renderPartitionRowBuilder(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
     }
