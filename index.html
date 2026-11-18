@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=76').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=78').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=76">
+  <link rel="stylesheet" href="style.css?v=78">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1802,9 +1802,10 @@
  </div>
  <div class="form-group">
  <label>Partition Type:</label>
- <select id="pt_type">
+ <select id="pt_type" onchange="onPartitionTypeChanged()">
  <option value="Fixed Partition" selected>Fixed Partition</option>
  <option value="Door + Partition">Door + Partition</option>
+ <option value="Window + Partition">Window + Partition</option>
  </select>
  </div>
  <div class="form-group">
@@ -1820,16 +1821,41 @@
  </div>
  </div>
  <div class="form-group">
- <label>Door Height (Optional):</label>
+ <label id="pt_sub_h_lbl">Door Height (Optional):</label>
  <div class="input-wrapper">
  <input readonly inputmode="none" onclick="openKeypad('pt_dh')" style="cursor:pointer; background:#fff;" type="text" id="pt_dh"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dh')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
- <label>Door Width (Optional):</label>
+ <label id="pt_sub_w_lbl">Door Width (Optional):</label>
  <div class="input-wrapper">
  <input readonly inputmode="none" onclick="openKeypad('pt_dw')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dw')"><i class="fa-solid fa-calculator"></i></button>
  </div>
+ </div>
+ <div id="pt_window_options_box" style="display:none; grid-column: 1 / -1; background:#f5f3ff; border:1.5px solid #8b5cf6; border-radius:10px; padding:10px;">
+   <div style="font-size:0.75rem; font-weight:800; color:#5b21b6; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+     <i class="fa-solid fa-window-restore"></i> <span>PARTITION WINDOW SYSTEM (H-SECTION OPENABLE / SLIDING):</span>
+   </div>
+   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+     <div style="grid-column: span 2;">
+       <label style="font-size:0.72rem; font-weight:700; color:#4c1d95; display:block; margin-bottom:2px;">Window Type & Tracks:</label>
+       <select id="pt_win_sys" onchange="renderPartitionWallVisualOnly(); renderLiveColorGlassPreview('pt');" style="width:100%; padding:7px; border:1px solid #a78bfa; border-radius:6px; font-size:0.8rem; font-weight:800; color:#4c1d95; background:#fff;">
+         <option value="H_OPEN_2" selected>H-Section Openable Window (2-Leaf / Double)</option>
+         <option value="H_OPEN_1">H-Section Openable Window (1-Leaf / Single)</option>
+         <option value="SLIDE_2T">2-Track Sliding Window (Inside Partition)</option>
+         <option value="SLIDE_3T">3-Track Sliding Window (2 Glass + 1 Jali)</option>
+         <option value="SLIDE_4T">4-Track Sliding Window (Inside Partition)</option>
+       </select>
+     </div>
+     <div>
+       <label style="font-size:0.71rem; font-weight:700; color:#4c1d95; display:block; margin-bottom:2px;">Bottom Sill Height (In):</label>
+       <input type="number" id="pt_win_sill" value="30" step="1" oninput="renderPartitionWallVisualOnly(); renderLiveColorGlassPreview('pt');" style="width:100%; padding:6px; border:1px solid #a78bfa; border-radius:6px; font-size:0.8rem; font-weight:700; text-align:center;">
+     </div>
+     <div>
+       <label style="font-size:0.71rem; font-weight:700; color:#4c1d95; display:block; margin-bottom:2px;">H-Section / Frame (In):</label>
+       <input type="number" id="pt_win_hsec" value="1.5" step="0.125" style="width:100%; padding:6px; border:1px solid #a78bfa; border-radius:6px; font-size:0.8rem; font-weight:700; text-align:center;">
+     </div>
+   </div>
  </div>
  <div class="form-group">
  <label style="color:#0284c7; font-weight:700;">Horizontal Divide (Cols):</label>
@@ -3185,7 +3211,7 @@
            <i class="fa-solid fa-image"></i> <span>SCAN FROM IMAGE</span>
          </button>
          <button type="button" class="action-btn" style="background:#4f46e5; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="promptImportGlassOrderCode()">
-           <i class="fa-solid fa-paste"></i> <span>PASTE ORDER CODE</span>
+           <i class="fa-solid fa-paste"></i> <span>ENTER 4-DIGIT CODE</span>
          </button>
          <button type="button" class="action-btn" style="background:#0d9488; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="shareCurrentGlassListToCutterWhatsApp()">
            <i class="fa-brands fa-whatsapp"></i> <span>SEND TO CUTTER</span>
@@ -4172,12 +4198,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=76"></script>
+  <script src="app.js?v=78"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=76').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=78').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

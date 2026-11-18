@@ -383,6 +383,51 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
       drawCasementRow('bot', innerY + topH + transomH, botH, cc_bot_sections);
     }
   } else if (isPart) {
+    var ptTypeVal = document.getElementById('pt_type') ? document.getElementById('pt_type').value : 'Fixed Partition';
+    if (prefix === 'pt' && ptTypeVal === 'Window + Partition') {
+      var winSys = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').value : 'H_OPEN_2';
+      var wx = 18, wy = 10, ww = 324, wh = 200;
+      svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
+      var ix = wx + 7, iy = wy + 7, iw = ww - 14, ih = wh - 14;
+      svg += '<rect x="' + ix + '" y="' + iy + '" width="' + iw + '" height="' + ih + '" fill="url(#aluGrad_' + uid + ')"/>';
+
+      // Left Side Fixed/ACP Bay + Center/Right Window Bay
+      var bayW = Math.round(iw * 0.54);
+      var sideW = iw - bayW - 5;
+      var topH = Math.round(ih * 0.20), midH = Math.round(ih * 0.48), botH = ih - topH - midH - 10;
+
+      // Side Partition Column (3 rows)
+      var sideX = ix + bayW + 5;
+      svg += drawPanelFill(sideX, iy, sideW, topH, 'GLASS', '');
+      svg += drawPanelFill(sideX, iy + topH + 5, sideW, midH, 'GLASS', '');
+      svg += drawPanelFill(sideX, iy + topH + midH + 10, sideW, botH, 'ACP', 'ACP');
+
+      // Window Bay: Top Glass + Window + Bottom ACP
+      svg += drawPanelFill(ix, iy, bayW, topH, 'GLASS', '');
+      svg += drawPanelFill(ix, iy + topH + midH + 10, bayW, botH, 'ACP', 'ACP');
+
+      var winY = iy + topH + 5;
+      if (winSys === 'H_OPEN_1' || winSys === 'H_OPEN_2') {
+        var leaves = (winSys === 'H_OPEN_2') ? 2 : 1;
+        var lw = (bayW - ((leaves - 1) * 4)) / leaves;
+        for (var l = 0; l < leaves; l++) {
+          var lx = ix + l * (lw + 4);
+          svg += '<rect x="' + lx + '" y="' + winY + '" width="' + lw + '" height="' + midH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.3"/>';
+          svg += drawPanelFill(lx + 5, winY + 5, lw - 10, midH - 10, 'GLASS', 'H-SEC');
+          svg += '<polyline points="' + (lx + 5) + ',' + (winY + 5) + ' ' + (lx + lw - 5) + ',' + (winY + midH / 2) + ' ' + (lx + 5) + ',' + (winY + midH - 5) + '" fill="none" stroke="#fff" stroke-width="1.1" stroke-dasharray="3,2"/>';
+          svg += '<rect x="' + (lx + lw - 4.5) + '" y="' + (winY + midH / 2 - 6) + '" width="2.2" height="12" rx="1" fill="#fbbf24"/>';
+        }
+      } else {
+        var tracks = (winSys === 'SLIDE_4T') ? 4 : (winSys === 'SLIDE_3T' ? 3 : 2);
+        var sw = (bayW - ((tracks - 1) * 3)) / tracks;
+        for (var t = 0; t < tracks; t++) {
+          var tx = ix + t * (sw + 3);
+          var isJali = (winSys === 'SLIDE_3T' && t === tracks - 1);
+          svg += '<rect x="' + tx + '" y="' + winY + '" width="' + sw + '" height="' + midH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+          svg += drawPanelFill(tx + 4, winY + 4, sw - 8, midH - 8, isJali ? 'JALI' : 'GLASS', isJali ? 'JALI' : (tracks + 'T'));
+        }
+      }
+    } else {
     var ptCols = (prefix === 'pt' && document.getElementById('pt_cols')) ? Math.max(1, Math.min(10, parseInt(document.getElementById('pt_cols').value) || 3)) : 3;
     var ptRows = (prefix === 'pt' && document.getElementById('pt_rows')) ? Math.max(1, Math.min(8, parseInt(document.getElementById('pt_rows').value) || 3)) : 3;
     if (prefix === 'pt' && typeof ensurePtRowConfigsCount === 'function') ensurePtRowConfigsCount(ptRows);
@@ -420,6 +465,7 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
         svg += drawPanelFill(cx, curY, cellW, cellH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : (matType === 'WINDOW' ? 'WIN' : '')), clickP);
       }
       curY += cellH + gapY;
+    }
     }
   } else {
     var numCols = 2;
@@ -1424,7 +1470,8 @@ function recalculateGlassCuttingSheets() {
       html += '<div style="flex:1; min-width:170px;">';
       html += '<div style="font-size:0.78rem; font-weight:800; color:#0369a1; margin-bottom:3px;"><i class="fa-solid fa-qrcode"></i> SHEET QR CODE FOR GLASS FABRICATOR</div>';
       html += '<div style="font-size:0.7rem; color:#334155; line-height:1.35; margin-bottom:6px;">When the Glass Fabricator scans this QR (from screen, <b>Bill PDF</b>, <b>1. Sheet Drawing PDF</b>, or <b>2. Glass List PDF</b>), all sizes & this <b>' + stockDim.label + '</b> sheet layout load automatically!</div>';
-      html += '<div style="font-family:monospace; font-size:0.65rem; background:#fff; padding:4px 6px; border-radius:6px; border:1px solid #94a3b8; color:#0f766e; word-break:break-all; margin-bottom:6px;">' + liveSwgPayload + '</div>';
+      var liveShortId = generateShortGlassOrderId(liveSwgPayload);
+      html += '<div style="font-size:0.85rem; font-weight:900; background:#fff; padding:5px 10px; border-radius:6px; border:1.5px solid #0284c7; color:#0369a1; margin-bottom:6px; display:inline-block;">4-DIGIT ORDER CODE: ' + liveShortId + '</div>';
       html += '<button type="button" onclick="shareCurrentGlassListToCutterWhatsApp()" style="background:#059669; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-brands fa-whatsapp"></i> Send Sheet QR & Details to Glass Fabricator</button>';
       html += '</div></div>';
     }
@@ -3235,7 +3282,7 @@ function exportSheetLayoutPdf(filename, title, acpList) {
       doc.setFont("courier", "bold");
       doc.setFontSize(6.8);
       doc.setTextColor(15, 118, 110);
-      doc.text(("GLASS FABRICATOR CODE: " + orderQrPayload).slice(0, 128), startX + 4, footY + 15.5);
+      var sId = generateShortGlassOrderId(orderQrPayload); doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.text("4-DIGIT GLASS ORDER CODE: " + sId + "  (Type in Glass Cutting -> ENTER 4-DIGIT CODE or Scan QR)", startX + 4, footY + 15.5);
     }
   });
 
@@ -5487,7 +5534,25 @@ function clearDoor() {
  var pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
  var pt_glass_dict = {};
 
- function calculatePartition() {
+ function onPartitionTypeChanged() {
+  var pType = document.getElementById('pt_type') ? document.getElementById('pt_type').value : 'Fixed Partition';
+  var hLbl = document.getElementById('pt_sub_h_lbl');
+  var wLbl = document.getElementById('pt_sub_w_lbl');
+  var winBox = document.getElementById('pt_window_options_box');
+  if (pType === 'Window + Partition') {
+    if (hLbl) { hLbl.textContent = 'Window Height (H):'; hLbl.style.color = '#6d28d9'; hLbl.style.fontWeight = '700'; }
+    if (wLbl) { wLbl.textContent = 'Window Width (W):'; wLbl.style.color = '#6d28d9'; wLbl.style.fontWeight = '700'; }
+    if (winBox) winBox.style.display = 'block';
+  } else {
+    if (hLbl) { hLbl.textContent = 'Door Height (Optional):'; hLbl.style.color = ''; hLbl.style.fontWeight = ''; }
+    if (wLbl) { wLbl.textContent = 'Door Width (Optional):'; wLbl.style.color = ''; wLbl.style.fontWeight = ''; }
+    if (winBox) winBox.style.display = 'none';
+  }
+  if (typeof renderPartitionWallVisualOnly === 'function') renderPartitionWallVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
+}
+
+function calculatePartition() {
  const raw_h = safeEval(document.getElementById('pt_h').value);
  const raw_w = safeEval(document.getElementById('pt_w').value);
  if (raw_h === 0 || raw_w === 0) {
@@ -5684,6 +5749,137 @@ function clearDoor() {
    out += `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
    out += `> Corner Cleats & Screws Set\n`;
 
+ } else if (p_type === "Window + Partition") {
+   const raw_wh = safeEval(document.getElementById('pt_dh') ? document.getElementById('pt_dh').value : '0');
+   const raw_ww = safeEval(document.getElementById('pt_dw') ? document.getElementById('pt_dw').value : '0');
+   if (raw_wh === 0 || raw_ww === 0) {
+     alert("Please enter Window Height and Window Width.");
+     return;
+   }
+   const wh = is_mm ? raw_wh / 25.4 : raw_wh;
+   const ww = is_mm ? raw_ww / 25.4 : raw_ww;
+   const winSys = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').value : 'H_OPEN_2';
+   const winSysLabel = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').options[document.getElementById('pt_win_sys').selectedIndex].text : 'H-Section Openable';
+   const winSill = parseFloat(document.getElementById('pt_win_sill') ? document.getElementById('pt_win_sill').value : 30) || 30;
+   const hSecFace = parseFloat(document.getElementById('pt_win_hsec') ? document.getElementById('pt_win_hsec').value : 1.5) || 1.5;
+
+   out = `[Partition #${pt_part_count} - Window + Partition (${disp(h)} x ${disp(w)}) | Window: ${disp(wh)} x ${disp(ww)}]\n> Jindal Section: ${tube_label} | Window System: ${winSysLabel}\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
+
+   const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h_top = w - (2 * tube_face);
+   const rem_w = Math.max(0, w - (ww + (2 * tube_face)));
+   const sideCols = Math.max(0, cols - 1);
+   const inner_h = sideCols > 0 ? (rem_w - ((sideCols + 1) * tube_face)) / sideCols : 0;
+
+   out += "-----------------------------------\n";
+   out += "1. PARTITION FRAME CUTTING SIZES\n";
+   out += "-----------------------------------\n";
+   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
+   out += `> Window Bay Vertical Posts (${tube_label}): ${disp(inter_v)} (2 pc)\n`;
+   out += `> Outer Top Horizontal (${tube_label}): ${disp(outer_h_top)} (1 pc)\n`;
+   out += `> Window Sill & Lintel Transoms (${tube_label}): ${disp(ww)} (2 pc)\n`;
+   pt_buckets[sg_key].push(outer_v, outer_v, outer_h_top);
+   pt_buckets[dg_key].push(inter_v, inter_v, ww, ww);
+   if (sideCols > 0) {
+     out += `> Side Partition Base & Transoms (${tube_label}): ${disp(inner_h)} (${sideCols * rows} pc)\n`;
+     for (let i = 0; i < sideCols * rows; i++) pt_buckets[dg_key].push(inner_h);
+   }
+
+   out += "\n-----------------------------------\n";
+   out += `2. WINDOW CUTTING (${winSysLabel.toUpperCase()})\n`;
+   out += "-----------------------------------\n";
+   let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
+   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
+
+   if (winSys === 'H_OPEN_1' || winSys === 'H_OPEN_2') {
+     // Partition H-Section Openable Window (NO 40-series frame; uses H-Section Sash inside Partition opening!)
+     const leaves = (winSys === 'H_OPEN_2') ? 2 : 1;
+     const sash_h = Math.max(4.0, wh - 0.25);
+     const sash_w = (leaves === 2) ? Math.max(4.0, (ww - 0.375) / 2.0) : Math.max(4.0, ww - 0.25);
+     const wg_h = Math.max(3.0, sash_h - (2 * hSecFace) + 0.5);
+     const wg_w = Math.max(3.0, sash_w - (2 * hSecFace) + 0.5);
+
+     if (!pt_buckets["H-Section Window Sash"]) pt_buckets["H-Section Window Sash"] = [];
+     for (let l = 0; l < leaves; l++) {
+       pt_buckets["H-Section Window Sash"].push(sash_h, sash_h, sash_w, sash_w);
+     }
+     out += `> H-Section Sash Verticals: ${disp(sash_h)} (${2 * leaves} pc)\n`;
+     out += `> H-Section Sash Horizontals: ${disp(sash_w)} (${2 * leaves} pc)\n`;
+     out += `> Window Glass (${pt_gspec}): ${disp(wg_h)} x ${disp(wg_w)} (${leaves} pc)\n`;
+     pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition H-Sec Window) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition H-Sec Window) || ${pt_gspec}`] || 0) + leaves;
+     totalGlassPcs += leaves;
+     totalGlassAreaSqFt += (wg_h * wg_w * leaves) / 144.0;
+     out += `> Hardware: H-Section Hinges (${2 * leaves} pc), Window Handle (${leaves} pc), Stay / Catcher (${leaves} Set)\n`;
+   } else {
+     // 2-Track / 3-Track / 4-Track Sliding Window fitted inside Partition opening!
+     const tracks = winSys === 'SLIDE_4T' ? 4 : (winSys === 'SLIDE_3T' ? 3 : 2);
+     const hasJali = (winSys === 'SLIDE_3T');
+     const glassPanes = hasJali ? 2 : tracks;
+     const sl_outer_v = wh;
+     const sl_outer_h = ww - 0.75;
+     const sl_sash_h = Math.max(4.0, wh - 2.25);
+     const overlap = (tracks === 2) ? 1.5 : (tracks === 3 ? 2.5 : 3.5);
+     const sl_sash_w = Math.max(4.0, ((ww - 1.5) + overlap) / tracks);
+     const wg_h = Math.max(3.0, sl_sash_h - 3.25);
+     const wg_w = Math.max(3.0, sl_sash_w - 2.0);
+
+     const trKey = `${tracks}-Track Sliding Outer`;
+     if (!pt_buckets[trKey]) pt_buckets[trKey] = [];
+     if (!pt_buckets["Sliding Sash (Handle/Bearing)"]) pt_buckets["Sliding Sash (Handle/Bearing)"] = [];
+     pt_buckets[trKey].push(sl_outer_v, sl_outer_v, sl_outer_h, sl_outer_h);
+     for (let t = 0; t < tracks; t++) {
+       pt_buckets["Sliding Sash (Handle/Bearing)"].push(sl_sash_h, sl_sash_h, sl_sash_w, sl_sash_w);
+     }
+     out += `> ${tracks}-Track Outer Top/Bottom: ${disp(sl_outer_h)} (2 pc) | Sides: ${disp(sl_outer_v)} (2 pc)\n`;
+     out += `> Sliding Handle/Interlock Vert: ${disp(sl_sash_h)} (${2 * tracks} pc) | Bearing Top/Bot: ${disp(sl_sash_w)} (${2 * tracks} pc)\n`;
+     out += `> Sliding Window Glass (${pt_gspec}): ${disp(wg_h)} x ${disp(wg_w)} (${glassPanes} pc)\n`;
+     pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition ${tracks}T Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition ${tracks}T Window Glass) || ${pt_gspec}`] || 0) + glassPanes;
+     totalGlassPcs += glassPanes;
+     totalGlassAreaSqFt += (wg_h * wg_w * glassPanes) / 144.0;
+     if (hasJali) {
+       out += `> Sliding Mosquito Jali / Mesh Shutter: ${disp(wg_h)} x ${disp(wg_w)} (1 pc)\n`;
+     }
+   }
+
+   // Below-window Sill ACP & Above-window Lintel Glass/ACP inside the Window Bay
+   const botAcpH = Math.max(4.0, winSill - bot_face - tube_face - 0.25);
+   const topBayH = Math.max(4.0, h - winSill - wh - (2 * tube_face) - 0.25);
+   const bayW = Math.max(4.0, ww - 0.25);
+   out += `\n--- WINDOW BAY TOP & BOTTOM PANELS ---\n`;
+   out += `> [Below Window - ACP Board]: ${disp(botAcpH)} x ${disp(bayW)} (1 pc)\n`;
+   out += `> [Above Window - Glass (${pt_gspec})]: ${disp(topBayH)} x ${disp(bayW)} (1 pc)\n`;
+   totalAcpPcs += 1;
+   totalAcpAreaSqFt += (botAcpH * bayW) / 144.0;
+   pt_acp_list.push({ rowTag: 'Win Sill ACP', cutStr: `${disp(botAcpH)} x ${disp(bayW)}`, h_in: botAcpH, w_in: bayW, qty: 1, buyLabel: '', areaSqFt: (botAcpH * bayW) / 144.0 });
+   pt_glass_dict[`${disp(topBayH)} x ${disp(bayW)} (Above Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(topBayH)} x ${disp(bayW)} (Above Window Glass) || ${pt_gspec}`] || 0) + 1;
+   totalGlassPcs += 1;
+   totalGlassAreaSqFt += (topBayH * bayW) / 144.0;
+
+   // Side partition columns (if wall width > window width)
+   if (sideCols > 0 && inner_h > 4.0) {
+     const cut_w = Math.max(4.0, inner_h - 0.25);
+     for (let r = rows - 1; r >= 0; r--) {
+       const rName = getRowShortEnglishName(r, rows);
+       const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
+       const rH = rowHeights[r];
+       if (rMat === 'ACP') {
+         const acp_h = Math.max(2.0, rH - 0.25);
+         out += `> [Side ${rName} - ACP]: ${disp(acp_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
+         totalAcpPcs += sideCols;
+         totalAcpAreaSqFt += (acp_h * cut_w * sideCols) / 144.0;
+         pt_acp_list.push({ rowTag: 'Side ACP', cutStr: `${disp(acp_h)} x ${disp(cut_w)}`, h_in: acp_h, w_in: cut_w, qty: sideCols, buyLabel: '', areaSqFt: (acp_h * cut_w * sideCols) / 144.0 });
+       } else {
+         const g_h = Math.max(2.0, rH - 0.25);
+         out += `> [Side ${rName} - Glass]: ${disp(g_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
+         totalGlassPcs += sideCols;
+         totalGlassAreaSqFt += (g_h * cut_w * sideCols) / 144.0;
+         pt_glass_dict[`${disp(g_h)} x ${disp(cut_w)} (Side ${rName}) || ${pt_gspec}`] = (pt_glass_dict[`${disp(g_h)} x ${disp(cut_w)} (Side ${rName}) || ${pt_gspec}`] || 0) + sideCols;
+       }
+     }
+   }
+   out += `\n• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF + QR\n`;
+   if (totalAcpPcs > 0) {
+     out += `• TOTAL ACP CUT PIECES: ${totalAcpPcs} Pcs (${totalAcpAreaSqFt.toFixed(1)} Sq.Ft)\n`;
+   }
  } else {
    // Door + Partition Mode
    const raw_dh = safeEval(document.getElementById('pt_dh').value);
@@ -6453,15 +6649,100 @@ function clearCustomSeries() {
         doc.setFont('courier', 'bold');
         doc.setFontSize(7.6);
         doc.setTextColor(15, 118, 110);
-        const wrappedCode = doc.splitTextToSize(`ORDER CODE: ${orderQrPayload}`, pageW - textX - 18);
-        doc.text(wrappedCode.slice(0, 2), textX, boxY + 34);
+        const shortId = generateShortGlassOrderId(orderQrPayload);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(2, 132, 199);
+        doc.text(`4-DIGIT ORDER CODE: ${shortId}`, textX, boxY + 34);
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(6.8);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Type '${shortId}' in Glass Cutting -> ENTER 4-DIGIT CODE (or Scan QR)`, textX, boxY + 39.5);
     }
 
     doc.save(`${filename}_${Date.now()}.pdf`);
 }
 // ============================================================================
-// B2B FABRICATOR-TO-GLASS-SHOP SMART QR BRIDGE (SWG|...)
+// B2B FABRICATOR-TO-GLASS-SHOP SMART QR & 4-DIGIT SHORT CODE BRIDGE
 // ============================================================================
+window.lastGeneratedGlassOrderCode = '';
+window.lastGeneratedShortOrderId = '';
+
+function generateShortGlassOrderId(swgPayload) {
+    // Deterministic 4-digit code (1000-9999) from payload so same order gets same 4-digit code
+    let hash = 0;
+    const s = String(swgPayload || Date.now());
+    for (let i = 0; i < s.length; i++) {
+        hash = ((hash << 5) - hash) + s.charCodeAt(i);
+        hash |= 0;
+    }
+    const num = 1000 + (Math.abs(hash) % 9000);
+    return String(num);
+}
+
+function saveShortGlassOrderToCloud(shortId, swgPayload) {
+    if (!shortId || !swgPayload) return;
+    window.lastGeneratedShortOrderId = shortId;
+    window.lastGeneratedGlassOrderCode = swgPayload;
+    // 1. Save locally
+    try {
+        const map = JSON.parse(localStorage.getItem('sw_short_glass_orders') || '{}');
+        map[shortId] = { payload: swgPayload, ts: Date.now() };
+        localStorage.setItem('sw_short_glass_orders', JSON.stringify(map));
+    } catch (e) {}
+    // 2. Save to Firebase Firestore & RTDB so another phone can fetch with just 4 digits!
+    try {
+        const db = window.fbDb || (window.firebase && firebase.apps.length ? firebase.firestore() : null);
+        if (db) {
+            db.collection('glass_orders').doc(shortId).set({
+                code: shortId,
+                payload: swgPayload,
+                createdAt: Date.now()
+            }).catch(() => {});
+        }
+    } catch (e) {}
+    try {
+        const rtdb = window.fbRtdb || (window.firebase && firebase.apps.length && firebase.database ? firebase.database() : null);
+        if (rtdb) {
+            rtdb.ref('glass_orders/' + shortId).set({
+                code: shortId,
+                payload: swgPayload,
+                createdAt: Date.now()
+            }).catch(() => {});
+        }
+    } catch (e) {}
+}
+
+async function fetchShortGlassOrderFromCloud(shortId) {
+    const cleanId = String(shortId || '').toUpperCase().replace(/^SW[-_]?/i, '').trim();
+    if (!cleanId) return null;
+    // 1. Check localStorage first
+    try {
+        const map = JSON.parse(localStorage.getItem('sw_short_glass_orders') || '{}');
+        if (map[cleanId] && map[cleanId].payload) return map[cleanId].payload;
+    } catch (e) {}
+    // 2. Check Firebase Firestore
+    try {
+        const db = window.fbDb || (window.firebase && firebase.apps.length ? firebase.firestore() : null);
+        if (db) {
+            const snap = await db.collection('glass_orders').doc(cleanId).get();
+            if (snap.exists && snap.data() && snap.data().payload) {
+                return snap.data().payload;
+            }
+        }
+    } catch (e) {}
+    // 3. Check Firebase RTDB
+    try {
+        const rtdb = window.fbRtdb || (window.firebase && firebase.apps.length && firebase.database ? firebase.database() : null);
+        if (rtdb) {
+            const snap = await rtdb.ref('glass_orders/' + cleanId).once('value');
+            const val = snap.val();
+            if (val && val.payload) return val.payload;
+        }
+    } catch (e) {}
+    return null;
+}
+
 function parseGlassKeyDimensionToInch(dimToken) {
     if (!dimToken) return 0;
     const s = String(dimToken).trim();
@@ -6535,11 +6816,13 @@ function buildGlassOrderQrPayload(title, glassDict, sheetSizeCode) {
         const tagCode = it.tag ? `@${it.tag.slice(0, 10)}` : '';
         return `${hStr}x${wStr}*${it.qty}${specCode}${tagCode}`;
     });
-    return `SWG|${shortTitle}|${firstSpec}|${itemTokens.join(';')}`;
+    const payload = `SWG|${shortTitle}|${firstSpec}|${itemTokens.join(';')}`;
+    const shortId = generateShortGlassOrderId(payload);
+    saveShortGlassOrderToCloud(shortId, payload);
+    return payload;
 }
 
 function buildGlassOrderQrPayloadFromBillItems(billItemsList, customerName) {
-    // If gc_items_list already has exact glass pieces and bill came from Glass Cutting, use those exact pieces
     const dict = {};
     const dispInch = (v) => (typeof toFractionInch === 'function' ? toFractionInch(v) : (v + '"'));
     (billItemsList || []).forEach((itm, idx) => {
@@ -6561,7 +6844,6 @@ function buildGlassOrderQrPayloadFromBillItems(billItemsList, customerName) {
         const qty = Math.max(1, parseInt(itm.qty, 10) || 1);
         const typeStr = String(itm.type || '');
         const tag = (itm.location || typeStr.split(' ')[0] || ('G' + (idx + 1))).slice(0, 10);
-        // Derive shutter glass dimensions if it's a 2-Track / 3-Track / 4-Track Sliding or Domal window
         if (typeStr.includes('3-Track')) {
             const gh = Math.max(4, parseFloat((hIn - 4.5).toFixed(2)));
             const gw = Math.max(4, parseFloat(((wIn - 3.0) / 3.0).toFixed(2)));
@@ -6586,17 +6868,18 @@ function buildGlassOrderQrPayloadFromBillItems(billItemsList, customerName) {
     return buildGlassOrderQrPayload(customerName || 'BILL ORDER', dict, stockCode);
 }
 
-window.lastGeneratedGlassOrderCode = '';
-
 function shareGlassOrderCodeWhatsApp(orderCode, title) {
     const code = orderCode || window.lastGeneratedGlassOrderCode;
     if (!code) {
         alert('Please calculate or generate a Glass Cutting list first.');
         return;
     }
+    const shortId = generateShortGlassOrderId(code);
+    saveShortGlassOrderToCloud(shortId, code);
     const parsed = parseSwgOrderPayload(code);
     if (!parsed) return;
     let msg = `*SMART WORKER PRO - GLASS & 4'x8' SHEET ORDER*\n`;
+    msg += `*ORDER CODE:* *${shortId}* (Just 4 Digits!)\n`;
     msg += `*Job / Party:* ${parsed.title || title || 'Glass Order'}\n`;
     msg += `*Glass Spec:* ${parsed.defaultSpec || '5 mm Clear'} | *Sheet:* ${parsed.sheetSizeCode || '96x48'}\n`;
     msg += `--------------------------------\n`;
@@ -6609,8 +6892,7 @@ function shareGlassOrderCodeWhatsApp(orderCode, title) {
     });
     msg += `--------------------------------\n`;
     msg += `*Total Glass:* ${totalPcs} Pcs\n\n`;
-    msg += `*1-Click Glass Fabricator Auto-Load Code (Scan QR on Bill/Sheet PDF or Paste in Smart Worker Pro -> Glass Cutting):*\n`;
-    msg += `${code}`;
+    msg += `*Open Smart Worker Pro -> Glass Cutting -> Tap "ENTER 4-DIGIT CODE" and type:* *${shortId}*`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -6667,10 +6949,22 @@ function parseSwgOrderPayload(rawText) {
     return { title, defaultSpec, sheetSizeCode, items, rawCode: cleanLine };
 }
 
-function importGlassOrderQrPayload(rawText) {
-    const parsed = parseSwgOrderPayload(rawText);
+async function importGlassOrderQrPayload(rawText) {
+    let textInput = String(rawText || '').trim();
+    // If user typed a short 4-digit Order Code (like "4829" or "SW-4829"), fetch from Firebase / localStorage!
+    if (textInput && !textInput.includes('SWG|') && /^(SW[-_]?)?[0-9]{4,6}$/i.test(textInput)) {
+        const fetched = await fetchShortGlassOrderFromCloud(textInput);
+        if (fetched) {
+            textInput = fetched;
+        } else {
+            alert('4-Digit Order Code "' + textInput + '" not found. Please check internet connection or scan the QR Code.');
+            return false;
+        }
+    }
+
+    const parsed = parseSwgOrderPayload(textInput);
     if (!parsed) {
-        alert('Invalid Glass Order QR / Code. Please scan a valid Smart Worker Pro Bill / Sheet / Glass PDF QR Code (starts with SWG|...).');
+        alert('Invalid Order Code. Enter the 4-digit Order Code (e.g. 4829) or scan the QR Code from the PDF.');
         return false;
     }
     const gcScreen = document.getElementById('screen-glass_cutting');
@@ -6678,7 +6972,6 @@ function importGlassOrderQrPayload(rawText) {
         if (typeof openScreen === 'function') openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)');
         else if (typeof navTo === 'function') navTo('glass_cutting');
     }
-    // Set Stock Sheet Size selector (96x48, 72x48, etc.)
     if (parsed.sheetSizeCode) {
         const sheetSel = document.getElementById('gc_sheet_size');
         if (sheetSel) {
@@ -6724,14 +7017,16 @@ function importGlassOrderQrPayload(rawText) {
         is_mm: false,
         cutStr: dispInch(it.h_in) + ' x ' + dispInch(it.w_in)
     }));
+    const shortId = generateShortGlassOrderId(parsed.rawCode);
     window.lastGeneratedGlassOrderCode = parsed.rawCode;
+    window.lastGeneratedShortOrderId = shortId;
     recalculateGlassCuttingSheets();
 
     const banner = document.getElementById('gc_qr_import_status');
     const totalPcs = parsed.items.reduce((s, i) => s + i.qty, 0);
     if (banner) {
         banner.style.display = 'block';
-        banner.innerHTML = `<i class="fa-solid fa-circle-check"></i> <b>Auto-Loaded Sheet & Glass Details:</b> ${parsed.title} (${parsed.items.length} sizes, <b>${totalPcs} Pcs</b> of ${parsed.defaultSpec} on Sheet ${parsed.sheetSizeCode.replace('x', '"x') + '"'}) — Complete Cutting Diagram & Summary Loaded Below!`;
+        banner.innerHTML = `<i class="fa-solid fa-circle-check"></i> <b>Auto-Loaded Order #${shortId}:</b> ${parsed.title} (${parsed.items.length} sizes, <b>${totalPcs} Pcs</b> of ${parsed.defaultSpec}) — 4'x8' Cutting Chart Ready!`;
     }
     const layoutBox = document.getElementById('gc_sheet_layout_box');
     if (layoutBox) layoutBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -6739,15 +7034,15 @@ function importGlassOrderQrPayload(rawText) {
 }
 
 function promptImportGlassOrderCode() {
-    const prefill = window.lastGeneratedGlassOrderCode || '';
-    const input = prompt('Paste or Enter the Fabricator Bill / Sheet QR Code (starts with SWG|...):', prefill);
+    const prefill = window.lastGeneratedShortOrderId || '';
+    const input = prompt('Enter the 4-Digit Order Code printed on the PDF (e.g. 4829):', prefill);
     if (!input) return;
     importGlassOrderQrPayload(input);
 }
 
 function shareCurrentGlassListToCutterWhatsApp() {
     if (!gc_items_list || !gc_items_list.length) {
-        alert('Please add glass sizes (+ CALCULATE) or scan a Bill/Sheet QR first.');
+        alert('Please add glass sizes (+ CALCULATE) or enter a 4-Digit Order Code first.');
         return;
     }
     const gType = document.getElementById('gc_g_type')?.value || 'Clear';
@@ -6763,7 +7058,6 @@ function shareCurrentGlassListToCutterWhatsApp() {
     });
     const stockCode = document.getElementById('gc_sheet_size')?.value || '96x48';
     const code = buildGlassOrderQrPayload('SHEET ORDER', dict, stockCode);
-    window.lastGeneratedGlassOrderCode = code;
     shareGlassOrderCodeWhatsApp(code, 'GLASS SHEET CUTTING ORDER');
 }
 
@@ -6792,30 +7086,39 @@ async function startGlassOrderQrScanner() {
         });
         video.srcObject = gcQrScannerStream;
         await video.play();
-        if ('BarcodeDetector' in window) {
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            const scanLoop = async () => {
-                if (!gcQrScannerStream) return;
-                try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const scanLoop = async () => {
+            if (!gcQrScannerStream) return;
+            try {
+                if ('BarcodeDetector' in window) {
+                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
                     const codes = await detector.detect(video);
-                    if (codes && codes.length > 0) {
-                        const raw = codes[0].rawValue || '';
-                        if (raw.includes('SWG|')) {
-                            stopGlassOrderQrScanner();
-                            importGlassOrderQrPayload(raw);
-                            return;
-                        }
+                    if (codes && codes.length > 0 && codes[0].rawValue) {
+                        stopGlassOrderQrScanner();
+                        importGlassOrderQrPayload(codes[0].rawValue);
+                        return;
                     }
-                } catch (e) {}
-                if (gcQrScannerStream) requestAnimationFrame(scanLoop);
-            };
-            requestAnimationFrame(scanLoop);
-        } else {
-            alert('Camera opened! If your phone browser does not auto-detect QR in live video, tap "PASTE ORDER CODE" or "SCAN FROM IMAGE" right next to it.');
-        }
+                }
+                if (typeof jsQR === 'function' && video.videoWidth > 0) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imgData.data, imgData.width, imgData.height);
+                    if (code && code.data) {
+                        stopGlassOrderQrScanner();
+                        importGlassOrderQrPayload(code.data);
+                        return;
+                    }
+                }
+            } catch (e) {}
+            if (gcQrScannerStream) requestAnimationFrame(scanLoop);
+        };
+        requestAnimationFrame(scanLoop);
     } catch (err) {
         box.style.display = 'none';
-        alert('Camera permission denied or unavailable. You can use "PASTE ORDER CODE" or "SCAN FROM IMAGE" instead.');
+        alert('Camera permission denied or unavailable. Please tap "ENTER 4-DIGIT CODE" and type the 4-digit code printed on the PDF.');
     }
 }
 
@@ -6823,19 +7126,37 @@ async function scanGlassQrFromImageFile(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
     try {
+        const bmp = await createImageBitmap(file);
         if ('BarcodeDetector' in window) {
-            const bmp = await createImageBitmap(file);
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            const codes = await detector.detect(bmp);
-            if (codes && codes.length > 0 && codes[0].rawValue) {
-                importGlassOrderQrPayload(codes[0].rawValue);
+            try {
+                const detector = new BarcodeDetector({ formats: ['qr_code'] });
+                const codes = await detector.detect(bmp);
+                if (codes && codes.length > 0 && codes[0].rawValue) {
+                    importGlassOrderQrPayload(codes[0].rawValue);
+                    event.target.value = '';
+                    return;
+                }
+            } catch (e) {}
+        }
+        if (typeof jsQR === 'function') {
+            const canvas = document.createElement('canvas');
+            const maxDim = 1600;
+            const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+            canvas.width = Math.round(bmp.width * scale);
+            canvas.height = Math.round(bmp.height * scale);
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imgData.data, imgData.width, imgData.height);
+            if (code && code.data) {
+                importGlassOrderQrPayload(code.data);
                 event.target.value = '';
                 return;
             }
         }
-        alert('Could not detect a QR code directly from that image on this browser. Please tap "PASTE ORDER CODE" and paste the SWG|... code printed below the QR on the Bill/Sheet PDF or WhatsApp message.');
+        alert('Could not read QR from that screenshot. Simply tap "ENTER 4-DIGIT CODE" and type the 4-digit code (e.g. 4829) printed next to the QR!');
     } catch (err) {
-        alert('Please use "PASTE ORDER CODE" to paste the SWG|... code from the Bill/Sheet PDF.');
+        alert('Please tap "ENTER 4-DIGIT CODE" and type the 4-digit code printed on the PDF.');
     }
     event.target.value = '';
 }
@@ -8449,8 +8770,11 @@ function autofillCustomer() {
       doc.setFont("courier", "bold");
       doc.setFontSize(6.6);
       doc.setTextColor(15, 118, 110);
-      const codeLines = doc.splitTextToSize("ORDER CODE: " + billSwgPayload, 182 - (tx - 14) - 4);
-      doc.text(codeLines.slice(0, 2), tx, qrBoxY + 23);
+      const billShortId = generateShortGlassOrderId(billSwgPayload);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(2, 132, 199);
+      doc.text("4-DIGIT ORDER CODE: " + billShortId + "  (Type in Glass Cutting)", tx, qrBoxY + 25);
     }
   } catch (err) {}
 
@@ -11996,7 +12320,7 @@ function acceptAndClosePrivacyLegalModal() {
               <i class="fa-solid fa-image"></i> <span>SCAN FROM IMAGE</span>
             </button>
             <button type="button" class="action-btn" style="background:#4f46e5; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="promptImportGlassOrderCode()">
-              <i class="fa-solid fa-paste"></i> <span>PASTE ORDER CODE</span>
+              <i class="fa-solid fa-paste"></i> <span>ENTER 4-DIGIT CODE</span>
             </button>
             <button type="button" class="action-btn" style="background:#0d9488; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="shareCurrentGlassListToCutterWhatsApp()">
               <i class="fa-brands fa-whatsapp"></i> <span>SEND TO CUTTER</span>
@@ -12024,7 +12348,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v76') === -1) caches.delete(k);
+                if (k.indexOf('v78') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPartitionRowBuilder(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
