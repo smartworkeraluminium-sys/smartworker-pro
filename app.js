@@ -1996,10 +1996,26 @@ var pt_row_configs = [
   { mat: 'ACP', h_val: 15.0 }    // Row 3 (Top)
 ];
 
+var dr_row_configs = [
+  { mat: 'ACP', h_val: 30.0 },   // Part 1 (Bottom)
+  { mat: 'GLASS', h_val: 0 }     // Part 2 (Top - 0 means Auto Remaining)
+];
+
+function getMatButtonStyle(mat) {
+  if (mat === 'ACP') return { bg: '#ea580c', icon: 'fa-layer-group', label: 'ACP Board', boxBg: '#fed7aa', boxFg: '#9a3412', boxBd: '#ea580c', shortLbl: 'ACP' };
+  if (mat === 'JALI') return { bg: '#16a34a', icon: 'fa-Table-cells', label: 'Jali / Mesh', boxBg: '#bbf7d0', boxFg: '#14532d', boxBd: '#16a34a', shortLbl: 'JALI / MESH' };
+  return { bg: '#0284c7', icon: 'fa-border-all', label: 'Glass', boxBg: '#bae6fd', boxFg: '#0369a1', boxBd: '#0284c7', shortLbl: 'GLASS' };
+}
+
+function nextPanelMaterial(curr) {
+  if (curr === 'GLASS') return 'ACP';
+  if (curr === 'ACP') return 'JALI';
+  return 'GLASS';
+}
+
 function ensurePtRowConfigsCount(numRows) {
   numRows = Math.max(1, Math.min(8, parseInt(numRows) || 3));
   while (pt_row_configs.length < numRows) {
-    // Insert new middle glass rows before the top row
     var topItem = pt_row_configs.pop() || { mat: 'ACP', h_val: 15.0 };
     pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
     pt_row_configs.push(topItem);
@@ -2012,18 +2028,31 @@ function ensurePtRowConfigsCount(numRows) {
 function applyQuickPartitionPattern(mode) {
   var rowsEl = document.getElementById('pt_rows');
   var numRows = rowsEl ? Math.max(1, parseInt(rowsEl.value) || 3) : 3;
+  if (mode === 'CUSTOM_ROWS') {
+    renderPartitionRowBuilder();
+    return;
+  }
   pt_row_configs = [];
   for (var r = 0; r < numRows; r++) {
     if (mode === 'EQUAL_DIVIDE') {
       pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
     } else if (mode === 'ALL_ACP') {
       pt_row_configs.push({ mat: 'ACP', h_val: 0 });
+    } else if (mode === 'ALL_JALI') {
+      pt_row_configs.push({ mat: 'JALI', h_val: 0 });
+    } else if (mode === 'TOP_JALI_MID_GLASS_BOT_ACP') {
+      if (r === 0) pt_row_configs.push({ mat: 'ACP', h_val: 30.0 });
+      else if (r === numRows - 1) pt_row_configs.push({ mat: 'JALI', h_val: numRows >= 3 ? 15.0 : 0 });
+      else pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
+    } else if (mode === 'TOP_MID_JALI_BOT_ACP') {
+      if (r === 0) pt_row_configs.push({ mat: 'ACP', h_val: 30.0 });
+      else pt_row_configs.push({ mat: 'JALI', h_val: (r === numRows - 1 && numRows >= 3) ? 15.0 : 0 });
     } else if (mode === 'BOT_TOP_ACP') {
       if (r === 0) pt_row_configs.push({ mat: 'ACP', h_val: 30.0 });
       else if (r === numRows - 1 && numRows >= 3) pt_row_configs.push({ mat: 'ACP', h_val: 15.0 });
       else pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
     } else {
-      // OPTIMIZED_4X8: Bottom ACP, rest Glass (Top Glass min 14"-15")
+      // OPTIMIZED_4X8: Bottom ACP, rest Glass
       if (r === 0) pt_row_configs.push({ mat: 'ACP', h_val: 30.0 });
       else if (r === numRows - 1 && numRows >= 3) pt_row_configs.push({ mat: 'GLASS', h_val: 15.0 });
       else pt_row_configs.push({ mat: 'GLASS', h_val: 0 });
@@ -2034,10 +2063,11 @@ function applyQuickPartitionPattern(mode) {
 
 function togglePtRowMaterial(rIdx) {
   if (!pt_row_configs[rIdx]) return;
-  pt_row_configs[rIdx].mat = (pt_row_configs[rIdx].mat === 'ACP') ? 'GLASS' : 'ACP';
+  pt_row_configs[rIdx].mat = nextPanelMaterial(pt_row_configs[rIdx].mat);
   var pm = document.getElementById('pt_panel_mode');
   if (pm) pm.value = 'CUSTOM_ROWS';
   renderPartitionRowBuilder();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
 }
 
 function updatePtRowHeightInput(rIdx, valStr) {
@@ -2065,15 +2095,13 @@ function getRowShortEnglishName(rIdx, totalRows) {
   return 'Middle Row ' + (rIdx + 1);
 }
 
-// Computes the resolved clear opening height (in inches) for each row [0 .. numRows-1]
-function resolvePartitionRowHeights(total_open_h, numRows, cut_w) {
-  ensurePtRowConfigsCount(numRows);
+function resolveRowHeightsGeneric(configsList, total_open_h, numRows) {
   var heights = new Array(numRows).fill(0);
   var autoIndices = [];
   var usedFixed = 0;
 
   for (var r = 0; r < numRows; r++) {
-    var cfg = pt_row_configs[r];
+    var cfg = configsList[r] || { mat: 'GLASS', h_val: 0 };
     var hVal = Number(cfg.h_val) || 0;
     if (hVal > 0 && numRows > 1) {
       heights[r] = hVal;
@@ -2083,34 +2111,40 @@ function resolvePartitionRowHeights(total_open_h, numRows, cut_w) {
     }
   }
 
-  // If fixed heights exceed or leave < 8" per auto row, scale or auto-adjust
-  var minPerAuto = 12.25;
+  var minPerAuto = 10.0;
   var remH = total_open_h - usedFixed;
   if (autoIndices.length > 0 && remH < (autoIndices.length * minPerAuto)) {
-    // Re-balance so top row is at least 12.25" (1 ft) and middle row gets comfortable space
     if (numRows >= 3 && heights[numRows - 1] > 0 && heights[0] > 0) {
-      heights[numRows - 1] = Math.max(12.25, Math.min(heights[numRows - 1], total_open_h * 0.20));
+      heights[numRows - 1] = Math.max(10.0, Math.min(heights[numRows - 1], total_open_h * 0.22));
       heights[0] = Math.min(heights[0], total_open_h * 0.38);
       usedFixed = 0;
       for (var i = 0; i < numRows; i++) {
         if (autoIndices.indexOf(i) === -1) usedFixed += heights[i];
       }
-      remH = Math.max(autoIndices.length * 10.0, total_open_h - usedFixed);
+      remH = Math.max(autoIndices.length * 8.0, total_open_h - usedFixed);
+    } else if (numRows === 2 && heights[0] > total_open_h * 0.7) {
+      heights[0] = Math.round(total_open_h * 0.42);
+      usedFixed = heights[0];
+      remH = Math.max(8.0, total_open_h - usedFixed);
     }
   }
 
   if (autoIndices.length > 0) {
-    var eachAuto = Math.max(6.0, remH / autoIndices.length);
+    var eachAuto = Math.max(5.0, remH / autoIndices.length);
     autoIndices.forEach(function(idx) {
       heights[idx] = eachAuto;
     });
   } else if (numRows > 0 && Math.abs(usedFixed - total_open_h) > 0.1) {
-    // All rows had fixed numbers typed: give any difference to the middle row (or top row) so total matches wall height!
     var midIdx = Math.floor(numRows / 2);
-    heights[midIdx] = Math.max(8.0, heights[midIdx] + (total_open_h - usedFixed));
+    heights[midIdx] = Math.max(6.0, heights[midIdx] + (total_open_h - usedFixed));
   }
 
   return heights;
+}
+
+function resolvePartitionRowHeights(total_open_h, numRows, cut_w) {
+  ensurePtRowConfigsCount(numRows);
+  return resolveRowHeightsGeneric(pt_row_configs, total_open_h, numRows);
 }
 
 function renderPartitionRowBuilder() {
@@ -2121,20 +2155,17 @@ function renderPartitionRowBuilder() {
   ensurePtRowConfigsCount(numRows);
 
   var html = '';
-  // Display from Top Row (numRows - 1) down to Bottom Row (0) so it matches the physical wall from Top to Bottom!
   for (var r = numRows - 1; r >= 0; r--) {
     var cfg = pt_row_configs[r];
-    var isAcp = (cfg.mat === 'ACP');
-    var btnBg = isAcp ? '#ea580c' : '#0284c7';
-    var btnIcon = isAcp ? 'fa-layer-group' : 'fa-border-all';
+    var st = getMatButtonStyle(cfg.mat);
     var rowLabel = getRowShortEnglishName(r, numRows);
     var hValStr = (cfg.h_val && cfg.h_val > 0) ? String(cfg.h_val) : '';
     var placeholderTxt = (cfg.h_val && cfg.h_val > 0) ? '' : 'Auto Height';
 
-    html += '<div style="display:grid; grid-template-columns: 1.25fr 1fr 1fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
-    html += '<div style="font-size:0.76rem; font-weight:800; color:#0f172a;">' + rowLabel + '</div>';
-    html += '<button type="button" onclick="togglePtRowMaterial(' + r + ')" style="background:' + btnBg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">';
-    html += '<i class="fa-solid ' + btnIcon + '"></i> <span>' + (isAcp ? 'ACP Board' : 'Glass') + '</span>';
+    html += '<div style="display:grid; grid-template-columns: 1.2fr 1.05fr 0.95fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
+    html += '<div style="font-size:0.75rem; font-weight:800; color:#0f172a;">' + rowLabel + '</div>';
+    html += '<button type="button" onclick="togglePtRowMaterial(' + r + ')" style="background:' + st.bg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.74rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">';
+    html += '<i class="fa-solid ' + st.icon.toLowerCase() + '"></i> <span>' + st.label + '</span>';
     html += '</button>';
     html += '<div style="display:flex; align-items:center; gap:3px;">';
     html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" oninput="updatePtRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
@@ -2169,27 +2200,193 @@ function renderPartitionWallVisualOnly() {
   var inner_w = Math.max(6, (w_in - ((numCols + 1) * tube_face)) / numCols);
   var rowHeights = resolvePartitionRowHeights(total_open_h, numRows, inner_w - 0.25);
 
-  var html = '<div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between;">';
-  html += '<span>LIVE PARTITION WALL PREVIEW (' + numCols + ' Cols x ' + numRows + ' Rows)</span>';
-  html += '<span style="color:#0284c7;">Tap any row to switch Glass / ACP</span>';
+  var html = '<div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">';
+  html += '<span>LIVE PARTITION PREVIEW (' + numCols + ' Cols x ' + numRows + ' Rows)</span>';
+  html += '<span style="color:#0284c7;">Tap row: Glass ➔ ACP ➔ Jali / Mesh</span>';
   html += '</div>';
 
   html += '<div style="display:flex; flex-direction:column; gap:3px; background:#334155; padding:5px; border-radius:6px;">';
   for (var r = numRows - 1; r >= 0; r--) {
     var cfg = pt_row_configs[r];
-    var isAcp = (cfg.mat === 'ACP');
+    var st = getMatButtonStyle(cfg.mat);
     var rh = rowHeights[r];
     var cutH = Math.max(1, rh - 0.25);
     var cutW = Math.max(1, inner_w - 0.25);
-    var bg = isAcp ? '#fed7aa' : '#bae6fd';
-    var fg = isAcp ? '#9a3412' : '#0369a1';
-    var bd = isAcp ? '#ea580c' : '#0284c7';
+    var meshBg = (cfg.mat === 'JALI')
+      ? 'repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 4px, #86efac 4px, #86efac 8px)'
+      : st.boxBg;
 
     html += '<div onclick="togglePtRowMaterial(' + r + ')" style="display:grid; grid-template-columns: repeat(' + numCols + ', 1fr); gap:3px; cursor:pointer;">';
     for (var c = 0; c < numCols; c++) {
-      html += '<div style="background:' + bg + '; color:' + fg + '; border:1.5px solid ' + bd + '; border-radius:4px; padding:6px 2px; font-size:0.68rem; font-weight:800; text-align:center;">';
-      html += '<div>' + (isAcp ? 'ACP' : 'GLASS') + '</div>';
+      html += '<div style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; padding:6px 2px; font-size:0.68rem; font-weight:800; text-align:center;">';
+      html += '<div>' + st.shortLbl + '</div>';
       html += '<div style="font-size:0.62rem; color:#0f172a;">' + toFractionInch(cutH) + ' x ' + toFractionInch(cutW) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  prevBox.innerHTML = html;
+}
+
+// =========================================================================
+// INTERACTIVE MULTI-PART DOOR BUILDER (1 TO 6 PARTS: GLASS / ACP / JALI)
+// =========================================================================
+function ensureDrRowConfigsCount(numRows) {
+  numRows = Math.max(1, Math.min(6, parseInt(numRows) || 2));
+  while (dr_row_configs.length < numRows) {
+    var topItem = dr_row_configs.pop() || { mat: 'GLASS', h_val: 0 };
+    dr_row_configs.push({ mat: 'GLASS', h_val: 0 });
+    dr_row_configs.push(topItem);
+  }
+  if (dr_row_configs.length > numRows) {
+    dr_row_configs = dr_row_configs.slice(0, numRows);
+  }
+  var hasMidEl = document.getElementById('dr_has_mid');
+  if (hasMidEl) hasMidEl.value = (numRows > 1) ? 'yes' : 'no';
+}
+
+function getDoorPartShortName(rIdx, totalRows) {
+  if (totalRows === 1) return 'Full Door Panel';
+  if (rIdx === 0) return 'Bottom Part 1';
+  if (rIdx === totalRows - 1) return 'Top Part ' + totalRows;
+  if (totalRows === 3 && rIdx === 1) return 'Middle Part 2';
+  return 'Middle Part ' + (rIdx + 1);
+}
+
+function applyQuickDoorPattern(mode) {
+  if (mode === 'CUSTOM_ROWS') {
+    renderDoorRowBuilder();
+    return;
+  }
+  var rowsEl = document.getElementById('dr_rows');
+  var targetRows = 2;
+  if (mode.indexOf('1_') === 0) targetRows = 1;
+  else if (mode.indexOf('3_') === 0) targetRows = 3;
+  else if (mode.indexOf('2_') === 0) targetRows = 2;
+  if (rowsEl) rowsEl.value = String(targetRows);
+
+  if (mode === '2_GLASS_ACP') {
+    dr_row_configs = [{ mat: 'ACP', h_val: 30.0 }, { mat: 'GLASS', h_val: 0 }];
+  } else if (mode === '2_JALI_ACP') {
+    dr_row_configs = [{ mat: 'ACP', h_val: 30.0 }, { mat: 'JALI', h_val: 0 }];
+  } else if (mode === '3_JALI_GLASS_ACP') {
+    dr_row_configs = [{ mat: 'ACP', h_val: 30.0 }, { mat: 'GLASS', h_val: 0 }, { mat: 'JALI', h_val: 14.0 }];
+  } else if (mode === '3_ACP_GLASS_ACP') {
+    dr_row_configs = [{ mat: 'ACP', h_val: 30.0 }, { mat: 'GLASS', h_val: 0 }, { mat: 'ACP', h_val: 14.0 }];
+  } else if (mode === '3_GLASS_GLASS_ACP') {
+    dr_row_configs = [{ mat: 'ACP', h_val: 30.0 }, { mat: 'GLASS', h_val: 0 }, { mat: 'GLASS', h_val: 14.0 }];
+  } else if (mode === '3_ALL_JALI') {
+    dr_row_configs = [{ mat: 'JALI', h_val: 0 }, { mat: 'JALI', h_val: 0 }, { mat: 'JALI', h_val: 0 }];
+  } else if (mode === '2_ALL_GLASS') {
+    dr_row_configs = [{ mat: 'GLASS', h_val: 0 }, { mat: 'GLASS', h_val: 0 }];
+  } else if (mode === '1_FULL_GLASS') {
+    dr_row_configs = [{ mat: 'GLASS', h_val: 0 }];
+  } else if (mode === '1_FULL_ACP') {
+    dr_row_configs = [{ mat: 'ACP', h_val: 0 }];
+  } else if (mode === '1_FULL_JALI') {
+    dr_row_configs = [{ mat: 'JALI', h_val: 0 }];
+  }
+  renderDoorRowBuilder();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('dr');
+}
+
+function toggleDrRowMaterial(rIdx) {
+  if (!dr_row_configs[rIdx]) return;
+  dr_row_configs[rIdx].mat = nextPanelMaterial(dr_row_configs[rIdx].mat);
+  var pm = document.getElementById('dr_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderDoorRowBuilder();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('dr');
+}
+
+function updateDrRowHeightInput(rIdx, valStr) {
+  if (!dr_row_configs[rIdx]) return;
+  var v = parseFloat(valStr);
+  dr_row_configs[rIdx].h_val = (isNaN(v) || v <= 0) ? 0 : v;
+  var pm = document.getElementById('dr_panel_mode');
+  if (pm) pm.value = 'CUSTOM_ROWS';
+  renderDoorVisualOnly();
+}
+
+function renderDoorRowBuilder() {
+  var container = document.getElementById('dr_rows_builder_container');
+  if (!container) return;
+  var rowsEl = document.getElementById('dr_rows');
+  var numRows = rowsEl ? Math.max(1, Math.min(6, parseInt(rowsEl.value) || 2)) : 2;
+  ensureDrRowConfigsCount(numRows);
+
+  var midCol = document.getElementById('dr_mid_h_col');
+  if (midCol) midCol.style.opacity = (numRows > 1) ? '1' : '0.35';
+
+  var html = '';
+  for (var r = numRows - 1; r >= 0; r--) {
+    var cfg = dr_row_configs[r];
+    var st = getMatButtonStyle(cfg.mat);
+    var partLabel = getDoorPartShortName(r, numRows);
+    var hValStr = (cfg.h_val && cfg.h_val > 0 && numRows > 1) ? String(cfg.h_val) : '';
+    var placeholderTxt = (numRows === 1) ? 'Full Height' : ((cfg.h_val && cfg.h_val > 0) ? '' : 'Auto Height');
+
+    html += '<div style="display:grid; grid-template-columns: 1.2fr 1.05fr 0.95fr; gap:6px; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px;">';
+    html += '<div style="font-size:0.75rem; font-weight:800; color:#0f172a;">' + partLabel + '</div>';
+    html += '<button type="button" onclick="toggleDrRowMaterial(' + r + ')" style="background:' + st.bg + '; color:#fff; border:none; border-radius:6px; padding:6px 4px; font-size:0.74rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">';
+    html += '<i class="fa-solid ' + st.icon.toLowerCase() + '"></i> <span>' + st.label + '</span>';
+    html += '</button>';
+    html += '<div style="display:flex; align-items:center; gap:3px;">';
+    html += '<input type="number" step="0.5" value="' + hValStr + '" placeholder="' + placeholderTxt + '" ' + (numRows === 1 ? 'disabled' : '') + ' oninput="updateDrRowHeightInput(' + r + ', this.value)" style="width:100%; padding:5px 6px; border:1px solid #94a3b8; border-radius:6px; font-size:0.78rem; font-weight:700; text-align:center;">';
+    html += '<span style="font-size:0.68rem; font-weight:700; color:#64748b;">In</span>';
+    html += '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+  renderDoorVisualOnly();
+}
+
+function renderDoorVisualOnly() {
+  var prevBox = document.getElementById('dr_door_visual_preview');
+  if (!prevBox) return;
+  var rowsEl = document.getElementById('dr_rows');
+  var numRows = rowsEl ? Math.max(1, Math.min(6, parseInt(rowsEl.value) || 2)) : 2;
+  ensureDrRowConfigsCount(numRows);
+
+  var palla = (document.getElementById('dr_palla') && document.getElementById('dr_palla').value === '1') ? 1 : 2;
+  var raw_h = safeEval(document.getElementById('dr_h') ? document.getElementById('dr_h').value : '84') || 84;
+  var raw_w = safeEval(document.getElementById('dr_w') ? document.getElementById('dr_w').value : (palla === 2 ? '48' : '36')) || (palla === 2 ? 48 : 36);
+  var is_mm = document.getElementById('dr_unit') && document.getElementById('dr_unit').value.indexOf('Millimeter') !== -1;
+  var h_in = is_mm ? (raw_h / 25.4) : raw_h;
+  var w_in = is_mm ? (raw_w / 25.4) : raw_w;
+
+  var vert_w = parseFloat(document.getElementById('dr_vert_w') ? document.getElementById('dr_vert_w').value : 1.75) || 1.75;
+  var top_h = parseFloat(document.getElementById('dr_top_h') ? document.getElementById('dr_top_h').value : 2.5) || 2.5;
+  var bot_h = parseFloat(document.getElementById('dr_bot_h') ? document.getElementById('dr_bot_h').value : 4.0) || 4.0;
+  var mid_h = parseFloat(document.getElementById('dr_mid_h') ? document.getElementById('dr_mid_h').value : 2.5) || 2.5;
+
+  var door_v = Math.max(24, h_in - 1.75);
+  var leaf_w = (palla === 2) ? Math.max(12, (w_in - 3.25) / 2.0) : Math.max(14, w_in - 3.25);
+  var rail_w = Math.max(6, leaf_w - (2 * vert_w));
+  var panel_w = rail_w + 0.75;
+
+  var total_open_h = Math.max(12, door_v - top_h - bot_h - ((numRows - 1) * mid_h));
+  var rowHeights = resolveRowHeightsGeneric(dr_row_configs, total_open_h, numRows);
+
+  var html = '<div style="font-size:0.72rem; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">';
+  html += '<span>LIVE ' + (palla === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR') + ' DESIGN (' + numRows + (numRows === 1 ? ' Part' : ' Parts') + ')</span>';
+  html += '<span style="color:#0284c7;">Tap panel: Glass ➔ ACP ➔ Jali / Mesh</span>';
+  html += '</div>';
+
+  html += '<div style="display:grid; grid-template-columns: repeat(' + palla + ', 1fr); gap:6px; max-width:' + (palla === 2 ? '340px' : '210px') + '; margin:0 auto; background:#1e293b; padding:7px; border-radius:8px; border:2px solid #475569;">';
+  for (var p = 0; p < palla; p++) {
+    html += '<div style="display:flex; flex-direction:column; gap:4px; background:#64748b; padding:5px; border-radius:5px;">';
+    for (var r = numRows - 1; r >= 0; r--) {
+      var cfg = dr_row_configs[r];
+      var st = getMatButtonStyle(cfg.mat);
+      var cutH = Math.max(2, rowHeights[r] + 0.75);
+      var meshBg = (cfg.mat === 'JALI')
+        ? 'repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 4px, #86efac 4px, #86efac 8px)'
+        : st.boxBg;
+      html += '<div onclick="toggleDrRowMaterial(' + r + ')" style="background:' + meshBg + '; color:' + st.boxFg + '; border:1.5px solid ' + st.boxBd + '; border-radius:4px; padding:8px 3px; font-size:0.68rem; font-weight:800; text-align:center; cursor:pointer;">';
+      html += '<div>' + st.shortLbl + '</div>';
+      html += '<div style="font-size:0.61rem; color:#0f172a;">' + toFractionInch(cutH) + ' x ' + toFractionInch(panel_w) + '</div>';
       html += '</div>';
     }
     html += '</div>';
@@ -4739,15 +4936,11 @@ function calculateDoor() {
   const palla_str = palla_qty === 2 ? "Double Door" : "Single Door";
 
   const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
-  const unit_str = is_mm ? "mm" : "Inch";
   dr_door_count += 1;
 
-  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${disp(h)} x ${disp(w)})${qty_str}]
-`;
+  let out = `[Door #${dr_door_count}${loc_str} - ${d_type} (${palla_str}) (${disp(h)} x ${disp(w)})${qty_str}]\n`;
 
-  // -------------------------------------------------------------
-  // BRANCH 1: DOMAL SYSTEM DOOR (Preserved 100% untouched)
-  // -------------------------------------------------------------
+  // BRANCH 1: DOMAL SYSTEM DOOR
   if (d_type === "Domal System Door") {
     let outer_v = h, outer_h = w - 3.0;
     let door_v = h - (25.0 / 25.4);
@@ -4756,23 +4949,16 @@ function calculateDoor() {
     let dg_h = door_v - 7.0;
     let dg_w = door_tb - 1.0;
 
-    out += `--- OUTER FRAME ---
-`;
-    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)
-`;
-    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)
-`;
+    out += `--- OUTER FRAME ---\n`;
+    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)\n`;
+    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)\n`;
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
     }
 
-    out += `
---- DOOR SASH (PALLA CUTTING) ---
-`;
-    out += `> Door Sash Verticals (Stiles): ${disp(door_v)} (${2 * palla_qty * door_qty} pc)
-`;
-    out += `> Door Sash Top/Bottom: ${disp(door_tb)} (${2 * palla_qty * door_qty} pc)
-`;
+    out += `\n--- DOOR SASH (PALLA CUTTING) ---\n`;
+    out += `> Door Sash Verticals (Stiles): ${disp(door_v)} (${2 * palla_qty * door_qty} pc)\n`;
+    out += `> Door Sash Top/Bottom: ${disp(door_tb)} (${2 * palla_qty * door_qty} pc)\n`;
 
     for (let q = 0; q < door_qty * palla_qty; q++) {
       dr_buckets["Door Verticals"].push(door_v, door_v);
@@ -4780,28 +4966,18 @@ function calculateDoor() {
       dr_buckets["Door Bottom Rail"].push(door_tb);
     }
 
-    out += `
---- GLASS / ACP SIZES ---
-`;
+    out += `\n--- GLASS / ACP SIZES ---\n`;
     const dr_gspec1 = getModuleGlassLabel('dr');
-    out += `> Alu Spec: ${getModuleAluLabel('dr')}
-`;
-    out += `> Door Glass (${dr_gspec1}): ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)
-`;
+    out += `> Alu Spec: ${getModuleAluLabel('dr')}\n`;
+    out += `> Door Glass (${dr_gspec1}): ${disp(dg_h)} x ${disp(dg_w)} (${palla_qty * door_qty} pc)\n`;
     const gKey = `${disp(dg_h)} x ${disp(dg_w)} (Domal Door Glass) || ${dr_gspec1}`;
     dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + (palla_qty * door_qty);
 
-    out += `
---- HARDWARE & ACCESSORIES ---
-`;
-    out += `> Domal Heavy Door Hinges / Pivot Set: ${3 * palla_qty * door_qty} pc
-`;
-    out += `> Heavy Touch Lock / Deadbolt Lock: ${1 * door_qty} Set
-`;
-    out += `> Premium Door Handle: ${palla_qty * door_qty} Set
-`;
-    out += `> Corner Cleats & Screws Set: Required
-`;
+    out += `\n--- HARDWARE & ACCESSORIES ---\n`;
+    out += `> Domal Heavy Door Hinges / Pivot Set: ${3 * palla_qty * door_qty} pc\n`;
+    out += `> Heavy Touch Lock / Deadbolt Lock: ${1 * door_qty} Set\n`;
+    out += `> Premium Door Handle: ${palla_qty * door_qty} Set\n`;
+    out += `> Corner Cleats & Screws Set: Required\n`;
 
     const prevOut = document.getElementById('dr_out').textContent;
     document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
@@ -4809,15 +4985,14 @@ function calculateDoor() {
     return;
   }
 
-  // -------------------------------------------------------------
-  // BRANCH 2: DYNAMIC TUBE SECTIONS (Standard, Floor Spring, Top Hung)
-  // -------------------------------------------------------------
+  // BRANCH 2: MULTI-PART CUSTOM DOOR DESIGNER (1 to 6 Parts: Glass / ACP Board / Jali Mesh)
   const vert_w = parseFloat(document.getElementById('dr_vert_w') ? document.getElementById('dr_vert_w').value : 1.75) || 1.75;
   const top_h = parseFloat(document.getElementById('dr_top_h') ? document.getElementById('dr_top_h').value : 2.5) || 2.5;
   const bot_h = parseFloat(document.getElementById('dr_bot_h') ? document.getElementById('dr_bot_h').value : 4.0) || 4.0;
-  const has_mid = document.getElementById('dr_has_mid') ? (document.getElementById('dr_has_mid').value === 'yes') : true;
   const mid_h = parseFloat(document.getElementById('dr_mid_h') ? document.getElementById('dr_mid_h').value : 2.5) || 2.5;
-  const mid_level = parseFloat(document.getElementById('dr_mid_level') ? document.getElementById('dr_mid_level').value : 36.0) || 36.0;
+  const num_rows = document.getElementById('dr_rows') ? Math.max(1, Math.min(6, parseInt(document.getElementById('dr_rows').value) || 2)) : 2;
+  ensureDrRowConfigsCount(num_rows);
+  renderDoorVisualOnly();
 
   let leaf_w = 0, door_v = 0;
   let has_outer = true;
@@ -4825,155 +5000,148 @@ function calculateDoor() {
 
   if (d_type === "Standard Door") {
     door_v = h - 1.75;
-    if (palla_qty === 2) {
-      leaf_w = (w - 3.25) / 2.0;
-    } else {
-      leaf_w = w - 3.25;
-    }
+    leaf_w = (palla_qty === 2) ? ((w - 3.25) / 2.0) : (w - 3.25);
   } else if (d_type === "Floor Spring Door") {
     door_v = h - 2.0;
-    if (palla_qty === 2) {
-      leaf_w = (w - 3.5) / 2.0;
-    } else {
-      leaf_w = w - 3.25;
-    }
+    leaf_w = (palla_qty === 2) ? ((w - 3.5) / 2.0) : (w - 3.25);
   } else if (d_type === "Top Hung Door") {
     has_outer = false;
     door_v = h - 2.0;
-    if (palla_qty === 2) {
-      leaf_w = (w + 4.0) / 2.0;
-    } else {
-      leaf_w = w + 4.0;
-    }
+    leaf_w = (palla_qty === 2) ? ((w + 4.0) / 2.0) : (w + 4.0);
   }
 
-  // Width of horizontal rails (Top Rail, Middle Rail, Bottom Rail)
   const rail_w = Math.max(0, leaf_w - (2 * vert_w));
-  const panel_w = rail_w + 0.75; // Bite into vertical stiles groove
+  const panel_w = rail_w + 0.75;
+  const total_leaves = palla_qty * door_qty;
+  const mid_rails_per_leaf = Math.max(0, num_rows - 1);
 
-  out += `> Alu Spec: ${getModuleAluLabel('dr')}\n`;
-  // 1. OUTER FRAME
+  out += `> Alu Spec: ${getModuleAluLabel('dr')} | Design: ${num_rows} ${num_rows === 1 ? 'Part' : 'Parts'}\n`;
   if (has_outer) {
-    out += `--- OUTER FRAME ---
-`;
-    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)
-`;
-    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)
-`;
+    out += `--- OUTER FRAME ---\n`;
+    out += `> Outer Vertical: ${disp(outer_v)} (${2 * door_qty} pc)\n`;
+    out += `> Outer Top Horizontal: ${disp(outer_h)} (${1 * door_qty} pc)\n`;
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(outer_v, outer_v, outer_h);
     }
   } else {
-    out += `--- TOP HUNG TRACK ---
-`;
-    out += `> Heavy Top Sliding Track: ${disp(w)} (${1 * door_qty} pc)
-`;
+    out += `--- TOP HUNG TRACK ---\n`;
+    out += `> Heavy Top Sliding Track: ${disp(w)} (${1 * door_qty} pc)\n`;
     for (let q = 0; q < door_qty; q++) {
       dr_buckets["Door Outer Frame"].push(w);
     }
   }
 
-  // 2. DOOR SASH SECTIONS (PALLA CUTTING)
-  const total_leaves = palla_qty * door_qty;
-  out += `
---- DOOR SASH (CUSTOM TUBE SECTIONS) ---
-`;
-  out += `> Door Vertical Stiles: ${disp(door_v)} (${2 * total_leaves} pc) [Profile: ${disp(vert_w)}]
-`;
-  out += `> Door Top Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(top_h)}]
-`;
-  if (has_mid) {
-    out += `> Door Middle Transom: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(mid_h)} @ ${disp(mid_level)} Level]
-`;
+  out += `\n--- DOOR SASH (TUBE SECTIONS) ---\n`;
+  out += `> Door Vertical Stiles: ${disp(door_v)} (${2 * total_leaves} pc) [Profile: ${disp(vert_w)}]\n`;
+  out += `> Door Top Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(top_h)}]\n`;
+  if (mid_rails_per_leaf > 0) {
+    out += `> Door Middle Transom Rails: ${disp(rail_w)} (${mid_rails_per_leaf * total_leaves} pc) [Profile: ${disp(mid_h)} | ${mid_rails_per_leaf} per Leaf]\n`;
   }
-  out += `> Door Bottom Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(bot_h)}]
-`;
+  out += `> Door Bottom Rail: ${disp(rail_w)} (${1 * total_leaves} pc) [Profile: ${disp(bot_h)}]\n`;
 
   for (let q = 0; q < total_leaves; q++) {
     dr_buckets["Door Verticals"].push(door_v, door_v);
     dr_buckets["Door Top Rail"].push(rail_w);
-    if (has_mid) dr_buckets["Door Middle Rail"].push(rail_w);
+    for (let m = 0; m < mid_rails_per_leaf; m++) {
+      dr_buckets["Door Middle Rail"].push(rail_w);
+    }
     dr_buckets["Door Bottom Rail"].push(rail_w);
   }
 
-  // 3. GLASS & 4'x8' ACP BOARD CALCULATION (ACP Excluded from Glass Shop PDF)
+  // Resolve Clear Opening Heights & Pipe Marking from Bottom of Door Sash
+  const total_open_h = Math.max(8.0, door_v - top_h - bot_h - (mid_rails_per_leaf * mid_h));
+  const partOpenHeights = resolveRowHeightsGeneric(dr_row_configs, total_open_h, num_rows);
+
+  if (num_rows > 1) {
+    out += `\n--- DOOR RAIL MARKING (BOTTOM TO TOP) ---\n`;
+    let runMark = bot_h;
+    for (let r = 0; r < num_rows; r++) {
+      const pName = getDoorPartShortName(r, num_rows);
+      const pMat = dr_row_configs[r] ? dr_row_configs[r].mat : 'GLASS';
+      const pOpenH = partOpenHeights[r];
+      out += `• ${pName} [${pMat}]: Clear Opening ${disp(pOpenH)} x ${disp(rail_w)}`;
+      if (r < num_rows - 1) {
+        runMark += pOpenH;
+        out += ` -> Mid Rail Mark at ${disp(runMark)} from Door Bottom\n`;
+        runMark += mid_h;
+      } else {
+        out += ` (Top Part)\n`;
+      }
+    }
+  }
+
+  // Calculate Glass, ACP Board & Jali / Mesh sizes for each Part (Top to Bottom)
   const dr_gspec = getModuleGlassLabel('dr');
-  out += `
---- GLASS & ACP BOARD DETAILS ---
-`;
-  if (has_mid) {
-    const bot_open_h = Math.max(4.0, mid_level - bot_h - (mid_h / 2.0));
-    const top_open_h = Math.max(4.0, door_v - mid_level - top_h - (mid_h / 2.0));
-    const top_gh = top_open_h + 0.75;
-    const bot_gh = bot_open_h + 0.75;
-    const acpInfo = calcAcp4x8Requirement(bot_gh, panel_w, total_leaves);
-    const glassSqFt = ((top_gh * panel_w * total_leaves) / 144.0).toFixed(2);
+  out += `\n--- GLASS, ACP BOARD & JALI / MESH CUTTING SIZES ---\n`;
+  let totGlassPcs = 0, totGlassSqFt = 0;
+  let totAcpPcs = 0, totAcpSqFt = 0;
+  let totJaliPcs = 0, totJaliSqFt = 0;
 
-    out += `> [Top Glass] (${dr_gspec}): ${disp(top_gh)} x ${disp(panel_w)} (${total_leaves} pc | ${glassSqFt} Sq.Ft)
-`;
-    out += `> [Bottom ACP Cut Size]: ${disp(bot_gh)} x ${disp(panel_w)} (${total_leaves} pc)
-`;
-    out += `> [Glass to Buy]: ${total_leaves} Pcs (${glassSqFt} Sq.Ft) -> Listed in 2. GLASS PDF
-`;
-    out += `> [4'x8' ACP Board to Buy]: ${acpInfo.buyLabel} (${acpInfo.totalAreaSqFt.toFixed(1)} Sq.Ft) -> Listed in 3. ALU PURCHASE PDF
-`;
+  for (let r = num_rows - 1; r >= 0; r--) {
+    const pName = getDoorPartShortName(r, num_rows);
+    const pMat = dr_row_configs[r] ? dr_row_configs[r].mat : 'GLASS';
+    const cut_h = Math.max(2.0, partOpenHeights[r] + 0.75);
+    const areaSqFt = (cut_h * panel_w * total_leaves) / 144.0;
 
-    const topKey = `${disp(top_gh)} x ${disp(panel_w)} (Top Door Glass) || ${dr_gspec}`;
-    dr_glass_dict[topKey] = (dr_glass_dict[topKey] || 0) + total_leaves;
-    dr_acp_list.push({
-      cutStr: `${disp(bot_gh)} x ${disp(panel_w)}`,
-      h_in: bot_gh,
-      w_in: panel_w,
-      qty: total_leaves,
-      buyLabel: acpInfo.buyLabel,
-      areaSqFt: acpInfo.totalAreaSqFt
-    });
-  } else {
-    const full_open_h = Math.max(6.0, door_v - top_h - bot_h);
-    const full_gh = full_open_h + 0.75;
-
-    out += `> [Full Door Glass] (${dr_gspec}): ${disp(full_gh)} x ${disp(panel_w)} (${total_leaves} pc)
-`;
-    const fullKey = `${disp(full_gh)} x ${disp(panel_w)} (Full Door Glass) || ${dr_gspec}`;
-    dr_glass_dict[fullKey] = (dr_glass_dict[fullKey] || 0) + total_leaves;
+    if (pMat === 'ACP') {
+      const acpInfo = calcAcp4x8Requirement(cut_h, panel_w, total_leaves);
+      out += `> [${pName} - ACP Board]: ${disp(cut_h)} x ${disp(panel_w)} (${total_leaves} pc | ${areaSqFt.toFixed(2)} Sq.Ft)\n`;
+      totAcpPcs += total_leaves;
+      totAcpSqFt += areaSqFt;
+      dr_acp_list.push({
+        rowTag: pName.replace(' Part ', 'P'),
+        cutStr: `${disp(cut_h)} x ${disp(panel_w)}`,
+        h_in: cut_h,
+        w_in: panel_w,
+        qty: total_leaves,
+        buyLabel: acpInfo.buyLabel,
+        areaSqFt: areaSqFt
+      });
+    } else if (pMat === 'JALI') {
+      out += `> [${pName} - Jali / Mesh]: ${disp(cut_h)} x ${disp(panel_w)} (${total_leaves} pc | ${areaSqFt.toFixed(2)} Sq.Ft)\n`;
+      totJaliPcs += total_leaves;
+      totJaliSqFt += areaSqFt;
+    } else {
+      out += `> [${pName} - Glass (${dr_gspec})]: ${disp(cut_h)} x ${disp(panel_w)} (${total_leaves} pc | ${areaSqFt.toFixed(2)} Sq.Ft)\n`;
+      totGlassPcs += total_leaves;
+      totGlassSqFt += areaSqFt;
+      const gKey = `${disp(cut_h)} x ${disp(panel_w)} (${pName} Door Glass) || ${dr_gspec}`;
+      dr_glass_dict[gKey] = (dr_glass_dict[gKey] || 0) + total_leaves;
+    }
   }
 
-  // 4. HARDWARE & ACCESSORIES
-  out += `
---- HARDWARE & ACCESSORIES ---
-`;
+  if (totGlassPcs > 0) {
+    out += `• TOTAL GLASS TO BUY: ${totGlassPcs} Pcs (${totGlassSqFt.toFixed(2)} Sq.Ft) -> Listed in 2. GLASS PDF + QR\n`;
+  }
+  if (totAcpPcs > 0) {
+    const packedDoorAcp = packPanelsOn4x8Sheets(dr_acp_list);
+    let acpBuyLbl = packedDoorAcp.length + " Full Sheet(s) (4'x8')";
+    if (packedDoorAcp.length === 1 && packedDoorAcp[0].isHalfSheetOnly) acpBuyLbl = "0.5 Sheet (4'x4' Half Board)";
+    out += `• TOTAL 4'x8' ACP BOARD TO BUY: ${acpBuyLbl} (${totAcpPcs} Cut Pcs | ${totAcpSqFt.toFixed(2)} Sq.Ft) -> Listed in 3. ALU PURCHASE PDF\n`;
+  }
+  if (totJaliPcs > 0) {
+    out += `• TOTAL JALI / MESH TO BUY: ${totJaliPcs} Pcs (Net Area: ${totJaliSqFt.toFixed(2)} Sq.Ft)\n`;
+  }
+
+  out += `\n--- HARDWARE & ACCESSORIES ---\n`;
   if (d_type === "Standard Door") {
-    out += `> Heavy Duty Door Butt Hinges (4"/5"): ${3 * total_leaves} pc
-`;
-    out += `> Door Mortise Lock / Deadbolt Set: ${1 * door_qty} Set
-`;
-    out += `> Tower Bolt (Top & Bottom): ${(palla_qty === 2 ? 2 : 1) * door_qty} pc
-`;
-    out += `> Door Handles (Inner & Outer): ${total_leaves} Set
-`;
-    out += `> Door Stopper / Buffer: ${total_leaves} pc
-`;
+    out += `> Heavy Duty Door Butt Hinges (4"/5"): ${3 * total_leaves} pc\n`;
+    out += `> Door Mortise Lock / Deadbolt Set: ${1 * door_qty} Set\n`;
+    out += `> Tower Bolt (Top & Bottom): ${(palla_qty === 2 ? 2 : 1) * door_qty} pc\n`;
+    out += `> Door Handles (Inner & Outer): ${total_leaves} Set\n`;
+    out += `> Door Stopper / Buffer: ${total_leaves} pc\n`;
   } else if (d_type === "Floor Spring Door") {
-    out += `> Heavy Double Cylinder Floor Spring: ${total_leaves} Set
-`;
-    out += `> Top & Bottom Patch Fittings / Pivot: ${total_leaves} Set
-`;
-    out += `> Floor Spring Patch Lock: ${1 * door_qty} Set
-`;
-    out += `> Long Stainless Steel Pull Handle: ${total_leaves} Set
-`;
+    out += `> Heavy Double Cylinder Floor Spring: ${total_leaves} Set\n`;
+    out += `> Top & Bottom Patch Fittings / Pivot: ${total_leaves} Set\n`;
+    out += `> Floor Spring Patch Lock: ${1 * door_qty} Set\n`;
+    out += `> Long Stainless Steel Pull Handle: ${total_leaves} Set\n`;
   } else if (d_type === "Top Hung Door") {
-    out += `> Heavy 4-Wheel Top Sliding Rollers: ${2 * total_leaves} pc
-`;
-    out += `> Bottom Floor Guide Roller / Channel: ${total_leaves} pc
-`;
-    out += `> Concealed Flush Handle / Pull Handle: ${total_leaves} Set
-`;
-    out += `> Sliding Door Hook Lock: ${1 * door_qty} Set
-`;
+    out += `> Heavy 4-Wheel Top Sliding Rollers: ${2 * total_leaves} pc\n`;
+    out += `> Bottom Floor Guide Roller / Channel: ${total_leaves} pc\n`;
+    out += `> Concealed Flush Handle / Pull Handle: ${total_leaves} Set\n`;
+    out += `> Sliding Door Hook Lock: ${1 * door_qty} Set\n`;
   }
-  out += `> Square Clip (Beading) / Gasket Girth: Approx ${Math.round((door_v + leaf_w) * 2 * total_leaves / 12)} Running Feet
-`;
+  out += `> Square Clip (Beading) / Gasket Girth: Approx ${Math.round(((door_v * 2) + (rail_w * 2 * num_rows)) * total_leaves / 12)} Running Feet\n`;
 
   const prevOut = document.getElementById('dr_out').textContent;
   document.getElementById('dr_out').textContent = out + "===================================\n\n" + prevOut;
@@ -5103,6 +5271,7 @@ function clearDoor() {
 
    let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
    let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
+   let totalJaliPcs = 0, totalJaliAreaSqFt = 0;
 
    for (let r = rows - 1; r >= 0; r--) {
      const rName = getRowShortEnglishName(r, rows);
@@ -5124,6 +5293,12 @@ function clearDoor() {
          buyLabel: '',
          areaSqFt: (acp_cut_h * cut_w * cols) / 144.0
        });
+     } else if (rMat === 'JALI') {
+       const jali_cut_h = Math.max(2.0, rH - 0.25);
+       const jaliSqFt = (jali_cut_h * cut_w * cols) / 144.0;
+       out += `> [${rName} - Jali / Mesh]: ${disp(jali_cut_h)} x ${disp(cut_w)} (${cols} pc | ${jaliSqFt.toFixed(2)} Sq.Ft)\n`;
+       totalJaliPcs += cols;
+       totalJaliAreaSqFt += jaliSqFt;
      } else {
        const g_guard = safeGlassSlabCap(Math.max(2.0, rH - 0.25));
        const g_cut_h = g_guard.cut;
@@ -5153,11 +5328,15 @@ function clearDoor() {
    out += "\n-----------------------------------\n";
    out += "4. TOTAL GLASS & 4'x8' ACP PURCHASE SUMMARY\n";
    out += "-----------------------------------\n";
-   out += `• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF\n`;
+   out += `• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF + QR\n`;
    if (totalAcpPcs > 0) {
      out += `• TOTAL ACP BOARD TO BUY: ${sheetsSummaryTxt} (${totalAcpPcs} Cut Pcs | ${totalAcpAreaSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE & 5. DRAWING PDF\n`;
-   } else {
-     out += `• TOTAL ACP BOARD TO BUY: None (Full Glass Partition)\n`;
+   }
+   if (totalJaliPcs > 0) {
+     out += `• TOTAL JALI / MESH TO BUY: ${totalJaliPcs} Pcs (Net Area: ${totalJaliAreaSqFt.toFixed(2)} Sq.Ft)\n`;
+   }
+   if (totalJaliPcs > 0) {
+     out += `• TOTAL JALI / MESH TO BUY: ${totalJaliPcs} Pcs (Net Area: ${totalJaliAreaSqFt.toFixed(2)} Sq.Ft)\n`;
    }
 
    // 5. HARDWARE
@@ -5234,6 +5413,7 @@ function clearDoor() {
    let totalGlassPcs = 2;
    let totalGlassAreaSqFt = ((dg_h * dg_w) + (transom_g_h * transom_g_w)) / 144.0;
    let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
+   let totalJaliPcs = 0, totalJaliAreaSqFt = 0;
 
    if (cols > 0) {
      for (let r = rows - 1; r >= 0; r--) {
@@ -5256,6 +5436,12 @@ function clearDoor() {
            buyLabel: '',
            areaSqFt: (acp_cut_h * cut_w * cols) / 144.0
          });
+       } else if (rMat === 'JALI') {
+         const jali_cut_h = Math.max(2.0, rH - 0.25);
+         const jaliSqFt = (jali_cut_h * cut_w * cols) / 144.0;
+         out += `> [${rName} - Jali / Mesh]: ${disp(jali_cut_h)} x ${disp(cut_w)} (${cols} pc | ${jaliSqFt.toFixed(2)} Sq.Ft)\n`;
+         totalJaliPcs += cols;
+         totalJaliAreaSqFt += jaliSqFt;
        } else {
          const g_guard = safeGlassSlabCap(Math.max(2.0, rH - 0.25));
          const g_cut_h = g_guard.cut;
@@ -8409,6 +8595,8 @@ function autofillCustomer() {
  function openScreen(screenName, title) {
   if (screenName === 'partition') {
     setTimeout(function() { try { renderPartitionRowBuilder(); } catch(e){} }, 20);
+  } else if (screenName === 'door') {
+    setTimeout(function() { try { renderDoorRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'wastage_qr') {
     setTimeout(function() { try { renderWastageQrStockList(); } catch(e){} }, 20);
   } else if (screenName === 'order_tracker') {
@@ -11475,7 +11663,8 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v72') === -1) caches.delete(k);
+                if (k.indexOf('v73') === -1) caches.delete(k);
+    try { renderDoorRowBuilder(); renderPartitionRowBuilder(); } catch(e){}
             });
         }).catch(() => {});
     }
