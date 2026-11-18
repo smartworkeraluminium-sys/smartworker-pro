@@ -1147,7 +1147,21 @@ function recalculateGlassCuttingSheets() {
       html += '</div>';
     });
 
-    html += '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">';
+    var liveSheetCode = (Math.round(stockDim.sL) + 'x' + Math.round(stockDim.sW));
+    var liveSwgPayload = (typeof buildGlassOrderQrPayload === 'function') ? buildGlassOrderQrPayload('SHEET ORDER', gc_glass_dict, liveSheetCode) : '';
+    if (liveSwgPayload) {
+      window.lastGeneratedGlassOrderCode = liveSwgPayload;
+      var liveQrSvg = (typeof renderQrMatrixToSvg === 'function') ? renderQrMatrixToSvg(generateQrMatrix(liveSwgPayload), 128) : '';
+      html += '<div style="margin-top:10px; background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:1.5px solid #0284c7; border-radius:10px; padding:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">';
+      html += '<div style="background:#fff; padding:6px; border-radius:8px; border:1px solid #cbd5e1; flex-shrink:0;">' + liveQrSvg + '</div>';
+      html += '<div style="flex:1; min-width:170px;">';
+      html += '<div style="font-size:0.78rem; font-weight:800; color:#0369a1; margin-bottom:3px;"><i class="fa-solid fa-qrcode"></i> SHEET QR CODE FOR GLASS FABRICATOR</div>';
+      html += '<div style="font-size:0.7rem; color:#334155; line-height:1.35; margin-bottom:6px;">When the Glass Fabricator scans this QR (from screen, <b>Bill PDF</b>, <b>1. Sheet Drawing PDF</b>, or <b>2. Glass List PDF</b>), all sizes & this <b>' + stockDim.label + '</b> sheet layout load automatically!</div>';
+      html += '<div style="font-family:monospace; font-size:0.65rem; background:#fff; padding:4px 6px; border-radius:6px; border:1px solid #94a3b8; color:#0f766e; word-break:break-all; margin-bottom:6px;">' + liveSwgPayload + '</div>';
+      html += '<button type="button" onclick="shareCurrentGlassListToCutterWhatsApp()" style="background:#059669; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-brands fa-whatsapp"></i> Send Sheet QR & Details to Glass Fabricator</button>';
+      html += '</div></div>';
+    }
+    html += '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:8px;">';
     html += '<button type="button" onclick="instantPrintChartOffcutQr(\'gc\')" style="background:#16a34a; color:#ffffff; border:none; border-radius:8px; padding:10px 6px; font-size:0.76rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;">';
     html += '<i class="fa-solid fa-print"></i> <span>1-CLICK THERMAL QR PRINT</span>';
     html += '</button>';
@@ -2525,9 +2539,16 @@ function exportSheetLayoutPdf(filename, title, acpList) {
     return;
   }
 
-  var sheets = packPanelsOn4x8Sheets(acpList);
+  var stockDim = (typeof getSelectedGlassStockSheetDims === 'function' && filename.indexOf('Glass') !== -1)
+    ? getSelectedGlassStockSheetDims()
+    : { sL: 96.0, sW: 48.0, label: '4\'x8\' (96" x 48")' };
+
+  var sheets = (typeof packGlassPanelsMinWaste === 'function')
+    ? packGlassPanelsMinWaste(acpList, stockDim.sL, stockDim.sW)
+    : packPanelsOn4x8Sheets(acpList);
+
   if (sheets.length === 0) {
-    alert("No ACP Sheet panels calculated yet! Please calculate a Partition or Door with ACP Board first.");
+    alert("No Sheet panels calculated yet! Please calculate Glass or ACP Sheet first.");
     return;
   }
 
@@ -2536,6 +2557,21 @@ function exportSheetLayoutPdf(filename, title, acpList) {
     alert("PDF library is loading, please try again in a moment.");
     return;
   }
+
+  // Build QR payload for this Sheet Drawing order
+  var sheetDict = {};
+  (acpList || []).forEach(function(itm, idx) {
+    var cutS = itm.cutStr || (toFractionInch(itm.h_in) + ' x ' + toFractionInch(itm.w_in));
+    var rTag = itm.rowTag || ('G' + (idx + 1));
+    var sp = itm.spec || '5 mm Clear';
+    var k = cutS + ' (' + rTag + ') || ' + sp;
+    sheetDict[k] = (sheetDict[k] || 0) + (itm.qty || 1);
+  });
+  var sheetCodeVal = (Math.round(stockDim.sL) + 'x' + Math.round(stockDim.sW));
+  var orderQrPayload = (typeof buildGlassOrderQrPayload === 'function')
+    ? buildGlassOrderQrPayload(title, sheetDict, sheetCodeVal)
+    : '';
+  if (orderQrPayload) window.lastGeneratedGlassOrderCode = orderQrPayload;
 
   var doc = new jsPDF('l', 'mm', 'a4');
   var today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
@@ -2551,31 +2587,27 @@ function exportSheetLayoutPdf(filename, title, acpList) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(159, 18, 57);
-    var modeTxt = sh.isHalfSheetOnly ? 'HALF SHEET NEEDED (4x4 / 48" x 48")' : 'FULL SHEET (4x8 / 96" x 48")';
+    var modeTxt = sh.isHalfSheetOnly ? 'HALF SHEET NEEDED (4x4 / 48" x 48")' : 'FULL SHEET (' + Math.round(sh.sheetL) + '" x ' + Math.round(sh.sheetW) + '")';
     doc.text("SHEET #" + sh.sheetNo + " OF " + sheets.length + "   |   BOARD: " + modeTxt + "   |   PIECES ON THIS SHEET: " + sh.placed.length + " PCS   |   DATE: " + today, 18, 36.8);
 
-    // Draw the 96" x 48" board to exact scale on Landscape A4
-    // Scale: 1 inch = 2.5 mm -> 96" = 240 mm wide, 48" = 120 mm high
-    var startX = 28.5;
-    var startY = 50.0;
-    var scaleMm = 2.5;
-    var boardW = 96.0 * scaleMm; // 240 mm
-    var boardH = 48.0 * scaleMm; // 120 mm
+    var startX = 22.0;
+    var startY = 48.0;
+    var scaleMm = Math.min(220.0 / sh.sheetL, 114.0 / sh.sheetW);
+    var boardW = sh.sheetL * scaleMm;
+    var boardH = sh.sheetW * scaleMm;
 
-    // Outer 4'x8' Board Rectangle (Shaded light yellow/amber for offcut/trim area)
+    // Outer Sheet Rectangle
     doc.setFillColor(254, 243, 199);
     doc.setDrawColor(15, 23, 42);
     doc.setLineWidth(0.7);
     doc.rect(startX, startY, boardW, boardH, 'FD');
 
-    // Board Top & Left Dimension Callouts
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(15, 23, 42);
-    doc.text("<---  8 FEET (96 INCHES) FULL BOARD LENGTH  --->", startX + (boardW / 2), startY - 3.5, { align: "center" });
-    doc.text('4 FT (48")', startX - 3, startY + (boardH / 2), { align: "right" });
+    doc.text('<---  ' + Math.round(sh.sheetL) + '" (' + (sh.sheetL/12).toFixed(0) + ' FT) FULL SHEET LENGTH  --->', startX + (boardW / 2), startY - 3, { align: "center" });
+    doc.text(Math.round(sh.sheetW) + '"', startX - 2.5, startY + (boardH / 2), { align: "right" });
 
-    // Draw each Cut Panel inside the 96" x 48" Board
     sh.placed.forEach(function(p) {
       var rx = startX + (p.x * scaleMm);
       var ry = startY + (p.y * scaleMm);
@@ -2591,60 +2623,105 @@ function exportSheetLayoutPdf(filename, title, acpList) {
       var cy = ry + (rh / 2);
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(30, 58, 138);
-      doc.text((p.tag || "PANEL") + " #" + p.pieceNum, cx, cy - 3, { align: "center" });
-
       doc.setFontSize(10);
+      doc.setTextColor(30, 58, 138);
+      doc.text((p.tag || "PANEL") + " #" + p.pieceNum, cx, cy - 2.5, { align: "center" });
+
+      doc.setFontSize(9);
       doc.setTextColor(15, 23, 42);
-      doc.text("Cut: " + p.dimXStr + " x " + p.dimYStr, cx, cy + 3.5, { align: "center" });
+      doc.text(p.dimXStr + " x " + p.dimYStr, cx, cy + 3, { align: "center" });
     });
 
-    // Draw Half Sheet 48" Cut Line if applicable
     if (sh.isHalfSheetOnly) {
-      var halfX = startX + (48.0 * scaleMm);
+      var halfX = startX + ((sh.sheetL / 2.0) * scaleMm);
       doc.setDrawColor(220, 38, 38);
       doc.setLineWidth(0.6);
       doc.line(halfX, startY, halfX, startY + boardH);
-      doc.setFontSize(9.5);
+      doc.setFontSize(9);
       doc.setTextColor(220, 38, 38);
-      doc.text('4x4 HALF SHEET CUT LINE (48")', halfX + 3, startY + 10);
+      doc.text('HALF SHEET CUT LINE (' + Math.round(sh.sheetL / 2) + '")', halfX + 2.5, startY + 9);
     }
 
-    // Label Right Offcut / Trim Area
     if (sh.wasteRight >= 0.5) {
       var wx = startX + (sh.maxRightX * scaleMm) + ((sh.wasteRight * scaleMm) / 2);
       var wy = startY + ((sh.maxBotY * scaleMm) / 2);
-      doc.setFontSize(9.5);
+      doc.setFontSize(9);
       doc.setTextColor(146, 64, 14);
-      var rTitle = sh.wasteRight >= 23.5 ? "REUSABLE BOARD" : "SIDE TRIM";
+      var rTitle = sh.wasteRight >= 18.0 ? "OFFCUT" : "TRIM";
       doc.text(rTitle, wx, wy - 2, { align: "center" });
-      doc.text(toFractionInch(sh.wasteRight) + ' x 48"', wx, wy + 3.5, { align: "center" });
+      doc.text(toFractionInch(sh.wasteRight) + ' x ' + Math.round(sh.sheetW) + '"', wx, wy + 3, { align: "center" });
     }
 
-    // Label Bottom Offcut / Trim Area
     if (sh.wasteBot >= 0.5) {
       var bwx = startX + ((sh.maxRightX * scaleMm) / 2);
       var bwy = startY + (sh.maxBotY * scaleMm) + ((sh.wasteBot * scaleMm) / 2) + 1.5;
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(146, 64, 14);
-      doc.text("BOTTOM TRIM / OFFCUT: " + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX), bwx, bwy, { align: "center" });
+      doc.text("BOTTOM OFFCUT: " + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX), bwx, bwy, { align: "center" });
     }
 
-    // Footer instruction box for Labour
-    var footY = startY + boardH + 8;
+    // Right-Side Scannable QR Box on the Sheet Drawing PDF for Glass Fabricator
+    if (orderQrPayload && typeof generateQrMatrix === 'function') {
+      var qrBoxX = startX + boardW + 5;
+      var qrBoxY = startY;
+      var qrBoxW = 283 - qrBoxX;
+      if (qrBoxW >= 34) {
+        doc.setFillColor(240, 249, 255);
+        doc.setDrawColor(2, 132, 199);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, boardH, 2, 2, 'FD');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(3, 105, 161);
+        doc.text("SCAN SHEET QR", qrBoxX + (qrBoxW / 2), qrBoxY + 6, { align: "center" });
+        doc.setFontSize(6.5);
+        doc.setTextColor(15, 118, 110);
+        doc.text("(GLASS FABRICATOR)", qrBoxX + (qrBoxW / 2), qrBoxY + 10, { align: "center" });
+
+        var qrMat = generateQrMatrix(orderQrPayload);
+        var qrMm = Math.min(qrBoxW - 6, 32);
+        var qx = qrBoxX + (qrBoxW - qrMm) / 2;
+        var qy = qrBoxY + 13;
+        doc.setFillColor(255, 255, 255);
+        doc.rect(qx - 1, qy - 1, qrMm + 2, qrMm + 2, 'F');
+        var n = qrMat.length;
+        var cMm = qrMm / n;
+        doc.setFillColor(15, 23, 42);
+        for (var r = 0; r < n; r++) {
+          for (var c = 0; c < n; c++) {
+            if (qrMat[r][c]) doc.rect(qx + c * cMm, qy + r * cMm, cMm + 0.04, cMm + 0.04, 'F');
+          }
+        }
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.3);
+        doc.setTextColor(30, 41, 59);
+        var tipLines = doc.splitTextToSize("Scan in Smart Worker Pro -> Glass Cutting to auto-load all sizes & sheet chart!", qrBoxW - 4);
+        doc.text(tipLines, qrBoxX + 2, qy + qrMm + 5);
+      }
+    }
+
+    // Footer instruction box + Order Code
+    var footY = startY + boardH + 6;
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.3);
-    doc.roundedRect(startX, footY, boardW, 16, 2, 2, 'FD');
+    doc.roundedRect(startX, footY, 261, 18, 2, 2, 'FD');
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(15, 23, 42);
     var firstCut = sh.placed[0] ? sh.placed[0].cutStr : "-";
-    doc.text("LABOUR CUTTING SUMMARY (SHEET #" + sh.sheetNo + "):   Cut " + sh.placed.length + " Pcs of size [ " + firstCut + " ]", startX + 5, footY + 6.5);
+    doc.text("SHEET #" + sh.sheetNo + " SUMMARY: Cut " + sh.placed.length + " Pcs (e.g. " + firstCut + ")  |  Used: " + sh.usedSqFt.toFixed(1) + " Sq.Ft / " + sh.sheetSqFt.toFixed(1) + " Sq.Ft", startX + 4, footY + 5.5);
     doc.setTextColor(180, 83, 9);
-    doc.text("Remaining Right Offcut: " + toFractionInch(sh.wasteRight) + ' x 48"   |   Remaining Bottom Offcut: ' + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX), startX + 5, footY + 12.5);
+    doc.text("Remaining Right Offcut: " + toFractionInch(sh.wasteRight) + ' x ' + Math.round(sh.sheetW) + '"   |   Remaining Bottom Offcut: ' + toFractionInch(sh.wasteBot) + " x " + toFractionInch(sh.maxRightX), startX + 4, footY + 10.5);
+    if (orderQrPayload) {
+      doc.setFont("courier", "bold");
+      doc.setFontSize(6.8);
+      doc.setTextColor(15, 118, 110);
+      doc.text(("GLASS FABRICATOR CODE: " + orderQrPayload).slice(0, 128), startX + 4, footY + 15.5);
+    }
   });
 
   doc.save(filename + ".pdf");
@@ -5888,14 +5965,14 @@ function parseGlassDictToStructuredItems(glassDict) {
                 w_in: wIn,
                 qty: parseInt(qty, 10) || 1,
                 spec: specText,
-                tag: rowTag
+                tag: rowTag || ('G' + (items.length + 1))
             });
         }
     }
     return items;
 }
 
-function buildGlassOrderQrPayload(title, glassDict) {
+function buildGlassOrderQrPayload(title, glassDict, sheetSizeCode) {
     const items = parseGlassDictToStructuredItems(glassDict);
     if (!items.length) return '';
     const shortTitle = String(title || 'GLASS ORDER')
@@ -5903,15 +5980,65 @@ function buildGlassOrderQrPayload(title, glassDict) {
         .replace(/[^A-Za-z0-9 _-]/g, '')
         .trim()
         .slice(0, 18) || 'ORDER';
-    const firstSpec = items[0].spec || '5 mm Clear';
+    const stockCode = sheetSizeCode || (document.getElementById('gc_sheet_size')?.value || '96x48');
+    const firstSpec = (items[0].spec || '5 mm Clear') + '#' + stockCode;
+    const baseSpecOnly = items[0].spec || '5 mm Clear';
     const itemTokens = items.map(it => {
         const hStr = Number(it.h_in.toFixed(2));
         const wStr = Number(it.w_in.toFixed(2));
-        const specCode = (it.spec && it.spec !== firstSpec) ? `~${it.spec}` : '';
+        const specCode = (it.spec && it.spec !== baseSpecOnly) ? `~${it.spec}` : '';
         const tagCode = it.tag ? `@${it.tag.slice(0, 10)}` : '';
         return `${hStr}x${wStr}*${it.qty}${specCode}${tagCode}`;
     });
     return `SWG|${shortTitle}|${firstSpec}|${itemTokens.join(';')}`;
+}
+
+function buildGlassOrderQrPayloadFromBillItems(billItemsList, customerName) {
+    // If gc_items_list already has exact glass pieces and bill came from Glass Cutting, use those exact pieces
+    const dict = {};
+    const dispInch = (v) => (typeof toFractionInch === 'function' ? toFractionInch(v) : (v + '"'));
+    (billItemsList || []).forEach((itm, idx) => {
+        if (!itm) return;
+        const gType = String(itm.glass_type || 'Clear').replace(/\+\s*Bottom ACP Board/i, '').replace(/\+\s*ACP Board/i, '').trim();
+        if (gType.toUpperCase() === 'FULL ACP BOARD' || gType.toUpperCase() === 'ACP BOARD') return;
+        const gThick = String(itm.glass_thick || '5 mm').trim();
+        const spec = `${gThick} ${gType}`;
+        const unit = String(itm.unit || 'ft').toLowerCase();
+        let hIn = parseFloat(itm.h) || 0;
+        let wIn = parseFloat(itm.w) || 0;
+        if (unit === 'ft' || unit === 'feet') {
+            hIn = parseFloat((hIn * 12.0).toFixed(2));
+            wIn = parseFloat((wIn * 12.0).toFixed(2));
+        } else if (unit === 'mm') {
+            hIn = parseFloat((hIn / 25.4).toFixed(2));
+            wIn = parseFloat((wIn / 25.4).toFixed(2));
+        }
+        const qty = Math.max(1, parseInt(itm.qty, 10) || 1);
+        const typeStr = String(itm.type || '');
+        const tag = (itm.location || typeStr.split(' ')[0] || ('G' + (idx + 1))).slice(0, 10);
+        // Derive shutter glass dimensions if it's a 2-Track / 3-Track / 4-Track Sliding or Domal window
+        if (typeStr.includes('3-Track')) {
+            const gh = Math.max(4, parseFloat((hIn - 4.5).toFixed(2)));
+            const gw = Math.max(4, parseFloat(((wIn - 3.0) / 3.0).toFixed(2)));
+            const key = `${dispInch(gh)} x ${dispInch(gw)} (${tag}) || ${spec}`;
+            dict[key] = (dict[key] || 0) + (qty * 3);
+        } else if (typeStr.includes('4-Track')) {
+            const gh = Math.max(4, parseFloat((hIn - 4.5).toFixed(2)));
+            const gw = Math.max(4, parseFloat(((wIn - 4.0) / 4.0).toFixed(2)));
+            const key = `${dispInch(gh)} x ${dispInch(gw)} (${tag}) || ${spec}`;
+            dict[key] = (dict[key] || 0) + (qty * 4);
+        } else if (typeStr.includes('2-Track') || typeStr.includes('Sliding') || typeStr.includes('Domal')) {
+            const gh = Math.max(4, parseFloat((hIn - 4.5).toFixed(2)));
+            const gw = Math.max(4, parseFloat(((wIn - 2.5) / 2.0).toFixed(2)));
+            const key = `${dispInch(gh)} x ${dispInch(gw)} (${tag}) || ${spec}`;
+            dict[key] = (dict[key] || 0) + (qty * 2);
+        } else if (hIn > 0 && wIn > 0) {
+            const key = `${dispInch(hIn)} x ${dispInch(wIn)} (${tag}) || ${spec}`;
+            dict[key] = (dict[key] || 0) + qty;
+        }
+    });
+    const stockCode = document.getElementById('gc_sheet_size')?.value || '96x48';
+    return buildGlassOrderQrPayload(customerName || 'BILL ORDER', dict, stockCode);
 }
 
 window.lastGeneratedGlassOrderCode = '';
@@ -5924,18 +6051,20 @@ function shareGlassOrderCodeWhatsApp(orderCode, title) {
     }
     const parsed = parseSwgOrderPayload(code);
     if (!parsed) return;
-    let msg = `*SMART WORKER PRO - GLASS CUTTING ORDER*\n`;
+    let msg = `*SMART WORKER PRO - GLASS & 4'x8' SHEET ORDER*\n`;
     msg += `*Job / Party:* ${parsed.title || title || 'Glass Order'}\n`;
-    msg += `*Glass Spec:* ${parsed.defaultSpec || '5 mm Clear'}\n`;
+    msg += `*Glass Spec:* ${parsed.defaultSpec || '5 mm Clear'} | *Sheet:* ${parsed.sheetSizeCode || '96x48'}\n`;
     msg += `--------------------------------\n`;
     let totalPcs = 0;
     parsed.items.forEach((it, idx) => {
         totalPcs += it.qty;
-        msg += `${idx + 1}. *${formatInch(it.h_in)} x ${formatInch(it.w_in)}*  -->  *${it.qty} Pcs* ${it.tag ? '(' + it.tag + ')' : ''}\n`;
+        const hDisp = typeof toFractionInch === 'function' ? toFractionInch(it.h_in) : (it.h_in + '"');
+        const wDisp = typeof toFractionInch === 'function' ? toFractionInch(it.w_in) : (it.w_in + '"');
+        msg += `${idx + 1}. *${hDisp} x ${wDisp}*  -->  *${it.qty} Pcs* ${it.tag ? '(' + it.tag + ')' : ''}\n`;
     });
     msg += `--------------------------------\n`;
     msg += `*Total Glass:* ${totalPcs} Pcs\n\n`;
-    msg += `*1-Click Glass Cutter Auto-Load Code (Copy & Paste or Scan PDF QR in Smart Worker Pro -> Glass Cutting):*\n`;
+    msg += `*1-Click Glass Fabricator Auto-Load Code (Scan QR on Bill/Sheet PDF or Paste in Smart Worker Pro -> Glass Cutting):*\n`;
     msg += `${code}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -5949,7 +6078,14 @@ function parseSwgOrderPayload(rawText) {
     const parts = cleanLine.split('|');
     if (parts.length < 4 || parts[0] !== 'SWG') return null;
     const title = parts[1] || 'Glass Order';
-    const defaultSpec = parts[2] || '5 mm Clear';
+    let rawSpecField = parts[2] || '5 mm Clear';
+    let sheetSizeCode = '96x48';
+    if (rawSpecField.includes('#')) {
+        const spParts = rawSpecField.split('#');
+        rawSpecField = spParts[0].trim() || '5 mm Clear';
+        sheetSizeCode = spParts[1].trim() || '96x48';
+    }
+    const defaultSpec = rawSpecField;
     const itemsRaw = parts.slice(3).join('|').split(';');
     const items = [];
     itemsRaw.forEach(tok => {
@@ -5983,18 +6119,31 @@ function parseSwgOrderPayload(rawText) {
         }
     });
     if (!items.length) return null;
-    return { title, defaultSpec, items, rawCode: cleanLine };
+    return { title, defaultSpec, sheetSizeCode, items, rawCode: cleanLine };
 }
 
 function importGlassOrderQrPayload(rawText) {
     const parsed = parseSwgOrderPayload(rawText);
     if (!parsed) {
-        alert('Invalid Glass Order QR / Code. Please scan a valid Smart Worker Pro Glass PDF QR Code (starts with SWG|...).');
+        alert('Invalid Glass Order QR / Code. Please scan a valid Smart Worker Pro Bill / Sheet / Glass PDF QR Code (starts with SWG|...).');
         return false;
     }
     const gcScreen = document.getElementById('screen-glass_cutting');
     if (gcScreen && !gcScreen.classList.contains('active')) {
-        navTo('glass_cutting');
+        if (typeof openScreen === 'function') openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)');
+        else if (typeof navTo === 'function') navTo('glass_cutting');
+    }
+    // Set Stock Sheet Size selector (96x48, 72x48, etc.)
+    if (parsed.sheetSizeCode) {
+        const sheetSel = document.getElementById('gc_sheet_size');
+        if (sheetSel) {
+            for (let i = 0; i < sheetSel.options.length; i++) {
+                if (sheetSel.options[i].value === parsed.sheetSizeCode) {
+                    sheetSel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
     }
     const specStr = parsed.defaultSpec || '5 mm Clear';
     const thickMatch = specStr.match(/^([0-9.]+\s*mm)\s+(.*)$/i);
@@ -6020,51 +6169,57 @@ function importGlassOrderQrPayload(rawText) {
             }
         }
     }
-    gc_items_list = parsed.items.map(it => ({
+    const dispInch = (v) => (typeof toFractionInch === 'function' ? toFractionInch(v) : (v + '"'));
+    gc_items_list = parsed.items.map((it, idx) => ({
+        rowTag: it.tag || ('G' + (idx + 1)),
         h_in: it.h_in,
         w_in: it.w_in,
         qty: it.qty,
-        label: it.tag ? `${it.tag} (${parsed.title})` : parsed.title
+        spec: it.spec || parsed.defaultSpec || '5 mm Clear',
+        is_mm: false,
+        cutStr: dispInch(it.h_in) + ' x ' + dispInch(it.w_in)
     }));
     window.lastGeneratedGlassOrderCode = parsed.rawCode;
-    renderGlassCuttingItemsList();
     recalculateGlassCuttingSheets();
 
     const banner = document.getElementById('gc_qr_import_status');
     const totalPcs = parsed.items.reduce((s, i) => s + i.qty, 0);
     if (banner) {
         banner.style.display = 'block';
-        banner.innerHTML = `<i class="fa-solid fa-circle-check"></i> <b>Auto-Loaded from Fabricator QR:</b> ${parsed.title} (${parsed.items.length} sizes, <b>${totalPcs} Pcs</b> of ${parsed.defaultSpec}) — 4'x8' Sheet Cutting Layout Ready below!`;
+        banner.innerHTML = `<i class="fa-solid fa-circle-check"></i> <b>Auto-Loaded Sheet & Glass Details:</b> ${parsed.title} (${parsed.items.length} sizes, <b>${totalPcs} Pcs</b> of ${parsed.defaultSpec} on Sheet ${parsed.sheetSizeCode.replace('x', '"x') + '"'}) — Complete Cutting Diagram & Summary Loaded Below!`;
     }
-    const outBox = document.getElementById('out-glass_cutting');
-    if (outBox) outBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const layoutBox = document.getElementById('gc_sheet_layout_box');
+    if (layoutBox) layoutBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return true;
 }
 
 function promptImportGlassOrderCode() {
     const prefill = window.lastGeneratedGlassOrderCode || '';
-    const input = prompt('Paste or Enter the Fabricator Glass Order Code (starts with SWG|...) from WhatsApp or 2. GLASS PDF:', prefill);
+    const input = prompt('Paste or Enter the Fabricator Bill / Sheet QR Code (starts with SWG|...):', prefill);
     if (!input) return;
     importGlassOrderQrPayload(input);
 }
 
 function shareCurrentGlassListToCutterWhatsApp() {
     if (!gc_items_list || !gc_items_list.length) {
-        alert('Please add glass sizes or load a sample/order first.');
+        alert('Please add glass sizes (+ CALCULATE) or scan a Bill/Sheet QR first.');
         return;
     }
     const gType = document.getElementById('gc_g_type')?.value || 'Clear';
     const gThick = document.getElementById('gc_g_thick')?.value || '5 mm';
-    const spec = `${gThick} ${gType}`;
+    const defaultSpec = `${gThick} ${gType}`;
+    const dispInch = (v) => (typeof toFractionInch === 'function' ? toFractionInch(v) : (v + '"'));
     const dict = {};
     gc_items_list.forEach((it, idx) => {
-        const tag = it.label ? ` (${it.label})` : ` (G${idx + 1})`;
-        const key = `${formatInch(it.h_in)} x ${formatInch(it.w_in)}${tag} || ${spec}`;
+        const tag = it.rowTag ? ` (${it.rowTag})` : ` (G${idx + 1})`;
+        const spec = it.spec || defaultSpec;
+        const key = `${dispInch(it.h_in)} x ${dispInch(it.w_in)}${tag} || ${spec}`;
         dict[key] = (dict[key] || 0) + (it.qty || 1);
     });
-    const code = buildGlassOrderQrPayload('GLASS ORDER', dict);
+    const stockCode = document.getElementById('gc_sheet_size')?.value || '96x48';
+    const code = buildGlassOrderQrPayload('SHEET ORDER', dict, stockCode);
     window.lastGeneratedGlassOrderCode = code;
-    shareGlassOrderCodeWhatsApp(code, 'GLASS CUTTING ORDER');
+    shareGlassOrderCodeWhatsApp(code, 'GLASS SHEET CUTTING ORDER');
 }
 
 let gcQrScannerStream = null;
@@ -6078,6 +6233,10 @@ function stopGlassOrderQrScanner() {
 }
 
 async function startGlassOrderQrScanner() {
+    const gcScreen = document.getElementById('screen-glass_cutting');
+    if (gcScreen && !gcScreen.classList.contains('active')) {
+        if (typeof openScreen === 'function') openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)');
+    }
     const box = document.getElementById('gc_qr_camera_box');
     const video = document.getElementById('gc_qr_video');
     if (!box || !video) return;
@@ -6107,11 +6266,11 @@ async function startGlassOrderQrScanner() {
             };
             requestAnimationFrame(scanLoop);
         } else {
-            alert('Camera opened! If your phone browser does not auto-detect QR in live video, tap "Paste Order Code" or "Scan from Image" right next to it.');
+            alert('Camera opened! If your phone browser does not auto-detect QR in live video, tap "PASTE ORDER CODE" or "SCAN FROM IMAGE" right next to it.');
         }
     } catch (err) {
         box.style.display = 'none';
-        alert('Camera permission denied or unavailable. You can use "Paste Order Code" or "Scan from Image" instead.');
+        alert('Camera permission denied or unavailable. You can use "PASTE ORDER CODE" or "SCAN FROM IMAGE" instead.');
     }
 }
 
@@ -6129,9 +6288,9 @@ async function scanGlassQrFromImageFile(event) {
                 return;
             }
         }
-        alert('Could not detect a QR code directly from that image on this browser. Please tap "Paste Order Code" and paste the SWG|... code printed below the QR on the PDF or WhatsApp message.');
+        alert('Could not detect a QR code directly from that image on this browser. Please tap "PASTE ORDER CODE" and paste the SWG|... code printed below the QR on the Bill/Sheet PDF or WhatsApp message.');
     } catch (err) {
-        alert('Please use "Paste Order Code" to paste the SWG|... code from the PDF.');
+        alert('Please use "PASTE ORDER CODE" to paste the SWG|... code from the Bill/Sheet PDF.');
     }
     event.target.value = '';
 }
@@ -7699,6 +7858,56 @@ function autofillCustomer() {
   const termsStr = (remarks_note ? "Note: " + remarks_note + " | " : "") + (pay_terms || "TERMS: 50% Advance with order. Balance on delivery.");
   doc.text(termsStr, 14, footerY);
   doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, footerY + 8);
+
+
+  // Draw Smart Glass Fabricator QR Auto-Load Box on the Bill PDF so Glass Fabricator can scan the Bill directly!
+  try {
+    const billSwgPayload = buildGlassOrderQrPayloadFromBillItems(effectiveItems, c_name);
+    if (billSwgPayload && typeof generateQrMatrix === 'function') {
+      window.lastGeneratedGlassOrderCode = billSwgPayload;
+      let qrBoxY = footerY + 13;
+      const pageH = doc.internal.pageSize.getHeight();
+      if (qrBoxY + 34 > pageH - 6) {
+        doc.addPage();
+        qrBoxY = 16;
+      }
+      doc.setFillColor(240, 249, 255);
+      doc.setDrawColor(2, 132, 199);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(14, qrBoxY, 182, 32, 2, 2, 'FD');
+
+      const qrMat = generateQrMatrix(billSwgPayload);
+      const qrMm = 26;
+      const qx = 17;
+      const qy = qrBoxY + 3;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(qx - 1, qy - 1, qrMm + 2, qrMm + 2, 'F');
+      const n = qrMat.length;
+      const cMm = qrMm / n;
+      doc.setFillColor(15, 23, 42);
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (qrMat[r][c]) doc.rect(qx + c * cMm, qy + r * cMm, cMm + 0.03, cMm + 0.03, 'F');
+        }
+      }
+
+      const tx = qx + qrMm + 5;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.8);
+      doc.setTextColor(3, 105, 161);
+      doc.text("FOR GLASS FABRICATOR / GLASS SHOP (1-SCAN AUTO-LOAD TO 4x8 SHEET):", tx, qrBoxY + 7);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.6);
+      doc.setTextColor(30, 41, 59);
+      doc.text("Scan this Bill QR Code in Smart Worker Pro -> Glass Cutting (4x8 Sheet) to auto-load all", tx, qrBoxY + 12.5);
+      doc.text("glass sizes, quantities, glass type, thickness & generate the 4x8 cutting layout chart!", tx, qrBoxY + 17);
+      doc.setFont("courier", "bold");
+      doc.setFontSize(6.6);
+      doc.setTextColor(15, 118, 110);
+      const codeLines = doc.splitTextToSize("ORDER CODE: " + billSwgPayload, 182 - (tx - 14) - 4);
+      doc.text(codeLines.slice(0, 2), tx, qrBoxY + 23);
+    }
+  } catch (err) {}
 
   doc.save(`Invoice_${c_name.replace(/\s+/g, '_')}.pdf`);
 }
@@ -11209,3 +11418,65 @@ function acceptAndClosePrivacyLegalModal() {
   localStorage.setItem('sw_legal_terms_accepted_v29', 'true');
   closePrivacyLegalModal();
 }
+
+
+// Auto-ensure QR Bridge UI exists in Glass Cutting & purge stale SW caches (< v71)
+(function ensureGlassQrBridgeAndFreshCache() {
+    const injectBridgeIfNeeded = () => {
+        if (document.getElementById('gc_qr_bridge_box')) return;
+        const gcScreen = document.getElementById('screen-glass_cutting');
+        if (!gcScreen) return;
+        const formGrid = gcScreen.querySelector('.form-grid');
+        if (!formGrid) return;
+        const wrap = document.createElement('div');
+        wrap.id = 'gc_qr_bridge_box';
+        wrap.style.cssText = 'background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:2px dashed #0284c7; border-radius:12px; padding:10px 12px; margin-bottom:14px;';
+        wrap.innerHTML = `
+          <div style="font-size:0.78rem; font-weight:800; color:#0369a1; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
+            <span><i class="fa-solid fa-qrcode" style="color:#059669;"></i> FABRICATOR ↔ GLASS CUTTER QR AUTO-LOAD</span>
+            <span style="font-size:0.66rem; background:#059669; color:#ffffff; padding:2px 8px; border-radius:99px;">1-Scan Auto-Import</span>
+          </div>
+          <div style="font-size:0.71rem; color:#334155; margin-bottom:8px; line-height:1.35;">
+            Scan the QR Code on any Fabricator's <b>2. GLASS PDF + QR</b> (or paste the <b>SWG|...</b> code) to auto-load all glass sizes & generate the <b>4'x8' cutting chart</b>!
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
+            <button type="button" class="action-btn" style="background:#059669; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="startGlassOrderQrScanner()">
+              <i class="fa-solid fa-camera"></i> <span>SCAN PDF QR CODE</span>
+            </button>
+            <button type="button" class="action-btn" style="background:#0284c7; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="document.getElementById('gc_qr_img_input').click()">
+              <i class="fa-solid fa-image"></i> <span>SCAN FROM IMAGE</span>
+            </button>
+            <button type="button" class="action-btn" style="background:#4f46e5; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="promptImportGlassOrderCode()">
+              <i class="fa-solid fa-paste"></i> <span>PASTE ORDER CODE</span>
+            </button>
+            <button type="button" class="action-btn" style="background:#0d9488; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="shareCurrentGlassListToCutterWhatsApp()">
+              <i class="fa-brands fa-whatsapp"></i> <span>SEND TO CUTTER</span>
+            </button>
+          </div>
+          <input type="file" id="gc_qr_img_input" accept="image/*" style="display:none;" onchange="scanGlassQrFromImageFile(event)">
+          <div id="gc_qr_camera_box" style="display:none; margin-top:10px; background:#0f172a; border:2px solid #10b981; border-radius:10px; padding:10px; text-align:center;">
+            <div style="font-size:0.75rem; color:#6ee7b7; margin-bottom:6px; font-weight:800;">Point Camera at the QR Code on "2. GLASS PDF + QR"</div>
+            <video id="gc_qr_video" playsinline muted style="width:100%; max-width:320px; border-radius:8px; border:1px solid #334155;"></video>
+            <div style="margin-top:8px;">
+              <button type="button" class="action-btn" style="background:#ef4444; color:#fff; padding:7px 16px; font-size:0.74rem; font-weight:800; border-radius:8px; width:auto; display:inline-flex; align-items:center; gap:5px;" onclick="stopGlassOrderQrScanner()">
+                <i class="fa-solid fa-xmark"></i> <span>Close Camera</span>
+              </button>
+            </div>
+          </div>
+          <div id="gc_qr_import_status" style="display:none; margin-top:8px; background:#dcfce7; border:1px solid #16a34a; color:#14532d; padding:8px 10px; border-radius:8px; display:size:0.75rem; font-weight:700;"></div>
+        `;
+        formGrid.parentNode.insertBefore(wrap, formGrid);
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectBridgeIfNeeded);
+    } else {
+        injectBridgeIfNeeded();
+    }
+    if ('caches' in window) {
+        caches.keys().then(keys => {
+            keys.forEach(k => {
+                if (k.indexOf('v72') === -1) caches.delete(k);
+            });
+        }).catch(() => {});
+    }
+})();
