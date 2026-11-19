@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=90').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=91').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=90">
+  <link rel="stylesheet" href="style.css?v=91">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1993,6 +1993,23 @@
            <option value="4-Track">4-Track Sliding</option>
            <option value="Openable (H-Sec)">Openable (H-Section)</option>
          </select>
+       </div>
+     </div>
+
+     <!-- PRO CAD: Per-Side Outer Frame & Window Outer Pipe Control -->
+     <div style="margin-top:7px; padding-top:7px; border-top:1px dashed #cbd5e1;">
+       <div style="font-size:0.65rem; font-weight:800; color:#0f766e; margin-bottom:4px;">
+         <i class="fa-solid fa-border-all"></i> OUTER FRAME PIPES (TAP TO ON / OFF):
+       </div>
+       <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:4px;">
+         <button type="button" id="pt_of_btn_top" onclick="togglePtOuterFrame('top')" style="background:#059669; color:#fff; border:none; border-radius:5px; padding:5px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Top ✓</button>
+         <button type="button" id="pt_of_btn_bot" onclick="togglePtOuterFrame('bot')" style="background:#059669; color:#fff; border:none; border-radius:5px; padding:5px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Bot ✓</button>
+         <button type="button" id="pt_of_btn_left" onclick="togglePtOuterFrame('left')" style="background:#059669; color:#fff; border:none; border-radius:5px; padding:5px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Left ✓</button>
+         <button type="button" id="pt_of_btn_right" onclick="togglePtOuterFrame('right')" style="background:#059669; color:#fff; border:none; border-radius:5px; padding:5px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Right ✓</button>
+         <button type="button" id="pt_of_btn_win" onclick="togglePtOuterFrame('win')" style="background:#0284c7; color:#fff; border:none; border-radius:5px; padding:5px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Win Frame ✓</button>
+       </div>
+       <div style="font-size:0.6rem; color:#475569; margin-top:3px; line-height:1.25;">
+         <b>Auto CAD Deduction:</b> Inner Box, Door Shutter &amp; Window sizes auto-deduct real tube width. Tap <b>Win Frame</b> OFF to remove outer partition pipe around Windows!
        </div>
      </div>
    </div>
@@ -4455,12 +4472,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=90"></script>
+  <script src="app.js?v=91"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=90').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=91').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

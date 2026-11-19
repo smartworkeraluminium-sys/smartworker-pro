@@ -5675,103 +5675,98 @@ function calculatePartition() {
 
   const leaves = [], splits = [], doorGroups = [];
   ptCadLayout(pt_cad_tree, 0, 0, d.w, d.h, leaves, splits, doorGroups);
+  leaves.forEach(lf => { lf._tc = ptCadComputeTrueCell(lf, d, tube_face); });
 
   const grossSqFt = (d.h * d.w) / 144.0;
   let minusWallSqFt = 0;
 
-  let out = `[Partition #${pt_part_count} — TOUCH CAD DESIGN (${disp(d.h)} H × ${disp(d.w)} W)]\n`;
+  let out = `[Partition #${pt_part_count} — PRO CAD DESIGN (${disp(d.h)} H × ${disp(d.w)} W)]\n`;
   const intDoorType = document.getElementById('pt_int_door_type')?.value || 'Standard Door';
   const intWinSys = document.getElementById('pt_int_win_sys')?.value || '18x40 System';
   const intWinTrack = document.getElementById('pt_int_win_track')?.value || '2-Track';
-  out += `> Section Tube: ${tube_label} | Alu: ${getModuleAluLabel('pt')}\n`;
+  const ofFlags = `Top:${pt_outer_frame.top?'ON':'OFF'} | Bot:${pt_outer_frame.bot?'ON':'OFF'} | L:${pt_outer_frame.left?'ON':'OFF'} | R:${pt_outer_frame.right?'ON':'OFF'} | WinFrame:${pt_outer_frame.win?'ON':'OFF'}`;
+  out += `> Section Tube: ${tube_label} (${disp(tube_face)} Face) | Alu: ${getModuleAluLabel('pt')}\n`;
+  out += `> Outer Frame Config: ${ofFlags}\n`;
   if (pt_active_combo_mode === 'PT_DOOR' || pt_active_combo_mode === 'ALL_3') out += `> Attached Door System: ${intDoorType}\n`;
   if (pt_active_combo_mode === 'PT_WIN' || pt_active_combo_mode === 'ALL_3') out += `> Attached Window System: ${intWinSys} (${intWinTrack})\n`;
   out += `-----------------------------------\n`;
-  out += `1. ALUMINIUM FRAME & DIVIDER TUBES (SMART WALL & DOOR MINUS)\n`;
+  out += `1. ALUMINIUM OUTER FRAME & DIVIDER TUBES (AUTO DEDUCTED)\n`;
   out += `-----------------------------------\n`;
 
-  // Compute Left & Right Outer Vertical lengths by deducting any WALL_MINUS touching the left/right edges!
-  let leftWallDeduct = 0, rightWallDeduct = 0, topWallDeduct = 0;
-  let bottomExcludedRanges = []; // spans [x1, x2] along floor occupied by WALL_MINUS or DOOR (NO bottom floor pipe!)
-  leaves.forEach(function(lf) {
-    if (lf.mat === 'WALL_MINUS') {
-      if (lf.x <= 0.5) leftWallDeduct += lf.h;
-      if (lf.x + lf.w >= d.w - 0.5) rightWallDeduct += lf.h;
-      if (lf.y <= 0.5) topWallDeduct += lf.w;
-      if (lf.y + lf.h >= d.h - 0.5) bottomExcludedRanges.push({ x1: lf.x, x2: lf.x + lf.w, reason: 'Wall' });
-    } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
-      if (lf.y + lf.h >= d.h - 0.5) bottomExcludedRanges.push({ x1: lf.x, x2: lf.x + lf.w, reason: 'Door' });
-    }
-  });
-  doorGroups.forEach(function(dg) {
-    if (dg.y + dg.h >= d.h - 0.5) bottomExcludedRanges.push({ x1: dg.x, x2: dg.x + dg.w, reason: 'Door' });
+  // Compute active outer pipe lengths from actual cells with outerL/outerR/outerT/outerB = true!
+  let leftOuterLen = 0, rightOuterLen = 0, topOuterLen = 0;
+  let botOuterSegs = [];
+  leaves.forEach(lf => {
+    const tc = lf._tc;
+    if (tc.outerL) leftOuterLen += lf.h;
+    if (tc.outerR) rightOuterLen += lf.h;
+    if (tc.outerT) topOuterLen += lf.w;
+    if (tc.outerB) botOuterSegs.push({ x1: lf.x, x2: lf.x + lf.w });
   });
 
-  const leftVertLen = Math.max(0, d.h - leftWallDeduct);
-  const rightVertLen = Math.max(0, d.h - rightWallDeduct);
-  const topHorizLen = Math.max(0, (d.w - topWallDeduct) - (2 * tube_face));
-
-  if (leftVertLen > 2) {
-    out += `> Left Outer Vertical (${tube_label}): ${disp(leftVertLen)} (1 pc)${leftWallDeduct > 0 ? ' [Wall Minus -' + disp(leftWallDeduct) + ']' : ''}\n`;
-    pt_buckets[sg_key].push(leftVertLen);
+  if (leftOuterLen > 2) {
+    out += `> Left Outer Vertical (${tube_label}): ${disp(leftOuterLen)} (1 pc)\n`;
+    pt_buckets[sg_key].push(leftOuterLen);
+  } else {
+    out += `> Left Outer Vertical: NOT REQUIRED (0 pc — OFF / Wall / No Win Frame)\n`;
   }
-  if (rightVertLen > 2) {
-    out += `> Right Outer Vertical (${tube_label}): ${disp(rightVertLen)} (1 pc)${rightWallDeduct > 0 ? ' [Wall Minus -' + disp(rightWallDeduct) + ']' : ''}\n`;
-    pt_buckets[sg_key].push(rightVertLen);
+  if (rightOuterLen > 2) {
+    out += `> Right Outer Vertical (${tube_label}): ${disp(rightOuterLen)} (1 pc)\n`;
+    pt_buckets[sg_key].push(rightOuterLen);
+  } else {
+    out += `> Right Outer Vertical: NOT REQUIRED (0 pc — OFF / Wall / No Win Frame)\n`;
   }
-  if (topHorizLen > 2) {
-    out += `> Top Outer Horizontal (${tube_label}): ${disp(topHorizLen)} (1 pc)${topWallDeduct > 0 ? ' [Wall Minus -' + disp(topWallDeduct) + ']' : ''}\n`;
-    pt_buckets[sg_key].push(topHorizLen);
+  const topNetLen = Math.max(0, topOuterLen - (leftOuterLen > 2 ? tube_face : 0) - (rightOuterLen > 2 ? tube_face : 0));
+  if (topNetLen > 2) {
+    out += `> Top Outer Horizontal (${tube_label}): ${disp(topNetLen)} (1 pc)\n`;
+    pt_buckets[sg_key].push(topNetLen);
+  } else {
+    out += `> Top Outer Horizontal: NOT REQUIRED (0 pc)\n`;
   }
 
-  // Compute remaining Bottom Floor Base Tube segments (subtracting ALL Door & Wall bottom spans!)
-  bottomExcludedRanges.sort((a, b) => a.x1 - b.x1);
-  const mergedEx = [];
-  bottomExcludedRanges.forEach(rng => {
-    if (!mergedEx.length || rng.x1 > mergedEx[mergedEx.length - 1].x2 + 0.5) {
-      mergedEx.push({ x1: rng.x1, x2: rng.x2 });
-    } else {
-      mergedEx[mergedEx.length - 1].x2 = Math.max(mergedEx[mergedEx.length - 1].x2, rng.x2);
-    }
+  // Merge contiguous bottom outer segments
+  botOuterSegs.sort((a, b) => a.x1 - b.x1);
+  const mergedBot = [];
+  botOuterSegs.forEach(s => {
+    if (!mergedBot.length || s.x1 > mergedBot[mergedBot.length - 1].x2 + 0.3) mergedBot.push({ x1: s.x1, x2: s.x2 });
+    else mergedBot[mergedBot.length - 1].x2 = Math.max(mergedBot[mergedBot.length - 1].x2, s.x2);
   });
-  let cursorX = 0;
-  const botTubeSegs = [];
-  mergedEx.forEach(ex => {
-    if (ex.x1 - cursorX > 3.0) botTubeSegs.push(ex.x1 - cursorX - tube_face);
-    cursorX = Math.max(cursorX, ex.x2);
-  });
-  if (d.w - cursorX > 3.0) botTubeSegs.push(d.w - cursorX - tube_face);
-
-  if (botTubeSegs.length > 0) {
-    botTubeSegs.forEach((segLen, sIdx) => {
+  if (mergedBot.length > 0) {
+    mergedBot.forEach((seg, sIdx) => {
+      const segDedL = (seg.x1 <= 0.15 && leftOuterLen > 2) ? tube_face : (seg.x1 > 0.15 ? tube_face / 2 : 0);
+      const segDedR = (seg.x2 >= d.w - 0.15 && rightOuterLen > 2) ? tube_face : (seg.x2 < d.w - 0.15 ? tube_face / 2 : 0);
+      const segLen = Math.max(0, (seg.x2 - seg.x1) - segDedL - segDedR);
       if (segLen > 2) {
         out += `> Bottom Base Tube #${sIdx + 1} (${tube_label}): ${disp(segLen)} (1 pc)\n`;
         pt_buckets[sg_key].push(segLen);
       }
     });
-    if (mergedEx.length > 0) {
-      out += `  (Note: Bottom floor pipe automatically MINUSED under Door / Half-Wall!)\n`;
-    }
   } else {
-    out += `> Bottom Floor Base Tube: NOT REQUIRED (0 pc — Fully covered by Door / Wall Minus!)\n`;
+    out += `> Bottom Floor Base Tube: NOT REQUIRED (0 pc — Door / Wall / Bot OFF / No Win Frame)\n`;
   }
+
   doorGroups.forEach(function(dg, idx) {
-    const dv = Math.max(24, dg.h - 1.75), drw = Math.max(8, dg.w - (2 * secVert));
-    out += `> Custom Multi-Part Door #${idx + 1} (${disp(dg.h)} × ${disp(dg.w)}):\n`;
-    out += `   • Vertical Stiles (${disp(secVert)} Sec): ${disp(dv)} (2 pc)\n`;
+    const clearH = Math.max(24, dg.h - (pt_outer_frame.top && dg.y <= 0.15 ? tube_face : tube_face / 2));
+    const clearW = Math.max(12, dg.w - (pt_outer_frame.left && dg.x <= 0.15 ? tube_face : tube_face / 2) - (pt_outer_frame.right && dg.x + dg.w >= d.w - 0.15 ? tube_face : tube_face / 2));
+    const shutH = Math.max(20, clearH - 0.5);
+    const shutW = Math.max(10, clearW - 0.375);
+    const drw = Math.max(6, shutW - (2 * secVert));
+    out += `> Multi-Part Door #${idx + 1} [Inner Clear: ${disp(clearH)} H × ${disp(clearW)} W -> Auto Shutter: ${disp(shutH)} × ${disp(shutW)}]:\n`;
+    out += `   • Vertical Stiles (${disp(secVert)} Sec): ${disp(shutH)} (2 pc)\n`;
     out += `   • Top Rail (${disp(secTop)} Sec): ${disp(drw)} (1 pc) | Bottom Rail (${disp(secBot)} Sec): ${disp(drw)} (1 pc)\n`;
-    out += `   • Middle Rail Section Used: ${disp(secMid)} | Hardware: Hinges 3 pc + Lock 1 Set + Handle\n`;
-    pt_buckets["Door Sash"].push(dv, dv, drw, drw);
+    out += `   • Middle Rail Section: ${disp(secMid)} | Hardware: Hinges 3 pc + Lock 1 Set + Handle\n`;
+    pt_buckets["Door Sash"].push(shutH, shutH, drw, drw);
   });
+
   splits.forEach(function(sp, idx) {
     const cutL = Math.max(4, sp.len - tube_face);
     const secTag = sp.dir === 'V' ? `Vert ${disp(secVert)}` : `Mid ${disp(secMid)}`;
-    out += `> Divider #${idx + 1} (${sp.dir === 'V' ? 'Vertical Post' : 'Horizontal Middle'} [${secTag}]): ${disp(cutL)} (1 pc)\n`;
+    out += `> Divider #${idx + 1} (${sp.dir === 'V' ? 'Vertical Post' : 'Horizontal Transom'} [${secTag}]): ${disp(cutL)} (1 pc)\n`;
     pt_buckets[dg_key].push(cutL);
   });
 
   out += `\n-----------------------------------\n`;
-  out += `2. SECTION-BY-SECTION CUTTING & MINUS DEDUCTIONS\n`;
+  out += `2. TRUE INNER OPENING & AUTO CUTTING LIST\n`;
   out += `-----------------------------------\n`;
   let totGlassPcs = 0, totGlassSqFt = 0;
   let totAcpPcs = 0, totAcpSqFt = 0;
@@ -5779,28 +5774,34 @@ function calculatePartition() {
 
   leaves.forEach(function(lf, idx) {
     const tag = `Box #${idx + 1}`;
-    const cw = Math.max(3, lf.w - tube_face - 0.25);
-    const ch = Math.max(3, lf.h - tube_face - 0.25);
+    const tc = lf._tc;
+    const iw = tc.innerW;
+    const ih = tc.innerH;
+    const cutW = Math.max(2, iw - 0.125);
+    const cutH = Math.max(2, ih - 0.125);
     const boxSqFt = (lf.h * lf.w) / 144.0;
 
     if (lf.mat === 'WALL_MINUS') {
       minusWallSqFt += boxSqFt;
       out += `• ${tag} [WALL / CUTOUT MINUS]: -${boxSqFt.toFixed(2)} Sq.Ft (${disp(lf.h)} × ${disp(lf.w)}) -> DEDUCTED!\n`;
     } else if (lf.mat === 'ACP') {
-      out += `• ${tag} [ACP BOARD]: ${disp(ch)} × ${disp(cw)} (1 pc | ${((ch * cw) / 144).toFixed(2)} Sq.Ft)\n`;
-      totAcpPcs++; totAcpSqFt += (ch * cw) / 144;
-      pt_acp_list.push({ rowTag: tag, cutStr: `${disp(ch)} x ${disp(cw)}`, h_in: ch, w_in: cw, qty: 1, buyLabel: '', areaSqFt: (ch * cw) / 144 });
+      out += `• ${tag} [ACP BOARD] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${((cutH * cutW) / 144).toFixed(2)} Sq.Ft)\n`;
+      totAcpPcs++; totAcpSqFt += (cutH * cutW) / 144;
+      pt_acp_list.push({ rowTag: tag, cutStr: `${disp(cutH)} x ${disp(cutW)}`, h_in: cutH, w_in: cutW, qty: 1, buyLabel: '', areaSqFt: (cutH * cutW) / 144 });
     } else if (lf.mat === 'JALI') {
-      out += `• ${tag} [JALI / MESH]: ${disp(ch)} × ${disp(cw)} (1 pc | ${((ch * cw) / 144).toFixed(2)} Sq.Ft)\n`;
-      totJaliPcs++; totJaliSqFt += (ch * cw) / 144;
+      out += `• ${tag} [JALI / MESH] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${((cutH * cutW) / 144).toFixed(2)} Sq.Ft)\n`;
+      totJaliPcs++; totJaliSqFt += (cutH * cutW) / 144;
     } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
       const nL = lf.mat === 'DOOR_2' ? 2 : 1;
-      const lw = Math.max(12, (lf.w - 1.5) / nL);
-      const railW = Math.max(6, lw - 3.5);
-      const dgH = Math.max(6, (lf.h - 8) * 0.62), dgW = Math.max(4, railW + 0.75);
-      const daH = Math.max(6, (lf.h - 8) * 0.38);
-      pt_buckets["Door Sash"].push(lf.h - 1.75, lf.h - 1.75, railW, railW);
-      out += `• ${tag} [${nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR'}]: Sash ${disp(lf.h - 1.75)} × ${disp(lw)} (${nL} Leaf)\n`;
+      const shutH = Math.max(20, ih - 0.5);
+      const shutW = Math.max(10, (iw - (nL === 2 ? 0.5 : 0.375)) / nL);
+      const railW = Math.max(6, shutW - (2 * secVert));
+      const innerPanelH = Math.max(8, shutH - secTop - secBot - secMid);
+      const dgH = Math.max(4, innerPanelH * 0.62), daH = Math.max(4, innerPanelH * 0.38);
+      const dgW = Math.max(4, railW + 0.5);
+      pt_buckets["Door Sash"].push(shutH, shutH, railW, railW);
+      out += `• ${tag} [${nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR'}] Inner Clear: ${disp(ih)} H × ${disp(iw)} W\n`;
+      out += `   -> Auto Shutter (${nL} Leaf): ${disp(shutH)} H × ${disp(shutW)} W | Rails: ${disp(railW)}\n`;
       out += `   -> Top Glass: ${disp(dgH)} × ${disp(dgW)} (${nL} pc) | Bot ACP: ${disp(daH)} × ${disp(dgW)} (${nL} pc)\n`;
       pt_glass_dict[`${disp(dgH)} x ${disp(dgW)} (${tag} Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dgH)} x ${disp(dgW)} (${tag} Door Glass) || ${pt_gspec}`] || 0) + nL;
       totGlassPcs += nL; totGlassSqFt += (dgH * dgW * nL) / 144;
@@ -5808,20 +5809,23 @@ function calculatePartition() {
       totAcpPcs += nL; totAcpSqFt += (daH * dgW * nL) / 144;
     } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
       const tr = lf.mat === 'SLIDE_3T' ? 3 : 2;
-      const wgH = Math.max(4, lf.h - 5.5), wgW = Math.max(4, (lf.w - 3.0) / tr);
-      out += `• ${tag} [${tr}-TRACK SLIDING WINDOW]: Glass ${disp(wgH)} × ${disp(wgW)} (2 pc)${tr === 3 ? ' + 1 Jali' : ''}\n`;
+      const wgH = Math.max(4, ih - 5.25), wgW = Math.max(4, (iw - 3.0) / tr);
+      const wfTag = pt_outer_frame.win ? 'Inside Partition Frame' : 'Direct Wall-to-Wall (No Outer Pipe)';
+      out += `• ${tag} [${tr}-TRACK SLIDING — ${wfTag}]\n`;
+      out += `   -> Exact Window Size: ${disp(ih)} H × ${disp(iw)} W (${intWinSys})\n`;
+      out += `   -> Glass Cut: ${disp(wgH)} × ${disp(wgW)} (2 pc)${tr === 3 ? ' + 1 Jali' : ''}\n`;
       pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${tag} ${tr}T Slide) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${tag} ${tr}T Slide) || ${pt_gspec}`] || 0) + 2;
       totGlassPcs += 2; totGlassSqFt += (wgH * wgW * 2) / 144;
       if (tr === 3) { totJaliPcs++; totJaliSqFt += (wgH * wgW) / 144; }
     } else if (lf.mat === 'H_OPEN') {
-      const oh = Math.max(4, lf.h - 3.0), ow = Math.max(4, lf.w - 3.0);
-      out += `• ${tag} [H-SEC OPENABLE WINDOW]: Glass ${disp(oh)} × ${disp(ow)} (1 pc)\n`;
+      const oh = Math.max(4, ih - 3.0), ow = Math.max(4, iw - 3.0);
+      out += `• ${tag} [H-SEC OPENABLE WIN] Exact Size: ${disp(ih)} × ${disp(iw)} -> Glass: ${disp(oh)} × ${disp(ow)} (1 pc)\n`;
       pt_glass_dict[`${disp(oh)} x ${disp(ow)} (${tag} OpenWin) || ${pt_gspec}`] = (pt_glass_dict[`${disp(oh)} x ${disp(ow)} (${tag} OpenWin) || ${pt_gspec}`] || 0) + 1;
       totGlassPcs++; totGlassSqFt += (oh * ow) / 144;
     } else {
-      out += `• ${tag} [FIXED GLASS]: ${disp(ch)} × ${disp(cw)} (1 pc | ${((ch * cw) / 144).toFixed(2)} Sq.Ft)\n`;
-      pt_glass_dict[`${disp(ch)} x ${disp(cw)} (${tag} Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(ch)} x ${disp(cw)} (${tag} Glass) || ${pt_gspec}`] || 0) + 1;
-      totGlassPcs++; totGlassSqFt += (ch * cw) / 144;
+      out += `• ${tag} [FIXED GLASS] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${((cutH * cutW) / 144).toFixed(2)} Sq.Ft)\n`;
+      pt_glass_dict[`${disp(cutH)} x ${disp(cutW)} (${tag} Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(cutH)} x ${disp(cutW)} (${tag} Glass) || ${pt_gspec}`] || 0) + 1;
+      totGlassPcs++; totGlassSqFt += (cutH * cutW) / 144;
     }
   });
 
@@ -5846,7 +5850,7 @@ function calculatePartition() {
   renderPtCadDesigner();
 }
 
- function clearPartition() {
+function clearPartition() {
  pt_part_count = 0;
  pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
  pt_glass_dict = {};
@@ -12179,7 +12183,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v90') === -1) caches.delete(k);
+                if (k.indexOf('v91') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -13331,23 +13335,83 @@ window.addEventListener('pointerup', ptCadEndDrag);
 window.addEventListener('touchmove', function(e){ if (pt_cad_drag) { e.preventDefault(); ptCadMoveDrag(e); } }, { passive: false });
 window.addEventListener('touchend', ptCadEndDrag);
 
+var pt_outer_frame = { top: true, bot: true, left: true, right: true, win: true };
+
+function togglePtOuterFrame(side) {
+  pt_outer_frame[side] = !pt_outer_frame[side];
+  var labels = { top: 'Top', bot: 'Bot', left: 'Left', right: 'Right', win: 'Win Frame' };
+  var btn = document.getElementById('pt_of_btn_' + side);
+  if (btn) {
+    var on = pt_outer_frame[side];
+    btn.textContent = labels[side] + (on ? ' ✓' : ' ✕');
+    btn.style.background = on ? (side === 'win' ? '#0284c7' : '#059669') : '#e2e8f0';
+    btn.style.color = on ? '#ffffff' : '#64748b';
+  }
+  renderPtCadDesigner();
+}
+
+function ptCadComputeTrueCell(lf, d, tubeFace) {
+  var isWin = (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T' || lf.mat === 'H_OPEN');
+  var isDoor = (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2');
+  var isWall = (lf.mat === 'WALL_MINUS');
+  var isWinNoOuter = isWin && !pt_outer_frame.win;
+
+  var atL = (lf.x <= 0.15);
+  var atR = (lf.x + lf.w >= d.w - 0.15);
+  var atT = (lf.y <= 0.15);
+  var atB = (lf.y + lf.h >= d.h - 0.15);
+
+  var outerL = atL && pt_outer_frame.left && !isWall && !isWinNoOuter;
+  var outerR = atR && pt_outer_frame.right && !isWall && !isWinNoOuter;
+  var outerT = atT && pt_outer_frame.top && !isWall && !isWinNoOuter;
+  var outerB = atB && pt_outer_frame.bot && !isWall && !isDoor && !isWinNoOuter;
+
+  var dedL = atL ? (outerL ? tubeFace : 0) : (tubeFace / 2);
+  var dedR = atR ? (outerR ? tubeFace : 0) : (tubeFace / 2);
+  var dedT = atT ? (outerT ? tubeFace : 0) : (tubeFace / 2);
+  var dedB = atB ? (outerB ? tubeFace : 0) : (tubeFace / 2);
+
+  var innerW = Math.max(2, lf.w - dedL - dedR);
+  var innerH = Math.max(2, lf.h - dedT - dedB);
+  return {
+    innerW: innerW, innerH: innerH,
+    dedL: dedL, dedR: dedR, dedT: dedT, dedB: dedB,
+    outerL: outerL, outerR: outerR, outerT: outerT, outerB: outerB,
+    atL: atL, atR: atR, atT: atT, atB: atB,
+    isWin: isWin, isDoor: isDoor, isWall: isWall
+  };
+}
+
+function ptCadSvgPill(cx, cy, text, fontSize, bg, fg, strokeCol) {
+  var fs = fontSize || 6.2;
+  var estW = Math.max(22, text.length * fs * 0.62 + 8);
+  var estH = fs + 4.4;
+  return '<rect x="' + (cx - estW / 2) + '" y="' + (cy - estH / 2) + '" width="' + estW + '" height="' + estH + '" rx="2.5" fill="' + (bg || 'rgba(255,255,255,0.94)') + '" stroke="' + (strokeCol || 'rgba(15,23,42,0.22)') + '" stroke-width="0.6"/>' +
+         '<text x="' + cx + '" y="' + (cy + fs * 0.34) + '" font-size="' + fs + '" font-weight="800" fill="' + (fg || '#0f172a') + '" text-anchor="middle">' + text + '</text>';
+}
+
 function buildPtCadSvg(isFullScreen) {
   var d = ptCadGetDims();
   var aluColor = getModuleAluColor('pt');
   var gType = document.getElementById('pt_g_type')?.value || 'Clear';
   var aluPal = getAluVisualPalette(aluColor);
   var glsPal = getGlassVisualPalette(gType);
+  var tubeFace = parseFloat(document.getElementById('pt_tube_face')?.value) || 1.5;
 
   var leaves = [], splits = [], doorGroups = [];
   ptCadLayout(pt_cad_tree, 0, 0, d.w, d.h, leaves, splits, doorGroups);
 
-  var vbW = 360, vbH = 235, pad = 16;
-  var scale = Math.min((vbW - pad * 2) / d.w, (vbH - pad * 2) / d.h);
+  var vbW = 380, vbH = 262;
+  var padL = 34, padR = 16, padT = 28, padB = 14;
+  var scale = Math.min((vbW - padL - padR) / d.w, (vbH - padT - padB) / d.h);
   var drawW = d.w * scale, drawH = d.h * scale;
-  var ox = (vbW - drawW) / 2, oy = (vbH - drawH) / 2;
+  var ox = padL + ((vbW - padL - padR) - drawW) / 2;
+  var oy = padT + ((vbH - padT - padB) - drawH) / 2;
   var uid = 'ptc_' + Math.floor(Math.random() * 10000);
+  var tubePx = Math.max(3.2, Math.min(8, tubeFace * scale));
 
-  var styleStr = isFullScreen ? 'width:100%; height:100%; max-height:100%; display:block; margin:0 auto;' : 'width:100%; max-height:255px; display:block; margin:0 auto;';
+  var disp = function(v) { return d.isMm ? toMmStr(v) : toFractionInch(v); };
+  var styleStr = isFullScreen ? 'width:100%; height:100%; max-height:100%; display:block; margin:0 auto;' : 'width:100%; max-height:275px; display:block; margin:0 auto;';
   var svg = '<svg id="' + (isFullScreen ? 'pt_cad_fs_svg' : 'pt_cad_svg_el') + '" viewBox="0 0 ' + vbW + ' ' + vbH + '" preserveAspectRatio="xMidYMid meet" style="' + styleStr + '">';
   svg += '<defs>';
   svg += '<linearGradient id="alu_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="' + aluPal.c1 + '"/><stop offset="50%" stop-color="' + aluPal.c2 + '"/><stop offset="100%" stop-color="' + aluPal.c3 + '"/></linearGradient>';
@@ -13355,44 +13419,73 @@ function buildPtCadSvg(isFullScreen) {
   svg += '<pattern id="jali_' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#ecfdf5"/><path d="M0 0 L7 7 M7 0 L0 7" stroke="#065f46" stroke-width="0.95" stroke-opacity="0.8"/></pattern>';
   svg += '</defs>';
 
-  svg += '<text x="' + (vbW / 2) + '" y="' + (oy - 5) + '" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="middle">Total: ' + toFractionInch(d.w) + ' W × ' + toFractionInch(d.h) + ' H</text>';
-  svg += '<rect x="' + (ox - 4) + '" y="' + (oy - 4) + '" width="' + (drawW + 8) + '" height="' + (drawH + 8) + '" rx="3" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.8"/>';
+  // Architectural CAD Exterior Dimension Line — TOP (Total Width)
+  var dimY = oy - 13;
+  svg += '<line x1="' + ox + '" y1="' + (oy - 4) + '" x2="' + ox + '" y2="' + (dimY - 3) + '" stroke="#475569" stroke-width="0.7"/>';
+  svg += '<line x1="' + (ox + drawW) + '" y1="' + (oy - 4) + '" x2="' + (ox + drawW) + '" y2="' + (dimY - 3) + '" stroke="#475569" stroke-width="0.7"/>';
+  svg += '<line x1="' + ox + '" y1="' + dimY + '" x2="' + (ox + drawW) + '" y2="' + dimY + '" stroke="#0369a1" stroke-width="1"/>';
+  svg += '<polygon points="' + ox + ',' + dimY + ' ' + (ox + 5) + ',' + (dimY - 2.3) + ' ' + (ox + 5) + ',' + (dimY + 2.3) + '" fill="#0369a1"/>';
+  svg += '<polygon points="' + (ox + drawW) + ',' + dimY + ' ' + (ox + drawW - 5) + ',' + (dimY - 2.3) + ' ' + (ox + drawW - 5) + ',' + (dimY + 2.3) + '" fill="#0369a1"/>';
+  svg += ptCadSvgPill(ox + drawW / 2, dimY, 'Total W: ' + disp(d.w), 7.0, '#f0f9ff', '#0c4a6e', '#0284c7');
 
+  // Architectural CAD Exterior Dimension Line — LEFT (Total Height)
+  var dimX = ox - 15;
+  svg += '<line x1="' + (ox - 4) + '" y1="' + oy + '" x2="' + (dimX - 3) + '" y2="' + oy + '" stroke="#475569" stroke-width="0.7"/>';
+  svg += '<line x1="' + (ox - 4) + '" y1="' + (oy + drawH) + '" x2="' + (dimX - 3) + '" y2="' + (oy + drawH) + '" stroke="#475569" stroke-width="0.7"/>';
+  svg += '<line x1="' + dimX + '" y1="' + oy + '" x2="' + dimX + '" y2="' + (oy + drawH) + '" stroke="#0369a1" stroke-width="1"/>';
+  svg += '<polygon points="' + dimX + ',' + oy + ' ' + (dimX - 2.3) + ',' + (oy + 5) + ' ' + (dimX + 2.3) + ',' + (oy + 5) + '" fill="#0369a1"/>';
+  svg += '<polygon points="' + dimX + ',' + (oy + drawH) + ' ' + (dimX - 2.3) + ',' + (oy + drawH - 5) + ' ' + (dimX + 2.3) + ',' + (oy + drawH - 5) + '" fill="#0369a1"/>';
+  svg += '<g transform="translate(' + dimX + ',' + (oy + drawH / 2) + ') rotate(-90)">' + ptCadSvgPill(0, 0, 'H: ' + disp(d.h), 6.8, '#f0f9ff', '#0c4a6e', '#0284c7') + '</g>';
+
+  // Subtle dashed outer boundary reference (shows exact wall opening even when an outer tube is OFF)
+  svg += '<rect x="' + ox + '" y="' + oy + '" width="' + drawW + '" height="' + drawH + '" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.9" stroke-dasharray="3,2"/>';
+
+  // Compute true inner cell dims & draw each cell + its active outer frame segments
   leaves.forEach(function(lf) {
-    var rx = ox + lf.x * scale + 1.5, ry = oy + lf.y * scale + 1.5;
-    var rw = Math.max(8, lf.w * scale - 3), rh = Math.max(8, lf.h * scale - 3);
+    var tc = ptCadComputeTrueCell(lf, d, tubeFace);
+    lf._tc = tc;
+
+    var pL = tc.dedL * scale, pR = tc.dedR * scale, pT = tc.dedT * scale, pB = tc.dedB * scale;
+    var bx = ox + lf.x * scale, by = oy + lf.y * scale, bw = lf.w * scale, bh = lf.h * scale;
+
+    // Draw Partition Frame / Divider Tubes belonging to this cell's borders
+    if (!tc.isWall) {
+      if (tc.outerL) svg += '<rect x="' + bx + '" y="' + by + '" width="' + Math.max(2.5, pL) + '" height="' + bh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
+      if (tc.outerR) svg += '<rect x="' + (bx + bw - Math.max(2.5, pR)) + '" y="' + by + '" width="' + Math.max(2.5, pR) + '" height="' + bh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
+      if (tc.outerT) svg += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + Math.max(2.5, pT) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
+      if (tc.outerB) svg += '<rect x="' + bx + '" y="' + (by + bh - Math.max(2.5, pB)) + '" width="' + bw + '" height="' + Math.max(2.5, pB) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
+    }
+
+    var rx = bx + pL, ry = by + pT;
+    var rw = Math.max(8, bw - pL - pR), rh = Math.max(8, bh - pT - pB);
     var isSel = (!isFullScreen && lf.id === pt_cad_sel_id);
     var clickA = isFullScreen ? '' : ('onclick="ptCadTapBox(' + lf.id + ')" style="cursor:pointer;"');
 
     svg += '<g ' + clickA + '>';
     if (lf.mat === 'WALL_MINUS') {
-      var exL = (lf.x <= 0.5) ? 5 : 0;
-      var exR = (lf.x + lf.w >= d.w - 0.5) ? 5 : 0;
-      var exB = (lf.y + lf.h >= d.h - 0.5) ? 5 : 0;
-      var wx0 = rx - exL, wy0 = ry, ww0 = rw + exL + exR, wh0 = rh + exB;
-      svg += '<rect x="' + wx0 + '" y="' + wy0 + '" width="' + ww0 + '" height="' + wh0 + '" fill="#e7e5e4" stroke="#78716c" stroke-width="1.4" stroke-dasharray="4,2"/>';
-      for (var ly = wy0 + 8; ly < wy0 + wh0 - 2; ly += 8) svg += '<line x1="' + wx0 + '" y1="' + ly + '" x2="' + (wx0 + ww0) + '" y2="' + ly + '" stroke="#a8a29e" stroke-width="0.7"/>';
-      svg += '<text x="' + (wx0 + ww0 / 2) + '" y="' + (wy0 + wh0 / 2 + 2) + '" font-size="7.2" font-weight="bold" fill="#dc2626" text-anchor="middle">WALL (NO PIPE / MINUS)</text>';
+      svg += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="#e7e5e4" stroke="#78716c" stroke-width="1.3" stroke-dasharray="4,2"/>';
+      for (var ly = by + 8; ly < by + bh - 2; ly += 8) svg += '<line x1="' + bx + '" y1="' + ly + '" x2="' + (bx + bw) + '" y2="' + ly + '" stroke="#a8a29e" stroke-width="0.7"/>';
+      if (bw >= 36 && bh >= 24) svg += ptCadSvgPill(bx + bw / 2, by + bh / 2, 'WALL (MINUS)', 6.0, 'rgba(254,242,242,0.95)', '#dc2626', '#fca5a5');
     } else if (lf.mat === 'ACP') {
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
+      if (rw >= 32 && rh >= 26) svg += ptCadSvgPill(rx + rw / 2, ry + rh / 2 + 5, 'ACP', 6.0, 'rgba(241,245,249,0.92)', '#0f172a', '#64748b');
     } else if (lf.mat === 'JALI') {
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#jali_' + uid + ')" stroke="#059669" stroke-width="1.2"/>';
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="7.5" font-weight="bold" fill="#065f46" text-anchor="middle">JALI</text>';
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#jali_' + uid + ')" stroke="#059669" stroke-width="1.1"/>';
+      if (rw >= 32 && rh >= 26) svg += ptCadSvgPill(rx + rw / 2, ry + rh / 2 + 5, 'JALI', 6.0, 'rgba(236,253,245,0.95)', '#065f46', '#10b981');
     } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
       var nL = (lf.mat === 'DOOR_2') ? 2 : 1;
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.1"/>';
       var lw = (rw - 4 - ((nL - 1) * 2)) / nL;
       for (var i = 0; i < nL; i++) {
         var dlx = rx + 2 + i * (lw + 2);
-        svg += '<rect x="' + dlx + '" y="' + (ry + 2) + '" width="' + lw + '" height="' + (rh - 4) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
+        svg += '<rect x="' + dlx + '" y="' + (ry + 2) + '" width="' + lw + '" height="' + (rh - 3) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.85"/>';
         var gh = (rh - 10) * 0.62, ah = (rh - 10) * 0.38;
         svg += '<rect x="' + (dlx + 3) + '" y="' + (ry + 4) + '" width="' + Math.max(4, lw - 6) + '" height="' + Math.max(4, gh) + '" fill="url(#gls_' + uid + ')"/>';
         svg += '<rect x="' + (dlx + 3) + '" y="' + (ry + 6 + gh) + '" width="' + Math.max(4, lw - 6) + '" height="' + Math.max(4, ah - 2) + '" fill="#94a3b8"/>';
         var hx = (i === 0 && nL === 2) ? (dlx + lw - 4) : (dlx + 2);
         svg += '<rect x="' + hx + '" y="' + (ry + rh * 0.45) + '" width="2.2" height="12" rx="1" fill="#fbbf24"/>';
       }
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh - 5) + '" font-size="6.8" font-weight="bold" fill="#0f172a" text-anchor="middle">DOOR</text>';
+      if (rw >= 34 && rh >= 32) svg += ptCadSvgPill(rx + rw / 2, ry + rh - 9, (nL === 2 ? '2-LEAF DOOR' : 'DOOR'), 5.8, '#fffbeb', '#92400e', '#f59e0b');
     } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
       var tr = (lf.mat === 'SLIDE_3T') ? 3 : 2;
       svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
@@ -13402,45 +13495,51 @@ function buildPtCadSvg(isFullScreen) {
         var isJ = (tr === 3 && t === 2);
         svg += '<rect x="' + tx + '" y="' + (ry + 2) + '" width="' + tw + '" height="' + (rh - 4) + '" fill="' + (isJ ? 'url(#jali_' + uid + ')' : 'url(#gls_' + uid + ')') + '" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
       }
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="7" font-weight="bold" fill="#0f172a" text-anchor="middle">' + (tr === 3 ? '3T+JALI' : '2T SLIDE') + '</text>';
+      if (rw >= 40 && rh >= 28) svg += ptCadSvgPill(rx + rw / 2, ry + rh / 2 + 5, (tr === 3 ? '3T SLIDE + JALI' : '2T SLIDE'), 6.0, 'rgba(255,255,255,0.95)', '#1e3a8a', '#60a5fa');
     } else if (lf.mat === 'H_OPEN') {
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.1"/>';
       svg += '<rect x="' + (rx + 3) + '" y="' + (ry + 3) + '" width="' + Math.max(4, rw - 6) + '" height="' + Math.max(4, rh - 6) + '" fill="url(#gls_' + uid + ')"/>';
       svg += '<polyline points="' + (rx + 3) + ',' + (ry + 3) + ' ' + (rx + rw - 3) + ',' + (ry + rh / 2) + ' ' + (rx + 3) + ',' + (ry + rh - 3) + '" fill="none" stroke="#fff" stroke-width="1.1" stroke-dasharray="3,2"/>';
       svg += '<rect x="' + (rx + rw - 4.5) + '" y="' + (ry + rh / 2 - 5) + '" width="2" height="10" rx="1" fill="#fbbf24"/>';
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh - 5) + '" font-size="6.8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">OPEN WIN</text>';
+      if (rw >= 38 && rh >= 28) svg += ptCadSvgPill(rx + rw / 2, ry + rh - 9, 'OPEN WIN', 5.8, '#eff6ff', '#1e3a8a', '#3b82f6');
     } else {
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#gls_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-      svg += '<line x1="' + (rx + 4) + '" y1="' + (ry + rh - 4) + '" x2="' + (rx + rw - 4) + '" y2="' + (ry + 4) + '" stroke="' + glsPal.shine + '" stroke-width="1.5" stroke-opacity="0.6"/>';
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#gls_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
+      svg += '<line x1="' + (rx + 4) + '" y1="' + (ry + rh - 4) + '" x2="' + (rx + rw - 4) + '" y2="' + (ry + 4) + '" stroke="' + glsPal.shine + '" stroke-width="1.4" stroke-opacity="0.6"/>';
     }
-    if (rw >= 32 && rh >= 22) {
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + 10) + '" font-size="6.2" font-weight="bold" fill="#0f172a" fill-opacity="0.85" text-anchor="middle">' + Math.round(lf.w) + '"×' + Math.round(lf.h) + '"</text>';
+
+    // Crisp White Pill with TRUE INNER CLEAR OPENING SIZE (never overlapping lines!)
+    if (rw >= 34 && rh >= 20) {
+      var dimTxt = tc.isWall ? (disp(lf.w) + '×' + disp(lf.h)) : (disp(tc.innerW) + '×' + disp(tc.innerH));
+      var pillY = (rh >= 36) ? (ry + 10) : (ry + rh / 2);
+      svg += ptCadSvgPill(rx + rw / 2, pillY, dimTxt, 5.8, 'rgba(255,255,255,0.94)', '#0f172a', 'rgba(15,23,42,0.22)');
     }
     if (isSel) {
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="none" stroke="#7c3aed" stroke-width="2.6" stroke-dasharray="4,2"/>';
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="none" stroke="#7c3aed" stroke-width="2.4" stroke-dasharray="4,2"/>';
     }
     svg += '</g>';
   });
 
-  // Draw Door Frame, Hinges & Golden Handle around any Wrapped Door Group (e.g. Jali + Glass + ACP Door!)
-  doorGroups.forEach(function(dg) {
-    var dx = ox + dg.x * scale;
-    var dy = oy + dg.y * scale;
-    var dw = dg.w * scale;
-    var dh = dg.h * scale;
-    svg += '<rect x="' + (dx + 0.5) + '" y="' + (dy + 0.5) + '" width="' + (dw - 1) + '" height="' + (dh - 1) + '" fill="none" stroke="#b45309" stroke-width="3.4" rx="2"/>';
-    // Door Hinges on Left
-    svg += '<rect x="' + (dx - 1) + '" y="' + (dy + dh * 0.14) + '" width="3.5" height="9" rx="1" fill="#78350f"/>';
-    svg += '<rect x="' + (dx - 1) + '" y="' + (dy + dh * 0.50) + '" width="3.5" height="9" rx="1" fill="#78350f"/>';
-    svg += '<rect x="' + (dx - 1) + '" y="' + (dy + dh * 0.82) + '" width="3.5" height="9" rx="1" fill="#78350f"/>';
-    // Golden Door Handle on Right
-    svg += '<rect x="' + (dx + dw - 6.5) + '" y="' + (dy + dh * 0.45) + '" width="3.5" height="18" rx="1.6" fill="#fbbf24" stroke="#78350f" stroke-width="0.8"/>';
-    // DOOR Label Pill
-    svg += '<rect x="' + (dx + dw / 2 - 20) + '" y="' + (dy + dh - 13) + '" width="40" height="11" rx="3" fill="#b45309"/>';
-    svg += '<text x="' + (dx + dw / 2) + '" y="' + (dy + dh - 5.2) + '" font-size="6.8" font-weight="bold" fill="#ffffff" text-anchor="middle">DOOR</text>';
-    if (dg.y + dg.h >= d.h - 0.5) {
-      svg += '<rect x="' + (dx + 2) + '" y="' + (oy + drawH) + '" width="' + Math.max(4, dw - 4) + '" height="6" fill="#f8fafc"/>';
+  // Draw Real Interior Divider Mullions & Transoms along every split line
+  splits.forEach(function(sp) {
+    if (sp.dir === 'V') {
+      var sx = ox + sp.x * scale - tubePx / 2;
+      svg += '<rect x="' + sx + '" y="' + (oy + sp.y * scale) + '" width="' + tubePx + '" height="' + (sp.len * scale) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.7"/>';
+    } else {
+      var sy = oy + sp.y * scale - tubePx / 2;
+      svg += '<rect x="' + (ox + sp.x * scale) + '" y="' + sy + '" width="' + (sp.len * scale) + '" height="' + tubePx + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.7"/>';
     }
+  });
+
+  // Draw Door Frame, Hinges & Golden Handle around any Wrapped/Multi-Part Door Group
+  doorGroups.forEach(function(dg) {
+    var dx = ox + dg.x * scale + 2, dy = oy + dg.y * scale + 2;
+    var dw = Math.max(12, dg.w * scale - 4), dh = Math.max(12, dg.h * scale - 4);
+    svg += '<rect x="' + dx + '" y="' + dy + '" width="' + dw + '" height="' + dh + '" fill="none" stroke="#b45309" stroke-width="2.8" rx="1.5"/>';
+    svg += '<rect x="' + (dx + 2) + '" y="' + (dy + dh * 0.14) + '" width="2.4" height="6" rx="0.8" fill="#475569"/>';
+    svg += '<rect x="' + (dx + 2) + '" y="' + (dy + dh * 0.50) + '" width="2.4" height="6" rx="0.8" fill="#475569"/>';
+    svg += '<rect x="' + (dx + 2) + '" y="' + (dy + dh * 0.84) + '" width="2.4" height="6" rx="0.8" fill="#475569"/>';
+    svg += '<rect x="' + (dx + dw - 5.5) + '" y="' + (dy + dh * 0.48) + '" width="3.2" height="15" rx="1.2" fill="#f59e0b" stroke="#78350f" stroke-width="0.6"/>';
+    svg += ptCadSvgPill(dx + dw / 2, dy + dh - 8, 'MULTI-PART DOOR', 5.8, '#b45309', '#ffffff', '#78350f');
   });
 
   if (!isFullScreen) {
@@ -13471,7 +13570,13 @@ function renderPtCadDesigner() {
   var infoEl = document.getElementById('pt_cad_sel_info');
   if (infoEl && cur) {
     var mName = cur.mat === 'WALL_MINUS' ? 'Wall (Minus -)' : cur.mat;
-    infoEl.innerHTML = 'Selected: <b>' + mName + '</b> (' + toFractionInch(cur.w) + ' W × ' + toFractionInch(cur.h) + ' H)';
+    var tc = cur._tc;
+    var disp = function(v) { return ptCadGetDims().isMm ? toMmStr(v) : toFractionInch(v); };
+    if (tc && !tc.isWall) {
+      infoEl.innerHTML = 'Selected: <b>' + mName + '</b> • Clear Inner: <b style="color:#0369a1;">' + disp(tc.innerW) + ' W × ' + disp(tc.innerH) + ' H</b> <span style="font-size:0.68rem; color:#64748b;">(Bay: ' + disp(cur.w) + ' × ' + disp(cur.h) + ')</span>';
+    } else {
+      infoEl.innerHTML = 'Selected: <b>' + mName + '</b> (' + disp(cur.w) + ' W × ' + disp(cur.h) + ' H)';
+    }
   }
 }
 
