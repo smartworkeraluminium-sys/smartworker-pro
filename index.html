@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=78').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=81').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=78">
+  <link rel="stylesheet" href="style.css?v=81">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -882,6 +882,18 @@
  </div>
  <div class="pro-card-title" style="color:#0369a1; font-size:0.98rem;">Glass Cutting (4'x8' Sheet Chart)</div>
  <div class="pro-card-sub" style="color:#334155;">Enter Glass Sizes -> Auto 4'x8' Min-Waste Cutting Drawing & PDF</div>
+ </div>
+
+ <!-- 8. Aluminium Pipe / Bar 1D Cutting Optimizer (12 Ft / 16 Ft) -->
+ <div class="pro-card" style="grid-column: span 2; border: 1.5px solid #0f766e; background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);" onclick="openScreen('bar_cutting', 'ALU BAR CUTTING (12/16 FT)')">
+ <div class="pro-card-header">
+ <div class="pro-card-icon" style="background:#0f766e; color:#ffffff;">
+ <i class="fa-solid fa-ruler-horizontal"></i>
+ </div>
+ <span style="font-size:0.7rem; font-weight:800; background:#ccfbf1; color:#0f766e; padding:3px 8px; border-radius:12px;">12' / 16' PIPE OPTIMIZER</span>
+ </div>
+ <div class="pro-card-title" style="color:#0f766e; font-size:0.98rem;">Alu Bar / Pipe Cutting (12' & 16')</div>
+ <div class="pro-card-sub" style="color:#334155;">Min-Waste 12ft / 16ft Pipe Cutting Drawing, Kerf Loss & PDF</div>
  </div>
 
 
@@ -1806,6 +1818,7 @@
  <option value="Fixed Partition" selected>Fixed Partition</option>
  <option value="Door + Partition">Door + Partition</option>
  <option value="Window + Partition">Window + Partition</option>
+ <option value="Door + Window + Partition">Door + Window + Partition (All-in-One)</option>
  </select>
  </div>
  <div class="form-group">
@@ -1832,6 +1845,38 @@
  <input readonly inputmode="none" onclick="openKeypad('pt_dw')" style="cursor:pointer; background:#fff;" type="text" id="pt_dw"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_dw')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
+ <div id="pt_door_options_box" style="display:none; grid-column: 1 / -1; background:#eff6ff; border:1.5px solid #0284c7; border-radius:10px; padding:10px;">
+   <div style="font-size:0.75rem; font-weight:800; color:#0369a1; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+     <i class="fa-solid fa-door-open"></i> <span>PARTITION DOOR OPTIONS (ATTACHED DOOR):</span>
+   </div>
+   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+     <div>
+       <label style="font-size:0.71rem; font-weight:700; color:#0369a1; display:block; margin-bottom:2px;">Door Leaves:</label>
+       <select id="pt_door_palla" onchange="renderPartitionWallVisualOnly(); renderLiveColorGlassPreview('pt');" style="width:100%; padding:6px; border:1px solid #38bdf8; border-radius:6px; font-size:0.78rem; font-weight:800; color:#0f172a; background:#fff;">
+         <option value="1" selected>Single Door</option>
+         <option value="2">Double Door</option>
+       </select>
+     </div>
+     <div>
+       <label style="font-size:0.71rem; font-weight:700; color:#0369a1; display:block; margin-bottom:2px;">Door Position:</label>
+       <select id="pt_door_pos" onchange="renderPartitionWallVisualOnly(); renderLiveColorGlassPreview('pt');" style="width:100%; padding:6px; border:1px solid #38bdf8; border-radius:6px; font-size:0.78rem; font-weight:800; color:#0f172a; background:#fff;">
+         <option value="left" selected>Left Side</option>
+         <option value="right">Right Side</option>
+       </select>
+     </div>
+     <div style="grid-column: span 2;">
+       <label style="font-size:0.71rem; font-weight:700; color:#0369a1; display:block; margin-bottom:2px;">Door Design (Glass / ACP / Jali):</label>
+       <select id="pt_door_design" onchange="renderPartitionWallVisualOnly(); renderLiveColorGlassPreview('pt');" style="width:100%; padding:6px; border:1px solid #38bdf8; border-radius:6px; font-size:0.78rem; font-weight:800; color:#0f172a; background:#fff;">
+         <option value="GLASS_ACP" selected>2 Parts: Top Glass + Bot ACP</option>
+         <option value="JALI_GLASS_ACP">3 Parts: Top Jali + Mid Glass + Bot ACP</option>
+         <option value="JALI_ACP">2 Parts: Top Jali + Bot ACP</option>
+         <option value="FULL_GLASS">1 Part: Full Glass Door</option>
+         <option value="FULL_ACP">1 Part: Full ACP Door</option>
+         <option value="FULL_JALI">1 Part: Full Jali Door</option>
+       </select>
+     </div>
+   </div>
+ </div>
  <div id="pt_window_options_box" style="display:none; grid-column: 1 / -1; background:#f5f3ff; border:1.5px solid #8b5cf6; border-radius:10px; padding:10px;">
    <div style="font-size:0.75rem; font-weight:800; color:#5b21b6; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
      <i class="fa-solid fa-window-restore"></i> <span>PARTITION WINDOW SYSTEM (H-SECTION OPENABLE / SLIDING):</span>
@@ -1846,6 +1891,14 @@
          <option value="SLIDE_3T">3-Track Sliding Window (2 Glass + 1 Jali)</option>
          <option value="SLIDE_4T">4-Track Sliding Window (Inside Partition)</option>
        </select>
+     </div>
+     <div id="pt_combo_wh_wrap" style="display:none;">
+       <label style="font-size:0.71rem; font-weight:700; color:#4c1d95; display:block; margin-bottom:2px;">Window Height (H):</label>
+       <input type="number" id="pt_combo_wh" value="48" step="0.5" oninput="renderLiveColorGlassPreview('pt')" style="width:100%; padding:6px; border:1px solid #a78bfa; border-radius:6px; font-size:0.8rem; font-weight:700; text-align:center;">
+     </div>
+     <div id="pt_combo_ww_wrap" style="display:none;">
+       <label style="font-size:0.71rem; font-weight:700; color:#4c1d95; display:block; margin-bottom:2px;">Window Width (W):</label>
+       <input type="number" id="pt_combo_ww" value="48" step="0.5" oninput="renderLiveColorGlassPreview('pt')" style="width:100%; padding:6px; border:1px solid #a78bfa; border-radius:6px; font-size:0.8rem; font-weight:700; text-align:center;">
      </div>
      <div>
        <label style="font-size:0.71rem; font-weight:700; color:#4c1d95; display:block; margin-bottom:2px;">Bottom Sill Height (In):</label>
@@ -3351,6 +3404,99 @@
    <div id="gc_mat_out" style="display:none;"></div>
  </div>
 
+ <!-- ================= 14A2. 12 FT / 16 FT ALUMINIUM BAR / PIPE 1D CUTTING OPTIMIZER SCREEN ================= -->
+ <div id="screen-bar_cutting" class="screen">
+   <div class="form-box" style="border-top: 4px solid #0f766e;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+       <div>
+         <div style="font-size:1.0rem; font-weight:800; color:#0f766e;"><i class="fa-solid fa-ruler-horizontal"></i> 12' / 16' ALU PIPE CUTTING MASTER</div>
+         <div style="font-size:0.73rem; color:#64748b;">Minimum-Waste 1D Bar Nesting, Visual Pipe Drawing & PDF</div>
+       </div>
+     </div>
+
+     <!-- 1-Click Auto-Import from Active Calculators -->
+     <div style="background:linear-gradient(135deg, #f0fdfa, #ecfdf5); border:1.5px dashed #0f766e; border-radius:10px; padding:9px 10px; margin-bottom:12px;">
+       <div style="font-size:0.73rem; font-weight:800; color:#0f766e; margin-bottom:6px;">
+         <i class="fa-solid fa-file-import"></i> 1-CLICK IMPORT CUT SIZES FROM CALCULATORS:
+       </div>
+       <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px;">
+         <button type="button" onclick="importBucketsToBarOptimizer('dm')" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Domal</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('sl')" style="background:#0f766e; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Sliding</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('dr')" style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Door</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('pt')" style="background:#ea580c; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Partition</button>
+       </div>
+     </div>
+
+     <div class="form-grid">
+       <div class="form-group">
+         <label style="color:#0f766e; font-weight:700;">Stock Bar Length:</label>
+         <select id="bc_stock_len" onchange="recalculateBarCuttingPlan()">
+           <option value="144" selected>12 Ft Bar (144" / 3658 mm)</option>
+           <option value="192">16 Ft Bar (192" / 4877 mm)</option>
+           <option value="180">15 Ft Bar (180" / 4572 mm)</option>
+           <option value="216">18 Ft Bar (216" / 5486 mm)</option>
+           <option value="240">20 Ft Bar (240" / 6096 mm)</option>
+         </select>
+       </div>
+       <div class="form-group">
+         <label>Input Unit:</label>
+         <select id="bc_unit" onchange="recalculateBarCuttingPlan()">
+           <option value="Inch" selected>Inch</option>
+           <option value="Millimeter">Millimeter</option>
+         </select>
+       </div>
+
+       <div class="form-group">
+         <label style="color:#0369a1; font-weight:700;">Section / Pipe Name:</label>
+         <input type="text" id="bc_profile" value="2.5x1.5 Tube" placeholder="e.g. Outer, Handle, Tube">
+       </div>
+       <div class="form-group">
+         <label style="color:#b45309; font-weight:700;">Blade Kerf (Cut Loss):</label>
+         <select id="bc_kerf" onchange="recalculateBarCuttingPlan()">
+           <option value="0.125" selected>3 mm (1/8" Standard Saw)</option>
+           <option value="0.1875">5 mm (3/16" Heavy Blade)</option>
+           <option value="0">0 mm (No Kerf)</option>
+         </select>
+       </div>
+
+       <div class="form-group">
+         <label>Cut Piece Length:</label>
+         <div class="input-wrapper">
+           <input readonly inputmode="none" onclick="openKeypad('bc_len')" style="cursor:pointer; background:#fff;" type="text" id="bc_len" placeholder="Length">
+           <button type="button" class="keypad-trigger" onclick="openKeypad('bc_len')"><i class="fa-solid fa-calculator"></i></button>
+         </div>
+       </div>
+       <div class="form-group">
+         <label style="color:#16a34a; font-weight:700;">Quantity (Pcs):</label>
+         <input type="number" id="bc_qty" value="2" min="1">
+       </div>
+
+       <div class="form-group" style="grid-column: 1 / -1;">
+         <label style="color:#2563eb; font-weight:700;">Piece Tag / Note (Optional):</label>
+         <input type="text" id="bc_tag" placeholder="e.g. Vertical, Top Rail, Transom">
+       </div>
+     </div>
+
+     <div class="btn-row">
+       <button type="button" class="action-btn btn-clear" style="flex:0.28;" onclick="clearBarCutting()">CLEAR</button>
+       <button type="button" class="action-btn" style="flex:0.28; background:#ea580c;" onclick="removeLastBarCuttingItem()">UNDO</button>
+       <button type="button" class="action-btn btn-calc" style="flex:0.44; background:#0f766e;" onclick="addBarCuttingItem()">+ ADD & OPTIMIZE</button>
+     </div>
+
+     <div style="margin-top:8px;">
+       <button type="button" class="action-btn" style="width:100%; background:#be123c; padding:11px 8px; font-size:0.82rem; font-weight:800; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="exportBarCuttingPdf()">
+         <i class="fa-solid fa-file-pdf"></i> <span>EXPORT 12' / 16' BAR CUTTING DRAWING PDF</span>
+       </button>
+     </div>
+   </div>
+
+   <!-- Live Visual 1D Bar Cutting SVG Map -->
+   <div id="bc_visual_layout_box" style="display:none; background:#ffffff; border:2px solid #0f766e; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(15,118,110,0.12);"></div>
+
+   <div class="output-label" style="color:#0f766e;">12' / 16' BAR CUTTING SUMMARY & STOCK LIST:</div>
+   <div class="output-area" id="bc_out"></div>
+ </div>
+
  <!-- ================= 14B. WASTAGE / OFFCUT QR STOCK & SCANNER SCREEN ================= -->
  <div id="screen-wastage_qr" class="screen">
    <div class="form-box" style="border-top: 4px solid #d97706;">
@@ -4198,12 +4344,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=78"></script>
+  <script src="app.js?v=81"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=78').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=81').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
