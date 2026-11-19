@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=87').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=90').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=87">
+  <link rel="stylesheet" href="style.css?v=90">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -1813,7 +1813,7 @@
  </select>
  </div>
  <div class="form-group">
- <label style="color:#0369a1; font-weight:700;">Jindal Tube Section:</label>
+ <label style="color:#0369a1; font-weight:700;">Tube / Section Size:</label>
  <select id="pt_tube_preset" onchange="applyPartitionTubePreset(this.value); renderPtCadDesigner();">
  <option value="2.5x1.5_edge" selected>2.5" x 1.5" Tube</option>
  <option value="2.5x1.5_flat">2.5" x 1.5" (2.5" Front)</option>
@@ -1945,6 +1945,58 @@
      </button>
    </div>
 
+   <!-- 4-MODE COMBINATION SWITCHER (Partition Only / + Door / + Window / All 3 Together) -->
+   <div style="background:#ffffff; border:1.5px solid #0284c7; border-radius:9px; padding:7px; margin-bottom:8px;">
+     <div style="font-size:0.69rem; font-weight:800; color:#0369a1; margin-bottom:5px;">
+       <i class="fa-solid fa-layer-group"></i> SELECT WORK MODE (SINGLE OR COMBINED):
+     </div>
+     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+       <button type="button" id="pt_mode_btn_only" onclick="setPtComboMode('ONLY_PT')" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:7px 4px; font-size:0.7rem; font-weight:800; cursor:pointer;">1. Only Partition</button>
+       <button type="button" id="pt_mode_btn_door" onclick="setPtComboMode('PT_DOOR')" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:7px 4px; font-size:0.7rem; font-weight:800; cursor:pointer;">2. Partition + Door</button>
+       <button type="button" id="pt_mode_btn_win" onclick="setPtComboMode('PT_WIN')" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:7px 4px; font-size:0.7rem; font-weight:800; cursor:pointer;">3. Partition + Window</button>
+       <button type="button" id="pt_mode_btn_all" onclick="setPtComboMode('ALL_3')" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:7px 4px; font-size:0.7rem; font-weight:800; cursor:pointer;">4. All 3 (Pt + Door + Win)</button>
+     </div>
+
+     <!-- Integrated DOOR SETTINGS (Shown in Partition+Door & All 3 Modes) -->
+     <div id="pt_integrated_door_specs" style="display:none; margin-top:7px; padding-top:7px; border-top:1px dashed #cbd5e1;">
+       <div style="font-size:0.67rem; font-weight:800; color:#b45309; margin-bottom:4px;"><i class="fa-solid fa-door-open"></i> ATTACHED DOOR SYSTEM:</div>
+       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+         <select id="pt_int_door_type" style="padding:5px; border:1px solid #fbbf24; border-radius:6px; font-size:0.72rem; font-weight:700; background:#fffbeb;">
+           <option value="Standard Door" selected>Standard Hinge Door</option>
+           <option value="Floor Spring Door">Floor Spring Door</option>
+           <option value="Top Hung Door">Top Hung Sliding Door</option>
+         </select>
+         <select id="pt_int_door_preset" onchange="applyPtDoorSectionPreset(this.value)" style="padding:5px; border:1px solid #fbbf24; border-radius:6px; font-size:0.72rem; font-weight:700; background:#fffbeb;">
+           <option value="commercial" selected>Commercial (4" Bot, 2.5" Top)</option>
+           <option value="jumbo">Jumbo (5" Bot, 2.5" Top)</option>
+           <option value="economy">Economy (2.5" Bot, 1.75" Top)</option>
+           <option value="slim">Slim (4" Bot, 2" Top)</option>
+         </select>
+       </div>
+     </div>
+
+     <!-- Integrated SLIDING / OPENABLE WINDOW SETTINGS (Shown in Partition+Window & All 3 Modes) -->
+     <div id="pt_integrated_win_specs" style="display:none; margin-top:7px; padding-top:7px; border-top:1px dashed #cbd5e1;">
+       <div style="font-size:0.67rem; font-weight:800; color:#6d28d9; margin-bottom:4px;"><i class="fa-solid fa-window-restore"></i> ATTACHED WINDOW SYSTEM:</div>
+       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+         <select id="pt_int_win_sys" style="padding:5px; border:1px solid #a78bfa; border-radius:6px; font-size:0.72rem; font-weight:700; background:#f5f3ff;">
+           <option value="18x40 System" selected>18x40 Sliding Series</option>
+           <option value="18x50 System">18x50 Sliding Series</option>
+           <option value="25x50 System">25x50 Heavy Sliding</option>
+           <option value="25x65 System">25x65 Jumbo Sliding</option>
+           <option value="Domal 27x65">Domal 27x65 Sliding</option>
+           <option value="H-Section Openable">H-Section Openable</option>
+         </select>
+         <select id="pt_int_win_track" style="padding:5px; border:1px solid #a78bfa; border-radius:6px; font-size:0.72rem; font-weight:700; background:#f5f3ff;">
+           <option value="2-Track" selected>2-Track Sliding</option>
+           <option value="3-Track (2 Glass + 1 Jali)">3-Track (2G + 1 Jali)</option>
+           <option value="4-Track">4-Track Sliding</option>
+           <option value="Openable (H-Sec)">Openable (H-Section)</option>
+         </select>
+       </div>
+     </div>
+   </div>
+
    <!-- 6 Ready Visual Designs + Custom Blank Option -->
    <div style="margin-bottom:8px;">
      <div style="font-size:0.69rem; font-weight:800; color:#0369a1; margin-bottom:4px;">QUICK READY DESIGNS (OR TAP 'CUSTOM DESIGN'):</div>
@@ -1981,6 +2033,31 @@
      <button type="button" onclick="ptCadResizePrompt()" style="background:#7c3aed; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.71rem; font-weight:800; cursor:pointer;">
        <i class="fa-solid fa-ruler"></i> Exact Size
      </button>
+   </div>
+
+   <!-- Custom Section Profile Widths (Top / Middle / Bottom / Vertical in Inches) -->
+   <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:7px 8px; margin-bottom:8px;">
+     <div style="font-size:0.68rem; font-weight:800; color:#0f766e; margin-bottom:5px;">
+       <i class="fa-solid fa-sliders"></i> SECTION SIZES (INCHES) — TOP / MIDDLE / BOTTOM / VERTICAL:
+     </div>
+     <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px;">
+       <div>
+         <label style="font-size:0.63rem; font-weight:700; color:#334155; display:block; text-align:center;">Top (In)</label>
+         <input type="number" id="pt_sec_top" value="2.5" step="0.125" oninput="renderPtCadDesigner()" style="width:100%; padding:4px 2px; border:1px solid #94a3b8; border-radius:5px; font-size:0.75rem; font-weight:800; text-align:center;">
+       </div>
+       <div>
+         <label style="font-size:0.63rem; font-weight:700; color:#334155; display:block; text-align:center;">Middle (In)</label>
+         <input type="number" id="pt_sec_mid" value="2.5" step="0.125" oninput="renderPtCadDesigner()" style="width:100%; padding:4px 2px; border:1px solid #94a3b8; border-radius:5px; font-size:0.75rem; font-weight:800; text-align:center;">
+       </div>
+       <div>
+         <label style="font-size:0.63rem; font-weight:700; color:#334155; display:block; text-align:center;">Bottom (In)</label>
+         <input type="number" id="pt_sec_bot" value="4.0" step="0.125" oninput="renderPtCadDesigner()" style="width:100%; padding:4px 2px; border:1px solid #94a3b8; border-radius:5px; font-size:0.75rem; font-weight:800; text-align:center;">
+       </div>
+       <div>
+         <label style="font-size:0.63rem; font-weight:700; color:#334155; display:block; text-align:center;">Vert (In)</label>
+         <input type="number" id="pt_sec_vert" value="1.75" step="0.125" oninput="renderPtCadDesigner()" style="width:100%; padding:4px 2px; border:1px solid #94a3b8; border-radius:5px; font-size:0.75rem; font-weight:800; text-align:center;">
+       </div>
+     </div>
    </div>
 
    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px;">
@@ -2183,18 +2260,18 @@
  <option value="Top Hung Door">Top Hung Door</option>
  <option value="Domal Door">Domal Door</option>
  </optgroup>
- <optgroup label="JINDAL PARTITIONS (GLASS & ACP)">
- <option value="Partition Jindal 2.5x1.5 (Glass + ACP)">Partition Jindal 2.5"x1.5" (Glass + ACP)</option>
- <option value="Partition Jindal 2.5x1.5 (Full Glass)">Partition Jindal 2.5"x1.5" (Full Glass)</option>
- <option value="Partition Jindal 2x1 (Glass + ACP)">Partition Jindal 2"x1" (Glass + ACP)</option>
- <option value="Partition Jindal 2x1 (Full Glass)">Partition Jindal 2"x1" (Full Glass)</option>
- <option value="Partition Jindal 1.75x1.75">Partition Jindal 1.75"x1.75"</option>
- <option value="Partition Jindal 3x1.5">Partition Jindal 3"x1.5" Heavy</option>
- <option value="Partition Jindal 4x1.75">Partition Jindal 4"x1.75" Jumbo</option>
- <option value="Partition Jindal 4x1.5">Partition Jindal 4"x1.5" Tube</option>
- <option value="Door + Partition (Jindal 2.5x1.5)">Door + Partition (Jindal 2.5"x1.5")</option>
- <option value="Door + Partition (Jindal 2x1)">Door + Partition (Jindal 2"x1")</option>
- <option value="Door + Partition (Jindal 4x1.75)">Door + Partition (Jindal 4"x1.75")</option>
+ <optgroup label="ALUMINIUM PARTITIONS (GLASS & ACP)">
+ <option value="Partition 2.5x1.5 (Glass + ACP)">Partition 2.5"x1.5" (Glass + ACP)</option>
+ <option value="Partition 2.5x1.5 (Full Glass)">Partition 2.5"x1.5" (Full Glass)</option>
+ <option value="Partition 2x1 (Glass + ACP)">Partition 2"x1" (Glass + ACP)</option>
+ <option value="Partition 2x1 (Full Glass)">Partition 2"x1" (Full Glass)</option>
+ <option value="Partition 1.75x1.75">Partition 1.75"x1.75"</option>
+ <option value="Partition 3x1.5">Partition 3"x1.5" Heavy</option>
+ <option value="Partition 4x1.75">Partition 4"x1.75" Jumbo</option>
+ <option value="Partition 4x1.5">Partition 4"x1.5" Tube</option>
+ <option value="Door + Partition (Tube 2.5x1.5)">Door + Partition (Tube 2.5"x1.5")</option>
+ <option value="Door + Partition (Tube 2x1)">Door + Partition (Tube 2"x1")</option>
+ <option value="Door + Partition (Tube 4x1.75)">Door + Partition (Tube 4"x1.75")</option>
  </optgroup>
  <optgroup label="CEILING & OTHER">
  <option value="Gypsum Ceiling">Gypsum Ceiling</option>
@@ -2969,15 +3046,15 @@
  <option value="Casement 40mm Series" selected>Casement 40mm Heavy Series (Openable/Fixed)</option>
  <option value="Casement 34mm Series">Casement 34mm Series (Openable/Fixed)</option>
  </optgroup>
- <optgroup label="JINDAL PARTITION SYSTEMS">
- <option value="Partition Jindal 2.5x1.5 (Glass + ACP)">Partition Jindal 2.5"x1.5" (Glass + ACP)</option>
- <option value="Partition Jindal 2.5x1.5 (Full Glass)">Partition Jindal 2.5"x1.5" (Full Glass)</option>
- <option value="Partition Jindal 2x1 (Glass + ACP)">Partition Jindal 2"x1" (Glass + ACP)</option>
- <option value="Partition Jindal 1.75x1.75">Partition Jindal 1.75"x1.75"</option>
- <option value="Partition Jindal 3x1.5">Partition Jindal 3"x1.5" Heavy</option>
- <option value="Partition Jindal 4x1.75">Partition Jindal 4"x1.75" Jumbo</option>
- <option value="Door + Partition (Jindal 2.5x1.5)">Door + Partition (Jindal 2.5"x1.5")</option>
- <option value="Door + Partition (Jindal 4x1.75)">Door + Partition (Jindal 4"x1.75")</option>
+ <optgroup label="PARTITION SYSTEMS">
+ <option value="Partition 2.5x1.5 (Glass + ACP)">Partition 2.5"x1.5" (Glass + ACP)</option>
+ <option value="Partition 2.5x1.5 (Full Glass)">Partition 2.5"x1.5" (Full Glass)</option>
+ <option value="Partition 2x1 (Glass + ACP)">Partition 2"x1" (Glass + ACP)</option>
+ <option value="Partition 1.75x1.75">Partition 1.75"x1.75"</option>
+ <option value="Partition 3x1.5">Partition 3"x1.5" Heavy</option>
+ <option value="Partition 4x1.75">Partition 4"x1.75" Jumbo</option>
+ <option value="Door + Partition (Tube 2.5x1.5)">Door + Partition (Tube 2.5"x1.5")</option>
+ <option value="Door + Partition (Tube 4x1.75)">Door + Partition (Tube 4"x1.75")</option>
  </optgroup>
  <optgroup label="DOMAL SYSTEM WINDOWS">
  <option value="Domal 27x65 (2-Track)">Domal 27x65 (2-Track Window)</option>
@@ -4378,12 +4455,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=87"></script>
+  <script src="app.js?v=90"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=87').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=90').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

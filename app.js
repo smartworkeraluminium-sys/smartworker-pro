@@ -3516,13 +3516,13 @@ function getPartitionTubeLabel() {
   var bot = parseFloat(document.getElementById('pt_bot_face') ? document.getElementById('pt_bot_face').value : 1.5) || 1.5;
   if (!sel) return '2.5"x1.5"';
   var v = sel.value;
-  if (v.indexOf('2.5x1.5') === 0) return 'Jindal 2.5"x1.5"';
-  if (v.indexOf('2x1') === 0) return 'Jindal 2"x1"';
-  if (v === '1.75x1.75') return 'Jindal 1.75"x1.75"';
-  if (v.indexOf('3x1.5') === 0) return 'Jindal 3"x1.5"';
-  if (v.indexOf('4x1.75') === 0) return 'Jindal 4"x1.75"';
-  if (v.indexOf('4x1.5') === 0) return 'Jindal 4"x1.5"';
-  if (v === '2x2') return 'Jindal 2"x2"';
+  if (v.indexOf('2.5x1.5') === 0) return '2.5"x1.5"';
+  if (v.indexOf('2x1') === 0) return '2"x1"';
+  if (v === '1.75x1.75') return '1.75"x1.75"';
+  if (v.indexOf('3x1.5') === 0) return '3"x1.5"';
+  if (v.indexOf('4x1.75') === 0) return '4"x1.75"';
+  if (v.indexOf('4x1.5') === 0) return '4"x1.5"';
+  if (v === '2x2') return '2"x2"';
   return 'Tube (' + face + '" Face, ' + bot + '" Base)';
 }
 
@@ -5662,6 +5662,10 @@ function calculatePartition() {
   pt_part_count += 1;
 
   const tube_face = parseFloat(document.getElementById('pt_tube_face')?.value) || 1.5;
+  const secTop = parseFloat(document.getElementById('pt_sec_top')?.value) || 2.5;
+  const secMid = parseFloat(document.getElementById('pt_sec_mid')?.value) || 2.5;
+  const secBot = parseFloat(document.getElementById('pt_sec_bot')?.value) || 4.0;
+  const secVert = parseFloat(document.getElementById('pt_sec_vert')?.value) || 1.75;
   const tube_label = getPartitionTubeLabel();
   const sg_key = `Single Glazing [${tube_label}]`;
   const dg_key = `Double Glazing [${tube_label}]`;
@@ -5676,21 +5680,93 @@ function calculatePartition() {
   let minusWallSqFt = 0;
 
   let out = `[Partition #${pt_part_count} — TOUCH CAD DESIGN (${disp(d.h)} H × ${disp(d.w)} W)]\n`;
-  out += `> Jindal Tube: ${tube_label} | Alu: ${getModuleAluLabel('pt')}\n`;
+  const intDoorType = document.getElementById('pt_int_door_type')?.value || 'Standard Door';
+  const intWinSys = document.getElementById('pt_int_win_sys')?.value || '18x40 System';
+  const intWinTrack = document.getElementById('pt_int_win_track')?.value || '2-Track';
+  out += `> Section Tube: ${tube_label} | Alu: ${getModuleAluLabel('pt')}\n`;
+  if (pt_active_combo_mode === 'PT_DOOR' || pt_active_combo_mode === 'ALL_3') out += `> Attached Door System: ${intDoorType}\n`;
+  if (pt_active_combo_mode === 'PT_WIN' || pt_active_combo_mode === 'ALL_3') out += `> Attached Window System: ${intWinSys} (${intWinTrack})\n`;
   out += `-----------------------------------\n`;
-  out += `1. ALUMINIUM FRAME & DIVIDER TUBES\n`;
+  out += `1. ALUMINIUM FRAME & DIVIDER TUBES (SMART WALL & DOOR MINUS)\n`;
   out += `-----------------------------------\n`;
-  out += `> Outer Verticals (${tube_label}): ${disp(d.h)} (2 pc)\n`;
-  out += `> Outer Horizontals (${tube_label}): ${disp(d.w - 2 * tube_face)} (2 pc)\n`;
-  pt_buckets[sg_key].push(d.h, d.h, d.w - 2 * tube_face, d.w - 2 * tube_face);
+
+  // Compute Left & Right Outer Vertical lengths by deducting any WALL_MINUS touching the left/right edges!
+  let leftWallDeduct = 0, rightWallDeduct = 0, topWallDeduct = 0;
+  let bottomExcludedRanges = []; // spans [x1, x2] along floor occupied by WALL_MINUS or DOOR (NO bottom floor pipe!)
+  leaves.forEach(function(lf) {
+    if (lf.mat === 'WALL_MINUS') {
+      if (lf.x <= 0.5) leftWallDeduct += lf.h;
+      if (lf.x + lf.w >= d.w - 0.5) rightWallDeduct += lf.h;
+      if (lf.y <= 0.5) topWallDeduct += lf.w;
+      if (lf.y + lf.h >= d.h - 0.5) bottomExcludedRanges.push({ x1: lf.x, x2: lf.x + lf.w, reason: 'Wall' });
+    } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
+      if (lf.y + lf.h >= d.h - 0.5) bottomExcludedRanges.push({ x1: lf.x, x2: lf.x + lf.w, reason: 'Door' });
+    }
+  });
+  doorGroups.forEach(function(dg) {
+    if (dg.y + dg.h >= d.h - 0.5) bottomExcludedRanges.push({ x1: dg.x, x2: dg.x + dg.w, reason: 'Door' });
+  });
+
+  const leftVertLen = Math.max(0, d.h - leftWallDeduct);
+  const rightVertLen = Math.max(0, d.h - rightWallDeduct);
+  const topHorizLen = Math.max(0, (d.w - topWallDeduct) - (2 * tube_face));
+
+  if (leftVertLen > 2) {
+    out += `> Left Outer Vertical (${tube_label}): ${disp(leftVertLen)} (1 pc)${leftWallDeduct > 0 ? ' [Wall Minus -' + disp(leftWallDeduct) + ']' : ''}\n`;
+    pt_buckets[sg_key].push(leftVertLen);
+  }
+  if (rightVertLen > 2) {
+    out += `> Right Outer Vertical (${tube_label}): ${disp(rightVertLen)} (1 pc)${rightWallDeduct > 0 ? ' [Wall Minus -' + disp(rightWallDeduct) + ']' : ''}\n`;
+    pt_buckets[sg_key].push(rightVertLen);
+  }
+  if (topHorizLen > 2) {
+    out += `> Top Outer Horizontal (${tube_label}): ${disp(topHorizLen)} (1 pc)${topWallDeduct > 0 ? ' [Wall Minus -' + disp(topWallDeduct) + ']' : ''}\n`;
+    pt_buckets[sg_key].push(topHorizLen);
+  }
+
+  // Compute remaining Bottom Floor Base Tube segments (subtracting ALL Door & Wall bottom spans!)
+  bottomExcludedRanges.sort((a, b) => a.x1 - b.x1);
+  const mergedEx = [];
+  bottomExcludedRanges.forEach(rng => {
+    if (!mergedEx.length || rng.x1 > mergedEx[mergedEx.length - 1].x2 + 0.5) {
+      mergedEx.push({ x1: rng.x1, x2: rng.x2 });
+    } else {
+      mergedEx[mergedEx.length - 1].x2 = Math.max(mergedEx[mergedEx.length - 1].x2, rng.x2);
+    }
+  });
+  let cursorX = 0;
+  const botTubeSegs = [];
+  mergedEx.forEach(ex => {
+    if (ex.x1 - cursorX > 3.0) botTubeSegs.push(ex.x1 - cursorX - tube_face);
+    cursorX = Math.max(cursorX, ex.x2);
+  });
+  if (d.w - cursorX > 3.0) botTubeSegs.push(d.w - cursorX - tube_face);
+
+  if (botTubeSegs.length > 0) {
+    botTubeSegs.forEach((segLen, sIdx) => {
+      if (segLen > 2) {
+        out += `> Bottom Base Tube #${sIdx + 1} (${tube_label}): ${disp(segLen)} (1 pc)\n`;
+        pt_buckets[sg_key].push(segLen);
+      }
+    });
+    if (mergedEx.length > 0) {
+      out += `  (Note: Bottom floor pipe automatically MINUSED under Door / Half-Wall!)\n`;
+    }
+  } else {
+    out += `> Bottom Floor Base Tube: NOT REQUIRED (0 pc — Fully covered by Door / Wall Minus!)\n`;
+  }
   doorGroups.forEach(function(dg, idx) {
-    const dv = Math.max(24, dg.h - 1.75), drw = Math.max(8, dg.w - 3.5);
-    out += `> Custom Multi-Part Door #${idx + 1} (${disp(dg.h)} × ${disp(dg.w)}): Vertical Stiles ${disp(dv)} (2 pc) | Top/Bot Rails ${disp(drw)} (2 pc) | Hinges 3 pc + Lock 1 Set\n`;
+    const dv = Math.max(24, dg.h - 1.75), drw = Math.max(8, dg.w - (2 * secVert));
+    out += `> Custom Multi-Part Door #${idx + 1} (${disp(dg.h)} × ${disp(dg.w)}):\n`;
+    out += `   • Vertical Stiles (${disp(secVert)} Sec): ${disp(dv)} (2 pc)\n`;
+    out += `   • Top Rail (${disp(secTop)} Sec): ${disp(drw)} (1 pc) | Bottom Rail (${disp(secBot)} Sec): ${disp(drw)} (1 pc)\n`;
+    out += `   • Middle Rail Section Used: ${disp(secMid)} | Hardware: Hinges 3 pc + Lock 1 Set + Handle\n`;
     pt_buckets["Door Sash"].push(dv, dv, drw, drw);
   });
   splits.forEach(function(sp, idx) {
     const cutL = Math.max(4, sp.len - tube_face);
-    out += `> Divider #${idx + 1} (${sp.dir === 'V' ? 'Vertical Post' : 'Horizontal Transom'}): ${disp(cutL)} (1 pc)\n`;
+    const secTag = sp.dir === 'V' ? `Vert ${disp(secVert)}` : `Mid ${disp(secMid)}`;
+    out += `> Divider #${idx + 1} (${sp.dir === 'V' ? 'Vertical Post' : 'Horizontal Middle'} [${secTag}]): ${disp(cutL)} (1 pc)\n`;
     pt_buckets[dg_key].push(cutL);
   });
 
@@ -12103,7 +12179,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v87') === -1) caches.delete(k);
+                if (k.indexOf('v90') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -13097,9 +13173,24 @@ function ptCadSplit(dir) {
   var idB = pt_cad_next_id++;
   found.node.kind = 'SPLIT';
   found.node.dir = dir;
-  found.node.ratio = 0.5;
-  found.node.a = { id: idA, kind: 'LEAF', mat: oldMat };
-  found.node.b = { id: idB, kind: 'LEAF', mat: oldMat };
+  if (oldMat === 'DOOR_1' || oldMat === 'DOOR_2') {
+    // Pro CAD Behavior: Splitting a Door divides the INSIDE of the door while preserving the Door Frame!
+    found.node.isDoor = true;
+    found.node.doorLeaves = (oldMat === 'DOOR_2') ? 2 : 1;
+    if (dir === 'H') {
+      found.node.ratio = 0.62;
+      found.node.a = { id: idA, kind: 'LEAF', mat: 'GLASS' };
+      found.node.b = { id: idB, kind: 'LEAF', mat: 'ACP' };
+    } else {
+      found.node.ratio = 0.5;
+      found.node.a = { id: idA, kind: 'LEAF', mat: 'GLASS' };
+      found.node.b = { id: idB, kind: 'LEAF', mat: 'GLASS' };
+    }
+  } else {
+    found.node.ratio = 0.5;
+    found.node.a = { id: idA, kind: 'LEAF', mat: oldMat };
+    found.node.b = { id: idB, kind: 'LEAF', mat: oldMat };
+  }
   delete found.node.mat;
   pt_cad_sel_id = idA;
   renderPtCadDesigner();
@@ -13275,9 +13366,13 @@ function buildPtCadSvg(isFullScreen) {
 
     svg += '<g ' + clickA + '>';
     if (lf.mat === 'WALL_MINUS') {
-      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#e7e5e4" stroke="#78716c" stroke-width="1.3" stroke-dasharray="4,2"/>';
-      for (var ly = ry + 8; ly < ry + rh - 2; ly += 8) svg += '<line x1="' + rx + '" y1="' + ly + '" x2="' + (rx + rw) + '" y2="' + ly + '" stroke="#a8a29e" stroke-width="0.7"/>';
-      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="7.2" font-weight="bold" fill="#dc2626" text-anchor="middle">WALL (MINUS)</text>';
+      var exL = (lf.x <= 0.5) ? 5 : 0;
+      var exR = (lf.x + lf.w >= d.w - 0.5) ? 5 : 0;
+      var exB = (lf.y + lf.h >= d.h - 0.5) ? 5 : 0;
+      var wx0 = rx - exL, wy0 = ry, ww0 = rw + exL + exR, wh0 = rh + exB;
+      svg += '<rect x="' + wx0 + '" y="' + wy0 + '" width="' + ww0 + '" height="' + wh0 + '" fill="#e7e5e4" stroke="#78716c" stroke-width="1.4" stroke-dasharray="4,2"/>';
+      for (var ly = wy0 + 8; ly < wy0 + wh0 - 2; ly += 8) svg += '<line x1="' + wx0 + '" y1="' + ly + '" x2="' + (wx0 + ww0) + '" y2="' + ly + '" stroke="#a8a29e" stroke-width="0.7"/>';
+      svg += '<text x="' + (wx0 + ww0 / 2) + '" y="' + (wy0 + wh0 / 2 + 2) + '" font-size="7.2" font-weight="bold" fill="#dc2626" text-anchor="middle">WALL (NO PIPE / MINUS)</text>';
     } else if (lf.mat === 'ACP') {
       svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
       svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
@@ -13343,6 +13438,9 @@ function buildPtCadSvg(isFullScreen) {
     // DOOR Label Pill
     svg += '<rect x="' + (dx + dw / 2 - 20) + '" y="' + (dy + dh - 13) + '" width="40" height="11" rx="3" fill="#b45309"/>';
     svg += '<text x="' + (dx + dw / 2) + '" y="' + (dy + dh - 5.2) + '" font-size="6.8" font-weight="bold" fill="#ffffff" text-anchor="middle">DOOR</text>';
+    if (dg.y + dg.h >= d.h - 0.5) {
+      svg += '<rect x="' + (dx + 2) + '" y="' + (oy + drawH) + '" width="' + Math.max(4, dw - 4) + '" height="6" fill="#f8fafc"/>';
+    }
   });
 
   if (!isFullScreen) {
@@ -13462,4 +13560,52 @@ function ptCadLoadPreset(name) {
   }
   pt_cad_sel_id = ptCadFirstLeaf(pt_cad_tree);
   renderPtCadDesigner();
+}
+
+
+var pt_active_combo_mode = 'ONLY_PT';
+
+function applyPtDoorSectionPreset(preset) {
+  var vEl = document.getElementById('pt_sec_vert');
+  var tEl = document.getElementById('pt_sec_top');
+  var bEl = document.getElementById('pt_sec_bot');
+  var mEl = document.getElementById('pt_sec_mid');
+  if (preset === 'commercial') { if(vEl) vEl.value='1.75'; if(tEl) tEl.value='2.5'; if(bEl) bEl.value='4.0'; if(mEl) mEl.value='2.5'; }
+  else if (preset === 'jumbo') { if(vEl) vEl.value='1.75'; if(tEl) tEl.value='2.5'; if(bEl) bEl.value='5.0'; if(mEl) mEl.value='3.0'; }
+  else if (preset === 'economy') { if(vEl) vEl.value='1.75'; if(tEl) tEl.value='1.75'; if(bEl) bEl.value='2.5'; if(mEl) mEl.value='1.75'; }
+  else if (preset === 'slim') { if(vEl) vEl.value='1.75'; if(tEl) tEl.value='2.0'; if(bEl) bEl.value='4.0'; if(mEl) mEl.value='2.0'; }
+  renderPtCadDesigner();
+}
+
+function setPtComboMode(mode) {
+  pt_active_combo_mode = mode;
+  var btns = {
+    ONLY_PT: document.getElementById('pt_mode_btn_only'),
+    PT_DOOR: document.getElementById('pt_mode_btn_door'),
+    PT_WIN: document.getElementById('pt_mode_btn_win'),
+    ALL_3: document.getElementById('pt_mode_btn_all')
+  };
+  Object.keys(btns).forEach(function(k) {
+    var b = btns[k];
+    if (!b) return;
+    if (k === mode) {
+      b.style.background = '#0284c7';
+      b.style.color = '#ffffff';
+      b.style.border = 'none';
+    } else {
+      b.style.background = '#f1f5f9';
+      b.style.color = '#0f172a';
+      b.style.border = '1px solid #cbd5e1';
+    }
+  });
+
+  var doorBox = document.getElementById('pt_integrated_door_specs');
+  var winBox = document.getElementById('pt_integrated_win_specs');
+  if (doorBox) doorBox.style.display = (mode === 'PT_DOOR' || mode === 'ALL_3') ? 'block' : 'none';
+  if (winBox) winBox.style.display = (mode === 'PT_WIN' || mode === 'ALL_3') ? 'block' : 'none';
+
+  if (mode === 'ONLY_PT') ptCadLoadPreset('office');
+  else if (mode === 'PT_DOOR') ptCadLoadPreset('mid_door');
+  else if (mode === 'PT_WIN') ptCadLoadPreset('hw_win');
+  else if (mode === 'ALL_3') ptCadLoadPreset('door_hw');
 }
