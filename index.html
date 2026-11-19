@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=82').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=83').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=82">
+  <link rel="stylesheet" href="style.css?v=83">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -870,6 +870,18 @@
  </div>
  <div class="pro-card-title" data-i18n="mod_ceiling">Ceiling Estimator</div>
  <div class="pro-card-sub" data-i18n="sub_ceiling">False Ceiling Grid & Perimeter</div>
+ </div>
+
+ <!-- 6B. Free Design Studio (Interactive Custom CAD Builder for Any Door/Window/Partition/Half-Wall) -->
+ <div class="pro-card" style="grid-column: span 2; border: 2px solid #7c3aed; background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);" onclick="openScreen('cad_studio', 'FREE DESIGN STUDIO (CAD)')">
+ <div class="pro-card-header">
+ <div class="pro-card-icon" style="background:#7c3aed; color:#ffffff;">
+ <i class="fa-solid fa-pen-ruler"></i>
+ </div>
+ <span style="font-size:0.7rem; font-weight:800; background:#ede9fe; color:#6d28d9; padding:3px 8px; border-radius:12px;">CUSTOM CAD BUILDER</span>
+ </div>
+ <div class="pro-card-title" style="color:#5b21b6; font-size:0.98rem;">Free Design Studio (Make Any Design)</div>
+ <div class="pro-card-sub" style="color:#334155;">Tap & Split Any Box -> Add Door, Window, Half Wall, Jali, ACP & Glass Anywhere!</div>
  </div>
 
  <!-- 7. Glass Cutting & 4'x8' Sheet Optimizer -->
@@ -3178,7 +3190,110 @@
 
 
  <!-- ================= 7B. GLASS CUTTING & 4'x8' SHEET OPTIMIZER SCREEN ================= -->
- <div id="screen-glass_cutting" class="screen">
+  <!-- ================= 13Z. FREE DESIGN STUDIO (INTERACTIVE CUSTOM CAD BUILDER v83) ================= -->
+ <div id="screen-cad_studio" class="screen">
+   <div class="form-box" style="border-top: 4px solid #7c3aed;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+       <div>
+         <div style="font-size:0.98rem; font-weight:800; color:#5b21b6;"><i class="fa-solid fa-pen-ruler"></i> FREE DESIGN STUDIO (CUSTOM CAD)</div>
+         <div style="font-size:0.71rem; color:#475569;">Tap any box in the drawing to Split, Resize, or place Door / Window / Half Wall / Jali / ACP!</div>
+       </div>
+       <button type="button" onclick="openCadFullScreenCustomerView()" style="background:#0284c7; color:#fff; border:none; padding:6px 10px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-expand"></i> Full-Screen
+       </button>
+     </div>
+
+     <!-- Total Wall Dimensions & Color Specs -->
+     <div class="form-grid" style="margin-bottom:8px;">
+       <div class="form-group">
+         <label style="color:#5b21b6; font-weight:700;">Total Height (In):</label>
+         <input type="number" id="cad_total_h" value="96" step="0.5" oninput="renderCadStudio()" style="font-weight:800; text-align:center;">
+       </div>
+       <div class="form-group">
+         <label style="color:#5b21b6; font-weight:700;">Total Width (In):</label>
+         <input type="number" id="cad_total_w" value="120" step="0.5" oninput="renderCadStudio()" style="font-weight:800; text-align:center;">
+       </div>
+       <div class="form-group">
+         <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
+         <select id="cad_alu_color" onchange="renderCadStudio()">
+           <option value="Anodized Silver Glossy" selected>Anodized Silver</option>
+           <option value="Powder Coated Black">Powder Coated Black</option>
+           <option value="Powder Coated White">Powder Coated White</option>
+           <option value="Powder Coated Brown">Powder Coated Brown</option>
+           <option value="Anodized Golden Glossy">Anodized Golden</option>
+           <option value="Wooden Finish Teak">Wooden Finish Teak</option>
+         </select>
+       </div>
+       <div class="form-group">
+         <label style="color:#0284c7; font-weight:700;">Glass & Tube:</label>
+         <select id="cad_g_type" onchange="renderCadStudio()">
+           <option value="5 mm Clear" selected>5 mm Clear</option>
+           <option value="5 mm Tinted Black">5 mm Tinted Black</option>
+           <option value="5 mm Tinted Blue">5 mm Tinted Blue</option>
+           <option value="5 mm Frosted">5 mm Frosted</option>
+           <option value="5 mm One Way Brown">5 mm One Way Brown</option>
+           <option value="8 mm Toughened Clear">8 mm Toughened Clear</option>
+         </select>
+       </div>
+     </div>
+
+     <!-- Interactive CAD Drawing Canvas -->
+     <div id="cad_svg_stage" style="background:linear-gradient(180deg, #f8fafc, #e2e8f0); border:2px solid #7c3aed; border-radius:12px; padding:8px; margin-bottom:10px; text-align:center;"></div>
+
+     <!-- Selected Box Action Toolbar -->
+     <div id="cad_selected_toolbar" style="background:#f5f3ff; border:1.5px solid #c4b5fd; border-radius:10px; padding:10px; margin-bottom:10px;">
+       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:4px;">
+         <span id="cad_sel_info" style="font-size:0.75rem; font-weight:800; color:#4c1d95;">Selected Box: Tap any box above</span>
+         <div style="display:flex; gap:5px;">
+           <button type="button" onclick="cadUndoAction()" style="background:#f59e0b; color:#fff; border:none; border-radius:6px; padding:4px 9px; font-size:0.7rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+           <button type="button" onclick="cadResetCanvas()" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:4px 9px; font-size:0.7rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-trash"></i> Reset</button>
+         </div>
+       </div>
+
+       <!-- Split & Exact Resize Controls -->
+       <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+         <button type="button" onclick="cadSplitSelected('V')" style="background:#0284c7; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+           <i class="fa-solid fa-table-columns"></i> Split Left/Right
+         </button>
+         <button type="button" onclick="cadSplitSelected('H')" style="background:#0f766e; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+           <i class="fa-solid fa-bars"></i> Split Top/Bot
+         </button>
+         <button type="button" onclick="cadResizeSelectedPrompt()" style="background:#7c3aed; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+           <i class="fa-solid fa-ruler"></i> Set Exact Size
+         </button>
+       </div>
+
+       <!-- Fill Selected Box With Any Item -->
+       <div style="font-size:0.7rem; font-weight:800; color:#334155; margin-bottom:5px;">PUT INSIDE SELECTED BOX:</div>
+       <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px;">
+         <button type="button" onclick="cadSetSelectedType('GLASS')" style="background:#e0f2fe; color:#0369a1; border:1px solid #38bdf8; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Glass</button>
+         <button type="button" onclick="cadSetSelectedType('ACP')" style="background:#ffedd5; color:#9a3412; border:1px solid #fb923c; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">ACP Board</button>
+         <button type="button" onclick="cadSetSelectedType('JALI')" style="background:#dcfce7; color:#166534; border:1px solid #4ade80; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Jali / Mesh</button>
+         <button type="button" onclick="cadSetSelectedType('DOOR_1')" style="background:#fef3c7; color:#92400e; border:1px solid #fbbf24; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Single Door</button>
+         <button type="button" onclick="cadSetSelectedType('DOOR_2')" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Double Door</button>
+         <button type="button" onclick="cadSetSelectedType('HALF_WALL')" style="background:#e7e5e4; color:#44403c; border:1px solid #a8a29e; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Half Wall</button>
+         <button type="button" onclick="cadSetSelectedType('SLIDE_2T')" style="background:#ede9fe; color:#5b21b6; border:1px solid #a78bfa; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">2T Sliding</button>
+         <button type="button" onclick="cadSetSelectedType('SLIDE_3T')" style="background:#ede9fe; color:#5b21b6; border:1px solid #8b5cf6; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">3T Slide+Jali</button>
+         <button type="button" onclick="cadSetSelectedType('H_OPEN')" style="background:#dbeafe; color:#1d4ed8; border:1px solid #60a5fa; border-radius:6px; padding:6px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Open Window</button>
+       </div>
+     </div>
+
+     <!-- Calculate & Export Buttons -->
+     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:7px;">
+       <button type="button" class="action-btn" style="background:#7c3aed; padding:11px 6px; font-size:0.78rem; font-weight:800; border-radius:8px;" onclick="calculateCadStudioDesign()">
+         <i class="fa-solid fa-calculator"></i> + CALCULATE ALL
+       </button>
+       <button type="button" class="action-btn" style="background:#0284c7; padding:11px 6px; font-size:0.78rem; font-weight:800; border-radius:8px;" onclick="exportGlassPdf('CAD_Studio_Glass', 'Custom CAD Design', cad_glass_dict, 'cad_out')">
+         <i class="fa-solid fa-qrcode"></i> GLASS PDF + QR
+       </button>
+     </div>
+   </div>
+
+   <div class="output-label" style="color:#5b21b6;">CUSTOM DESIGN CUTTING LIST & MATERIAL SUMMARY:</div>
+   <div class="output-area" id="cad_out"></div>
+ </div>
+
+<div id="screen-glass_cutting" class="screen">
    <div class="form-box" style="border-top: 4px solid #0284c7;">
      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
        <div>
@@ -4284,12 +4399,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=82"></script>
+  <script src="app.js?v=83"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=82').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=83').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

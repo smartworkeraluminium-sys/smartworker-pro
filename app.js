@@ -9119,6 +9119,8 @@ function autofillCustomer() {
     setTimeout(function() { try { renderDoorRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'casement') {
     setTimeout(function() { try { renderCasementSectionDesigner(); } catch(e){} }, 20);
+  } else if (screenName === 'cad_studio') {
+    setTimeout(function() { try { renderCadStudio(); } catch(e){} }, 20);
   } else if (screenName === 'wastage_qr') {
     setTimeout(function() { try { renderWastageQrStockList(); } catch(e){} }, 20);
   } else if (screenName === 'order_tracker') {
@@ -12185,7 +12187,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v82') === -1) caches.delete(k);
+                if (k.indexOf('v83') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPartitionStudioUI(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -12749,4 +12751,342 @@ function renderPartitionStudioUI() {
   renderPartitionBaysBuilder();
   if (typeof renderPartitionRowBuilder === 'function') renderPartitionRowBuilder();
   if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
+}
+
+
+// =========================================================================
+// FREE DESIGN STUDIO — INTERACTIVE RECURSIVE SPLIT-BOX CAD ENGINE (v83)
+// =========================================================================
+var cad_next_id = 2;
+var cad_tree = { id: 1, kind: 'LEAF', mat: 'GLASS' };
+var cad_selected_id = 1;
+var cad_history = [];
+var cad_glass_dict = {};
+var cad_acp_list = [];
+
+function cadSaveUndo() {
+  cad_history.push(JSON.stringify(cad_tree));
+  if (cad_history.length > 25) cad_history.shift();
+}
+
+function cadUndoAction() {
+  if (!cad_history.length) return;
+  cad_tree = JSON.parse(cad_history.pop());
+  cad_selected_id = cadFindFirstLeafId(cad_tree);
+  renderCadStudio();
+}
+
+function cadResetCanvas() {
+  cadSaveUndo();
+  cad_next_id = 2;
+  cad_tree = { id: 1, kind: 'LEAF', mat: 'GLASS' };
+  cad_selected_id = 1;
+  renderCadStudio();
+  if (document.getElementById('cad_out')) document.getElementById('cad_out').textContent = '';
+}
+
+function cadFindFirstLeafId(node) {
+  if (!node) return 1;
+  if (node.kind === 'LEAF') return node.id;
+  return cadFindFirstLeafId(node.a);
+}
+
+function cadFindNodeAndParent(node, targetId, parent, branch) {
+  if (!node) return null;
+  if (node.id === targetId) return { node: node, parent: parent, branch: branch };
+  if (node.kind === 'SPLIT') {
+    return cadFindNodeAndParent(node.a, targetId, node, 'a') || cadFindNodeAndParent(node.b, targetId, node, 'b');
+  }
+  return null;
+}
+
+function cadSelectBox(id) {
+  cad_selected_id = id;
+  renderCadStudio();
+}
+
+function cadSplitSelected(dir) {
+  var found = cadFindNodeAndParent(cad_tree, cad_selected_id, null, null);
+  if (!found || found.node.kind !== 'LEAF') return;
+  cadSaveUndo();
+  var oldMat = found.node.mat || 'GLASS';
+  var idA = cad_next_id++;
+  var idB = cad_next_id++;
+  found.node.kind = 'SPLIT';
+  found.node.dir = dir; // 'V' = Left/Right, 'H' = Top/Bottom
+  found.node.ratio = 0.5;
+  found.node.a = { id: idA, kind: 'LEAF', mat: oldMat };
+  found.node.b = { id: idB, kind: 'LEAF', mat: oldMat };
+  delete found.node.mat;
+  cad_selected_id = idA;
+  renderCadStudio();
+}
+
+function cadSetSelectedType(matType) {
+  var found = cadFindNodeAndParent(cad_tree, cad_selected_id, null, null);
+  if (!found || found.node.kind !== 'LEAF') return;
+  cadSaveUndo();
+  found.node.mat = matType;
+  renderCadStudio();
+}
+
+function cadComputeLayout(node, x, y, w, h, outLeaves, outSplits) {
+  if (node.kind === 'LEAF') {
+    outLeaves.push({ id: node.id, mat: node.mat || 'GLASS', x: x, y: y, w: w, h: h });
+    return;
+  }
+  var r = Math.min(0.88, Math.max(0.12, Number(node.ratio) || 0.5));
+  if (node.dir === 'V') {
+    var wA = w * r;
+    var wB = w - wA;
+    outSplits.push({ dir: 'V', x: x + wA, y: y, len: h });
+    cadComputeLayout(node.a, x, y, wA, h, outLeaves, outSplits);
+    cadComputeLayout(node.b, x + wA, y, wB, h, outLeaves, outSplits);
+  } else {
+    var hA = h * r;
+    var hB = h - hA;
+    outSplits.push({ dir: 'H', x: x, y: y + hA, len: w });
+    cadComputeLayout(node.a, x, y, w, hA, outLeaves, outSplits);
+    cadComputeLayout(node.b, x, y + hA, w, hB, outLeaves, outSplits);
+  }
+}
+
+function cadResizeSelectedPrompt() {
+  var totalH = Math.max(12, parseFloat(document.getElementById('cad_total_h')?.value) || 96);
+  var totalW = Math.max(12, parseFloat(document.getElementById('cad_total_w')?.value) || 120);
+  var leaves = [], splits = [];
+  cadComputeLayout(cad_tree, 0, 0, totalW, totalH, leaves, splits);
+  var curLeaf = leaves.find(l => l.id === cad_selected_id);
+  var found = cadFindNodeAndParent(cad_tree, cad_selected_id, null, null);
+  if (!curLeaf || !found || !found.parent) {
+    alert("Split the box first, then you can set exact Width or Height (in inches) for each part!");
+    return;
+  }
+  var par = found.parent;
+  var isV = (par.dir === 'V');
+  var parentSpan = isV ? (curLeaf.w / (found.branch === 'a' ? par.ratio : (1 - par.ratio))) : (curLeaf.h / (found.branch === 'a' ? par.ratio : (1 - par.ratio)));
+  var dimName = isV ? 'Width (Inches)' : 'Height (Inches)';
+  var curVal = isV ? curLeaf.w : curLeaf.h;
+  var inp = prompt("Enter exact " + dimName + " for this box (Max " + Math.round(parentSpan - 4) + '"):', curVal.toFixed(1));
+  if (!inp) return;
+  var newVal = parseFloat(inp);
+  if (isNaN(newVal) || newVal <= 2 || newVal >= parentSpan - 2) {
+    alert("Please enter a valid number between 3 and " + Math.round(parentSpan - 3) + '".');
+    return;
+  }
+  cadSaveUndo();
+  var newRatio = newVal / parentSpan;
+  par.ratio = (found.branch === 'a') ? newRatio : (1 - newRatio);
+  renderCadStudio();
+}
+
+function buildCadStudioSvg(isFullScreen) {
+  var totalH = Math.max(12, parseFloat(document.getElementById('cad_total_h')?.value) || 96);
+  var totalW = Math.max(12, parseFloat(document.getElementById('cad_total_w')?.value) || 120);
+  var aluColor = document.getElementById('cad_alu_color')?.value || 'Anodized Silver Glossy';
+  var gSpec = document.getElementById('cad_g_type')?.value || '5 mm Clear';
+  var aluPal = getAluVisualPalette(aluColor);
+  var glsPal = getGlassVisualPalette(gSpec);
+
+  var leaves = [], splits = [];
+  cadComputeLayout(cad_tree, 0, 0, totalW, totalH, leaves, splits);
+
+  var vbW = 360, vbH = 230;
+  var pad = 16;
+  var scale = Math.min((vbW - pad * 2) / totalW, (vbH - pad * 2) / totalH);
+  var drawW = totalW * scale;
+  var drawH = totalH * scale;
+  var ox = (vbW - drawW) / 2;
+  var oy = (vbH - drawH) / 2;
+  var uid = 'cad_' + Math.floor(Math.random() * 10000);
+
+  var svgStyle = isFullScreen
+    ? 'width:100%; height:100%; max-height:100%; display:block; margin:0 auto;'
+    : 'width:100%; max-height:245px; display:block; margin:0 auto;';
+
+  var svg = '<svg viewBox="0 0 ' + vbW + ' ' + vbH + '" preserveAspectRatio="xMidYMid meet" style="' + svgStyle + '">';
+  svg += '<defs>';
+  svg += '<linearGradient id="alu_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="' + aluPal.c1 + '"/><stop offset="50%" stop-color="' + aluPal.c2 + '"/><stop offset="100%" stop-color="' + aluPal.c3 + '"/></linearGradient>';
+  svg += '<linearGradient id="gls_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="' + glsPal.g1 + '" stop-opacity="' + glsPal.op + '"/><stop offset="55%" stop-color="' + glsPal.g2 + '" stop-opacity="' + glsPal.op + '"/><stop offset="100%" stop-color="' + glsPal.g1 + '" stop-opacity="' + glsPal.op + '"/></linearGradient>';
+  svg += '<pattern id="jali_' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#ecfdf5"/><path d="M0 0 L7 7 M7 0 L0 7" stroke="#065f46" stroke-width="0.95" stroke-opacity="0.8"/></pattern>';
+  svg += '</defs>';
+
+  // Outer Wall Dimensions Text
+  svg += '<text x="' + (vbW / 2) + '" y="' + (oy - 4) + '" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="middle">Width: ' + toFractionInch(totalW) + '  ×  Height: ' + toFractionInch(totalH) + '</text>';
+
+  // Outer Aluminium Frame
+  svg += '<rect x="' + (ox - 4) + '" y="' + (oy - 4) + '" width="' + (drawW + 8) + '" height="' + (drawH + 8) + '" rx="3" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.8"/>';
+
+  leaves.forEach(function(lf) {
+    var rx = ox + lf.x * scale + 1.5;
+    var ry = oy + lf.y * scale + 1.5;
+    var rw = Math.max(8, lf.w * scale - 3);
+    var rh = Math.max(8, lf.h * scale - 3);
+    var isSel = (!isFullScreen && lf.id === cad_selected_id);
+    var clickA = isFullScreen ? '' : ('onclick="cadSelectBox(' + lf.id + ')" style="cursor:pointer;"');
+
+    svg += '<g ' + clickA + '>';
+    if (lf.mat === 'HALF_WALL') {
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#d6d3d1" stroke="#78716c" stroke-width="1.2"/>';
+      for (var ly = ry + 8; ly < ry + rh - 2; ly += 8) {
+        svg += '<line x1="' + rx + '" y1="' + ly + '" x2="' + (rx + rw) + '" y2="' + ly + '" stroke="#a8a29e" stroke-width="0.7"/>';
+      }
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="7.5" font-weight="bold" fill="#44403c" text-anchor="middle">HALF WALL</text>';
+    } else if (lf.mat === 'ACP') {
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="#94a3b8" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="middle">ACP</text>';
+    } else if (lf.mat === 'JALI') {
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#jali_' + uid + ')" stroke="#059669" stroke-width="1.2"/>';
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="7.5" font-weight="bold" fill="#065f46" text-anchor="middle">JALI</text>';
+    } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
+      var nL = (lf.mat === 'DOOR_2') ? 2 : 1;
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      var lw = (rw - 4 - ((nL - 1) * 2)) / nL;
+      for (var d = 0; d < nL; d++) {
+        var dlx = rx + 2 + d * (lw + 2);
+        svg += '<rect x="' + dlx + '" y="' + (ry + 2) + '" width="' + lw + '" height="' + (rh - 4) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
+        var gh = (rh - 10) * 0.62, ah = (rh - 10) * 0.38;
+        svg += '<rect x="' + (dlx + 3) + '" y="' + (ry + 4) + '" width="' + Math.max(4, lw - 6) + '" height="' + Math.max(4, gh) + '" fill="url(#gls_' + uid + ')"/>';
+        svg += '<rect x="' + (dlx + 3) + '" y="' + (ry + 6 + gh) + '" width="' + Math.max(4, lw - 6) + '" height="' + Math.max(4, ah - 2) + '" fill="#94a3b8"/>';
+        var hx = (d === 0 && nL === 2) ? (dlx + lw - 4) : (dlx + 2);
+        svg += '<rect x="' + hx + '" y="' + (ry + rh * 0.45) + '" width="2.2" height="12" rx="1" fill="#fbbf24"/>';
+      }
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh - 5) + '" font-size="6.8" font-weight="bold" fill="#0f172a" text-anchor="middle">DOOR</text>';
+    } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
+      var tr = (lf.mat === 'SLIDE_3T') ? 3 : 2;
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      var tw = (rw - 4 - ((tr - 1) * 2)) / tr;
+      for (var t = 0; t < tr; t++) {
+        var tx = rx + 2 + t * (tw + 2);
+        var isJ = (tr === 3 && t === 2);
+        svg += '<rect x="' + tx + '" y="' + (ry + 2) + '" width="' + tw + '" height="' + (rh - 4) + '" fill="' + (isJ ? 'url(#jali_' + uid + ')' : 'url(#gls_' + uid + ')') + '" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
+      }
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh / 2 + 2) + '" font-size="7" font-weight="bold" fill="#0f172a" text-anchor="middle">' + (tr === 3 ? '3T+JALI' : '2T SLIDE') + '</text>';
+    } else if (lf.mat === 'H_OPEN') {
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      svg += '<rect x="' + (rx + 3) + '" y="' + (ry + 3) + '" width="' + Math.max(4, rw - 6) + '" height="' + Math.max(4, rh - 6) + '" fill="url(#gls_' + uid + ')"/>';
+      svg += '<polyline points="' + (rx + 3) + ',' + (ry + 3) + ' ' + (rx + rw - 3) + ',' + (ry + rh / 2) + ' ' + (rx + 3) + ',' + (ry + rh - 3) + '" fill="none" stroke="#fff" stroke-width="1.1" stroke-dasharray="3,2"/>';
+      svg += '<rect x="' + (rx + rw - 4.5) + '" y="' + (ry + rh / 2 - 5) + '" width="2" height="10" rx="1" fill="#fbbf24"/>';
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + rh - 5) + '" font-size="6.8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">OPEN WIN</text>';
+    } else {
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#gls_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      svg += '<line x1="' + (rx + 4) + '" y1="' + (ry + rh - 4) + '" x2="' + (rx + rw - 4) + '" y2="' + (ry + 4) + '" stroke="' + glsPal.shine + '" stroke-width="1.5" stroke-opacity="0.6"/>';
+    }
+
+    // Show exact inch dimensions inside each box if big enough
+    if (rw >= 34 && rh >= 24) {
+      svg += '<text x="' + (rx + rw / 2) + '" y="' + (ry + 10) + '" font-size="6.2" font-weight="bold" fill="#0f172a" fill-opacity="0.85" text-anchor="middle">' + Math.round(lf.w) + '"×' + Math.round(lf.h) + '"</text>';
+    }
+    if (isSel) {
+      svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="none" stroke="#7c3aed" stroke-width="2.6" stroke-dasharray="4,2"/>';
+    }
+    svg += '</g>';
+  });
+
+  svg += '</svg>';
+  return { svg: svg, leaves: leaves, splits: splits, aluColor: aluColor, gSpec: gSpec };
+}
+
+function renderCadStudio() {
+  var stage = document.getElementById('cad_svg_stage');
+  if (!stage) return;
+  var res = buildCadStudioSvg(false);
+  stage.innerHTML = res.svg;
+  var cur = res.leaves.find(l => l.id === cad_selected_id);
+  var infoEl = document.getElementById('cad_sel_info');
+  if (infoEl && cur) {
+    infoEl.innerHTML = 'Selected: <b>' + cur.mat + '</b> (' + toFractionInch(cur.w) + ' W × ' + toFractionInch(cur.h) + ' H)';
+  }
+}
+
+function openCadFullScreenCustomerView() {
+  var modal = document.getElementById('customerShowroomModal');
+  var holder = document.getElementById('csm_svg_holder');
+  var sub = document.getElementById('csm_subtitle');
+  var badges = document.getElementById('csm_specs_badges');
+  if (!modal || !holder) return;
+  var res = buildCadStudioSvg(true);
+  csmCurrentZoom = 1.0;
+  holder.style.transform = 'scale(1)';
+  holder.innerHTML = res.svg;
+  if (sub) sub.textContent = 'Custom CAD Elevation  •  ' + res.aluColor + ' + ' + res.gSpec;
+  if (badges) {
+    badges.innerHTML =
+      '<div style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:8px; padding:7px 9px;"><div style="font-size:0.65rem; color:#6d28d9; font-weight:700;">CUSTOM DESIGN</div><div style="font-size:0.8rem; color:#0f172a; font-weight:800;">' + res.leaves.length + ' Sections (' + res.aluColor + ')</div></div>' +
+      '<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:7px 9px;"><div style="font-size:0.65rem; color:#0369a1; font-weight:700;">GLASS SPEC</div><div style="font-size:0.8rem; color:#0f172a; font-weight:800;">' + res.gSpec + '</div></div>';
+  }
+  modal.style.display = 'flex';
+}
+
+function calculateCadStudioDesign() {
+  var totalH = Math.max(12, parseFloat(document.getElementById('cad_total_h')?.value) || 96);
+  var totalW = Math.max(12, parseFloat(document.getElementById('cad_total_w')?.value) || 120);
+  var gSpec = document.getElementById('cad_g_type')?.value || '5 mm Clear';
+  var leaves = [], splits = [];
+  cadComputeLayout(cad_tree, 0, 0, totalW, totalH, leaves, splits);
+
+  cad_glass_dict = {};
+  cad_acp_list = [];
+
+  var out = "========================================\n";
+  out += "FREE DESIGN STUDIO — EXACT CUTTING LIST\n";
+  out += "Total Elevation: " + toFractionInch(totalH) + " H × " + toFractionInch(totalW) + " W\n";
+  out += "========================================\n";
+  out += "1. FRAME & DIVIDER TUBES:\n";
+  out += "> Outer Verticals: " + toFractionInch(totalH) + " (2 pc)\n";
+  out += "> Outer Horizontals: " + toFractionInch(totalW - 3.0) + " (2 pc)\n";
+  splits.forEach(function(sp, idx) {
+    out += "> Divider #" + (idx + 1) + " (" + (sp.dir === 'V' ? 'Vertical Post' : 'Horizontal Transom') + "): " + toFractionInch(Math.max(4, sp.len - 1.5)) + " (1 pc)\n";
+  });
+
+  out += "\n2. SECTION-BY-SECTION PANELS & DOORS/WINDOWS:\n";
+  var totG = 0, totGSqFt = 0, totAcp = 0, totJali = 0;
+  leaves.forEach(function(lf, idx) {
+    var tag = "Box #" + (idx + 1);
+    var cw = Math.max(3, lf.w - 1.75), ch = Math.max(3, lf.h - 1.75);
+    if (lf.mat === 'HALF_WALL') {
+      out += "• " + tag + " [HALF WALL (Brick/Civil)]: " + toFractionInch(lf.h) + " H × " + toFractionInch(lf.w) + " W (No Alu/Glass)\n";
+    } else if (lf.mat === 'ACP') {
+      out += "• " + tag + " [ACP BOARD]: " + toFractionInch(ch) + " × " + toFractionInch(cw) + " (1 pc)\n";
+      totAcp++;
+      cad_acp_list.push({ rowTag: tag, cutStr: toFractionInch(ch) + ' x ' + toFractionInch(cw), h_in: ch, w_in: cw, qty: 1, buyLabel: '', areaSqFt: (ch * cw) / 144 });
+    } else if (lf.mat === 'JALI') {
+      out += "• " + tag + " [JALI / MESH]: " + toFractionInch(ch) + " × " + toFractionInch(cw) + " (1 pc)\n";
+      totJali++;
+    } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
+      var nL = (lf.mat === 'DOOR_2') ? 2 : 1;
+      var lw = (lf.w - 1.5) / nL;
+      var dgH = Math.max(6, (lf.h - 8) * 0.62), dgW = Math.max(4, lw - 3.25);
+      out += "• " + tag + " [" + (nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR') + "]: Frame " + toFractionInch(lf.h) + " × " + toFractionInch(lf.w) + " | Top Glass: " + toFractionInch(dgH) + " × " + toFractionInch(dgW) + " (" + nL + " pc)\n";
+      cad_glass_dict[toFractionInch(dgH) + " x " + toFractionInch(dgW) + " (" + tag + " Door) || " + gSpec] = (cad_glass_dict[toFractionInch(dgH) + " x " + toFractionInch(dgW) + " (" + tag + " Door) || " + gSpec] || 0) + nL;
+      totG += nL; totGSqFt += (dgH * dgW * nL) / 144;
+    } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
+      var tr = (lf.mat === 'SLIDE_3T') ? 3 : 2;
+      var wgH = Math.max(4, lf.h - 5.5), wgW = Math.max(4, (lf.w - 3.0) / tr);
+      out += "• " + tag + " [" + tr + "-TRACK SLIDING]: Glass " + toFractionInch(wgH) + " × " + toFractionInch(wgW) + " (2 pc)" + (tr === 3 ? " + 1 Jali" : "") + "\n";
+      cad_glass_dict[toFractionInch(wgH) + " x " + toFractionInch(wgW) + " (" + tag + " Slide) || " + gSpec] = (cad_glass_dict[toFractionInch(wgH) + " x " + toFractionInch(wgW) + " (" + tag + " Slide) || " + gSpec] || 0) + 2;
+      totG += 2; totGSqFt += (wgH * wgW * 2) / 144;
+      if (tr === 3) totJali++;
+    } else if (lf.mat === 'H_OPEN') {
+      var oh = Math.max(4, lf.h - 3.0), ow = Math.max(4, lf.w - 3.0);
+      out += "• " + tag + " [OPENABLE WINDOW]: Glass " + toFractionInch(oh) + " × " + toFractionInch(ow) + " (1 pc)\n";
+      cad_glass_dict[toFractionInch(oh) + " x " + toFractionInch(ow) + " (" + tag + " OpenWin) || " + gSpec] = (cad_glass_dict[toFractionInch(oh) + " x " + toFractionInch(ow) + " (" + tag + " OpenWin) || " + gSpec] || 0) + 1;
+      totG += 1; totGSqFt += (oh * ow) / 144;
+    } else {
+      out += "• " + tag + " [FIXED GLASS]: " + toFractionInch(ch) + " × " + toFractionInch(cw) + " (1 pc)\n";
+      cad_glass_dict[toFractionInch(ch) + " x " + toFractionInch(cw) + " (" + tag + " Glass) || " + gSpec] = (cad_glass_dict[toFractionInch(ch) + " x " + toFractionInch(cw) + " (" + tag + " Glass) || " + gSpec] || 0) + 1;
+      totG += 1; totGSqFt += (ch * cw) / 144;
+    }
+  });
+
+  out += "\n----------------------------------------\n";
+  out += "• TOTAL GLASS: " + totG + " Pcs (" + totGSqFt.toFixed(2) + " Sq.Ft) -> Tap 'GLASS PDF + QR'\n";
+  if (totAcp > 0) out += "• TOTAL ACP PANELS: " + totAcp + " Pcs\n";
+  if (totJali > 0) out += "• TOTAL JALI / MESH PANELS: " + totJali + " Pcs\n";
+
+  var outEl = document.getElementById('cad_out');
+  if (outEl) {
+    outEl.textContent = out;
+    outEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
