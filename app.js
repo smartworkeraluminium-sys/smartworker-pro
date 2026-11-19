@@ -12103,7 +12103,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v86') === -1) caches.delete(k);
+                if (k.indexOf('v87') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -13025,6 +13025,7 @@ var pt_cad_drag = null;
 var PT_CAD_CYCLE = ['GLASS', 'ACP', 'JALI', 'DOOR_1', 'DOOR_2', 'WALL_MINUS', 'SLIDE_2T', 'SLIDE_3T', 'H_OPEN'];
 
 function ptCadSaveUndo() {
+  if (!pt_cad_history) pt_cad_history = [];
   pt_cad_history.push(JSON.stringify(pt_cad_tree));
   if (pt_cad_history.length > 30) pt_cad_history.shift();
 }
@@ -13246,8 +13247,8 @@ function buildPtCadSvg(isFullScreen) {
   var aluPal = getAluVisualPalette(aluColor);
   var glsPal = getGlassVisualPalette(gType);
 
-  var leaves = [], splits = [];
-  ptCadLayout(pt_cad_tree, 0, 0, d.w, d.h, leaves, splits);
+  var leaves = [], splits = [], doorGroups = [];
+  ptCadLayout(pt_cad_tree, 0, 0, d.w, d.h, leaves, splits, doorGroups);
 
   var vbW = 360, vbH = 235, pad = 16;
   var scale = Math.min((vbW - pad * 2) / d.w, (vbH - pad * 2) / d.h);
@@ -13363,6 +13364,7 @@ function buildPtCadSvg(isFullScreen) {
 }
 
 function renderPtCadDesigner() {
+  if (!pt_cad_tree) pt_cad_tree = { id: 1, kind: 'LEAF', mat: 'GLASS' };
   var stage = document.getElementById('pt_cad_svg_stage');
   if (!stage) return;
   var res = buildPtCadSvg(false);
