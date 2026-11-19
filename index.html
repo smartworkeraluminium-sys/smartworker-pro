@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=83').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=86').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=83">
+  <link rel="stylesheet" href="style.css?v=86">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -870,18 +870,6 @@
  </div>
  <div class="pro-card-title" data-i18n="mod_ceiling">Ceiling Estimator</div>
  <div class="pro-card-sub" data-i18n="sub_ceiling">False Ceiling Grid & Perimeter</div>
- </div>
-
- <!-- 6B. Free Design Studio (Interactive Custom CAD Builder for Any Door/Window/Partition/Half-Wall) -->
- <div class="pro-card" style="grid-column: span 2; border: 2px solid #7c3aed; background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);" onclick="openScreen('cad_studio', 'FREE DESIGN STUDIO (CAD)')">
- <div class="pro-card-header">
- <div class="pro-card-icon" style="background:#7c3aed; color:#ffffff;">
- <i class="fa-solid fa-pen-ruler"></i>
- </div>
- <span style="font-size:0.7rem; font-weight:800; background:#ede9fe; color:#6d28d9; padding:3px 8px; border-radius:12px;">CUSTOM CAD BUILDER</span>
- </div>
- <div class="pro-card-title" style="color:#5b21b6; font-size:0.98rem;">Free Design Studio (Make Any Design)</div>
- <div class="pro-card-sub" style="color:#334155;">Tap & Split Any Box -> Add Door, Window, Half Wall, Jali, ACP & Glass Anywhere!</div>
  </div>
 
  <!-- 7. Glass Cutting & 4'x8' Sheet Optimizer -->
@@ -1816,112 +1804,42 @@
  <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
  <div id="screen-partition" class="screen">
  <div class="form-box">
- <!-- VISUAL PICTURE-PICK DESIGN GALLERY (TAP ANY PHOTO TO LOAD DESIGN!) -->
- <div style="background:linear-gradient(135deg, #f0f9ff, #f0fdf4); border:1.5px solid #0284c7; border-radius:12px; padding:10px; margin-bottom:12px;">
-   <div style="font-size:0.78rem; font-weight:800; color:#0369a1; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
-     <span><i class="fa-solid fa-images" style="color:#059669;"></i> VISUAL DESIGN STUDIO (PICK BY PHOTO)</span>
-     <span style="font-size:0.66rem; background:#0284c7; color:#fff; padding:2px 8px; border-radius:99px;">Door • Window • Half Wall • Jali</span>
-   </div>
-   <div style="font-size:0.7rem; color:#334155; margin-bottom:8px;">Tap any ready photo below — or customize Left / Middle / Right bays freely for your customer!</div>
-   <div id="pt_visual_gallery" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;"></div>
- </div>
-
  <div class="form-grid">
  <div class="form-group">
  <label>Input Unit:</label>
- <select id="pt_unit" onchange="renderPartitionStudioUI()">
+ <select id="pt_unit" onchange="renderPtCadDesigner()">
  <option value="Inch" selected>Inch</option>
  <option value="Millimeter">Millimeter</option>
  </select>
  </div>
  <div class="form-group">
- <label style="color:#0f766e; font-weight:700;">Half Wall / Door H (In):</label>
- <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-   <input type="number" id="pt_halfwall_h" value="36" step="1" title="Half Wall Height" placeholder="Wall H" oninput="renderPartitionStudioUI()" style="padding:6px 4px; text-align:center; font-weight:700;">
-   <input type="number" id="pt_dh" value="84" step="1" title="Door Height" placeholder="Door H" oninput="renderPartitionStudioUI()" style="padding:6px 4px; text-align:center; font-weight:700;">
- </div>
- <input type="hidden" id="pt_type" value="Visual Studio">
- <input type="hidden" id="pt_dw" value="36">
+ <label style="color:#0369a1; font-weight:700;">Jindal Tube Section:</label>
+ <select id="pt_tube_preset" onchange="applyPartitionTubePreset(this.value); renderPtCadDesigner();">
+ <option value="2.5x1.5_edge" selected>2.5" x 1.5" Tube</option>
+ <option value="2.5x1.5_flat">2.5" x 1.5" (2.5" Front)</option>
+ <option value="2x1_edge">2" x 1" Tube</option>
+ <option value="1.75x1.75">1.75" x 1.75" Tube</option>
+ <option value="3x1.5_edge">3" x 1.5" Tube</option>
+ <option value="4x1.75_base">4" x 1.75" Tube</option>
+ <option value="2x2">2" x 2" Tube</option>
+ </select>
+ <input type="hidden" id="pt_tube_face" value="1.5">
+ <input type="hidden" id="pt_bot_face" value="1.5">
+ <input type="hidden" id="pt_type" value="Touch CAD Partition">
+ <input type="hidden" id="pt_cols" value="3">
+ <input type="hidden" id="pt_rows" value="3">
  </div>
  <div class="form-group">
- <label>Total Wall Height (H):</label>
+ <label style="color:#5b21b6; font-weight:700;">Total Wall Height (H):</label>
  <div class="input-wrapper">
- <input readonly inputmode="none" onclick="openKeypad('pt_h')" style="cursor:pointer; background:#fff;" type="text" id="pt_h"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_h')"><i class="fa-solid fa-calculator"></i></button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_h')" style="cursor:pointer; background:#fff; font-weight:800;" type="text" id="pt_h" value="96" oninput="renderPtCadDesigner()"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_h')"><i class="fa-solid fa-calculator"></i></button>
  </div>
  </div>
  <div class="form-group">
- <label>Total Wall Width (W):</label>
+ <label style="color:#5b21b6; font-weight:700;">Total Wall Width (W):</label>
  <div class="input-wrapper">
- <input readonly inputmode="none" onclick="openKeypad('pt_w')" style="cursor:pointer; background:#fff;" type="text" id="pt_w"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_w')"><i class="fa-solid fa-calculator"></i></button>
+ <input readonly inputmode="none" onclick="openKeypad('pt_w')" style="cursor:pointer; background:#fff; font-weight:800;" type="text" id="pt_w" value="120" oninput="renderPtCadDesigner()"> <button type="button" class="keypad-trigger" onclick="openKeypad('pt_w')"><i class="fa-solid fa-calculator"></i></button>
  </div>
- </div>
- <div class="form-group">
- <label style="color:#0284c7; font-weight:700;">Horizontal Divide (Cols):</label>
- <input type="number" id="pt_cols" value="3" min="1" max="10" oninput="renderPartitionStudioUI()">
- </div>
- <div class="form-group">
- <label style="color:#b45309; font-weight:700;">Vertical Divide (Rows):</label>
- <input type="number" id="pt_rows" value="3" min="1" max="8" oninput="renderPartitionStudioUI()">
- </div>
-
- <!-- Jindal Partition Tube Section & Panel Mode Box (Full Row) -->
- <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px; margin-top:2px;">
-   <div style="font-size:0.76rem; font-weight:800; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-     <i class="fa-solid fa-ruler-combined" style="color:#0284c7;"></i>
-     <span>JINDAL PARTITION TUBE / SECTION SIZE:</span>
-   </div>
-   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
-     <div style="grid-column: span 2;">
-       <select id="pt_tube_preset" onchange="applyPartitionTubePreset(this.value)" style="width:100%; padding:7px 8px; border-radius:6px; border:1px solid #94a3b8; background:#fff; color:#0f172a; font-size:0.84rem; font-weight:700;">
-         <option value="2.5x1.5_edge" selected>2.5" x 1.5" Tube</option>
-         <option value="2.5x1.5_flat">2.5" x 1.5" Tube (2.5" Front)</option>
-         <option value="2x1_edge">2" x 1" Tube</option>
-         <option value="2x1_flat">2" x 1" Tube (2" Front)</option>
-         <option value="1.75x1.75">1.75" x 1.75" Tube</option>
-         <option value="3x1.5_edge">3" x 1.5" Tube</option>
-         <option value="4x1.75_base">4" x 1.75" Tube</option>
-         <option value="4x1.5_base">4" x 1.5" Tube</option>
-         <option value="2x2">2" x 2" Tube</option>
-         <option value="custom">Custom Tube Size</option>
-       </select>
-     </div>
-     <div>
-       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Frame/Mullion Face (In):</label>
-       <input type="number" id="pt_tube_face" value="1.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
-     </div>
-     <div>
-       <label style="font-size:0.72rem; font-weight:700; color:#334155; display:block; margin-bottom:2px;">Bottom Base Tube (In):</label>
-       <input type="number" id="pt_bot_face" value="1.5" step="0.125" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem; font-weight:700; text-align:center;">
-     </div>
-   </div>
-   <div style="border-top:1px solid #e2e8f0; padding-top:8px; margin-top:4px;">
-     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
-       <label style="font-size:0.76rem; font-weight:800; color:#1e3a8a;">SELECT GLASS, ACP OR JALI FOR EACH ROW (TOP TO BOTTOM):</label>
-       <select id="pt_panel_mode" onchange="applyQuickPartitionPattern(this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #0284c7; background:#eff6ff; color:#0369a1; font-size:0.76rem; font-weight:800;">
-         <option value="BOT_TOP_ACP" selected>Top ACP + Mid Glass + Bot ACP</option>
-         <option value="OPTIMIZED_4X8">Top Glass + Mid Glass + Bot ACP</option>
-         <option value="TOP_JALI_MID_GLASS_BOT_ACP">Top Jali / Mesh + Mid Glass + Bot ACP</option>
-         <option value="TOP_MID_JALI_BOT_ACP">Top Jali + Mid Jali + Bot ACP</option>
-         <option value="EQUAL_DIVIDE">All Glass (Every Row Glass)</option>
-         <option value="ALL_ACP">All ACP Board (Every Row ACP)</option>
-         <option value="ALL_JALI">All Jali / Mesh (Every Row Jali)</option>
-         <option value="CUSTOM_ROWS">Custom Row / Window Setup</option>
-       </select>
-     </div>
-
-     <!-- Dynamic Row-by-Row Glass/ACP & Height Table -->
-          <!-- Column-by-Column Bay Editor (Place Door, Window, Half Wall, or Partition in ANY Column!) -->
-     <div style="background:#eff6ff; border:1px solid #93c5fd; border-radius:8px; padding:8px; margin-bottom:8px;">
-       <div style="font-size:0.73rem; font-weight:800; color:#1e3a8a; margin-bottom:6px;">
-         <i class="fa-solid fa-columns"></i> LEFT ➔ MIDDLE ➔ RIGHT BAYS (PUT DOOR / WINDOW / HALF WALL ANYWHERE):
-       </div>
-       <div id="pt_bays_builder_container" style="display:flex; flex-direction:column; gap:5px;"></div>
-     </div>
-     <div id="pt_rows_builder_container" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
-
-     <!-- Live Visual Wall Grid Preview (Shows Top, Middle, Bottom boxes with Glass/ACP colors) -->
-     <div id="pt_wall_visual_preview" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:8px; text-align:center;"></div>
-   </div>
  </div>
  <div class="form-group">
  <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
@@ -2016,7 +1934,68 @@
  </div>
  </div>
 
- <div id="pt_color_preview_box" style="margin:8px 0 10px 0;"></div>
+ <div id="pt_cad_designer_wrapper" style="margin:10px 0 12px 0; background:#f8fafc; border:2px solid #7c3aed; border-radius:12px; padding:10px;">
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:5px;">
+     <div>
+       <div style="font-size:0.82rem; font-weight:800; color:#5b21b6;"><i class="fa-solid fa-pen-ruler"></i> TOUCH DESIGN CANVAS (DRAG ↔ / ↕ OR TAP BOX)</div>
+       <div style="font-size:0.68rem; color:#475569;">Tap once to select • Tap again to switch Glass / ACP / Jali / Door / Window / Wall (Minus)</div>
+     </div>
+     <button type="button" onclick="openPtCadFullScreen()" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+       <i class="fa-solid fa-expand"></i> Full-Screen
+     </button>
+   </div>
+
+   <!-- 6 Ready Visual Designs + Custom Blank Option -->
+   <div style="margin-bottom:8px;">
+     <div style="font-size:0.69rem; font-weight:800; color:#0369a1; margin-bottom:4px;">QUICK READY DESIGNS (OR TAP 'CUSTOM DESIGN'):</div>
+     <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px;">
+       <button type="button" onclick="ptCadLoadPreset('office')" style="background:#fff; border:1.5px solid #cbd5e1; border-radius:6px; padding:5px 2px; font-size:0.64rem; font-weight:800; color:#0f172a; cursor:pointer;">Full Partition</button>
+       <button type="button" onclick="ptCadLoadPreset('mid_door')" style="background:#fff; border:1.5px solid #cbd5e1; border-radius:6px; padding:5px 2px; font-size:0.64rem; font-weight:800; color:#0f172a; cursor:pointer;">Middle Door</button>
+       <button type="button" onclick="ptCadLoadPreset('door_win')" style="background:#fff; border:1.5px solid #cbd5e1; border-radius:6px; padding:5px 2px; font-size:0.64rem; font-weight:800; color:#0f172a; cursor:pointer;">Door + Win</button>
+       <button type="button" onclick="ptCadLoadPreset('hw_win')" style="background:#fff; border:1.5px solid #cbd5e1; border-radius:6px; padding:5px 2px; font-size:0.64rem; font-weight:800; color:#0f172a; cursor:pointer;">Half Wall+Win</button>
+       <button type="button" onclick="ptCadLoadPreset('door_hw')" style="background:#fff; border:1.5px solid #cbd5e1; border-radius:6px; padding:5px 2px; font-size:0.64rem; font-weight:800; color:#0f172a; cursor:pointer;">Door+HalfWall</button>
+       <button type="button" onclick="ptCadLoadPreset('dbl_door')" style="background:#fff; border:1.5px solid #cbd5e1; border-radius:6px; padding:5px 2px; font-size:0.64rem; font-weight:800; color:#0f172a; cursor:pointer;">Double Door</button>
+       <button type="button" onclick="ptCadLoadPreset('custom')" style="grid-column: span 2; background:#7c3aed; border:1.5px solid #6d28d9; border-radius:6px; padding:5px 2px; font-size:0.67rem; font-weight:800; color:#ffffff; cursor:pointer;"><i class="fa-solid fa-pen-ruler"></i> Custom Design (Blank)</button>
+     </div>
+   </div>
+
+   <div id="pt_cad_svg_stage" style="background:linear-gradient(180deg, #ffffff, #e2e8f0); border:1.5px solid #cbd5e1; border-radius:10px; padding:6px; margin-bottom:8px; touch-action:none; user-select:none;"></div>
+
+   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; flex-wrap:wrap; gap:4px;">
+     <span id="pt_cad_sel_info" style="font-size:0.73rem; font-weight:800; color:#4c1d95;">Selected Box</span>
+     <div style="display:flex; gap:5px; flex-wrap:wrap;">
+       <button type="button" onclick="ptCadToggleGroupDoor()" style="background:#b45309; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:0.69rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-door-open"></i> Group = Door</button>
+       <button type="button" onclick="ptCadMergeSelected()" style="background:#475569; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:0.69rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-compress"></i> Merge</button>
+       <button type="button" onclick="ptCadUndo()" style="background:#f59e0b; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:0.69rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+       <button type="button" onclick="ptCadReset()" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:0.69rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-trash"></i> Reset</button>
+     </div>
+   </div>
+
+   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+     <button type="button" onclick="ptCadSplit('V')" style="background:#0284c7; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+       <i class="fa-solid fa-table-columns"></i> Split Left/Right
+     </button>
+     <button type="button" onclick="ptCadSplit('H')" style="background:#0f766e; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+       <i class="fa-solid fa-bars"></i> Split Top/Bot
+     </button>
+     <button type="button" onclick="ptCadResizePrompt()" style="background:#7c3aed; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+       <i class="fa-solid fa-ruler"></i> Exact Size
+     </button>
+   </div>
+
+   <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px;">
+     <button type="button" onclick="ptCadSetType('GLASS')" style="background:#e0f2fe; color:#0369a1; border:1px solid #38bdf8; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">Glass</button>
+     <button type="button" onclick="ptCadSetType('ACP')" style="background:#ffedd5; color:#9a3412; border:1px solid #fb923c; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">ACP Board</button>
+     <button type="button" onclick="ptCadSetType('JALI')" style="background:#dcfce7; color:#166534; border:1px solid #4ade80; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">Jali / Mesh</button>
+     <button type="button" onclick="ptCadSetType('DOOR_1')" style="background:#fef3c7; color:#92400e; border:1px solid #fbbf24; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">Single Door</button>
+     <button type="button" onclick="ptCadSetType('DOOR_2')" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">Double Door</button>
+     <button type="button" onclick="ptCadSetType('WALL_MINUS')" style="background:#e7e5e4; color:#44403c; border:1.5px dashed #78716c; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">Wall (Minus -)</button>
+     <button type="button" onclick="ptCadSetType('SLIDE_2T')" style="background:#ede9fe; color:#5b21b6; border:1px solid #a78bfa; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">2T Sliding</button>
+     <button type="button" onclick="ptCadSetType('SLIDE_3T')" style="background:#ede9fe; color:#5b21b6; border:1px solid #8b5cf6; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">3T Slide+Jali</button>
+     <button type="button" onclick="ptCadSetType('H_OPEN')" style="background:#dbeafe; color:#1d4ed8; border:1px solid #60a5fa; border-radius:6px; padding:6px 2px; font-size:0.69rem; font-weight:800; cursor:pointer;">Open Window</button>
+   </div>
+ </div>
+ <div id="pt_color_preview_box" style="display:none;"></div>
  <div class="btn-row">
  <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearPartition()">CLEAR</button>
  <button class="action-btn btn-calc" style="flex:0.65; background:#e64d4d;" onclick="calculatePartition()">+ CALCULATE</button>
@@ -4399,12 +4378,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=83"></script>
+  <script src="app.js?v=86"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=83').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=86').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
