@@ -383,120 +383,142 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
       drawCasementRow('bot', innerY + topH + transomH, botH, cc_bot_sections);
     }
   } else if (isPart) {
-    var ptTypeVal = (prefix === 'pt' && document.getElementById('pt_type')) ? document.getElementById('pt_type').value : 'Fixed Partition';
     var ptCols = (prefix === 'pt' && document.getElementById('pt_cols')) ? Math.max(1, Math.min(10, parseInt(document.getElementById('pt_cols').value) || 3)) : 3;
     var ptRows = (prefix === 'pt' && document.getElementById('pt_rows')) ? Math.max(1, Math.min(8, parseInt(document.getElementById('pt_rows').value) || 3)) : 3;
     if (prefix === 'pt' && typeof ensurePtRowConfigsCount === 'function') ensurePtRowConfigsCount(ptRows);
+    if (prefix === 'pt' && typeof ensurePtColConfigsCount === 'function') ensurePtColConfigsCount(ptCols);
 
     var raw_ph = safeEval(document.getElementById('pt_h') ? document.getElementById('pt_h').value : '96') || 96;
+    var raw_pw = safeEval(document.getElementById('pt_w') ? document.getElementById('pt_w').value : '120') || 120;
     var is_pmm = document.getElementById('pt_unit') && document.getElementById('pt_unit').value.indexOf('Millimeter') !== -1;
     var p_h_in = is_pmm ? (raw_ph / 25.4) : raw_ph;
+    var p_w_in = is_pmm ? (raw_pw / 25.4) : raw_pw;
+    var halfWallHIn = parseFloat(document.getElementById('pt_halfwall_h')?.value) || 36;
+    var doorHIn = parseFloat(document.getElementById('pt_dh')?.value) || 84;
     var t_face = parseFloat(document.getElementById('pt_tube_face')?.value) || 1.5;
     var b_face = parseFloat(document.getElementById('pt_bot_face')?.value) || 1.5;
+
     var pt_open_h = Math.max(12, p_h_in - b_face - (ptRows * t_face));
     var ptResH = (prefix === 'pt' && typeof resolvePartitionRowHeights === 'function')
       ? resolvePartitionRowHeights(pt_open_h, ptRows, 30)
       : Array(ptRows).fill(pt_open_h / ptRows);
     var sumPtH = ptResH.reduce((a, b) => a + b, 0) || 1;
 
-    var wx = 18, wy = 10, ww = 324, wh = 200;
+    var pt_open_w = Math.max(24, p_w_in - ((ptCols + 1) * t_face));
+    var colWidthsIn = (prefix === 'pt' && typeof resolvePartitionColWidths === 'function')
+      ? resolvePartitionColWidths(pt_open_w, ptCols)
+      : Array(ptCols).fill(pt_open_w / ptCols);
+    var sumColW = colWidthsIn.reduce((a, b) => a + b, 0) || 1;
+
+    var wx = 14, wy = 10, ww = 332, wh = 200;
     svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
-    var innerX = wx + 7, innerY = wy + 7, innerW = ww - 14, innerH = wh - 14;
+    var innerX = wx + 6, innerY = wy + 6, innerW = ww - 12, innerH = wh - 12;
     svg += '<rect x="' + innerX + '" y="' + innerY + '" width="' + innerW + '" height="' + innerH + '" fill="url(#aluGrad_' + uid + ')"/>';
 
-    var gridX = innerX;
-    var gridW = innerW;
+    var gapX = 5, gapY = 4;
+    var availW = innerW - ((ptCols - 1) * gapX);
+    var curX = innerX;
 
-    // If Door + Partition is active, reserve space for the Attached Door (Left or Right) + Top Transom!
-    if (prefix === 'pt' && (ptTypeVal === 'Door + Partition' || ptTypeVal === 'Door + Window + Partition')) {
-      var dPalla = document.getElementById('pt_door_palla')?.value === '2' ? 2 : 1;
-      var dPos = document.getElementById('pt_door_pos')?.value === 'right' ? 'right' : 'left';
-      var dDesign = document.getElementById('pt_door_design')?.value || 'GLASS_ACP';
-      var doorBayW = Math.round(innerW * (dPalla === 2 ? 0.44 : 0.30));
-      var doorGap = 5;
-      var doorX = (dPos === 'left') ? innerX : (innerX + innerW - doorBayW);
-      gridX = (dPos === 'left') ? (innerX + doorBayW + doorGap) : innerX;
-      gridW = innerW - doorBayW - doorGap;
-
-      // Top Transom above Door + Door Frame
-      var transomH = Math.round(innerH * 0.16);
-      var doorBodyY = innerY + transomH + 4;
-      var doorBodyH = innerH - transomH - 4;
-      svg += drawPanelFill(doorX, innerY, doorBayW, transomH, 'GLASS', 'DOOR TOP');
-      svg += '<rect x="' + doorX + '" y="' + doorBodyY + '" width="' + doorBayW + '" height="' + doorBodyH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.3"/>';
-
-      var leafW = (doorBayW - 6 - ((dPalla - 1) * 3)) / dPalla;
-      var doorParts = ['GLASS', 'ACP'];
-      var doorRatios = [0.62, 0.38];
-      if (dDesign === 'JALI_GLASS_ACP') { doorParts = ['JALI', 'GLASS', 'ACP']; doorRatios = [0.22, 0.46, 0.32]; }
-      else if (dDesign === 'JALI_ACP') { doorParts = ['JALI', 'ACP']; doorRatios = [0.62, 0.38]; }
-      else if (dDesign === 'FULL_GLASS') { doorParts = ['GLASS']; doorRatios = [1.0]; }
-      else if (dDesign === 'FULL_ACP') { doorParts = ['ACP']; doorRatios = [1.0]; }
-      else if (dDesign === 'FULL_JALI') { doorParts = ['JALI']; doorRatios = [1.0]; }
-
-      for (var dl = 0; dl < dPalla; dl++) {
-        var dlx = doorX + 3 + dl * (leafW + 3);
-        var dly = doorBodyY + 3;
-        var dlh = doorBodyH - 6;
-        svg += '<rect x="' + dlx + '" y="' + dly + '" width="' + leafW + '" height="' + dlh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
-        var pCurY = dly + 4;
-        var pAvailH = dlh - 8 - ((doorParts.length - 1) * 3);
-        for (var dp = 0; dp < doorParts.length; dp++) {
-          var ph = pAvailH * doorRatios[dp];
-          svg += drawPanelFill(dlx + 4, pCurY, leafW - 8, ph, doorParts[dp], doorParts[dp] === 'GLASS' ? '' : doorParts[dp]);
-          pCurY += ph + 3;
+    var drawWindowInRect = function(rx, ry, rw, rh, wMode) {
+      var o = '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
+      if (wMode === 'HOPEN') {
+        var wLw = (rw - 6 - 3) / 2;
+        for (var wl = 0; wl < 2; wl++) {
+          var wlx = rx + 3 + wl * (wLw + 3);
+          o += drawPanelFill(wlx, ry + 3, wLw, rh - 6, 'GLASS', 'H-OPEN');
+          o += '<polyline points="' + wlx + ',' + (ry + 3) + ' ' + (wlx + wLw) + ',' + (ry + rh / 2) + ' ' + wlx + ',' + (ry + rh - 3) + '" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3,2"/>';
+          o += '<rect x="' + (wlx + wLw - 3.5) + '" y="' + (ry + rh / 2 - 5) + '" width="2" height="10" rx="1" fill="#fbbf24"/>';
         }
-        var dhx = (dl === 0 && dPalla === 2) ? (dlx + leafW - 4.5) : (dlx + 2.5);
-        svg += '<rect x="' + dhx + '" y="' + (dly + dlh * 0.46) + '" width="2.2" height="14" rx="1" fill="#fbbf24"/>';
+      } else {
+        var trk = (wMode === 'SLIDE3') ? 3 : 2;
+        var sw = (rw - 6 - ((trk - 1) * 2)) / trk;
+        for (var wt = 0; wt < trk; wt++) {
+          var wtx = rx + 3 + wt * (sw + 2);
+          var isJ = (wMode === 'SLIDE3' && wt === trk - 1);
+          o += drawPanelFill(wtx, ry + 3, sw, rh - 6, isJ ? 'JALI' : 'GLASS', isJ ? 'JALI' : (trk + 'T'));
+        }
       }
-    }
+      return o;
+    };
 
-    // Draw the EXACT Partition Grid (ptCols x ptRows) matching LIVE PARTITION PREVIEW!
-    var gapX = 5, gapY = 5;
-    var cellW = (gridW - ((ptCols - 1) * gapX)) / ptCols;
-    var drawPtAvailH = innerH - ((ptRows - 1) * gapY);
-    var curY = innerY;
-    var winSys = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').value : 'H_OPEN_2';
+    for (var c = 0; c < ptCols; c++) {
+      var bayW = Math.max(24, (colWidthsIn[c] / sumColW) * availW);
+      var bayType = (prefix === 'pt' && pt_col_configs[c]) ? pt_col_configs[c].type : 'PARTITION';
 
-    for (var r = 0; r < ptRows; r++) {
-      var cfgIdx = ptRows - 1 - r;
-      var cellH = Math.max(12, (ptResH[cfgIdx] / sumPtH) * drawPtAvailH);
-      for (var c = 0; c < ptCols; c++) {
-        var cx = gridX + c * (cellW + gapX);
-        var matType = (prefix === 'pt' && pt_cell_overrides[cfgIdx + '_' + c])
-          ? pt_cell_overrides[cfgIdx + '_' + c]
-          : ((prefix === 'pt' && typeof pt_row_configs !== 'undefined' && pt_row_configs[cfgIdx]) ? pt_row_configs[cfgIdx].mat : 'GLASS');
-        var clickP = (prefix === 'pt') ? ('onclick="togglePtCellMaterial(' + cfgIdx + ',' + c + ')"') : '';
+      if (bayType.indexOf('DOOR_') === 0) {
+        var dPalla = (bayType.indexOf('DOOR_2') === 0) ? 2 : 1;
+        var doorRatio = Math.min(0.88, Math.max(0.65, doorHIn / Math.max(doorHIn + 8, p_h_in)));
+        var transomH = Math.max(14, innerH * (1 - doorRatio) - 4);
+        var doorY = innerY + transomH + 4;
+        var doorH = innerH - transomH - 4;
+        svg += drawPanelFill(curX, innerY, bayW, transomH, 'GLASS', 'TOP');
+        svg += '<rect x="' + curX + '" y="' + doorY + '" width="' + bayW + '" height="' + doorH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.3"/>';
 
-        if (matType === 'WINDOW') {
-          // Render the exact Window type (H-Section 1/2 Leaf OR 2/3/4-Track Sliding) inside this exact cell!
-          svg += '<g ' + clickP + ' style="cursor:pointer;">';
-          svg += '<rect x="' + cx + '" y="' + curY + '" width="' + cellW + '" height="' + cellH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.3"/>';
-          if (winSys === 'H_OPEN_1' || winSys === 'H_OPEN_2') {
-            var wLeaves = (winSys === 'H_OPEN_2') ? 2 : 1;
-            var wLw = (cellW - 6 - ((wLeaves - 1) * 3)) / wLeaves;
-            for (var wl = 0; wl < wLeaves; wl++) {
-              var wlx = cx + 3 + wl * (wLw + 3);
-              var wly = curY + 3, wlh = Math.max(6, cellH - 6);
-              svg += drawPanelFill(wlx, wly, wLw, wlh, 'GLASS', 'H-SEC');
-              svg += '<polyline points="' + wlx + ',' + wly + ' ' + (wlx + wLw) + ',' + (wly + wlh / 2) + ' ' + wlx + ',' + (wly + wlh) + '" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3,2"/>';
-              svg += '<rect x="' + (wlx + wLw - 3.5) + '" y="' + (wly + wlh / 2 - 5) + '" width="2" height="10" rx="1" fill="#fbbf24"/>';
-            }
-          } else {
-            var wTracks = (winSys === 'SLIDE_4T') ? 4 : (winSys === 'SLIDE_3T' ? 3 : 2);
-            var wSw = (cellW - 6 - ((wTracks - 1) * 2)) / wTracks;
-            for (var wt = 0; wt < wTracks; wt++) {
-              var wtx = cx + 3 + wt * (wSw + 2);
-              var wJali = (winSys === 'SLIDE_3T' && wt === wTracks - 1);
-              svg += drawPanelFill(wtx, curY + 3, wSw, Math.max(6, cellH - 6), wJali ? 'JALI' : 'GLASS', wJali ? 'JALI' : (wTracks + 'T'));
-            }
+        var leafW = (bayW - 6 - ((dPalla - 1) * 3)) / dPalla;
+        var dParts = ['GLASS', 'ACP'], dRats = [0.62, 0.38];
+        if (bayType.indexOf('JGA') !== -1) { dParts = ['JALI', 'GLASS', 'ACP']; dRats = [0.24, 0.44, 0.32]; }
+        else if (bayType.indexOf('JALI') !== -1) { dParts = ['JALI']; dRats = [1.0]; }
+
+        for (var dl = 0; dl < dPalla; dl++) {
+          var dlx = curX + 3 + dl * (leafW + 3);
+          var dly = doorY + 3, dlh = doorH - 6;
+          svg += '<rect x="' + dlx + '" y="' + dly + '" width="' + leafW + '" height="' + dlh + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+          var py = dly + 4, pAv = dlh - 8 - ((dParts.length - 1) * 3);
+          for (var dp = 0; dp < dParts.length; dp++) {
+            var ph = pAv * dRats[dp];
+            svg += drawPanelFill(dlx + 4, py, leafW - 8, ph, dParts[dp], dParts[dp] === 'GLASS' ? 'DOOR' : dParts[dp]);
+            py += ph + 3;
           }
-          svg += '</g>';
+          var hx = (dl === 0 && dPalla === 2) ? (dlx + leafW - 4.5) : (dlx + 2.5);
+          svg += '<rect x="' + hx + '" y="' + (dly + dlh * 0.46) + '" width="2.2" height="14" rx="1" fill="#fbbf24"/>';
+        }
+      } else if (bayType.indexOf('HW_') === 0) {
+        // Half Wall (Brick / Concrete Wall at bottom) + Glass or Window on top!
+        var hwRatio = Math.min(0.55, Math.max(0.25, halfWallHIn / Math.max(60, p_h_in)));
+        var wallH = Math.round(innerH * hwRatio);
+        var topAvailH = innerH - wallH - 4;
+        var wallY = innerY + topAvailH + 4;
+
+        // Draw Brick/Concrete Half Wall at bottom
+        svg += '<rect x="' + curX + '" y="' + wallY + '" width="' + bayW + '" height="' + wallH + '" fill="#d6d3d1" stroke="#78716c" stroke-width="1.2"/>';
+        for (var wyL = wallY + 9; wyL < wallY + wallH - 3; wyL += 9) {
+          svg += '<line x1="' + curX + '" y1="' + wyL + '" x2="' + (curX + bayW) + '" y2="' + wyL + '" stroke="#a8a29e" stroke-width="0.7"/>';
+        }
+        svg += '<rect x="' + (curX + bayW / 2 - 26) + '" y="' + (wallY + wallH / 2 - 6) + '" width="52" height="12" rx="2" fill="#ffffff" fill-opacity="0.85"/>';
+        svg += '<text x="' + (curX + bayW / 2) + '" y="' + (wallY + wallH / 2 + 2.5) + '" font-size="6.8" font-weight="bold" fill="#44403c" text-anchor="middle">HALF WALL</text>';
+
+        // Top section above Half Wall
+        if (bayType === 'HW_GLASS') {
+          svg += drawPanelFill(curX, innerY, bayW, topAvailH, 'GLASS', 'GLASS');
+        } else if (bayType === 'HW_SLIDE_2T') {
+          svg += drawWindowInRect(curX, innerY, bayW, topAvailH, 'SLIDE2');
+        } else if (bayType === 'HW_SLIDE_3T') {
+          svg += drawWindowInRect(curX, innerY, bayW, topAvailH, 'SLIDE3');
         } else {
-          svg += drawPanelFill(cx, curY, cellW, cellH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickP);
+          svg += drawWindowInRect(curX, innerY, bayW, topAvailH, 'HOPEN');
+        }
+      } else if (bayType.indexOf('WIN_') === 0) {
+        var topH = Math.round(innerH * 0.18), botH = Math.round(innerH * 0.28), midH = innerH - topH - botH - 8;
+        svg += drawPanelFill(curX, innerY, bayW, topH, 'GLASS', '');
+        var wMode = (bayType === 'WIN_SLIDE_3T') ? 'SLIDE3' : (bayType === 'WIN_SLIDE_2T' ? 'SLIDE2' : 'HOPEN');
+        svg += drawWindowInRect(curX, innerY + topH + 4, bayW, midH, wMode);
+        svg += drawPanelFill(curX, innerY + topH + midH + 8, bayW, botH, 'ACP', 'ACP');
+      } else {
+        // Standard Partition Column (Proportional Rows: Glass / ACP / Jali)
+        var drawPtAvailH = innerH - ((ptRows - 1) * gapY);
+        var curY = innerY;
+        for (var r = 0; r < ptRows; r++) {
+          var cfgIdx = ptRows - 1 - r;
+          var cellH = Math.max(12, (ptResH[cfgIdx] / sumPtH) * drawPtAvailH);
+          var matType = (prefix === 'pt' && pt_cell_overrides[cfgIdx + '_' + c])
+            ? pt_cell_overrides[cfgIdx + '_' + c]
+            : ((prefix === 'pt' && typeof pt_row_configs !== 'undefined' && pt_row_configs[cfgIdx]) ? pt_row_configs[cfgIdx].mat : 'GLASS');
+          var clickP = (prefix === 'pt') ? ('onclick="togglePtCellMaterial(' + cfgIdx + ',' + c + ')"') : '';
+          svg += drawPanelFill(curX, curY, bayW, cellH, matType, matType === 'JALI' ? 'JALI' : (matType === 'ACP' ? 'ACP' : ''), clickP);
+          curY += cellH + gapY;
         }
       }
-      curY += cellH + gapY;
+      curX += bayW + gapX;
     }  } else {
     var numCols = 2;
     if (prefix === 'dm' && document.getElementById('dm_type')) {
@@ -5630,620 +5652,206 @@ function clearDoor() {
 }
 
 function calculatePartition() {
- const raw_h = safeEval(document.getElementById('pt_h').value);
- const raw_w = safeEval(document.getElementById('pt_w').value);
- if (raw_h === 0 || raw_w === 0) {
-   alert("Please enter Height and Width.");
-   return;
- }
+  const raw_h = safeEval(document.getElementById('pt_h').value);
+  const raw_w = safeEval(document.getElementById('pt_w').value);
+  if (raw_h === 0 || raw_w === 0) {
+    alert("Please enter Total Wall Height (H) and Width (W).");
+    return;
+  }
 
- const is_mm = document.getElementById('pt_unit').value.includes('Millimeter');
- const h = is_mm ? raw_h / 25.4 : raw_h;
- const w = is_mm ? raw_w / 25.4 : raw_w;
- const p_type = document.getElementById('pt_type').value;
- const cols = Math.max(1, parseInt(safeEval(document.getElementById('pt_cols').value)) || 3);
- const rows = Math.max(1, parseInt(safeEval(document.getElementById('pt_rows').value)) || 3);
- const panel_mode = (document.getElementById('pt_panel_mode') ? document.getElementById('pt_panel_mode').value : "OPTIMIZED_4X8");
+  const is_mm = document.getElementById('pt_unit').value.includes('Millimeter');
+  const h = is_mm ? raw_h / 25.4 : raw_h;
+  const w = is_mm ? raw_w / 25.4 : raw_w;
+  const cols = Math.max(1, parseInt(safeEval(document.getElementById('pt_cols').value)) || 3);
+  const rows = Math.max(1, parseInt(safeEval(document.getElementById('pt_rows').value)) || 3);
+  const halfWallH = parseFloat(document.getElementById('pt_halfwall_h')?.value) || 36;
+  const doorH = parseFloat(document.getElementById('pt_dh')?.value) || 84;
 
- const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
- pt_part_count += 1;
- const unit_str = is_mm ? "mm" : "Inch";
- const isBn = (currentAppLang === 'bn');
+  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
+  pt_part_count += 1;
 
- let out = "";
+  const tube_face = parseFloat(document.getElementById('pt_tube_face')?.value) || 1.5;
+  const bot_face = parseFloat(document.getElementById('pt_bot_face')?.value) || 1.5;
+  const tube_label = getPartitionTubeLabel();
+  const sg_key = `Single Glazing [${tube_label}]`;
+  const dg_key = `Double Glazing [${tube_label}]`;
+  if (!pt_buckets[sg_key]) pt_buckets[sg_key] = [];
+  if (!pt_buckets[dg_key]) pt_buckets[dg_key] = [];
 
- const tube_face = parseFloat(document.getElementById('pt_tube_face') ? document.getElementById('pt_tube_face').value : 1.5) || 1.5;
- const bot_face = parseFloat(document.getElementById('pt_bot_face') ? document.getElementById('pt_bot_face').value : 1.5) || 1.5;
- const tube_label = getPartitionTubeLabel();
- const sg_key = `Single Glazing [${tube_label}]`;
- const dg_key = `Double Glazing [${tube_label}]`;
- if (!pt_buckets[sg_key]) pt_buckets[sg_key] = [];
- if (!pt_buckets[dg_key]) pt_buckets[dg_key] = [];
+  ensurePtColConfigsCount(cols);
+  ensurePtRowConfigsCount(rows);
+  const total_open_w = Math.max(12, w - ((cols + 1) * tube_face));
+  const colWidths = resolvePartitionColWidths(total_open_w, cols);
+  const frame_deduct = bot_face + (rows * tube_face);
+  const total_open_h = Math.max(10, h - frame_deduct);
+  const rowHeights = resolvePartitionRowHeights(total_open_h, rows, colWidths[0] - 0.25);
+  const pt_gspec = getModuleGlassLabel('pt');
 
- // Frame height deductions: top (tube_face) + bottom (bot_face) + (rows - 1) transoms (each tube_face)
- const frame_deduct = bot_face + (rows * tube_face);
- const total_open_h = Math.max(10, h - frame_deduct);
- const approx_inner_w = (w - ((cols + 1) * tube_face)) / cols;
- const rowHeights = resolvePartitionRowHeights(total_open_h, rows, approx_inner_w - 0.25);
- renderPartitionWallVisualOnly();
- const pt_gspec = getModuleGlassLabel('pt');
+  let out = `[Partition Studio #${pt_part_count} (${disp(h)} x ${disp(w)}) | ${cols} Bays]\n`;
+  out += `> Jindal Tube: ${tube_label} | Alu Spec: ${getModuleAluLabel('pt')}\n`;
+  out += `-----------------------------------\n`;
+  out += `1. MAIN OUTER & VERTICAL FRAME CUTTING\n`;
+  out += `-----------------------------------\n`;
+  const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h = w - (2 * tube_face);
+  out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
+  out += `> Top Full Horizontal (${tube_label}): ${disp(outer_h)} (1 pc)\n`;
+  pt_buckets[sg_key].push(outer_v, outer_v, outer_h);
+  if (cols > 1) {
+    out += `> Bay Divider Verticals (${tube_label}): ${disp(inter_v)} (${cols - 1} pc)\n`;
+    for (let i = 0; i < cols - 1; i++) pt_buckets[dg_key].push(inter_v);
+  }
 
- if (p_type === "Fixed Partition") {
-   out = `[Partition #${pt_part_count} - ${p_type} (${disp(h)} x ${disp(w)}) | ${cols} Cols x ${rows} Rows]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
-   const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h = w - (2 * tube_face);
-   const inner_h = (w - ((cols + 1) * tube_face)) / cols;
+  let totalGlassPcs = 0, totalGlassSqFt = 0;
+  let totalAcpPcs = 0, totalAcpSqFt = 0;
+  let totalJaliPcs = 0, totalJaliSqFt = 0;
 
-   // 1. FRAME SECTIONS
-   out += "-----------------------------------\n";
-   out += "1. ALUMINIUM FRAME CUTTING SIZES\n";
-   out += "-----------------------------------\n";
-   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
-   if (Math.abs(bot_face - tube_face) > 0.05) {
-     out += `> Outer Top Horizontal (${disp(tube_face)} Face): ${disp(outer_h)} (1 pc)\n`;
-     out += `> Bottom Base Rail (${disp(bot_face)} Section): ${disp(outer_h)} (1 pc)\n`;
-     const base_key = `Bottom Base Tube [${disp(bot_face)}]`;
-     if (!pt_buckets[base_key]) pt_buckets[base_key] = [];
-     pt_buckets[sg_key].push(outer_v, outer_v, outer_h);
-     pt_buckets[base_key].push(outer_h);
-   } else {
-     out += `> Outer Horizontals Top/Bottom (${tube_label}): ${disp(outer_h)} (2 pc)\n`;
-     pt_buckets[sg_key].push(outer_v, outer_v, outer_h, outer_h);
-   }
+  out += `\n-----------------------------------\n`;
+  out += `2. BAY-BY-BAY CUTTING (LEFT TO RIGHT)\n`;
+  out += `-----------------------------------\n`;
 
-   if (cols > 1) {
-     out += `> Intermediate Verticals (${tube_label}): ${disp(inter_v)} (${cols - 1} pc)\n`;
-     for (let i = 0; i < cols - 1; i++) pt_buckets[dg_key].push(inter_v);
-   }
+  for (let c = 0; c < cols; c++) {
+    const bayW = colWidths[c];
+    const bType = pt_col_configs[c].type;
+    const bLbl = `Bay #${c + 1}`;
+    const bOpt = PT_BAY_OPTIONS.find(o => o.val === bType);
+    out += `\n[${bLbl}: ${bOpt ? bOpt.label : bType} | Clear Width: ${disp(bayW)}]\n`;
 
-   const h_qty = cols * (rows - 1);
-   if (h_qty > 0) {
-     out += `> Horizontal Transoms (${tube_label}): ${disp(inner_h)} (${h_qty} pc)\n`;
-     for (let i = 0; i < h_qty; i++) pt_buckets[dg_key].push(inner_h);
-   }
+    if (bType.indexOf('DOOR_') === 0) {
+      const dPalla = bType.indexOf('DOOR_2') === 0 ? 2 : 1;
+      const dV = Math.max(24, doorH - 1.75);
+      const leafW = dPalla === 2 ? Math.max(12, (bayW - 0.5) / 2.0) : Math.max(14, bayW - 0.25);
+      const railW = Math.max(6, leafW - 3.5);
+      const pW = railW + 0.75;
+      out += `  > Door Top Transom Tube: ${disp(bayW)} (1 pc)\n`;
+      out += `  > Door Stiles: ${disp(dV)} (${2 * dPalla} pc) | Rails: ${disp(railW)} (${3 * dPalla} pc)\n`;
+      pt_buckets[dg_key].push(bayW);
+      pt_buckets["Door Sash"].push(dV, dV, railW, railW);
 
-   // 2. ROW BY ROW CLEAR OPENINGS & TRANSOM MARKING FROM FLOOR
-   out += "\n-----------------------------------\n";
-   out += "2. ROW OPENINGS & PIPE MARKING (BOTTOM TO TOP)\n";
-   out += "-----------------------------------\n";
-   let runningMark = bot_face;
-   for (let r = 0; r < rows; r++) {
-     const rName = getRowShortEnglishName(r, rows);
-     const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
-     const rH = rowHeights[r];
-     out += `• ${rName} [${rMat}]: Clear Opening ${disp(rH)} x ${disp(inner_h)}`;
-     if (r < rows - 1) {
-       runningMark += rH;
-       out += ` -> Transom Mark at ${disp(runningMark)} from Floor\n`;
-       runningMark += tube_face;
-     } else {
-       out += ` (Top Row to Ceiling)\n`;
-     }
-   }
+      // Door Top Transom Glass
+      const tH = Math.max(4, h - doorH - (2 * tube_face) - 0.25);
+      const tW = Math.max(4, bayW - 0.25);
+      out += `  > [Door Top Glass]: ${disp(tH)} x ${disp(tW)} (1 pc)\n`;
+      pt_glass_dict[`${disp(tH)} x ${disp(tW)} (${bLbl} Door Top) || ${pt_gspec}`] = (pt_glass_dict[`${disp(tH)} x ${disp(tW)} (${bLbl} Door Top) || ${pt_gspec}`] || 0) + 1;
+      totalGlassPcs += 1; totalGlassSqFt += (tH * tW) / 144.0;
 
-   // 3. ROW BY ROW GLASS & ACP CUTTING SIZES
-   const raw_cut_w = inner_h - 0.25;
-   const w_guard = safeGlassSlabCap(raw_cut_w);
-   const cut_w = w_guard.cut;
+      if (bType.indexOf('JGA') !== -1) {
+        const jH = 14.0, aH = 29.75, gH = Math.max(10, dV - 11.5 - jH - aH);
+        out += `  > [Door Top Jali]: ${disp(jH)} x ${disp(pW)} (${dPalla} pc)\n`;
+        out += `  > [Door Mid Glass]: ${disp(gH)} x ${disp(pW)} (${dPalla} pc)\n`;
+        out += `  > [Door Bot ACP]: ${disp(aH)} x ${disp(pW)} (${dPalla} pc)\n`;
+        totalJaliPcs += dPalla; totalJaliSqFt += (jH * pW * dPalla) / 144.0;
+        pt_glass_dict[`${disp(gH)} x ${disp(pW)} (${bLbl} Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(gH)} x ${disp(pW)} (${bLbl} Door Glass) || ${pt_gspec}`] || 0) + dPalla;
+        totalGlassPcs += dPalla; totalGlassSqFt += (gH * pW * dPalla) / 144.0;
+        pt_acp_list.push({ rowTag: bLbl + ' Door ACP', cutStr: `${disp(aH)} x ${disp(pW)}`, h_in: aH, w_in: pW, qty: dPalla, buyLabel: '', areaSqFt: (aH * pW * dPalla) / 144.0 });
+        totalAcpPcs += dPalla; totalAcpSqFt += (aH * pW * dPalla) / 144.0;
+      } else if (bType.indexOf('JALI') !== -1) {
+        const fullJH = Math.max(12, dV - 6.5);
+        out += `  > [Door Full Jali/Mesh]: ${disp(fullJH)} x ${disp(pW)} (${dPalla} pc)\n`;
+        totalJaliPcs += dPalla; totalJaliSqFt += (fullJH * pW * dPalla) / 144.0;
+      } else {
+        const aH = 29.75, gH = Math.max(12, dV - 9.0 - aH);
+        out += `  > [Door Top Glass]: ${disp(gH)} x ${disp(pW)} (${dPalla} pc)\n`;
+        out += `  > [Door Bot ACP]: ${disp(aH)} x ${disp(pW)} (${dPalla} pc)\n`;
+        pt_glass_dict[`${disp(gH)} x ${disp(pW)} (${bLbl} Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(gH)} x ${disp(pW)} (${bLbl} Door Glass) || ${pt_gspec}`] || 0) + dPalla;
+        totalGlassPcs += dPalla; totalGlassSqFt += (gH * pW * dPalla) / 144.0;
+        pt_acp_list.push({ rowTag: bLbl + ' Door ACP', cutStr: `${disp(aH)} x ${disp(pW)}`, h_in: aH, w_in: pW, qty: dPalla, buyLabel: '', areaSqFt: (aH * pW * dPalla) / 144.0 });
+        totalAcpPcs += dPalla; totalAcpSqFt += (aH * pW * dPalla) / 144.0;
+      }
+    } else if (bType.indexOf('HW_') === 0) {
+      const topOpenH = Math.max(12, h - halfWallH - (2 * tube_face));
+      out += `  > Half Wall Height: ${disp(halfWallH)} | Top Frame Opening: ${disp(topOpenH)} x ${disp(bayW)}\n`;
+      pt_buckets[dg_key].push(bayW); // Base tube on half wall
+      if (bType === 'HW_GLASS') {
+        const gH = Math.max(4, topOpenH - 0.25), gW = Math.max(4, bayW - 0.25);
+        out += `  > [Above Half-Wall Glass]: ${disp(gH)} x ${disp(gW)} (1 pc)\n`;
+        pt_glass_dict[`${disp(gH)} x ${disp(gW)} (${bLbl} HalfWall Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(gH)} x ${disp(gW)} (${bLbl} HalfWall Glass) || ${pt_gspec}`] || 0) + 1;
+        totalGlassPcs += 1; totalGlassSqFt += (gH * gW) / 144.0;
+      } else if (bType === 'HW_HOPEN_2') {
+        const sH = Math.max(6, topOpenH - 0.25), sW = Math.max(6, (bayW - 0.375) / 2.0);
+        const wgH = Math.max(4, sH - 2.5), wgW = Math.max(4, sW - 2.5);
+        out += `  > H-Sec Openable Sash (2-Leaf): ${disp(sH)} x ${disp(sW)} (2 leaves)\n`;
+        out += `  > [Window Glass]: ${disp(wgH)} x ${disp(wgW)} (2 pc)\n`;
+        pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} H-Sec Win) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} H-Sec Win) || ${pt_gspec}`] || 0) + 2;
+        totalGlassPcs += 2; totalGlassSqFt += (wgH * wgW * 2) / 144.0;
+      } else {
+        const trk = (bType === 'HW_SLIDE_3T') ? 3 : 2;
+        const gPcs = (trk === 3) ? 2 : 2;
+        const slH = Math.max(6, topOpenH - 2.25);
+        const slW = Math.max(6, ((bayW - 1.5) + (trk === 3 ? 2.5 : 1.5)) / trk);
+        const wgH = Math.max(4, slH - 3.25), wgW = Math.max(4, slW - 2.0);
+        out += `  > ${trk}-Track Sliding Window: ${disp(topOpenH)} x ${disp(bayW)}\n`;
+        out += `  > [Sliding Glass]: ${disp(wgH)} x ${disp(wgW)} (${gPcs} pc)${trk === 3 ? ' + 1 Jali Shutter' : ''}\n`;
+        pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} ${trk}T Win) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} ${trk}T Win) || ${pt_gspec}`] || 0) + gPcs;
+        totalGlassPcs += gPcs; totalGlassSqFt += (wgH * wgW * gPcs) / 144.0;
+        if (trk === 3) { totalJaliPcs += 1; totalJaliSqFt += (wgH * wgW) / 144.0; }
+      }
+    } else if (bType.indexOf('WIN_') === 0) {
+      const botAcpH = 29.75, topGH = 14.75;
+      const winH = Math.max(16, h - botAcpH - topGH - (4 * tube_face));
+      const bayCutW = Math.max(4, bayW - 0.25);
+      out += `  > [Top Glass]: ${disp(topGH)} x ${disp(bayCutW)} (1 pc) | [Bot ACP]: ${disp(botAcpH)} x ${disp(bayCutW)} (1 pc)\n`;
+      pt_glass_dict[`${disp(topGH)} x ${disp(bayCutW)} (${bLbl} Top Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(topGH)} x ${disp(bayCutW)} (${bLbl} Top Glass) || ${pt_gspec}`] || 0) + 1;
+      totalGlassPcs += 1; totalGlassSqFt += (topGH * bayCutW) / 144.0;
+      pt_acp_list.push({ rowTag: bLbl + ' Bot ACP', cutStr: `${disp(botAcpH)} x ${disp(bayCutW)}`, h_in: botAcpH, w_in: bayCutW, qty: 1, buyLabel: '', areaSqFt: (botAcpH * bayCutW) / 144.0 });
+      totalAcpPcs += 1; totalAcpSqFt += (botAcpH * bayCutW) / 144.0;
 
-   out += "\n-----------------------------------\n";
-   out += "3. GLASS & ACP CUTTING SIZES (BY ROW)\n";
-   out += "-----------------------------------\n";
+      if (bType === 'WIN_HOPEN_2') {
+        const sH = Math.max(6, winH - 0.25), sW = Math.max(6, (bayW - 0.375) / 2.0);
+        const wgH = Math.max(4, sH - 2.5), wgW = Math.max(4, sW - 2.5);
+        out += `  > [Middle H-Sec Openable Window (2-Leaf)]: Glass ${disp(wgH)} x ${disp(wgW)} (2 pc)\n`;
+        pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} H-Sec Win) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} H-Sec Win) || ${pt_gspec}`] || 0) + 2;
+        totalGlassPcs += 2; totalGlassSqFt += (wgH * wgW * 2) / 144.0;
+      } else {
+        const trk = (bType === 'WIN_SLIDE_3T') ? 3 : 2;
+        const slH = Math.max(6, winH - 2.25);
+        const slW = Math.max(6, ((bayW - 1.5) + (trk === 3 ? 2.5 : 1.5)) / trk);
+        const wgH = Math.max(4, slH - 3.25), wgW = Math.max(4, slW - 2.0);
+        out += `  > [Middle ${trk}-Track Sliding Window]: Glass ${disp(wgH)} x ${disp(wgW)} (2 pc)${trk === 3 ? ' + 1 Jali' : ''}\n`;
+        pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} ${trk}T Win) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${bLbl} ${trk}T Win) || ${pt_gspec}`] || 0) + 2;
+        totalGlassPcs += 2; totalGlassSqFt += (wgH * wgW * 2) / 144.0;
+        if (trk === 3) { totalJaliPcs += 1; totalJaliSqFt += (wgH * wgW) / 144.0; }
+      }
+    } else {
+      // Standard Partition Bay (rows from Top to Bottom)
+      const cutW = Math.max(4, bayW - 0.25);
+      for (let t = 0; t < rows - 1; t++) pt_buckets[dg_key].push(bayW);
+      for (let r = rows - 1; r >= 0; r--) {
+        const rName = getRowShortEnglishName(r, rows);
+        const mat = pt_cell_overrides[r + '_' + c] || (pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS');
+        const cutH = Math.max(2, rowHeights[r] - 0.25);
+        if (mat === 'ACP') {
+          out += `  > [${rName} - ACP]: ${disp(cutH)} x ${disp(cutW)} (1 pc)\n`;
+          pt_acp_list.push({ rowTag: bLbl + ' ' + rName, cutStr: `${disp(cutH)} x ${disp(cutW)}`, h_in: cutH, w_in: cutW, qty: 1, buyLabel: '', areaSqFt: (cutH * cutW) / 144.0 });
+          totalAcpPcs += 1; totalAcpSqFt += (cutH * cutW) / 144.0;
+        } else if (mat === 'JALI') {
+          out += `  > [${rName} - Jali/Mesh]: ${disp(cutH)} x ${disp(cutW)} (1 pc)\n`;
+          totalJaliPcs += 1; totalJaliSqFt += (cutH * cutW) / 144.0;
+        } else {
+          out += `  > [${rName} - Glass]: ${disp(cutH)} x ${disp(cutW)} (1 pc)\n`;
+          pt_glass_dict[`${disp(cutH)} x ${disp(cutW)} (${bLbl} ${rName}) || ${pt_gspec}`] = (pt_glass_dict[`${disp(cutH)} x ${disp(cutW)} (${bLbl} ${rName}) || ${pt_gspec}`] || 0) + 1;
+          totalGlassPcs += 1; totalGlassSqFt += (cutH * cutW) / 144.0;
+        }
+      }
+    }
+  }
 
-   let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
-   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
-   let totalJaliPcs = 0, totalJaliAreaSqFt = 0;
-   let totalWinPcs = 0;
+  out += `\n-----------------------------------\n`;
+  out += `3. TOTAL PURCHASE SUMMARY\n`;
+  out += `-----------------------------------\n`;
+  out += `• TOTAL GLASS: ${totalGlassPcs} Pcs (${totalGlassSqFt.toFixed(2)} Sq.Ft) -> 2. GLASS PDF + QR\n`;
+  if (totalAcpPcs > 0) {
+    const packedSheets = packPanelsOn4x8Sheets(pt_acp_list);
+    out += `• TOTAL ACP BOARD: ${packedSheets.length} Sheet(s) (${totalAcpPcs} Cut Pcs | ${totalAcpSqFt.toFixed(1)} Sq.Ft) -> 3. ALU PURCHASE & 5. DRAWING PDF\n`;
+  }
+  if (totalJaliPcs > 0) {
+    out += `• TOTAL JALI / MESH: ${totalJaliPcs} Pcs (${totalJaliSqFt.toFixed(2)} Sq.Ft)\n`;
+  }
 
-   for (let r = rows - 1; r >= 0; r--) {
-     const rName = getRowShortEnglishName(r, rows);
-     const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
-     const rH = rowHeights[r];
-     let cellWinCount = 0;
-     for (let cc = 0; cc < cols; cc++) {
-       if ((pt_cell_overrides[r + '_' + cc] || rMat) === 'WINDOW') cellWinCount++;
-     }
-     if (cellWinCount > 0 && rMat !== 'WINDOW') {
-       const winG_h = Math.max(4.0, rH - 3.5);
-       const winG_w = Math.max(4.0, inner_h - 3.5);
-       out += `> [${rName} - Openable Window (${cellWinCount} pc)]: Sash ${disp(rH - 0.5)} x ${disp(inner_h - 0.5)} | Window Glass: ${disp(winG_h)} x ${disp(winG_w)} (${cellWinCount} pc)\n`;
-       totalWinPcs += cellWinCount;
-       pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] || 0) + cellWinCount;
-     }
-
-     if (rMat === 'WINDOW') {
-       const winG_h = Math.max(4.0, rH - 3.5);
-       const winG_w = Math.max(4.0, inner_h - 3.5);
-       out += `> [${rName} - Openable Window (${cols} pc)]: Sash ${disp(rH - 0.5)} x ${disp(inner_h - 0.5)} | Window Glass: ${disp(winG_h)} x ${disp(winG_w)} (${cols} pc)\n`;
-       totalWinPcs += cols;
-       totalGlassPcs += cols;
-       totalGlassAreaSqFt += (winG_h * winG_w * cols) / 144.0;
-       pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(winG_h)} x ${disp(winG_w)} (${rName} Window Glass) || ${pt_gspec}`] || 0) + cols;
-     } else if (rMat === 'ACP') {
-       const acp_cut_h = Math.max(2.0, rH - 0.25);
-       const shortTag = (r === 0) ? 'Bot ACP' : (r === rows - 1 ? 'Top ACP' : ('Row' + (r + 1) + ' ACP'));
-       out += `> [${rName} - ACP Board]: ${disp(acp_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-       totalAcpPcs += cols;
-       totalAcpAreaSqFt += (acp_cut_h * cut_w * cols) / 144.0;
-       pt_acp_list.push({
-         rowTag: shortTag,
-         cutStr: `${disp(acp_cut_h)} x ${disp(cut_w)}`,
-         h_in: acp_cut_h,
-         w_in: cut_w,
-         qty: cols,
-         buyLabel: '',
-         areaSqFt: (acp_cut_h * cut_w * cols) / 144.0
-       });
-     } else if (rMat === 'JALI') {
-       const jali_cut_h = Math.max(2.0, rH - 0.25);
-       const jaliSqFt = (jali_cut_h * cut_w * cols) / 144.0;
-       out += `> [${rName} - Jali / Mesh]: ${disp(jali_cut_h)} x ${disp(cut_w)} (${cols} pc | ${jaliSqFt.toFixed(2)} Sq.Ft)\n`;
-       totalJaliPcs += cols;
-       totalJaliAreaSqFt += jaliSqFt;
-     } else {
-       const g_guard = safeGlassSlabCap(Math.max(2.0, rH - 0.25));
-       const g_cut_h = g_guard.cut;
-       out += `> [${rName} - Glass (${pt_gspec})]: ${disp(g_cut_h)} x ${disp(cut_w)} (${cols} pc) [Slab: ${g_guard.slab}" x ${w_guard.slab}"]\n`;
-       totalGlassPcs += cols;
-       totalGlassAreaSqFt += (g_cut_h * cut_w * cols) / 144.0;
-       const gKey = `${disp(g_cut_h)} x ${disp(cut_w)} (${rName}) || ${pt_gspec}`;
-       pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + cols;
-     }
-   }
-
-   // Consolidate 4'x8' Sheet Count across ALL ACP rows (e.g. Bottom ACP + Top ACP nested together!)
-   const packedSheets = packPanelsOn4x8Sheets(pt_acp_list);
-   let sheetsSummaryTxt = "0 Sheets";
-   if (packedSheets.length > 0) {
-     const lastSh = packedSheets[packedSheets.length - 1];
-     if (packedSheets.length === 1 && lastSh.isHalfSheetOnly) {
-       sheetsSummaryTxt = "0.5 Sheet (4'x4' Half Board)";
-     } else if (packedSheets.length > 1 && lastSh.isHalfSheetOnly) {
-       sheetsSummaryTxt = (packedSheets.length - 1) + ".5 Sheets (" + (packedSheets.length - 1) + " Full + 1 Half 4'x4' Board)";
-     } else {
-       sheetsSummaryTxt = packedSheets.length + (packedSheets.length === 1 ? " Full Sheet (4'x8')" : " Full Sheets (4'x8')");
-     }
-     pt_acp_list.forEach(function(item) { item.buyLabel = sheetsSummaryTxt; });
-   }
-
-   out += "\n-----------------------------------\n";
-   out += "4. TOTAL GLASS & 4'x8' ACP PURCHASE SUMMARY\n";
-   out += "-----------------------------------\n";
-   out += `• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF + QR\n`;
-   if (totalAcpPcs > 0) {
-     out += `• TOTAL ACP BOARD TO BUY: ${sheetsSummaryTxt} (${totalAcpPcs} Cut Pcs | ${totalAcpAreaSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE & 5. DRAWING PDF\n`;
-   }
-   if (totalJaliPcs > 0) {
-     out += `• TOTAL JALI / MESH TO BUY: ${totalJaliPcs} Pcs (Net Area: ${totalJaliAreaSqFt.toFixed(2)} Sq.Ft)\n`;
-   }
-   if (totalJaliPcs > 0) {
-     out += `• TOTAL JALI / MESH TO BUY: ${totalJaliPcs} Pcs (Net Area: ${totalJaliAreaSqFt.toFixed(2)} Sq.Ft)\n`;
-   }
-
-   // 5. HARDWARE
-   const beading_rft = Math.round((total_open_h + (rows * inner_h)) * 2 * cols / 12);
-   out += "\n--- HARDWARE & ACCESSORIES ---\n";
-   out += `> Square Clip (Beading): Approx ${beading_rft} Running Feet\n`;
-   out += `> EPDM Glass Gasket / Sealant: Approx ${beading_rft} Feet\n`;
-   out += `> Corner Cleats & Screws Set\n`;
-
- } else if (p_type === "Door + Window + Partition") {
-   const raw_dh = safeEval(document.getElementById('pt_dh') ? document.getElementById('pt_dh').value : '84') || 84;
-   const raw_dw = safeEval(document.getElementById('pt_dw') ? document.getElementById('pt_dw').value : '36') || 36;
-   const raw_wh = safeEval(document.getElementById('pt_combo_wh') ? document.getElementById('pt_combo_wh').value : '48') || 48;
-   const raw_ww = safeEval(document.getElementById('pt_combo_ww') ? document.getElementById('pt_combo_ww').value : '48') || 48;
-
-   const dh = is_mm ? raw_dh / 25.4 : raw_dh;
-   const dw = is_mm ? raw_dw / 25.4 : raw_dw;
-   const wh = is_mm ? raw_wh / 25.4 : raw_wh;
-   const ww = is_mm ? raw_ww / 25.4 : raw_ww;
-
-   const dPalla = document.getElementById('pt_door_palla')?.value === '2' ? 2 : 1;
-   const dDesign = document.getElementById('pt_door_design')?.value || 'GLASS_ACP';
-   const winSys = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').value : 'H_OPEN_2';
-   const winSysLabel = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').options[document.getElementById('pt_win_sys').selectedIndex].text : 'H-Section Openable';
-   const winSill = parseFloat(document.getElementById('pt_win_sill')?.value) || 30;
-   const hSecFace = parseFloat(document.getElementById('pt_win_hsec')?.value) || 1.5;
-
-   out = `[Partition #${pt_part_count} - ALL-IN-ONE: DOOR + WINDOW + PARTITION (${disp(h)} x ${disp(w)})]\n`;
-   out += `> Door: ${disp(dh)} x ${disp(dw)} (${dPalla === 2 ? 'Double' : 'Single'}) | Window: ${disp(wh)} x ${disp(ww)} (${winSysLabel})\n`;
-   out += `> Jindal Section: ${tube_label} | Alu Spec: ${getModuleAluLabel('pt')}\n`;
-
-   const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h_top = w - (2 * tube_face);
-   const rem_w = Math.max(0, w - dw - ww - (3 * tube_face));
-   const sideCols = Math.max(0, cols - 1);
-   const sideInnerW = sideCols > 0 ? Math.max(4, (rem_w - ((sideCols + 1) * tube_face)) / sideCols) : 0;
-
-   out += "-----------------------------------\n";
-   out += "1. PARTITION MAIN FRAME CUTTING\n";
-   out += "-----------------------------------\n";
-   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
-   out += `> Door & Window Vertical Posts (${tube_label}): ${disp(inter_v)} (3 pc)\n`;
-   out += `> Top Full Horizontal (${tube_label}): ${disp(outer_h_top)} (1 pc)\n`;
-   out += `> Door Top Transom (${tube_label}): ${disp(dw)} (1 pc)\n`;
-   out += `> Window Sill & Lintel Transoms (${tube_label}): ${disp(ww)} (2 pc)\n`;
-   pt_buckets[sg_key].push(outer_v, outer_v, outer_h_top);
-   pt_buckets[dg_key].push(inter_v, inter_v, inter_v, dw, ww, ww);
-
-   // 2. ATTACHED DOOR SASH & PANELS
-   const door_v = Math.max(24, dh - 1.75);
-   const leaf_w = (dPalla === 2) ? Math.max(12, (dw - 0.5) / 2.0) : Math.max(14, dw - 0.25);
-   const rail_w = Math.max(6, leaf_w - 3.5);
-   const dPanelW = rail_w + 0.75;
-   out += "\n-----------------------------------\n";
-   out += `2. ATTACHED DOOR CUTTING (${dPalla === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR'})\n`;
-   out += "-----------------------------------\n";
-   out += `> Door Vertical Stiles: ${disp(door_v)} (${2 * dPalla} pc)\n`;
-   out += `> Door Top/Bottom/Mid Rails: ${disp(rail_w)} (${(dDesign.indexOf('FULL') === 0 ? 2 : 3) * dPalla} pc)\n`;
-   pt_buckets["Door Sash"].push(door_v, door_v, rail_w, rail_w);
-
-   let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
-   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
-
-   const dTopTransomH = Math.max(4, h - dh - (2 * tube_face) - 0.25);
-   const dTopTransomW = Math.max(4, dw - 0.25);
-   out += `> [Door Top Transom Glass]: ${disp(dTopTransomH)} x ${disp(dTopTransomW)} (1 pc)\n`;
-   pt_glass_dict[`${disp(dTopTransomH)} x ${disp(dTopTransomW)} (Door Top Transom) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dTopTransomH)} x ${disp(dTopTransomW)} (Door Top Transom) || ${pt_gspec}`] || 0) + 1;
-   totalGlassPcs += 1; totalGlassAreaSqFt += (dTopTransomH * dTopTransomW) / 144.0;
-
-   if (dDesign === 'FULL_GLASS') {
-     const dgH = Math.max(8, door_v - 6.5);
-     out += `> [Door Full Glass]: ${disp(dgH)} x ${disp(dPanelW)} (${dPalla} pc)\n`;
-     pt_glass_dict[`${disp(dgH)} x ${disp(dPanelW)} (Attached Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dgH)} x ${disp(dPanelW)} (Attached Door Glass) || ${pt_gspec}`] || 0) + dPalla;
-     totalGlassPcs += dPalla; totalGlassAreaSqFt += (dgH * dPanelW * dPalla) / 144.0;
-   } else if (dDesign === 'FULL_ACP') {
-     const daH = Math.max(8, door_v - 6.5);
-     out += `> [Door Full ACP Board]: ${disp(daH)} x ${disp(dPanelW)} (${dPalla} pc)\n`;
-     totalAcpPcs += dPalla; totalAcpAreaSqFt += (daH * dPanelW * dPalla) / 144.0;
-     pt_acp_list.push({ rowTag: 'Door ACP', cutStr: `${disp(daH)} x ${disp(dPanelW)}`, h_in: daH, w_in: dPanelW, qty: dPalla, buyLabel: '', areaSqFt: (daH * dPanelW * dPalla) / 144.0 });
-   } else {
-     const dBotAcpH = 29.75;
-     const dTopPanelH = Math.max(8, door_v - 9.0 - dBotAcpH);
-     out += `> [Door Top Panel (${dDesign.includes('JALI') ? 'Jali/Glass' : 'Glass'})]: ${disp(dTopPanelH)} x ${disp(dPanelW)} (${dPalla} pc)\n`;
-     out += `> [Door Bottom ACP Board]: ${disp(dBotAcpH)} x ${disp(dPanelW)} (${dPalla} pc)\n`;
-     if (!dDesign.startsWith('JALI_ACP')) {
-       pt_glass_dict[`${disp(dTopPanelH)} x ${disp(dPanelW)} (Attached Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dTopPanelH)} x ${disp(dPanelW)} (Attached Door Glass) || ${pt_gspec}`] || 0) + dPalla;
-       totalGlassPcs += dPalla; totalGlassAreaSqFt += (dTopPanelH * dPanelW * dPalla) / 144.0;
-     }
-     totalAcpPcs += dPalla; totalAcpAreaSqFt += (dBotAcpH * dPanelW * dPalla) / 144.0;
-     pt_acp_list.push({ rowTag: 'Door Bot ACP', cutStr: `${disp(dBotAcpH)} x ${disp(dPanelW)}`, h_in: dBotAcpH, w_in: dPanelW, qty: dPalla, buyLabel: '', areaSqFt: (dBotAcpH * dPanelW * dPalla) / 144.0 });
-   }
-
-   // 3. ATTACHED WINDOW CUTTING (H-Section Openable or 2/3/4-Track Sliding)
-   out += "\n-----------------------------------\n";
-   out += `3. ATTACHED WINDOW CUTTING (${winSysLabel.toUpperCase()})\n`;
-   out += "-----------------------------------\n";
-   if (winSys === 'H_OPEN_1' || winSys === 'H_OPEN_2') {
-     const leaves = (winSys === 'H_OPEN_2') ? 2 : 1;
-     const sash_h = Math.max(4, wh - 0.25);
-     const sash_w = (leaves === 2) ? Math.max(4, (ww - 0.375) / 2.0) : Math.max(4, ww - 0.25);
-     const wg_h = Math.max(3, sash_h - (2 * hSecFace) + 0.5);
-     const wg_w = Math.max(3, sash_w - (2 * hSecFace) + 0.5);
-     if (!pt_buckets["H-Section Window Sash"]) pt_buckets["H-Section Window Sash"] = [];
-     for (let l = 0; l < leaves; l++) pt_buckets["H-Section Window Sash"].push(sash_h, sash_h, sash_w, sash_w);
-     out += `> H-Section Sash Vert: ${disp(sash_h)} (${2 * leaves} pc) | Horiz: ${disp(sash_w)} (${2 * leaves} pc)\n`;
-     out += `> Window Glass (${pt_gspec}): ${disp(wg_h)} x ${disp(wg_w)} (${leaves} pc)\n`;
-     pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition H-Sec Win) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition H-Sec Win) || ${pt_gspec}`] || 0) + leaves;
-     totalGlassPcs += leaves; totalGlassAreaSqFt += (wg_h * wg_w * leaves) / 144.0;
-   } else {
-     const tracks = winSys === 'SLIDE_4T' ? 4 : (winSys === 'SLIDE_3T' ? 3 : 2);
-     const hasJali = (winSys === 'SLIDE_3T');
-     const glassPanes = hasJali ? 2 : tracks;
-     const sl_sash_h = Math.max(4, wh - 2.25);
-     const overlap = (tracks === 2) ? 1.5 : (tracks === 3 ? 2.5 : 3.5);
-     const sl_sash_w = Math.max(4, ((ww - 1.5) + overlap) / tracks);
-     const wg_h = Math.max(3, sl_sash_h - 3.25);
-     const wg_w = Math.max(3, sl_sash_w - 2.0);
-     const trKey = `${tracks}-Track Sliding Outer`;
-     if (!pt_buckets[trKey]) pt_buckets[trKey] = [];
-     pt_buckets[trKey].push(wh, wh, ww - 0.75, ww - 0.75);
-     out += `> ${tracks}-Track Outer: ${disp(ww - 0.75)} (2 pc) x ${disp(wh)} (2 pc)\n`;
-     out += `> Sliding Window Glass (${pt_gspec}): ${disp(wg_h)} x ${disp(wg_w)} (${glassPanes} pc)\n`;
-     pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition ${tracks}T Win) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition ${tracks}T Win) || ${pt_gspec}`] || 0) + glassPanes;
-     totalGlassPcs += glassPanes; totalGlassAreaSqFt += (wg_h * wg_w * glassPanes) / 144.0;
-     if (hasJali) out += `> Sliding Mosquito Jali Shutter: ${disp(wg_h)} x ${disp(wg_w)} (1 pc)\n`;
-   }
-
-   // Window Bay Sill ACP & Top Glass + Side Partition Panels
-   const botWinAcpH = Math.max(4, winSill - bot_face - tube_face - 0.25);
-   const topWinBayH = Math.max(4, h - winSill - wh - (2 * tube_face) - 0.25);
-   const bayW = Math.max(4, ww - 0.25);
-   out += `> [Below Window - ACP]: ${disp(botWinAcpH)} x ${disp(bayW)} (1 pc) | [Above Window - Glass]: ${disp(topWinBayH)} x ${disp(bayW)} (1 pc)\n`;
-   pt_acp_list.push({ rowTag: 'Win Sill ACP', cutStr: `${disp(botWinAcpH)} x ${disp(bayW)}`, h_in: botWinAcpH, w_in: bayW, qty: 1, buyLabel: '', areaSqFt: (botWinAcpH * bayW) / 144.0 });
-   totalAcpPcs += 1; totalAcpAreaSqFt += (botWinAcpH * bayW) / 144.0;
-   pt_glass_dict[`${disp(topWinBayH)} x ${disp(bayW)} (Above Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(topWinBayH)} x ${disp(bayW)} (Above Window Glass) || ${pt_gspec}`] || 0) + 1;
-   totalGlassPcs += 1; totalGlassAreaSqFt += (topWinBayH * bayW) / 144.0;
-
-   if (sideCols > 0 && sideInnerW > 4) {
-     const cut_w = Math.max(4, sideInnerW - 0.25);
-     out += "\n--- 4. SIDE FIXED PARTITION PANELS ---\n";
-     for (let r = rows - 1; r >= 0; r--) {
-       const rName = getRowShortEnglishName(r, rows);
-       const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
-       const rH = rowHeights[r];
-       if (rMat === 'ACP') {
-         const acp_h = Math.max(2, rH - 0.25);
-         out += `> [Side ${rName} - ACP]: ${disp(acp_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
-         totalAcpPcs += sideCols; totalAcpAreaSqFt += (acp_h * cut_w * sideCols) / 144.0;
-         pt_acp_list.push({ rowTag: 'Side ACP', cutStr: `${disp(acp_h)} x ${disp(cut_w)}`, h_in: acp_h, w_in: cut_w, qty: sideCols, buyLabel: '', areaSqFt: (acp_h * cut_w * sideCols) / 144.0 });
-       } else if (rMat === 'JALI') {
-         const j_h = Math.max(2, rH - 0.25);
-         out += `> [Side ${rName} - Jali/Mesh]: ${disp(j_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
-       } else {
-         const g_h = Math.max(2, rH - 0.25);
-         out += `> [Side ${rName} - Glass]: ${disp(g_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
-         totalGlassPcs += sideCols; totalGlassAreaSqFt += (g_h * cut_w * sideCols) / 144.0;
-         pt_glass_dict[`${disp(g_h)} x ${disp(cut_w)} (Side ${rName}) || ${pt_gspec}`] = (pt_glass_dict[`${disp(g_h)} x ${disp(cut_w)} (Side ${rName}) || ${pt_gspec}`] || 0) + sideCols;
-       }
-     }
-   }
-   out += `\n• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF + QR\n`;
-   if (totalAcpPcs > 0) out += `• TOTAL ACP CUT PIECES: ${totalAcpPcs} Pcs (${totalAcpAreaSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE & 5. DRAWING PDF\n`;
- } else if (p_type === "Window + Partition") {
-   const raw_wh = safeEval(document.getElementById('pt_dh') ? document.getElementById('pt_dh').value : '0');
-   const raw_ww = safeEval(document.getElementById('pt_dw') ? document.getElementById('pt_dw').value : '0');
-   if (raw_wh === 0 || raw_ww === 0) {
-     alert("Please enter Window Height and Window Width.");
-     return;
-   }
-   const wh = is_mm ? raw_wh / 25.4 : raw_wh;
-   const ww = is_mm ? raw_ww / 25.4 : raw_ww;
-   const winSys = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').value : 'H_OPEN_2';
-   const winSysLabel = document.getElementById('pt_win_sys') ? document.getElementById('pt_win_sys').options[document.getElementById('pt_win_sys').selectedIndex].text : 'H-Section Openable';
-   const winSill = parseFloat(document.getElementById('pt_win_sill') ? document.getElementById('pt_win_sill').value : 30) || 30;
-   const hSecFace = parseFloat(document.getElementById('pt_win_hsec') ? document.getElementById('pt_win_hsec').value : 1.5) || 1.5;
-
-   out = `[Partition #${pt_part_count} - Window + Partition (${disp(h)} x ${disp(w)}) | Window: ${disp(wh)} x ${disp(ww)}]\n> Jindal Section: ${tube_label} | Window System: ${winSysLabel}\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
-
-   const outer_v = h, inter_v = h - (tube_face + bot_face), outer_h_top = w - (2 * tube_face);
-   const rem_w = Math.max(0, w - (ww + (2 * tube_face)));
-   const sideCols = Math.max(0, cols - 1);
-   const inner_h = sideCols > 0 ? (rem_w - ((sideCols + 1) * tube_face)) / sideCols : 0;
-
-   out += "-----------------------------------\n";
-   out += "1. PARTITION FRAME CUTTING SIZES\n";
-   out += "-----------------------------------\n";
-   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
-   out += `> Window Bay Vertical Posts (${tube_label}): ${disp(inter_v)} (2 pc)\n`;
-   out += `> Outer Top Horizontal (${tube_label}): ${disp(outer_h_top)} (1 pc)\n`;
-   out += `> Window Sill & Lintel Transoms (${tube_label}): ${disp(ww)} (2 pc)\n`;
-   pt_buckets[sg_key].push(outer_v, outer_v, outer_h_top);
-   pt_buckets[dg_key].push(inter_v, inter_v, ww, ww);
-   if (sideCols > 0) {
-     out += `> Side Partition Base & Transoms (${tube_label}): ${disp(inner_h)} (${sideCols * rows} pc)\n`;
-     for (let i = 0; i < sideCols * rows; i++) pt_buckets[dg_key].push(inner_h);
-   }
-
-   out += "\n-----------------------------------\n";
-   out += `2. WINDOW CUTTING (${winSysLabel.toUpperCase()})\n`;
-   out += "-----------------------------------\n";
-   let totalGlassPcs = 0, totalGlassAreaSqFt = 0;
-   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
-
-   if (winSys === 'H_OPEN_1' || winSys === 'H_OPEN_2') {
-     // Partition H-Section Openable Window (NO 40-series frame; uses H-Section Sash inside Partition opening!)
-     const leaves = (winSys === 'H_OPEN_2') ? 2 : 1;
-     const sash_h = Math.max(4.0, wh - 0.25);
-     const sash_w = (leaves === 2) ? Math.max(4.0, (ww - 0.375) / 2.0) : Math.max(4.0, ww - 0.25);
-     const wg_h = Math.max(3.0, sash_h - (2 * hSecFace) + 0.5);
-     const wg_w = Math.max(3.0, sash_w - (2 * hSecFace) + 0.5);
-
-     if (!pt_buckets["H-Section Window Sash"]) pt_buckets["H-Section Window Sash"] = [];
-     for (let l = 0; l < leaves; l++) {
-       pt_buckets["H-Section Window Sash"].push(sash_h, sash_h, sash_w, sash_w);
-     }
-     out += `> H-Section Sash Verticals: ${disp(sash_h)} (${2 * leaves} pc)\n`;
-     out += `> H-Section Sash Horizontals: ${disp(sash_w)} (${2 * leaves} pc)\n`;
-     out += `> Window Glass (${pt_gspec}): ${disp(wg_h)} x ${disp(wg_w)} (${leaves} pc)\n`;
-     pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition H-Sec Window) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition H-Sec Window) || ${pt_gspec}`] || 0) + leaves;
-     totalGlassPcs += leaves;
-     totalGlassAreaSqFt += (wg_h * wg_w * leaves) / 144.0;
-     out += `> Hardware: H-Section Hinges (${2 * leaves} pc), Window Handle (${leaves} pc), Stay / Catcher (${leaves} Set)\n`;
-   } else {
-     // 2-Track / 3-Track / 4-Track Sliding Window fitted inside Partition opening!
-     const tracks = winSys === 'SLIDE_4T' ? 4 : (winSys === 'SLIDE_3T' ? 3 : 2);
-     const hasJali = (winSys === 'SLIDE_3T');
-     const glassPanes = hasJali ? 2 : tracks;
-     const sl_outer_v = wh;
-     const sl_outer_h = ww - 0.75;
-     const sl_sash_h = Math.max(4.0, wh - 2.25);
-     const overlap = (tracks === 2) ? 1.5 : (tracks === 3 ? 2.5 : 3.5);
-     const sl_sash_w = Math.max(4.0, ((ww - 1.5) + overlap) / tracks);
-     const wg_h = Math.max(3.0, sl_sash_h - 3.25);
-     const wg_w = Math.max(3.0, sl_sash_w - 2.0);
-
-     const trKey = `${tracks}-Track Sliding Outer`;
-     if (!pt_buckets[trKey]) pt_buckets[trKey] = [];
-     if (!pt_buckets["Sliding Sash (Handle/Bearing)"]) pt_buckets["Sliding Sash (Handle/Bearing)"] = [];
-     pt_buckets[trKey].push(sl_outer_v, sl_outer_v, sl_outer_h, sl_outer_h);
-     for (let t = 0; t < tracks; t++) {
-       pt_buckets["Sliding Sash (Handle/Bearing)"].push(sl_sash_h, sl_sash_h, sl_sash_w, sl_sash_w);
-     }
-     out += `> ${tracks}-Track Outer Top/Bottom: ${disp(sl_outer_h)} (2 pc) | Sides: ${disp(sl_outer_v)} (2 pc)\n`;
-     out += `> Sliding Handle/Interlock Vert: ${disp(sl_sash_h)} (${2 * tracks} pc) | Bearing Top/Bot: ${disp(sl_sash_w)} (${2 * tracks} pc)\n`;
-     out += `> Sliding Window Glass (${pt_gspec}): ${disp(wg_h)} x ${disp(wg_w)} (${glassPanes} pc)\n`;
-     pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition ${tracks}T Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wg_h)} x ${disp(wg_w)} (Partition ${tracks}T Window Glass) || ${pt_gspec}`] || 0) + glassPanes;
-     totalGlassPcs += glassPanes;
-     totalGlassAreaSqFt += (wg_h * wg_w * glassPanes) / 144.0;
-     if (hasJali) {
-       out += `> Sliding Mosquito Jali / Mesh Shutter: ${disp(wg_h)} x ${disp(wg_w)} (1 pc)\n`;
-     }
-   }
-
-   // Below-window Sill ACP & Above-window Lintel Glass/ACP inside the Window Bay
-   const botAcpH = Math.max(4.0, winSill - bot_face - tube_face - 0.25);
-   const topBayH = Math.max(4.0, h - winSill - wh - (2 * tube_face) - 0.25);
-   const bayW = Math.max(4.0, ww - 0.25);
-   out += `\n--- WINDOW BAY TOP & BOTTOM PANELS ---\n`;
-   out += `> [Below Window - ACP Board]: ${disp(botAcpH)} x ${disp(bayW)} (1 pc)\n`;
-   out += `> [Above Window - Glass (${pt_gspec})]: ${disp(topBayH)} x ${disp(bayW)} (1 pc)\n`;
-   totalAcpPcs += 1;
-   totalAcpAreaSqFt += (botAcpH * bayW) / 144.0;
-   pt_acp_list.push({ rowTag: 'Win Sill ACP', cutStr: `${disp(botAcpH)} x ${disp(bayW)}`, h_in: botAcpH, w_in: bayW, qty: 1, buyLabel: '', areaSqFt: (botAcpH * bayW) / 144.0 });
-   pt_glass_dict[`${disp(topBayH)} x ${disp(bayW)} (Above Window Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(topBayH)} x ${disp(bayW)} (Above Window Glass) || ${pt_gspec}`] || 0) + 1;
-   totalGlassPcs += 1;
-   totalGlassAreaSqFt += (topBayH * bayW) / 144.0;
-
-   // Side partition columns (if wall width > window width)
-   if (sideCols > 0 && inner_h > 4.0) {
-     const cut_w = Math.max(4.0, inner_h - 0.25);
-     for (let r = rows - 1; r >= 0; r--) {
-       const rName = getRowShortEnglishName(r, rows);
-       const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
-       const rH = rowHeights[r];
-       if (rMat === 'ACP') {
-         const acp_h = Math.max(2.0, rH - 0.25);
-         out += `> [Side ${rName} - ACP]: ${disp(acp_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
-         totalAcpPcs += sideCols;
-         totalAcpAreaSqFt += (acp_h * cut_w * sideCols) / 144.0;
-         pt_acp_list.push({ rowTag: 'Side ACP', cutStr: `${disp(acp_h)} x ${disp(cut_w)}`, h_in: acp_h, w_in: cut_w, qty: sideCols, buyLabel: '', areaSqFt: (acp_h * cut_w * sideCols) / 144.0 });
-       } else {
-         const g_h = Math.max(2.0, rH - 0.25);
-         out += `> [Side ${rName} - Glass]: ${disp(g_h)} x ${disp(cut_w)} (${sideCols} pc)\n`;
-         totalGlassPcs += sideCols;
-         totalGlassAreaSqFt += (g_h * cut_w * sideCols) / 144.0;
-         pt_glass_dict[`${disp(g_h)} x ${disp(cut_w)} (Side ${rName}) || ${pt_gspec}`] = (pt_glass_dict[`${disp(g_h)} x ${disp(cut_w)} (Side ${rName}) || ${pt_gspec}`] || 0) + sideCols;
-       }
-     }
-   }
-   out += `\n• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF + QR\n`;
-   if (totalAcpPcs > 0) {
-     out += `• TOTAL ACP CUT PIECES: ${totalAcpPcs} Pcs (${totalAcpAreaSqFt.toFixed(1)} Sq.Ft)\n`;
-   }
- } else {
-   // Door + Partition Mode
-   const raw_dh = safeEval(document.getElementById('pt_dh').value);
-   const raw_dw = safeEval(document.getElementById('pt_dw').value);
-   if (raw_dh === 0 || raw_dw === 0) {
-     alert("Please enter Door Size.");
-     return;
-   }
-
-   const dh = is_mm ? raw_dh / 25.4 : raw_dh;
-   const dw = is_mm ? raw_dw / 25.4 : raw_dw;
-
-   out = `[Partition #${pt_part_count} - Door + Partition (${disp(h)} x ${disp(w)}) | ${cols} Side Cols x ${rows} Rows]\n> Jindal Section: ${tube_label} (Face: ${disp(tube_face)}, Base: ${disp(bot_face)})\n> Alu Spec: ${getModuleAluLabel('pt')}\n`;
-   const outer_v = h, inter_v = h - (tube_face + bot_face), door_side_v = h - tube_face;
-   const outer_h_top = w - (2 * tube_face), rem_w = w - (dw + (2 * tube_face));
-   const inner_h = cols > 0 ? (rem_w - ((cols + 1) * tube_face)) / cols : 0;
-
-   out += "-----------------------------------\n";
-   out += "1. ALUMINIUM FRAME CUTTING SIZES\n";
-   out += "-----------------------------------\n";
-   out += `> Outer Verticals (${tube_label}): ${disp(outer_v)} (2 pc)\n`;
-   out += `> Door Post Vertical (${tube_label}): ${disp(door_side_v)} (1 pc)\n`;
-   pt_buckets[sg_key].push(outer_v, outer_v);
-   pt_buckets[dg_key].push(door_side_v);
-
-   if (cols > 1) {
-     out += `> Side Intermediate Verticals (${tube_label}): ${disp(inter_v)} (${cols - 1} pc)\n`;
-     for (let i = 0; i < cols - 1; i++) pt_buckets[dg_key].push(inter_v);
-   }
-
-   out += `> Outer Top Horizontal (${tube_label}): ${disp(outer_h_top)} (1 pc)\n`;
-   out += `> Side Bottom Base Tube (${disp(bot_face)}): ${disp(rem_w)} (1 pc)\n`;
-   pt_buckets[sg_key].push(outer_h_top);
-   pt_buckets[dg_key].push(rem_w);
-
-   const h_qty = cols * (rows - 1);
-   if (h_qty > 0) {
-     out += `> Side Partition Transoms (${tube_label}): ${disp(inner_h)} (${h_qty} pc)\n`;
-     for (let i = 0; i < h_qty; i++) pt_buckets[dg_key].push(inner_h);
-   }
-
-   // Door Frame & Sash
-   const door_v = dh - 1.75, door_tb = dw - 6.75;
-   const dg_h = door_v - 5.875 - 0.25, dg_w = door_tb - 0.25;
-
-   out += "\n--- DOOR SASH & FRAME ---\n";
-   out += `> Door Sash Verticals: ${disp(door_v)} (2 pc)\n`;
-   out += `> Door Sash Top/Bottom: ${disp(door_tb)} (2 pc)\n`;
-   out += `> Door Glass (${pt_gspec}): ${disp(dg_h)} x ${disp(dg_w)} (1 pc)\n`;
-   pt_buckets["Door Sash"].push(door_v, door_v, door_tb, door_tb);
-
-   const transom_g_h = Math.max(4.0, (h - dh - tube_face) - 0.25), transom_g_w = dw - 0.25;
-   pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dg_h)} x ${disp(dg_w)} (Door Glass) || ${pt_gspec}`] || 0) + 1;
-   pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Door Top Transom Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(transom_g_h)} x ${disp(transom_g_w)} (Door Top Transom Glass) || ${pt_gspec}`] || 0) + 1;
-
-   const raw_cut_w = Math.max(4.0, inner_h - 0.25);
-   const w_guard = safeGlassSlabCap(raw_cut_w);
-   const cut_w = w_guard.cut;
-
-   out += "\n-----------------------------------\n";
-   out += "2. GLASS & ACP CUTTING SIZES (BY ROW)\n";
-   out += "-----------------------------------\n";
-   out += `> [Door Top Transom Glass (${pt_gspec})]: ${disp(transom_g_h)} x ${disp(transom_g_w)} (1 pc)\n`;
-
-   let totalGlassPcs = 2;
-   let totalGlassAreaSqFt = ((dg_h * dg_w) + (transom_g_h * transom_g_w)) / 144.0;
-   let totalAcpPcs = 0, totalAcpAreaSqFt = 0;
-   let totalJaliPcs = 0, totalJaliAreaSqFt = 0;
-   let totalWinPcs = 0;
-
-   if (cols > 0) {
-     for (let r = rows - 1; r >= 0; r--) {
-       const rName = getRowShortEnglishName(r, rows);
-       const rMat = pt_row_configs[r] ? pt_row_configs[r].mat : 'GLASS';
-       const rH = rowHeights[r];
-
-       if (rMat === 'ACP') {
-         const acp_cut_h = Math.max(2.0, rH - 0.25);
-         const shortTag = (r === 0) ? 'Bot ACP' : (r === rows - 1 ? 'Top ACP' : ('Row' + (r + 1) + ' ACP'));
-         out += `> [${rName} - ACP Board]: ${disp(acp_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-         totalAcpPcs += cols;
-         totalAcpAreaSqFt += (acp_cut_h * cut_w * cols) / 144.0;
-         pt_acp_list.push({
-           rowTag: shortTag,
-           cutStr: `${disp(acp_cut_h)} x ${disp(cut_w)}`,
-           h_in: acp_cut_h,
-           w_in: cut_w,
-           qty: cols,
-           buyLabel: '',
-           areaSqFt: (acp_cut_h * cut_w * cols) / 144.0
-         });
-       } else if (rMat === 'JALI') {
-         const jali_cut_h = Math.max(2.0, rH - 0.25);
-         const jaliSqFt = (jali_cut_h * cut_w * cols) / 144.0;
-         out += `> [${rName} - Jali / Mesh]: ${disp(jali_cut_h)} x ${disp(cut_w)} (${cols} pc | ${jaliSqFt.toFixed(2)} Sq.Ft)\n`;
-         totalJaliPcs += cols;
-         totalJaliAreaSqFt += jaliSqFt;
-       } else {
-         const g_guard = safeGlassSlabCap(Math.max(2.0, rH - 0.25));
-         const g_cut_h = g_guard.cut;
-         out += `> [${rName} - Glass (${pt_gspec})]: ${disp(g_cut_h)} x ${disp(cut_w)} (${cols} pc)\n`;
-         totalGlassPcs += cols;
-         totalGlassAreaSqFt += (g_cut_h * cut_w * cols) / 144.0;
-         const gKey = `${disp(g_cut_h)} x ${disp(cut_w)} (${rName}) || ${pt_gspec}`;
-         pt_glass_dict[gKey] = (pt_glass_dict[gKey] || 0) + cols;
-       }
-     }
-   }
-
-   const packedSheets = packPanelsOn4x8Sheets(pt_acp_list);
-   let sheetsSummaryTxt = "0 Sheets";
-   if (packedSheets.length > 0) {
-     const lastSh = packedSheets[packedSheets.length - 1];
-     if (packedSheets.length === 1 && lastSh.isHalfSheetOnly) {
-       sheetsSummaryTxt = "0.5 Sheet (4'x4' Half Board)";
-     } else if (packedSheets.length > 1 && lastSh.isHalfSheetOnly) {
-       sheetsSummaryTxt = (packedSheets.length - 1) + ".5 Sheets (" + (packedSheets.length - 1) + " Full + 1 Half 4'x4' Board)";
-     } else {
-       sheetsSummaryTxt = packedSheets.length + (packedSheets.length === 1 ? " Full Sheet (4'x8')" : " Full Sheets (4'x8')");
-     }
-     pt_acp_list.forEach(function(item) { item.buyLabel = sheetsSummaryTxt; });
-   }
-
-   out += `• TOTAL GLASS TO BUY: ${totalGlassPcs} Pcs (${totalGlassAreaSqFt.toFixed(2)} Sq.Ft) -> In 2. GLASS PDF\n`;
-   if (totalAcpPcs > 0) {
-     out += `• TOTAL ACP BOARD TO BUY: ${sheetsSummaryTxt} (${totalAcpPcs} Cut Pcs | ${totalAcpAreaSqFt.toFixed(1)} Sq.Ft) -> In 3. ALU PURCHASE & 5. DRAWING PDF\n`;
-   }
-
-   out += "\n--- HARDWARE & FITTINGS ---\n";
-   out += "> Door Lock: 1 Set\n> Floor Spring / Pivot: 1 Set\n> Door Handle: 1 Set\n";
- }
- const prevOut = document.getElementById('pt_out').textContent;
- document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
- document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
- renderSheetLayoutBoxUI('pt_sheet_layout_box', pt_acp_list, 'Partition');
+  const prevOut = document.getElementById('pt_out').textContent;
+  document.getElementById('pt_out').textContent = out + "===================================\n\n" + prevOut;
+  document.getElementById('pt_mat_out').textContent = generateMaterialList(pt_buckets);
+  renderSheetLayoutBoxUI('pt_sheet_layout_box', pt_acp_list, 'Partition');
+  renderPartitionStudioUI();
 }
 
  function clearPartition() {
@@ -9506,7 +9114,7 @@ function autofillCustomer() {
 
  function openScreen(screenName, title) {
   if (screenName === 'partition') {
-    setTimeout(function() { try { renderPartitionRowBuilder(); } catch(e){} }, 20);
+    setTimeout(function() { try { renderPartitionStudioUI(); } catch(e){} }, 20);
   } else if (screenName === 'door') {
     setTimeout(function() { try { renderDoorRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'casement') {
@@ -12577,8 +12185,8 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v81') === -1) caches.delete(k);
-    try { renderDoorRowBuilder(); renderPartitionRowBuilder(); renderCasementSectionDesigner(); } catch(e){}
+                if (k.indexOf('v82') === -1) caches.delete(k);
+    try { renderDoorRowBuilder(); renderPartitionStudioUI(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
     }
@@ -12918,4 +12526,227 @@ function exportBarCuttingPdf() {
   });
 
   doc.save("Alu_Bar_Cutting_" + stockFt + "ft_" + Date.now() + ".pdf");
+}
+
+
+// =========================================================================
+// VISUAL PICTURE-PICK PARTITION + DOOR + WINDOW + HALF-WALL STUDIO (v82)
+// =========================================================================
+var pt_col_configs = [
+  { type: 'PARTITION', w_in: 0 },
+  { type: 'PARTITION', w_in: 0 },
+  { type: 'PARTITION', w_in: 0 }
+];
+
+var PT_BAY_OPTIONS = [
+  { val: 'PARTITION', label: 'Partition (Glass/ACP/Jali)' },
+  { val: 'DOOR_1_GA', label: 'Single Door (Glass + ACP)' },
+  { val: 'DOOR_1_JGA', label: 'Single Door (Jali + Glass + ACP)' },
+  { val: 'DOOR_1_JALI', label: 'Single Door (Full Jali / Mesh)' },
+  { val: 'DOOR_2_GA', label: 'Double Door (Glass + ACP)' },
+  { val: 'DOOR_2_JGA', label: 'Double Door (Jali + Glass + ACP)' },
+  { val: 'HW_GLASS', label: 'Half Wall + Top Glass' },
+  { val: 'HW_SLIDE_2T', label: 'Half Wall + 2-Track Sliding' },
+  { val: 'HW_SLIDE_3T', label: 'Half Wall + 3-Track Sliding + Jali' },
+  { val: 'HW_HOPEN_2', label: 'Half Wall + H-Sec Openable Win' },
+  { val: 'WIN_SLIDE_2T', label: '2-Track Sliding Window Bay' },
+  { val: 'WIN_SLIDE_3T', label: '3-Track Sliding + Jali Bay' },
+  { val: 'WIN_HOPEN_2', label: 'H-Section Openable Window Bay' }
+];
+
+var PT_VISUAL_TEMPLATES = [
+  {
+    id: 'office_3x3',
+    name: 'Full Partition',
+    cols: 3, rows: 3,
+    bays: [{ type: 'PARTITION', w_in: 0 }, { type: 'PARTITION', w_in: 0 }, { type: 'PARTITION', w_in: 0 }],
+    rowMats: ['ACP', 'GLASS', 'ACP']
+  },
+  {
+    id: 'mid_door',
+    name: 'Middle Door',
+    cols: 3, rows: 3,
+    bays: [{ type: 'PARTITION', w_in: 0 }, { type: 'DOOR_1_GA', w_in: 36 }, { type: 'PARTITION', w_in: 0 }],
+    rowMats: ['ACP', 'GLASS', 'ACP']
+  },
+  {
+    id: 'left_door_right_win',
+    name: 'Door + Right Win',
+    cols: 3, rows: 3,
+    bays: [{ type: 'DOOR_1_JGA', w_in: 36 }, { type: 'PARTITION', w_in: 0 }, { type: 'WIN_SLIDE_3T', w_in: 48 }],
+    rowMats: ['ACP', 'GLASS', 'ACP']
+  },
+  {
+    id: 'half_wall_win',
+    name: 'Half Wall + Win',
+    cols: 3, rows: 2,
+    bays: [{ type: 'HW_GLASS', w_in: 0 }, { type: 'HW_SLIDE_3T', w_in: 48 }, { type: 'HW_GLASS', w_in: 0 }],
+    rowMats: ['GLASS', 'GLASS']
+  },
+  {
+    id: 'door_hw_win',
+    name: 'Door + Half Wall',
+    cols: 3, rows: 3,
+    bays: [{ type: 'DOOR_1_GA', w_in: 36 }, { type: 'HW_GLASS', w_in: 0 }, { type: 'HW_HOPEN_2', w_in: 42 }],
+    rowMats: ['ACP', 'GLASS', 'GLASS']
+  },
+  {
+    id: 'dbl_door_jali',
+    name: 'Double Door+Jali',
+    cols: 3, rows: 3,
+    bays: [{ type: 'PARTITION', w_in: 0 }, { type: 'DOOR_2_JGA', w_in: 54 }, { type: 'PARTITION', w_in: 0 }],
+    rowMats: ['ACP', 'GLASS', 'JALI']
+  }
+];
+
+function ensurePtColConfigsCount(numCols) {
+  numCols = Math.max(1, Math.min(10, parseInt(numCols) || 3));
+  while (pt_col_configs.length < numCols) {
+    pt_col_configs.push({ type: 'PARTITION', w_in: 0 });
+  }
+  if (pt_col_configs.length > numCols) {
+    pt_col_configs = pt_col_configs.slice(0, numCols);
+  }
+}
+
+function buildMiniTemplateThumbSvg(tpl) {
+  var svg = '<svg viewBox="0 0 100 62" width="100%" style="height:46px; display:block; margin:0 auto;">';
+  svg += '<rect x="2" y="2" width="96" height="58" rx="3" fill="#334155" stroke="#0f172a" stroke-width="1.5"/>';
+  var n = tpl.bays.length;
+  var bw = (90 - (n - 1) * 3) / n;
+  for (var i = 0; i < n; i++) {
+    var bx = 5 + i * (bw + 3);
+    var bt = tpl.bays[i].type;
+    if (bt.indexOf('DOOR_') === 0) {
+      svg += '<rect x="' + bx + '" y="5" width="' + bw + '" height="10" fill="#bae6fd"/>';
+      svg += '<rect x="' + bx + '" y="17" width="' + bw + '" height="40" fill="#78350f" stroke="#fbbf24" stroke-width="0.8"/>';
+      if (bt.indexOf('JGA') !== -1) {
+        svg += '<rect x="' + (bx + 2) + '" y="19" width="' + (bw - 4) + '" height="9" fill="#86efac"/>';
+        svg += '<rect x="' + (bx + 2) + '" y="30" width="' + (bw - 4) + '" height="13" fill="#e0f2fe"/>';
+        svg += '<rect x="' + (bx + 2) + '" y="45" width="' + (bw - 4) + '" height="10" fill="#94a3b8"/>';
+      } else {
+        svg += '<rect x="' + (bx + 2) + '" y="19" width="' + (bw - 4) + '" height="22" fill="#e0f2fe"/>';
+        svg += '<rect x="' + (bx + 2) + '" y="43" width="' + (bw - 4) + '" height="12" fill="#94a3b8"/>';
+      }
+    } else if (bt.indexOf('HW_') === 0) {
+      svg += '<rect x="' + bx + '" y="5" width="' + bw + '" height="31" fill="' + (bt === 'HW_GLASS' ? '#bae6fd' : '#c4b5fd') + '"/>';
+      if (bt !== 'HW_GLASS') svg += '<line x1="' + (bx + bw / 2) + '" y1="5" x2="' + (bx + bw / 2) + '" y2="36" stroke="#4c1d95" stroke-width="1.2"/>';
+      // Brick/concrete half wall at bottom
+      svg += '<rect x="' + bx + '" y="38" width="' + bw + '" height="19" fill="#d6d3d1" stroke="#78716c" stroke-width="0.8"/>';
+      svg += '<line x1="' + bx + '" y1="44" x2="' + (bx + bw) + '" y2="44" stroke="#a8a29e" stroke-width="0.6"/>';
+      svg += '<line x1="' + bx + '" y1="50" x2="' + (bx + bw) + '" y2="50" stroke="#a8a29e" stroke-width="0.6"/>';
+    } else if (bt.indexOf('WIN_') === 0) {
+      svg += '<rect x="' + bx + '" y="5" width="' + bw + '" height="11" fill="#bae6fd"/>';
+      svg += '<rect x="' + bx + '" y="18" width="' + bw + '" height="24" fill="#c4b5fd" stroke="#5b21b6" stroke-width="1"/>';
+      svg += '<line x1="' + (bx + bw / 2) + '" y1="18" x2="' + (bx + bw / 2) + '" y2="42" stroke="#5b21b6" stroke-width="1.2"/>';
+      svg += '<rect x="' + bx + '" y="44" width="' + bw + '" height="13" fill="#fed7aa"/>';
+    } else {
+      svg += '<rect x="' + bx + '" y="5" width="' + bw + '" height="11" fill="' + (tpl.rowMats[2] === 'JALI' ? '#86efac' : '#fed7aa') + '"/>';
+      svg += '<rect x="' + bx + '" y="18" width="' + bw + '" height="24" fill="#bae6fd"/>';
+      svg += '<rect x="' + bx + '" y="44" width="' + bw + '" height="13" fill="#fed7aa"/>';
+    }
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function renderPartitionVisualGallery() {
+  var gal = document.getElementById('pt_visual_gallery');
+  if (!gal) return;
+  var html = '';
+  PT_VISUAL_TEMPLATES.forEach(function(tpl) {
+    html += '<button type="button" onclick="applyPartitionVisualTemplate(\'' + tpl.id + '\')" style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:9px; padding:5px 4px; cursor:pointer; text-align:center; display:flex; flex-direction:column; align-items:center; gap:3px;">';
+    html += buildMiniTemplateThumbSvg(tpl);
+    html += '<span style="font-size:0.65rem; font-weight:800; color:#0f172a; line-height:1.15;">' + tpl.name + '</span>';
+    html += '</button>';
+  });
+  gal.innerHTML = html;
+}
+
+function applyPartitionVisualTemplate(tplId) {
+  var tpl = PT_VISUAL_TEMPLATES.find(t => t.id === tplId);
+  if (!tpl) return;
+  if (document.getElementById('pt_cols')) document.getElementById('pt_cols').value = String(tpl.cols);
+  if (document.getElementById('pt_rows')) document.getElementById('pt_rows').value = String(tpl.rows);
+  pt_col_configs = tpl.bays.map(b => ({ type: b.type, w_in: b.w_in }));
+  pt_row_configs = tpl.rowMats.map((m, idx) => ({
+    mat: m,
+    h_val: idx === 0 ? 30.0 : (idx === tpl.rowMats.length - 1 && tpl.rowMats.length >= 3 ? 15.0 : 0)
+  }));
+  pt_cell_overrides = {};
+  renderPartitionStudioUI();
+}
+
+function setPtColType(cIdx, newType) {
+  ensurePtColConfigsCount(document.getElementById('pt_cols')?.value || 3);
+  if (pt_col_configs[cIdx]) {
+    pt_col_configs[cIdx].type = newType;
+    if (newType.indexOf('DOOR_2') === 0 && !pt_col_configs[cIdx].w_in) pt_col_configs[cIdx].w_in = 54;
+    else if (newType.indexOf('DOOR_1') === 0 && !pt_col_configs[cIdx].w_in) pt_col_configs[cIdx].w_in = 36;
+  }
+  renderPartitionStudioUI();
+}
+
+function setPtColWidth(cIdx, valStr) {
+  ensurePtColConfigsCount(document.getElementById('pt_cols')?.value || 3);
+  if (pt_col_configs[cIdx]) {
+    var v = parseFloat(valStr);
+    pt_col_configs[cIdx].w_in = (isNaN(v) || v <= 0) ? 0 : v;
+  }
+  renderPartitionWallVisualOnly();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
+}
+
+function resolvePartitionColWidths(total_open_w, numCols) {
+  ensurePtColConfigsCount(numCols);
+  var widths = new Array(numCols).fill(0);
+  var autoIdx = [];
+  var used = 0;
+  for (var c = 0; c < numCols; c++) {
+    var wv = Number(pt_col_configs[c].w_in) || 0;
+    if (wv > 0 && numCols > 1) {
+      widths[c] = wv;
+      used += wv;
+    } else {
+      autoIdx.push(c);
+    }
+  }
+  if (autoIdx.length > 0) {
+    var each = Math.max(12, (total_open_w - used) / autoIdx.length);
+    autoIdx.forEach(i => { widths[i] = each; });
+  } else if (used > 0 && Math.abs(used - total_open_w) > 0.5) {
+    var scale = total_open_w / used;
+    widths = widths.map(w => Math.max(10, w * scale));
+  }
+  return widths;
+}
+
+function renderPartitionBaysBuilder() {
+  var box = document.getElementById('pt_bays_builder_container');
+  if (!box) return;
+  var numCols = Math.max(1, Math.min(10, parseInt(document.getElementById('pt_cols')?.value) || 3));
+  ensurePtColConfigsCount(numCols);
+  var html = '';
+  for (var c = 0; c < numCols; c++) {
+    var cfg = pt_col_configs[c];
+    var posName = (numCols === 1) ? 'Full Bay' : (c === 0 ? 'Left Bay 1' : (c === numCols - 1 ? 'Right Bay ' + (c + 1) : 'Middle Bay ' + (c + 1)));
+    var wStr = (cfg.w_in && cfg.w_in > 0) ? String(cfg.w_in) : '';
+    html += '<div style="display:grid; grid-template-columns: 0.9fr 1.6fr 0.75fr; gap:5px; align-items:center; background:#fff; border:1px solid #bfdbfe; border-radius:7px; padding:5px 6px;">';
+    html += '<div style="font-size:0.71rem; font-weight:800; color:#1e3a8a;">' + posName + '</div>';
+    html += '<select onchange="setPtColType(' + c + ', this.value)" style="padding:5px 4px; border:1px solid #93c5fd; border-radius:6px; font-size:0.72rem; font-weight:800; color:#0f172a; background:#f8fafc;">';
+    PT_BAY_OPTIONS.forEach(function(opt) {
+      html += '<option value="' + opt.val + '" ' + (cfg.type === opt.val ? 'selected' : '') + '>' + opt.label + '</option>';
+    });
+    html += '</select>';
+    html += '<input type="number" step="0.5" value="' + wStr + '" placeholder="Auto" oninput="setPtColWidth(' + c + ', this.value)" style="width:100%; padding:5px 4px; border:1px solid #94a3b8; border-radius:6px; font-size:0.74rem; font-weight:700; text-align:center;">';
+    html += '</div>';
+  }
+  box.innerHTML = html;
+}
+
+function renderPartitionStudioUI() {
+  renderPartitionVisualGallery();
+  renderPartitionBaysBuilder();
+  if (typeof renderPartitionRowBuilder === 'function') renderPartitionRowBuilder();
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('pt');
 }
