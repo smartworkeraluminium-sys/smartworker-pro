@@ -5793,26 +5793,53 @@ function calculatePartition() {
       totJaliPcs++; totJaliSqFt += (cutH * cutW) / 144;
     } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
       const nL = lf.mat === 'DOOR_2' ? 2 : 1;
+      const dParts = (Array.isArray(lf.doorParts) && lf.doorParts.length) ? lf.doorParts : ptCadGetDefaultDoorParts();
+      const midRailCount = Math.max(0, dParts.length - 1);
       const shutH = Math.max(20, ih - 0.5);
       const shutW = Math.max(10, (iw - (nL === 2 ? 0.5 : 0.375)) / nL);
       const railW = Math.max(6, shutW - (2 * secVert));
-      const innerPanelH = Math.max(8, shutH - secTop - secBot - secMid);
-      const dgH = Math.max(4, innerPanelH * 0.62), daH = Math.max(4, innerPanelH * 0.38);
-      const dgW = Math.max(4, railW + 0.5);
-      pt_buckets["Door Sash"].push(shutH, shutH, railW, railW);
-      out += `• ${tag} [${nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR'}] Inner Clear: ${disp(ih)} H × ${disp(iw)} W\n`;
-      out += `   -> Auto Shutter (${nL} Leaf): ${disp(shutH)} H × ${disp(shutW)} W | Rails: ${disp(railW)}\n`;
-      out += `   -> Top Glass: ${disp(dgH)} × ${disp(dgW)} (${nL} pc) | Bot ACP: ${disp(daH)} × ${disp(dgW)} (${nL} pc)\n`;
-      pt_glass_dict[`${disp(dgH)} x ${disp(dgW)} (${tag} Door Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(dgH)} x ${disp(dgW)} (${tag} Door Glass) || ${pt_gspec}`] || 0) + nL;
-      totGlassPcs += nL; totGlassSqFt += (dgH * dgW * nL) / 144;
-      pt_acp_list.push({ rowTag: tag + ' Door ACP', cutStr: `${disp(daH)} x ${disp(dgW)}`, h_in: daH, w_in: dgW, qty: nL, buyLabel: '', areaSqFt: (daH * dgW * nL) / 144 });
-      totAcpPcs += nL; totAcpSqFt += (daH * dgW * nL) / 144;
+      const availPanelH = Math.max(6, shutH - secTop - secBot - (midRailCount * secMid));
+      const partHeights = ptCadComputeDoorPartHeights(dParts, availPanelH);
+      const panelCutW = Math.max(4, railW + 0.5);
+      for (let li = 0; li < nL; li++) {
+        pt_buckets["Door Sash"].push(shutH, shutH, railW, railW);
+        for (let mr = 0; mr < midRailCount; mr++) pt_buckets["Door Sash"].push(railW);
+      }
+      out += `• ${tag} [${nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR'} — ${dParts.length} PART(S)] Inner Clear: ${disp(ih)} H × ${disp(iw)} W\n`;
+      out += `   -> Auto Shutter (${nL} Leaf): ${disp(shutH)} H × ${disp(shutW)} W | Top/Bot Rails: ${disp(railW)} (${2*nL} pc)${midRailCount > 0 ? ' | Mid Rails: ' + disp(railW) + ' (' + (midRailCount*nL) + ' pc)' : ''}\n`;
+      dParts.forEach(function(dp, pi) {
+        const ph = Math.max(4, partHeights[pi] + 0.5);
+        const pLabel = `Part ${pi + 1}`;
+        if (dp.mat === 'ACP') {
+          out += `   -> ${pLabel} [ACP BOARD]: ${disp(ph)} × ${disp(panelCutW)} (${nL} pc)\n`;
+          pt_acp_list.push({ rowTag: `${tag} Door ${pLabel} ACP`, cutStr: `${disp(ph)} x ${disp(panelCutW)}`, h_in: ph, w_in: panelCutW, qty: nL, buyLabel: '', areaSqFt: (ph * panelCutW * nL) / 144 });
+          totAcpPcs += nL; totAcpSqFt += (ph * panelCutW * nL) / 144;
+        } else if (dp.mat === 'JALI') {
+          out += `   -> ${pLabel} [JALI / MESH]: ${disp(ph)} × ${disp(panelCutW)} (${nL} pc)\n`;
+          totJaliPcs += nL; totJaliSqFt += (ph * panelCutW * nL) / 144;
+        } else {
+          out += `   -> ${pLabel} [GLASS]: ${disp(ph)} × ${disp(panelCutW)} (${nL} pc)\n`;
+          pt_glass_dict[`${disp(ph)} x ${disp(panelCutW)} (${tag} Door ${pLabel}) || ${pt_gspec}`] = (pt_glass_dict[`${disp(ph)} x ${disp(panelCutW)} (${tag} Door ${pLabel}) || ${pt_gspec}`] || 0) + nL;
+          totGlassPcs += nL; totGlassSqFt += (ph * panelCutW * nL) / 144;
+        }
+      });
     } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
       const tr = lf.mat === 'SLIDE_3T' ? 3 : 2;
+      const winOuterTopBot = iw;
+      const winOuterSide = ih;
+      const winShutH = Math.max(6, ih - 1.5);
+      const winShutW = Math.max(6, (iw / tr) + 0.75);
       const wgH = Math.max(4, ih - 5.25), wgW = Math.max(4, (iw - 3.0) / tr);
       const wfTag = pt_outer_frame.win ? 'Inside Partition Frame' : 'Direct Wall-to-Wall (No Outer Pipe)';
+      const winKey = `Window Outer [${intWinSys} ${tr}T]`;
+      const winShutKey = `Window Shutter [${intWinSys}]`;
+      if (!pt_buckets[winKey]) pt_buckets[winKey] = [];
+      if (!pt_buckets[winShutKey]) pt_buckets[winShutKey] = [];
+      pt_buckets[winKey].push(winOuterTopBot, winOuterTopBot, winOuterSide, winOuterSide);
+      for (let ti = 0; ti < tr; ti++) pt_buckets[winShutKey].push(winShutH, winShutH, winShutW, winShutW);
       out += `• ${tag} [${tr}-TRACK SLIDING — ${wfTag}]\n`;
-      out += `   -> Exact Window Size: ${disp(ih)} H × ${disp(iw)} W (${intWinSys})\n`;
+      out += `   -> Window Outer Frame Cut (${intWinSys}): Top/Bot Track ${disp(winOuterTopBot)} (2 pc) | Sides ${disp(winOuterSide)} (2 pc)\n`;
+      out += `   -> Window Shutter Cut (${tr} Leaf): Vert/Interlock ${disp(winShutH)} (${2*tr} pc) | Top/Bot ${disp(winShutW)} (${2*tr} pc)\n`;
       out += `   -> Glass Cut: ${disp(wgH)} × ${disp(wgW)} (2 pc)${tr === 3 ? ' + 1 Jali' : ''}\n`;
       pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${tag} ${tr}T Slide) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${tag} ${tr}T Slide) || ${pt_gspec}`] || 0) + 2;
       totGlassPcs += 2; totGlassSqFt += (wgH * wgW * 2) / 144;
@@ -12183,7 +12210,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v91') === -1) caches.delete(k);
+                if (k.indexOf('v92') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -13258,7 +13285,7 @@ function ptCadMergeSelected() {
 
 function ptCadLayout(node, x, y, w, h, leaves, splits, doorGroups) {
   if (node.kind === 'LEAF') {
-    leaves.push({ id: node.id, mat: node.mat || 'GLASS', x: x, y: y, w: w, h: h });
+    leaves.push({ id: node.id, mat: node.mat || 'GLASS', doorParts: node.doorParts || null, x: x, y: y, w: w, h: h });
     return;
   }
   if (node.isDoor && doorGroups) {
@@ -13390,6 +13417,95 @@ function ptCadSvgPill(cx, cy, text, fontSize, bg, fg, strokeCol) {
          '<text x="' + cx + '" y="' + (cy + fs * 0.34) + '" font-size="' + fs + '" font-weight="800" fill="' + (fg || '#0f172a') + '" text-anchor="middle">' + text + '</text>';
 }
 
+function ptCadGetDefaultDoorParts() {
+  return [{ mat: 'GLASS', h: 0 }, { mat: 'ACP', h: 30 }];
+}
+
+function ptCadComputeDoorPartHeights(parts, availH) {
+  var fixedSum = 0, autoCount = 0;
+  parts.forEach(function(p) {
+    var hv = parseFloat(p.h) || 0;
+    if (hv > 2) fixedSum += hv; else autoCount++;
+  });
+  var rem = Math.max(4, availH - fixedSum);
+  return parts.map(function(p) {
+    var hv = parseFloat(p.h) || 0;
+    if (hv > 2) return Math.min(availH - 2, hv);
+    return rem / Math.max(1, autoCount);
+  });
+}
+
+function ptCadGetSelectedDoorNode() {
+  var found = ptCadFind(pt_cad_tree, pt_cad_sel_id, null, null);
+  if (!found || !found.node || found.node.kind !== 'LEAF') return null;
+  if (found.node.mat !== 'DOOR_1' && found.node.mat !== 'DOOR_2') return null;
+  if (!Array.isArray(found.node.doorParts) || !found.node.doorParts.length) {
+    found.node.doorParts = ptCadGetDefaultDoorParts();
+  }
+  return found.node;
+}
+
+function ptCadSetDoorPartCount(n) {
+  var node = ptCadGetSelectedDoorNode();
+  if (!node) return;
+  ptCadSaveUndo();
+  n = Math.max(1, Math.min(4, parseInt(n, 10) || 2));
+  if (n === 1) node.doorParts = [{ mat: 'GLASS', h: 0 }];
+  else if (n === 2) node.doorParts = [{ mat: 'GLASS', h: 0 }, { mat: 'ACP', h: 30 }];
+  else if (n === 3) node.doorParts = [{ mat: 'JALI', h: 18 }, { mat: 'GLASS', h: 0 }, { mat: 'ACP', h: 30 }];
+  else node.doorParts = [{ mat: 'JALI', h: 16 }, { mat: 'GLASS', h: 0 }, { mat: 'GLASS', h: 0 }, { mat: 'ACP', h: 28 }];
+  renderPtCadDesigner();
+}
+
+function ptCadApplyDoorPreset(preset) {
+  var node = ptCadGetSelectedDoorNode();
+  if (!node) return;
+  ptCadSaveUndo();
+  if (preset === 'full_glass') node.doorParts = [{ mat: 'GLASS', h: 0 }];
+  else if (preset === 'full_jali') node.doorParts = [{ mat: 'JALI', h: 0 }];
+  else if (preset === 'full_acp') node.doorParts = [{ mat: 'ACP', h: 0 }];
+  else if (preset === 'glass_acp') node.doorParts = [{ mat: 'GLASS', h: 0 }, { mat: 'ACP', h: 30 }];
+  else if (preset === 'jali_acp') node.doorParts = [{ mat: 'JALI', h: 0 }, { mat: 'ACP', h: 30 }];
+  else if (preset === 'jali_glass_acp') node.doorParts = [{ mat: 'JALI', h: 18 }, { mat: 'GLASS', h: 0 }, { mat: 'ACP', h: 30 }];
+  else if (preset === 'glass_jali_acp') node.doorParts = [{ mat: 'GLASS', h: 0 }, { mat: 'JALI', h: 20 }, { mat: 'ACP', h: 30 }];
+  renderPtCadDesigner();
+}
+
+function ptCadUpdateDoorPart(idx, field, val) {
+  var node = ptCadGetSelectedDoorNode();
+  if (!node || !node.doorParts[idx]) return;
+  if (field === 'mat') node.doorParts[idx].mat = val;
+  else if (field === 'h') node.doorParts[idx].h = parseFloat(val) || 0;
+  renderPtCadDesigner();
+}
+
+function renderPtCadDoorCustomizerUI() {
+  var box = document.getElementById('pt_cad_door_customizer');
+  var rowsEl = document.getElementById('pt_cad_door_parts_rows');
+  if (!box || !rowsEl) return;
+  var node = ptCadGetSelectedDoorNode();
+  if (!node) {
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  var parts = node.doorParts;
+  var html = '';
+  parts.forEach(function(p, idx) {
+    var posLabel = (parts.length === 1) ? 'Full Door' : (idx === 0 ? 'Top Part ' + (idx + 1) : (idx === parts.length - 1 ? 'Bot Part ' + (idx + 1) : 'Mid Part ' + (idx + 1)));
+    html += '<div style="display:grid; grid-template-columns: 78px 1fr 78px; gap:5px; align-items:center; background:#fff; padding:4px 6px; border-radius:6px; border:1px solid #fde68a;">';
+    html += '<span style="font-size:0.66rem; font-weight:800; color:#78350f;">' + posLabel + '</span>';
+    html += '<select onchange="ptCadUpdateDoorPart(' + idx + ',\'mat\',this.value)" style="padding:4px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.69rem; font-weight:700; background:#f8fafc;">';
+    html += '<option value="GLASS"' + (p.mat === 'GLASS' ? ' selected' : '') + '>Glass</option>';
+    html += '<option value="ACP"' + (p.mat === 'ACP' ? ' selected' : '') + '>ACP Board</option>';
+    html += '<option value="JALI"' + (p.mat === 'JALI' ? ' selected' : '') + '>Jali / Mesh</option>';
+    html += '</select>';
+    html += '<input type="number" step="0.5" placeholder="Auto" value="' + (p.h > 0 ? p.h : '') + '" onchange="ptCadUpdateDoorPart(' + idx + ',\'h\',this.value)" style="padding:4px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.69rem; font-weight:700; text-align:center;" title="Height in Inches (blank = Auto)">';
+    html += '</div>';
+  });
+  rowsEl.innerHTML = html;
+}
+
 function buildPtCadSvg(isFullScreen) {
   var d = ptCadGetDims();
   var aluColor = getModuleAluColor('pt');
@@ -13401,8 +13517,8 @@ function buildPtCadSvg(isFullScreen) {
   var leaves = [], splits = [], doorGroups = [];
   ptCadLayout(pt_cad_tree, 0, 0, d.w, d.h, leaves, splits, doorGroups);
 
-  var vbW = 380, vbH = 262;
-  var padL = 34, padR = 16, padT = 28, padB = 14;
+  var vbW = 388, vbH = 266;
+  var padL = 42, padR = 14, padT = 28, padB = 14;
   var scale = Math.min((vbW - padL - padR) / d.w, (vbH - padT - padB) / d.h);
   var drawW = d.w * scale, drawH = d.h * scale;
   var ox = padL + ((vbW - padL - padR) - drawW) / 2;
@@ -13474,18 +13590,34 @@ function buildPtCadSvg(isFullScreen) {
       if (rw >= 32 && rh >= 26) svg += ptCadSvgPill(rx + rw / 2, ry + rh / 2 + 5, 'JALI', 6.0, 'rgba(236,253,245,0.95)', '#065f46', '#10b981');
     } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
       var nL = (lf.mat === 'DOOR_2') ? 2 : 1;
+      var dParts = (Array.isArray(lf.doorParts) && lf.doorParts.length) ? lf.doorParts : ptCadGetDefaultDoorParts();
+      var pHeights = ptCadComputeDoorPartHeights(dParts, Math.max(20, tc.innerH - 8));
+      var sumPH = pHeights.reduce(function(a, b) { return a + b; }, 0) || 1;
       svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.1"/>';
       var lw = (rw - 4 - ((nL - 1) * 2)) / nL;
+      var innerLeafH = Math.max(8, rh - 8);
+      var railGap = 2.2;
+      var usableH = Math.max(6, innerLeafH - (dParts.length - 1) * railGap);
       for (var i = 0; i < nL; i++) {
         var dlx = rx + 2 + i * (lw + 2);
         svg += '<rect x="' + dlx + '" y="' + (ry + 2) + '" width="' + lw + '" height="' + (rh - 3) + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.85"/>';
-        var gh = (rh - 10) * 0.62, ah = (rh - 10) * 0.38;
-        svg += '<rect x="' + (dlx + 3) + '" y="' + (ry + 4) + '" width="' + Math.max(4, lw - 6) + '" height="' + Math.max(4, gh) + '" fill="url(#gls_' + uid + ')"/>';
-        svg += '<rect x="' + (dlx + 3) + '" y="' + (ry + 6 + gh) + '" width="' + Math.max(4, lw - 6) + '" height="' + Math.max(4, ah - 2) + '" fill="#94a3b8"/>';
+        var curPY = ry + 4;
+        for (var pi = 0; pi < dParts.length; pi++) {
+          var partH = Math.max(4, usableH * (pHeights[pi] / sumPH));
+          var pMat = dParts[pi].mat;
+          var pFill = (pMat === 'JALI') ? ('url(#jali_' + uid + ')') : (pMat === 'ACP' ? '#94a3b8' : ('url(#gls_' + uid + ')'));
+          svg += '<rect x="' + (dlx + 3) + '" y="' + curPY + '" width="' + Math.max(4, lw - 6) + '" height="' + partH + '" fill="' + pFill + '" stroke="' + (pMat === 'JALI' ? '#059669' : aluPal.stroke) + '" stroke-width="0.5"/>';
+          if (lw >= 28 && partH >= 15 && i === 0) {
+            var pTag = pMat === 'JALI' ? 'JALI' : (pMat === 'ACP' ? 'ACP' : 'GLASS');
+            svg += '<text x="' + (dlx + lw / 2) + '" y="' + (curPY + partH / 2 + 2) + '" font-size="5.2" font-weight="800" fill="' + (pMat === 'JALI' ? '#065f46' : '#1e293b') + '" text-anchor="middle">' + pTag + '</text>';
+          }
+          curPY += partH + railGap;
+        }
         var hx = (i === 0 && nL === 2) ? (dlx + lw - 4) : (dlx + 2);
         svg += '<rect x="' + hx + '" y="' + (ry + rh * 0.45) + '" width="2.2" height="12" rx="1" fill="#fbbf24"/>';
       }
-      if (rw >= 34 && rh >= 32) svg += ptCadSvgPill(rx + rw / 2, ry + rh - 9, (nL === 2 ? '2-LEAF DOOR' : 'DOOR'), 5.8, '#fffbeb', '#92400e', '#f59e0b');
+      var dBadge = (nL === 2 ? '2-LEAF ' : '') + 'DOOR (' + dParts.length + 'P)';
+      if (rw >= 34 && rh >= 32) svg += ptCadSvgPill(rx + rw / 2, ry + rh - 9, dBadge, 5.6, '#fffbeb', '#92400e', '#f59e0b');
     } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
       var tr = (lf.mat === 'SLIDE_3T') ? 3 : 2;
       svg += '<rect x="' + rx + '" y="' + ry + '" width="' + rw + '" height="' + rh + '" fill="url(#alu_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.2"/>';
@@ -13567,6 +13699,7 @@ function renderPtCadDesigner() {
   var res = buildPtCadSvg(false);
   stage.innerHTML = res.svg;
   var cur = res.leaves.find(l => l.id === pt_cad_sel_id);
+  renderPtCadDoorCustomizerUI();
   var infoEl = document.getElementById('pt_cad_sel_info');
   if (infoEl && cur) {
     var mName = cur.mat === 'WALL_MINUS' ? 'Wall (Minus -)' : cur.mat;

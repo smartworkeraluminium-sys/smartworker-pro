@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=91').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=92').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=91">
+  <link rel="stylesheet" href="style.css?v=92">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -2050,6 +2050,29 @@
      <button type="button" onclick="ptCadResizePrompt()" style="background:#7c3aed; color:#fff; border:none; border-radius:7px; padding:8px 4px; font-size:0.71rem; font-weight:800; cursor:pointer;">
        <i class="fa-solid fa-ruler"></i> Exact Size
      </button>
+   </div>
+
+   <!-- Contextual CUSTOM DOOR DESIGNER (Auto-shows whenever a Single/Double Door box is selected!) -->
+   <div id="pt_cad_door_customizer" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; border-radius:9px; padding:8px; margin-bottom:8px;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; flex-wrap:wrap; gap:4px;">
+       <span style="font-size:0.71rem; font-weight:800; color:#92400e;"><i class="fa-solid fa-door-open"></i> CUSTOM DOOR DESIGN (1–4 PARTS):</span>
+       <div style="display:flex; gap:3px;">
+         <button type="button" onclick="ptCadSetDoorPartCount(1)" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; border-radius:4px; padding:2px 7px; font-size:0.66rem; font-weight:800; cursor:pointer;">1 Part</button>
+         <button type="button" onclick="ptCadSetDoorPartCount(2)" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; border-radius:4px; padding:2px 7px; font-size:0.66rem; font-weight:800; cursor:pointer;">2 Parts</button>
+         <button type="button" onclick="ptCadSetDoorPartCount(3)" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; border-radius:4px; padding:2px 7px; font-size:0.66rem; font-weight:800; cursor:pointer;">3 Parts</button>
+         <button type="button" onclick="ptCadSetDoorPartCount(4)" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; border-radius:4px; padding:2px 7px; font-size:0.66rem; font-weight:800; cursor:pointer;">4 Parts</button>
+       </div>
+     </div>
+     <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px;">
+       <button type="button" onclick="ptCadApplyDoorPreset('full_glass')" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">Full Glass</button>
+       <button type="button" onclick="ptCadApplyDoorPreset('full_jali')" style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">Full Jali</button>
+       <button type="button" onclick="ptCadApplyDoorPreset('full_acp')" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">Full ACP</button>
+       <button type="button" onclick="ptCadApplyDoorPreset('glass_acp')" style="background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">2P: Glass+ACP</button>
+       <button type="button" onclick="ptCadApplyDoorPreset('jali_acp')" style="background:#fff; color:#0f172a; border:1px solid #cbd5e1; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">2P: Jali+ACP</button>
+       <button type="button" onclick="ptCadApplyDoorPreset('jali_glass_acp')" style="background:#fef9c3; color:#854d0e; border:1px solid #facc15; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">3P: Jali+Glass+ACP</button>
+       <button type="button" onclick="ptCadApplyDoorPreset('glass_jali_acp')" style="background:#fef9c3; color:#854d0e; border:1px solid #facc15; border-radius:5px; padding:3px 6px; font-size:0.63rem; font-weight:800; cursor:pointer;">3P: Glass+Jali+ACP</button>
+     </div>
+     <div id="pt_cad_door_parts_rows" style="display:flex; flex-direction:column; gap:4px;"></div>
    </div>
 
    <!-- Custom Section Profile Widths (Top / Middle / Bottom / Vertical in Inches) -->
@@ -4472,12 +4495,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=91"></script>
+  <script src="app.js?v=92"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=91').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=92').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
