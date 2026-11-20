@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=94').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=96').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=94">
+  <link rel="stylesheet" href="style.css?v=96">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -2738,6 +2738,21 @@
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
 
+ <!-- GLASS SETTINGS: Add Your Own Custom Glass Types -->
+ <div class="gemini-card" style="padding:14px 16px; margin-top:12px; margin-bottom:12px; border:1.5px solid #0284c7;">
+   <div style="font-size:0.86rem; font-weight:800; color:#0369a1; margin-bottom:4px;">
+     <i class="fa-solid fa-layer-group"></i> GLASS SETTINGS (ADD CUSTOM GLASS NAMES)
+   </div>
+   <div style="font-size:0.71rem; color:#64748b; margin-bottom:8px;">
+     Add your own glass types (e.g. Fluted, 8mm Saint-Gobain Frost, Laminated). They auto-appear in all calculators &amp; Glass Shop Stock!
+   </div>
+   <div style="display:flex; gap:6px; margin-bottom:8px;">
+     <input type="text" id="custom_glass_name_inp" placeholder="e.g. 5mm Fluted / 8mm Frost" style="flex:1; padding:8px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.78rem; font-weight:700;">
+     <button type="button" onclick="addCustomGlassType()" style="background:#0284c7; color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:0.76rem; font-weight:800; cursor:pointer; white-space:nowrap;">+ Add Glass</button>
+   </div>
+   <div id="custom_glass_types_list" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+ </div>
+
  <!-- Google Sheets Auto-Sync Configuration Card -->
  <div onclick="configureGoogleSheetSync()" class="gemini-pill-btn" style="border-color:#bbf7d0; background:#f0fdf4;">
  <div style="display:flex; align-items:center; gap:12px;">
@@ -3399,39 +3414,20 @@
      </div>
 
      <!-- B2B FABRICATOR TO GLASS CUTTER QR AUTO-LOAD BRIDGE -->
-     <div id="gc_qr_bridge_box" style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:2px dashed #0284c7; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
-       <div style="font-size:0.78rem; font-weight:800; color:#0369a1; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
-         <span><i class="fa-solid fa-qrcode" style="color:#059669;"></i> FABRICATOR ↔ GLASS CUTTER QR AUTO-LOAD</span>
-         <span style="font-size:0.66rem; background:#059669; color:#ffffff; padding:2px 8px; border-radius:99px;">1-Scan Auto-Import</span>
-       </div>
-       <div style="font-size:0.71rem; color:#334155; margin-bottom:8px; line-height:1.35;">
-         Scan the QR Code on any Fabricator's <b>2. GLASS PDF + QR</b> (or paste the <b>SWG|...</b> code) to auto-load all glass sizes & generate the <b>4'x8' cutting chart</b>!
+     <!-- FABRICATOR ↔ GLASS SHOP 4-DIGIT CODE BRIDGE (NO QR NEEDED) -->
+     <div id="gc_qr_bridge_box" style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:1.5px solid #0284c7; border-radius:11px; padding:9px 10px; margin-bottom:12px;">
+       <div style="font-size:0.74rem; font-weight:800; color:#0369a1; margin-bottom:6px;">
+         <i class="fa-solid fa-hashtag" style="color:#059669;"></i> 4-DIGIT ORDER CODE &amp; WHATSAPP SHARE (NO QR)
        </div>
        <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
-         <button type="button" class="action-btn" style="background:#059669; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="startGlassOrderQrScanner()">
-           <i class="fa-solid fa-camera"></i> <span>SCAN PDF QR CODE</span>
+         <button type="button" class="action-btn" style="background:#4f46e5; color:#fff; padding:9px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="promptImportGlassOrderCode()">
+           <i class="fa-solid fa-keyboard"></i> <span>ENTER 4-DIGIT CODE</span>
          </button>
-         <button type="button" class="action-btn" style="background:#0284c7; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="document.getElementById('gc_qr_img_input').click()">
-           <i class="fa-solid fa-image"></i> <span>SCAN FROM IMAGE</span>
-         </button>
-         <button type="button" class="action-btn" style="background:#4f46e5; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="promptImportGlassOrderCode()">
-           <i class="fa-solid fa-paste"></i> <span>ENTER 4-DIGIT CODE</span>
-         </button>
-         <button type="button" class="action-btn" style="background:#0d9488; color:#fff; padding:10px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="shareCurrentGlassListToCutterWhatsApp()">
+         <button type="button" class="action-btn" style="background:#0d9488; color:#fff; padding:9px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="shareCurrentGlassListToCutterWhatsApp()">
            <i class="fa-brands fa-whatsapp"></i> <span>SEND TO CUTTER</span>
          </button>
        </div>
-       <input type="file" id="gc_qr_img_input" accept="image/*" style="display:none;" onchange="scanGlassQrFromImageFile(event)">
-       <div id="gc_qr_camera_box" style="display:none; margin-top:10px; background:#0f172a; border:2px solid #10b981; border-radius:10px; padding:10px; text-align:center;">
-         <div style="font-size:0.75rem; color:#6ee7b7; margin-bottom:6px; font-weight:800;">Point Camera at the QR Code on "2. GLASS PDF + QR"</div>
-         <video id="gc_qr_video" playsinline muted style="width:100%; max-width:320px; border-radius:8px; border:1px solid #334155;"></video>
-         <div style="margin-top:8px;">
-           <button type="button" class="action-btn" style="background:#ef4444; color:#fff; padding:7px 16px; font-size:0.74rem; font-weight:800; border-radius:8px; width:auto; display:inline-flex; align-items:center; gap:5px;" onclick="stopGlassOrderQrScanner()">
-             <i class="fa-solid fa-xmark"></i> <span>Close Camera</span>
-           </button>
-         </div>
-       </div>
-       <div id="gc_qr_import_status" style="display:none; margin-top:8px; background:#dcfce7; border:1px solid #16a34a; color:#14532d; padding:8px 10px; border-radius:8px; font-size:0.75rem; font-weight:700;"></div>
+       <div id="gc_qr_import_status" style="display:none; margin-top:7px; background:#dcfce7; border:1px solid #16a34a; color:#14532d; padding:7px 9px; border-radius:8px; font-size:0.73rem; font-weight:700;"></div>
      </div>
 
      <div class="form-grid">
@@ -3552,6 +3548,41 @@
 
    <div class="output-label" style="color:#0284c7;">GLASS CUTTING & 4'x8' SHEET SUMMARY:</div>
    <div class="output-area" id="gc_out"></div>
+
+   <!-- GLASS SHOP FULL-SHEET INVENTORY & NUMBER-TAG OFFCUT STOCK (#G101, #G102 — NO QR) -->
+   <div style="margin-top:12px; background:#f0f9ff; border:1.5px solid #0284c7; border-radius:11px; padding:10px;">
+     <div style="font-size:0.77rem; font-weight:800; color:#0369a1; margin-bottom:6px;">
+       <i class="fa-solid fa-warehouse"></i> GLASS SHOP FULL-SHEET STOCK (CHECK STOCK vs BUY)
+     </div>
+     <div style="display:grid; grid-template-columns: 1fr 72px 72px; gap:5px; margin-bottom:7px;">
+       <select id="gc_shop_stock_type" style="padding:6px; border:1px solid #7dd3fc; border-radius:6px; font-size:0.72rem; font-weight:700; background:#fff;">
+         <option value="Clear">Clear Glass</option>
+         <option value="Tinted / Brown">Tinted / Brown</option>
+         <option value="Frosted">Frosted Glass</option>
+         <option value="Reflective">Reflective Glass</option>
+         <option value="Toughened">Toughened Glass</option>
+       </select>
+       <input type="number" id="gc_shop_stock_qty" min="0" value="10" placeholder="Sheets" style="padding:6px; border:1px solid #7dd3fc; border-radius:6px; font-size:0.74rem; font-weight:800; text-align:center;">
+       <button type="button" onclick="saveGlassShopFullStock()" style="background:#0284c7; color:#fff; border:none; border-radius:6px; font-size:0.71rem; font-weight:800; cursor:pointer;">Set Stock</button>
+     </div>
+     <div id="gc_shop_stock_list" style="font-size:0.71rem; color:#334155;">No shop sheet stock set yet. Set your available sheets above!</div>
+   </div>
+
+   <div style="margin-top:10px; background:#f0fdf4; border:1.5px solid #10b981; border-radius:11px; padding:10px;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:5px; flex-wrap:wrap;">
+       <span style="font-size:0.74rem; font-weight:800; color:#065f46;"><i class="fa-solid fa-tags"></i> GLASS OFFCUT STOCK (≥12" • #G101 TAGS)</span>
+       <input type="text" id="gc_remnant_search" oninput="renderGlassRemnantStockUI()" placeholder="Search #G101..." style="width:98px; padding:3px 6px; border:1px solid #10b981; border-radius:5px; font-size:0.68rem; font-weight:700; background:#fff;">
+     </div>
+     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:7px;">
+       <button type="button" onclick="saveUsableGlassOffcuts()" style="background:#059669; color:#fff; border:none; border-radius:7px; padding:7px 5px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-floppy-disk"></i> Save Offcuts (≥12")
+       </button>
+       <button type="button" onclick="exportGlassNumberStickersPdf()" style="background:#b45309; color:#fff; border:none; border-radius:7px; padding:7px 5px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-tag"></i> Glass Tag Stickers PDF
+       </button>
+     </div>
+     <div id="gc_remnant_stock_list" style="font-size:0.71rem; color:#475569;">No glass offcuts saved yet. Pieces below 12" are treated as Scrap.</div>
+   </div>
    <div id="gc_mat_out" style="display:none;"></div>
  </div>
 
@@ -3582,7 +3613,8 @@
        <div class="form-group">
          <label style="color:#0f766e; font-weight:700;">Stock Bar Length:</label>
          <select id="bc_stock_len" onchange="recalculateBarCuttingPlan()">
-           <option value="144" selected>12 Ft Bar (144" / 3658 mm)</option>
+           <option value="AUTO_MIX" selected>★ Auto Best Mix (12' + 15' + 16' Min-Waste)</option>
+           <option value="144">12 Ft Bar Only (144" / 3658 mm)</option>
            <option value="192">16 Ft Bar (192" / 4877 mm)</option>
            <option value="180">15 Ft Bar (180" / 4572 mm)</option>
            <option value="216">18 Ft Bar (216" / 5486 mm)</option>
@@ -3639,6 +3671,28 @@
          <i class="fa-solid fa-file-pdf"></i> <span>EXPORT 12' / 16' BAR CUTTING DRAWING PDF</span>
        </button>
      </div>
+
+     <!-- Workshop Remnant Stock & QR Sticker Controls (>= 12" Usable Offcuts; < 12" = Scrap) -->
+     <div style="margin-top:8px; background:#f0fdf4; border:1.5px solid #10b981; border-radius:9px; padding:8px;">
+       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px;">
+         <span style="font-size:0.71rem; font-weight:800; color:#065f46;"><i class="fa-solid fa-boxes-stacked"></i> WORKSHOP REMNANT STOCK (≥12" ONLY)</span>
+         <label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; font-weight:800; color:#047857; cursor:pointer;">
+           <input type="checkbox" id="bc_use_stock_chk" checked onchange="recalculateBarCuttingPlan()" style="width:15px; height:15px; accent-color:#059669;">
+           Auto-Use Stock First
+         </label>
+       </div>
+       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+         <button type="button" onclick="saveUsableOffcutsToStock()" style="background:#059669; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+           <i class="fa-solid fa-floppy-disk"></i> Save Offcuts (≥12")
+         </button>
+         <button type="button" onclick="exportRemnantQrStickersPdf()" style="background:#b45309; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.71rem; font-weight:800; cursor:pointer;">
+           <i class="fa-solid fa-tag"></i> Number Tag Stickers PDF
+         </button>
+       </div>
+       <div style="font-size:0.62rem; color:#475569; margin-top:4px;">
+         * Pieces under <b>12" (1 Ft)</b> = <b>SCRAP</b> (Not Saved). Bold Number Tags (<b>#101, #102</b>) — No QR needed! Next project auto-uses Stock first.
+       </div>
+     </div>
    </div>
 
    <!-- Live Visual 1D Bar Cutting SVG Map -->
@@ -3646,6 +3700,18 @@
 
    <div class="output-label" style="color:#0f766e;">12' / 16' BAR CUTTING SUMMARY & STOCK LIST:</div>
    <div class="output-area" id="bc_out"></div>
+
+   <!-- Live Persistent Workshop / Warehouse Remnant Stock List -->
+   <div id="bc_workshop_stock_panel" style="margin-top:12px; background:#fffbeb; border:1.5px solid #f59e0b; border-radius:10px; padding:10px;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:5px; flex-wrap:wrap;">
+       <span style="font-size:0.76rem; font-weight:800; color:#92400e;"><i class="fa-solid fa-warehouse"></i> WORKSHOP / WAREHOUSE STOCK (≥12")</span>
+       <div style="display:flex; gap:4px; align-items:center;">
+         <input type="text" id="bc_stock_search" oninput="renderWorkshopRemnantStockUI()" placeholder="Search #101..." style="width:92px; padding:3px 6px; border:1px solid #f59e0b; border-radius:5px; font-size:0.68rem; font-weight:700; background:#fff;">
+         <button type="button" onclick="clearAllWorkshopRemnants()" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; border-radius:5px; padding:3px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;">Clear</button>
+       </div>
+     </div>
+     <div id="bc_workshop_stock_list" style="font-size:0.72rem; color:#475569;">No usable remnants saved yet. Run a cutting plan and tap <b>Save Offcuts (≥12")</b>!</div>
+   </div>
  </div>
 
  <!-- ================= 14B. WASTAGE / OFFCUT QR STOCK & SCANNER SCREEN ================= -->
@@ -4495,12 +4561,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=94"></script>
+  <script src="app.js?v=96"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=94').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=96').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

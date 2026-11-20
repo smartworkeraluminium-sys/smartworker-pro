@@ -12422,7 +12422,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v94') === -1) caches.delete(k);
+                if (k.indexOf('v96') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -12579,131 +12579,491 @@ function groupBarItemsByProfile(items) {
   return groups;
 }
 
+var BC_REMNANT_STORAGE_KEY = 'sw_workshop_remnants_v1';
+var BC_MIN_USABLE_IN = 12.0; // Strictly < 12" (1 Foot) = SCRAP (No QR / Not Saved!)
+var bc_last_plan_offcuts = []; // Usable offcuts (>= 12") from latest plan
+var bc_last_used_remnants = []; // Remnants consumed from Workshop Stock in latest plan
+
+function loadWorkshopRemnants() {
+  try {
+    var raw = localStorage.getItem(BC_REMNANT_STORAGE_KEY);
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function saveWorkshopRemnants(arr) {
+  try { localStorage.setItem(BC_REMNANT_STORAGE_KEY, JSON.stringify(arr || [])); } catch (e) {}
+  renderWorkshopRemnantStockUI();
+}
+
+function nextRemnantId(list) {
+  var maxN = 100;
+  (list || []).forEach(function(r) {
+    var m = String(r.id || '').match(/(?:REM-|#)(\d+)/);
+    if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+  });
+  return '#' + (maxN + 1);
+}
+
+function renderWorkshopRemnantStockUI() {
+  var el = document.getElementById('bc_workshop_stock_list');
+  if (!el) return;
+  var qSearch = (document.getElementById('bc_stock_search')?.value || '').trim().toLowerCase();
+  var list = loadWorkshopRemnants().filter(function(r) {
+    if (!(r.qty > 0 && r.len_in >= BC_MIN_USABLE_IN)) return false;
+    if (!qSearch) return true;
+    return String(r.id).toLowerCase().includes(qSearch) || String(r.profile).toLowerCase().includes(qSearch);
+  });
+  if (!list.length) {
+    el.innerHTML = 'No usable offcuts (≥12") in Workshop Stock yet. After cutting, tap <b>Save Offcuts (≥12")</b>!';
+    return;
+  }
+  var isMm = document.getElementById('bc_unit') && document.getElementById('bc_unit').value.indexOf('Millimeter') !== -1;
+  var disp = function(v) { return isMm ? toMmStr(v) : toFractionInch(v); };
+  var totalPcs = list.reduce(function(s, r) { return s + (r.qty || 1); }, 0);
+  var h = '<div style="font-weight:800; color:#065f46; margin-bottom:5px;">Total Available in Workshop: ' + totalPcs + ' Usable Piece(s) (≥12")</div>';
+  list.forEach(function(r, idx) {
+    h += '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #fde68a; border-radius:6px; padding:5px 7px; margin-bottom:4px; gap:6px;">';
+    h += '<div><span style="background:#0f766e; color:#fff; padding:1px 5px; border-radius:4px; font-size:0.63rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + r.profile + '</b><div style="font-size:0.67rem; color:#475569; margin-top:1px;">Length: <b style="color:#b45309;">' + disp(r.len_in) + '</b>  •  Qty: <b style="color:#059669;">' + r.qty + ' pc(s)</b></div></div>';
+    h += '<button type="button" onclick="deleteWorkshopRemnant(' + idx + ')" style="background:#fee2e2; color:#b91c1c; border:none; border-radius:5px; padding:4px 7px; font-size:0.66rem; font-weight:800; cursor:pointer;">✕</button>';
+    h += '</div>';
+  });
+  el.innerHTML = h;
+}
+
+function deleteWorkshopRemnant(idx) {
+  var list = loadWorkshopRemnants();
+  list.splice(idx, 1);
+  saveWorkshopRemnants(list);
+  recalculateBarCuttingPlan();
+}
+
+function clearAllWorkshopRemnants() {
+  if (!confirm("Clear all saved Workshop Remnant Stock?")) return;
+  saveWorkshopRemnants([]);
+  recalculateBarCuttingPlan();
+}
+
+function saveUsableOffcutsToStock() {
+  if (!bc_last_plan_offcuts.length) {
+    alert("No usable offcuts (≥ 12\" / 1 Foot) found in the current cutting plan! Pieces under 12\" are treated as Scrap.");
+    return;
+  }
+  var stock = loadWorkshopRemnants();
+  var today = new Date().toLocaleDateString('en-GB');
+  var addedPcs = 0;
+  bc_last_plan_offcuts.forEach(function(off) {
+    if (off.len_in < BC_MIN_USABLE_IN || off.qty <= 0) return;
+    // Merge if same profile and exact same length (within 0.1")
+    var existing = stock.find(function(s) {
+      return s.profile.toLowerCase() === off.profile.toLowerCase() && Math.abs(s.len_in - off.len_in) < 0.1;
+    });
+    if (existing) {
+      existing.qty += off.qty;
+      existing.date = today;
+      off.remId = existing.id;
+    } else {
+      var newId = nextRemnantId(stock);
+      stock.push({ id: newId, profile: off.profile, len_in: parseFloat(off.len_in.toFixed(3)), qty: off.qty, date: today });
+      off.remId = newId;
+    }
+    addedPcs += off.qty;
+  });
+  saveWorkshopRemnants(stock);
+  alert("Saved " + addedPcs + " usable offcut piece(s) (≥12\") to Workshop Stock! Tap 'Offcut QR Stickers PDF' to print labels.");
+}
+
+function confirmDeductUsedWorkshopStock() {
+  if (!bc_last_used_remnants.length) return;
+  var stock = loadWorkshopRemnants();
+  var deducted = 0;
+  bc_last_used_remnants.forEach(function(u) {
+    var rec = stock.find(function(s) { return s.id === u.remId; });
+    if (rec && rec.qty > 0) {
+      var take = Math.min(rec.qty, u.qty);
+      rec.qty -= take;
+      deducted += take;
+    }
+  });
+  stock = stock.filter(function(s) { return s.qty > 0; });
+  saveWorkshopRemnants(stock);
+  alert("Deducted " + deducted + " used piece(s) from Workshop Stock!");
+  recalculateBarCuttingPlan();
+}
+
+function pack1DBarsAutoMix(items, kerfIn) {
+  // Automatically selects best stock bar length (12 Ft = 144", 15 Ft = 180", 16 Ft = 192") per bar for MINIMUM WASTE!
+  var candidates = [144, 180, 192];
+  var pieces = [];
+  (items || []).forEach(function(it) {
+    var q = Math.max(1, parseInt(it.qty, 10) || 1);
+    for (var i = 0; i < q; i++) pieces.push({ len: parseFloat(it.len_in), tag: it.tag || '' });
+  });
+  pieces.sort(function(a, b) { return b.len - a.len; });
+
+  var bars = [];
+  var rem = pieces.slice();
+  var barNo = 1;
+
+  while (rem.length > 0) {
+    var bestPlan = null;
+    candidates.forEach(function(cLen) {
+      if (rem[0].len > cLen + 0.01) return;
+      var cuts = [], used = 0, usedIdx = [];
+      for (var i = 0; i < rem.length; i++) {
+        var need = rem[i].len + (cuts.length > 0 ? kerfIn : 0);
+        if (used + need <= cLen + 0.001) {
+          cuts.push({ len: rem[i].len, tag: rem[i].tag, offset: used + (cuts.length > 0 ? kerfIn : 0) });
+          used += need;
+          usedIdx.push(i);
+        }
+      }
+      if (!cuts.length) return;
+      var util = used / cLen;
+      var waste = Math.max(0, cLen - used);
+      // Prefer higher utilization %; on near-tie (within 1%), prefer smaller standard 12' bar
+      if (!bestPlan || util > bestPlan.util + 0.008 || (Math.abs(util - bestPlan.util) <= 0.008 && cLen < bestPlan.stockLen)) {
+        bestPlan = { stockLen: cLen, stockFt: Math.round(cLen / 12), cuts: cuts, used: used, remaining: waste, util: util, usedIdx: usedIdx };
+      }
+    });
+
+    if (!bestPlan) {
+      // Piece longer than 16' -> fallback to 20'
+      var p0 = rem.shift();
+      bars.push({ barNo: barNo++, stockLen: 240, stockFt: 20, cuts: [{ len: p0.len, tag: p0.tag, offset: 0 }], used: p0.len, remaining: Math.max(0, 240 - p0.len) });
+      continue;
+    }
+
+    bars.push({ barNo: barNo++, stockLen: bestPlan.stockLen, stockFt: bestPlan.stockFt, cuts: bestPlan.cuts, used: bestPlan.used, remaining: bestPlan.remaining });
+    // Remove used pieces from rem (reverse index order)
+    for (var k = bestPlan.usedIdx.length - 1; k >= 0; k--) rem.splice(bestPlan.usedIdx[k], 1);
+  }
+  return bars;
+}
+
+function pack1DBarsWithWorkshopStock(items, stockLenIn, kerfIn, profileName, useWorkshopStock) {
+  // Expand all cut pieces sorted descending
+  var allPieces = [];
+  (items || []).forEach(function(it) {
+    var q = Math.max(1, parseInt(it.qty, 10) || 1);
+    for (var i = 0; i < q; i++) allPieces.push({ len: parseFloat(it.len_in), tag: it.tag || '' });
+  });
+  allPieces.sort(function(a, b) { return b.len - a.len; });
+
+  var stockUsedBars = [];
+  var remainingPieces = [];
+
+  if (useWorkshopStock) {
+    var available = loadWorkshopRemnants()
+      .filter(function(r) { return r.qty > 0 && r.len_in >= BC_MIN_USABLE_IN && r.profile.toLowerCase() === String(profileName || '').toLowerCase(); })
+      .sort(function(a, b) { return a.len_in - b.len_in; }); // Prefer smallest remnant that fits (Best-Fit!)
+
+    // Expand pool of individual remnants (cap at 500 for instant mobile performance)
+    var remPool = [];
+    available.forEach(function(r) {
+      var cap = Math.min(500, parseInt(r.qty, 10) || 0);
+      for (var k = 0; k < cap; k++) {
+        remPool.push({ remId: r.id, stockLen: r.len_in, cuts: [], used: 0, remaining: r.len_in, fromStock: true });
+      }
+    });
+
+    allPieces.forEach(function(pc) {
+      var bestIdx = -1, bestRemAfter = 999999;
+      for (var i = 0; i < remPool.length; i++) {
+        var rb = remPool[i];
+        var need = pc.len + (rb.cuts.length > 0 ? kerfIn : 0);
+        if (rb.remaining + 0.001 >= need) {
+          var after = rb.remaining - need;
+          if (after < bestRemAfter) {
+            bestRemAfter = after;
+            bestIdx = i;
+          }
+        }
+      }
+      if (bestIdx !== -1) {
+        var chosen = remPool[bestIdx];
+        var off = chosen.used + (chosen.cuts.length > 0 ? kerfIn : 0);
+        chosen.cuts.push({ len: pc.len, tag: pc.tag, offset: off });
+        chosen.used = off + pc.len;
+        chosen.remaining = Math.max(0, chosen.stockLen - chosen.used);
+      } else {
+        remainingPieces.push(pc);
+      }
+    });
+
+    stockUsedBars = remPool.filter(function(rb) { return rb.cuts.length > 0; });
+  } else {
+    remainingPieces = allPieces;
+  }
+
+  // Pack remaining pieces into brand-new 12'/16' stock bars
+  var newBars = [];
+  if (remainingPieces.length > 0) {
+    var remItems = remainingPieces.map(function(p) { return { len_in: p.len, qty: 1, tag: p.tag }; });
+    if (stockLenIn === 'AUTO_MIX') {
+      newBars = pack1DBarsAutoMix(remItems, kerfIn);
+    } else {
+      newBars = pack1DBarsBestFit(remItems, stockLenIn, kerfIn);
+      newBars.forEach(function(b) { b.stockLen = stockLenIn; b.stockFt = Math.round(stockLenIn / 12); });
+    }
+  }
+  return { stockUsedBars: stockUsedBars, newBars: newBars };
+}
+
+function groupIdenticalBars(bars) {
+  var grouped = [];
+  var map = {};
+  (bars || []).forEach(function(bar) {
+    var prefix = bar.fromStock ? ('STK|' + bar.remId + '|' + bar.stockLen.toFixed(2) + '|') : ('NEW|' + (bar.stockFt || 12) + '|');
+    var sig = prefix + bar.cuts.map(function(c) { return c.len.toFixed(3); }).join('|') + '||' + bar.remaining.toFixed(3);
+    if (map[sig]) {
+      map[sig].qty += 1;
+      map[sig].barNos.push(bar.barNo || 0);
+    } else {
+      var entry = { qty: 1, barNos: [bar.barNo || 0], bar: bar };
+      map[sig] = entry;
+      grouped.push(entry);
+    }
+  });
+  return grouped;
+}
+
 function recalculateBarCuttingPlan() {
+  renderWorkshopRemnantStockUI();
   var box = document.getElementById('bc_visual_layout_box');
   var outEl = document.getElementById('bc_out');
+  bc_last_plan_offcuts = [];
+  bc_last_used_remnants = [];
+
   if (!bc_items_list.length) {
     if (box) { box.style.display = 'none'; box.innerHTML = ''; }
     if (outEl) outEl.textContent = '';
     return;
   }
 
-  var stockLenIn = parseFloat(document.getElementById('bc_stock_len')?.value) || 144.0;
-  var stockFt = Math.round(stockLenIn / 12);
+  var rawStockVal = document.getElementById('bc_stock_len')?.value || 'AUTO_MIX';
+  var isAutoMix = (rawStockVal === 'AUTO_MIX');
+  var stockLenIn = isAutoMix ? 'AUTO_MIX' : (parseFloat(rawStockVal) || 144.0);
+  var stockFt = isAutoMix ? '12/15/16' : Math.round(stockLenIn / 12);
   var kerfIn = parseFloat(document.getElementById('bc_kerf')?.value);
   if (isNaN(kerfIn)) kerfIn = 0.125;
   var isMm = document.getElementById('bc_unit') && document.getElementById('bc_unit').value.indexOf('Millimeter') !== -1;
+  var useStock = document.getElementById('bc_use_stock_chk') ? document.getElementById('bc_use_stock_chk').checked : true;
   var disp = function(v) { return isMm ? toMmStr(v) : toFractionInch(v); };
 
   var groups = groupBarItemsByProfile(bc_items_list);
-  var profNames = Object.keys(groups);
-  var palette = ['#0284c7', '#0f766e', '#7c3aed', '#2563eb', '#0891b2', '#059669'];
+  var grandNewBars = 0, grandStockReused = 0, grandUsedLen = 0, grandStockLen = 0;
+  var grandUsableOffcuts = 0, grandScrapCount = 0;
 
-  var grandTotalBars = 0;
-  var grandUsedLen = 0;
-  var grandStockLen = 0;
-  var textOut = "========================================\n";
-  textOut += stockFt + " FT (" + Math.round(stockLenIn) + '") ALUMINIUM BAR CUTTING PLAN\n';
-  textOut += "Saw Kerf: " + (kerfIn > 0 ? (isMm ? toMmStr(kerfIn) : toFractionInch(kerfIn)) : "0") + "\n";
-  textOut += "========================================\n";
+  var html = '';
+  var textOut = "=== " + stockFt + " FT ALU BAR CUTTING PLAN (KERF: " + (kerfIn === 0 ? "0 mm" : toMmStr(kerfIn)) + ") ===\n";
+  var palette = ['#0284c7', '#0f766e', '#7c3aed', '#2563eb', '#0891b2', '#d97706'];
 
-  var html = '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #ccfbf1; padding-bottom:8px; margin-bottom:10px; flex-wrap:wrap; gap:6px;">';
-  html += '<div style="font-size:0.84rem; font-weight:800; color:#0f766e;"><i class="fa-solid fa-ruler-horizontal"></i> ' + stockFt + ' FT BAR CUTTING VISUAL MAP</div>';
-  html += '<span style="font-size:0.72rem; font-weight:800; background:#ccfbf1; color:#0f766e; padding:3px 9px; border-radius:99px;">Stock: ' + stockFt + ' Ft (' + Math.round(stockLenIn) + '")</span>';
-  html += '</div>';
+  Object.keys(groups).forEach(function(pName) {
+    var packed = pack1DBarsWithWorkshopStock(groups[pName], stockLenIn, kerfIn, pName, useStock);
+    var stockUsed = packed.stockUsedBars;
+    var newBars = packed.newBars;
+    grandStockReused += stockUsed.length;
+    grandNewBars += newBars.length;
 
-  profNames.forEach(function(pName, pIdx) {
-    var bars = pack1DBarsBestFit(groups[pName], stockLenIn, kerfIn);
-    var pStockTotal = bars.length * stockLenIn;
-    var pUsedTotal = bars.reduce(function(s, b) { return s + b.used; }, 0);
-    var pWastePct = pStockTotal > 0 ? (((pStockTotal - pUsedTotal) / pStockTotal) * 100).toFixed(1) : '0.0';
-    var pUtilPct = (100 - parseFloat(pWastePct)).toFixed(1);
+    var allBarsThisProfile = stockUsed.concat(newBars);
+    var pUsed = 0, pStock = 0;
+    allBarsThisProfile.forEach(function(b) {
+      pUsed += b.used;
+      pStock += (b.stockLen || (isAutoMix ? 144 : stockLenIn));
+    });
+    grandUsedLen += pUsed;
+    grandStockLen += pStock;
+    var pUtilPct = pStock > 0 ? ((pUsed / pStock) * 100).toFixed(1) : '0.0';
 
-    grandTotalBars += bars.length;
-    grandUsedLen += pUsedTotal;
-    grandStockLen += pStockTotal;
+    textOut += "\n[" + pName.toUpperCase() + "] -> NEW BARS TO BUY: " + newBars.length + " (" + stockFt + " Ft)" + (stockUsed.length > 0 ? (" | REUSED FROM WORKSHOP STOCK: " + stockUsed.length + " pc(s)") : "") + "\n";
 
-    textOut += "\n[" + pName.toUpperCase() + "] -> BUY: " + bars.length + " Full Bar(s) of " + stockFt + " Ft | Used: " + pUtilPct + "% | Waste: " + pWastePct + "%\n";
-
-    html += '<div style="margin-bottom:14px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:9px;">';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:8px;">';
-    html += '<span style="font-size:0.78rem; font-weight:800; color:#0f172a;">' + (pIdx + 1) + '. ' + pName + '</span>';
-    html += '<span style="font-size:0.72rem; font-weight:800; color:#0f766e; background:#dcfce7; padding:2px 8px; border-radius:8px;">Buy ' + bars.length + ' Bar' + (bars.length > 1 ? 's' : '') + ' (' + stockFt + ' Ft) • ' + pUtilPct + '% Used</span>';
+    html += '<div style="margin-bottom:12px; border:1px solid #cbd5e1; border-radius:9px; padding:8px; background:#f8fafc;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:6px; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">';
+    html += '<span style="font-size:0.78rem; font-weight:800; color:#0f172a;">' + pName + '</span>';
+    html += '<span style="font-size:0.7rem; font-weight:800; color:#0f766e;">Buy ' + newBars.length + ' New Bar' + (newBars.length !== 1 ? 's' : '') + (stockUsed.length > 0 ? (' + <span style="color:#15803d;">' + stockUsed.length + ' From Stock</span>') : '') + ' • ' + pUtilPct + '% Used</span>';
     html += '</div>';
 
-    var groupedBars = groupIdenticalBars(bars);
-    groupedBars.forEach(function(gEntry) {
+    // Track consumed remnants
+    var groupedStock = groupIdenticalBars(stockUsed);
+    groupedStock.forEach(function(gEntry) {
       var bar = gEntry.bar;
       var qty = gEntry.qty;
-      var qtyLabel = qty > 1 ? ('× ' + qty + ' Bars') : '1 Bar';
+      bc_last_used_remnants.push({ remId: bar.remId, profile: pName, len_in: bar.stockLen, qty: qty });
+      if (bar.remaining >= BC_MIN_USABLE_IN) {
+        bc_last_plan_offcuts.push({ profile: pName, len_in: bar.remaining, qty: qty });
+        grandUsableOffcuts += qty;
+      } else if (bar.remaining > 0.1) {
+        grandScrapCount += qty;
+      }
+      var qtyLabel = (qty > 1 ? ('× ' + qty + ' ') : '1 ') + 'FROM STOCK (' + bar.remId + ')';
       var cutListStr = bar.cuts.map(function(c) { return disp(c.len); }).join(' + ');
-      textOut += "  [" + qtyLabel + "]  " + cutListStr + "  |  Offcut: " + disp(bar.remaining) + "\n";
+      textOut += "  ★ [" + qtyLabel + " • " + disp(bar.stockLen) + "] " + cutListStr + " | " + (bar.remaining >= BC_MIN_USABLE_IN ? ("Usable Offcut: " + disp(bar.remaining)) : ("Scrap: " + disp(bar.remaining))) + "\n";
+
+      var svgW = 500, svgH = 34;
+      var scale = (svgW - 12) / bar.stockLen;
+      html += '<div style="margin-bottom:7px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:4px 6px;">';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.68rem; font-weight:700; color:#166534; margin-bottom:2px;">';
+      html += '<span><span style="background:#16a34a; color:#fff; padding:1px 6px; border-radius:4px; font-weight:800; margin-right:5px;">★ ' + qtyLabel + '</span> (' + disp(bar.stockLen) + ')</span>';
+      html += '<span style="color:' + (bar.remaining >= BC_MIN_USABLE_IN ? '#047857' : '#64748b') + ';">' + (bar.remaining >= BC_MIN_USABLE_IN ? ('Usable: ' + disp(bar.remaining)) : ('Scrap (<12"): ' + disp(bar.remaining))) + '</span>';
+      html += '</div>';
+      html += '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%; height:auto; background:#ffffff; border:1px solid #16a34a; border-radius:5px; display:block;">';
+      html += '<rect x="6" y="3" width="' + (svgW - 12) + '" height="28" rx="3" fill="#dcfce7" stroke="#166534" stroke-width="1.1"/>';
+      bar.cuts.forEach(function(c) {
+        var rx = 6 + (c.offset * scale);
+        var rw = Math.max(4, Math.min(svgW - 6 - rx, c.len * scale));
+        html += '<rect x="' + rx + '" y="3" width="' + rw + '" height="28" fill="#15803d" stroke="#ffffff" stroke-width="1.4"/>';
+        if (rw >= 34) html += '<text x="' + (rx + rw / 2) + '" y="20" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">' + disp(c.len) + '</text>';
+      });
+      html += '</svg></div>';
+    });
+
+    // Track new 12'/16' bars grouped by pattern
+    var groupedNew = groupIdenticalBars(newBars);
+    groupedNew.forEach(function(gEntry) {
+      var bar = gEntry.bar;
+      var qty = gEntry.qty;
+      var isUsable = (bar.remaining >= BC_MIN_USABLE_IN);
+      if (isUsable) {
+        bc_last_plan_offcuts.push({ profile: pName, len_in: bar.remaining, qty: qty });
+        grandUsableOffcuts += qty;
+      } else if (bar.remaining > 0.1) {
+        grandScrapCount += qty;
+      }
+      var bFt = bar.stockFt || (isAutoMix ? 12 : stockFt); var qtyLabel = (qty > 1 ? ('× ' + qty + ' Bars') : '1 Bar') + ' [' + bFt + "']";
+      var cutListStr = bar.cuts.map(function(c) { return disp(c.len); }).join(' + ');
+      textOut += "  [" + qtyLabel + "]  " + cutListStr + "  |  " + (isUsable ? ("Usable Offcut (≥12\"): " + disp(bar.remaining)) : ("Scrap (<12\"): " + disp(bar.remaining))) + "\n";
 
       var svgW = 500, svgH = 36;
-      var scale = (svgW - 12) / stockLenIn;
+      var scale = (svgW - 12) / (bar.stockLen || 144);
       html += '<div style="margin-bottom:8px;">';
       html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.69rem; font-weight:700; color:#334155; margin-bottom:2px;">';
       html += '<span><span style="background:#0f766e; color:#fff; padding:1px 6px; border-radius:4px; font-weight:800; margin-right:5px;">' + qtyLabel + '</span> (' + bar.cuts.length + ' cuts each)</span>';
-      html += '<span style="color:#b45309;">Offcut: ' + disp(bar.remaining) + '</span>';
+      html += '<span style="color:' + (isUsable ? '#047857' : '#94a3b8') + '; font-weight:800;">' + (isUsable ? ('✓ Usable Offcut: ' + disp(bar.remaining)) : ('Scrap (<12"): ' + disp(bar.remaining))) + '</span>';
       html += '</div>';
       html += '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%; height:auto; background:#ffffff; border:1px solid #94a3b8; border-radius:6px; display:block;">';
-      // Full bar amber background (represents offcut/waste)
-      html += '<rect x="6" y="4" width="' + (svgW - 12) + '" height="30" rx="3" fill="#fef3c7" stroke="#0f172a" stroke-width="1.2"/>';
-
+      html += '<rect x="6" y="4" width="' + (svgW - 12) + '" height="30" rx="3" fill="' + (isUsable ? '#fef3c7' : '#e2e8f0') + '" stroke="#0f172a" stroke-width="1.2"/>';
       bar.cuts.forEach(function(c, ci) {
         var rx = 6 + (c.offset * scale);
         var rw = Math.max(4, Math.min(svgW - 6 - rx, c.len * scale));
         var col = palette[ci % palette.length];
         html += '<rect x="' + rx + '" y="4" width="' + rw + '" height="30" fill="' + col + '" stroke="#ffffff" stroke-width="1.5"/>';
-        if (rw >= 36) {
-          html += '<text x="' + (rx + rw / 2) + '" y="22" font-size="10.5" font-weight="bold" fill="#ffffff" text-anchor="middle">' + disp(c.len) + '</text>';
-        }
+        if (rw >= 36) html += '<text x="' + (rx + rw / 2) + '" y="22" font-size="10.5" font-weight="bold" fill="#ffffff" text-anchor="middle">' + disp(c.len) + '</text>';
       });
-
       if (bar.remaining * scale >= 34) {
         var wx = 6 + (bar.used * scale) + ((bar.remaining * scale) / 2);
-        html += '<text x="' + wx + '" y="22" font-size="9.5" font-weight="bold" fill="#92400e" text-anchor="middle">' + disp(bar.remaining) + '</text>';
+        html += '<text x="' + wx + '" y="22" font-size="9.5" font-weight="bold" fill="' + (isUsable ? '#92400e' : '#64748b') + '" text-anchor="middle">' + disp(bar.remaining) + '</text>';
       }
-      html += '</svg>';
-      html += '</div>';
+      html += '</svg></div>';
     });
     html += '</div>';
   });
 
   var totalUtil = grandStockLen > 0 ? ((grandUsedLen / grandStockLen) * 100).toFixed(1) : '0.0';
   var totalWaste = (100 - parseFloat(totalUtil)).toFixed(1);
-  html = '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; text-align:center;">' +
-         '<div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:6px;"><div style="font-size:0.65rem; color:#0f766e; font-weight:700;">TOTAL BARS</div><div style="font-size:0.95rem; font-weight:900; color:#0f172a;">' + grandTotalBars + ' (' + stockFt + ' Ft)</div></div>' +
-         '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:6px;"><div style="font-size:0.65rem; color:#15803d; font-weight:700;">USED %</div><div style="font-size:0.95rem; font-weight:900; color:#166534;">' + totalUtil + '%</div></div>' +
-         '<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:6px;"><div style="font-size:0.65rem; color:#b45309; font-weight:700;">WASTE %</div><div style="font-size:0.95rem; font-weight:900; color:#b45309;">' + totalWaste + '%</div></div>' +
+
+  var stockBanner = '';
+  if (grandStockReused > 0) {
+    stockBanner = '<div style="background:#dcfce7; border:1.5px solid #16a34a; border-radius:8px; padding:8px; margin-bottom:9px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">' +
+      '<div style="font-size:0.74rem; font-weight:800; color:#166534;"><i class="fa-solid fa-recycle"></i> WORKSHOP STOCK AUTO-USED: ' + grandStockReused + ' Piece(s) from your Workshop Stock!</div>' +
+      '<button type="button" onclick="confirmDeductUsedWorkshopStock()" style="background:#16a34a; color:#fff; border:none; border-radius:6px; padding:5px 9px; font-size:0.69rem; font-weight:800; cursor:pointer;">Confirm &amp; Deduct Stock</button>' +
+      '</div>';
+  }
+
+  html = stockBanner +
+         '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; text-align:center;">' +
+         '<div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:6px;"><div style="font-size:0.63rem; color:#0f766e; font-weight:700;">NEW BARS TO BUY</div><div style="font-size:0.95rem; font-weight:900; color:#0f172a;">' + grandNewBars + ' (' + stockFt + ' Ft)</div></div>' +
+         '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:6px;"><div style="font-size:0.63rem; color:#15803d; font-weight:700;">USABLE OFFCUTS</div><div style="font-size:0.95rem; font-weight:900; color:#166534;">' + grandUsableOffcuts + ' pc (≥12")</div></div>' +
+         '<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:6px;"><div style="font-size:0.63rem; color:#b45309; font-weight:700;">USED / WASTE</div><div style="font-size:0.95rem; font-weight:900; color:#b45309;">' + totalUtil + '% / ' + totalWaste + '%</div></div>' +
          '</div>' + html;
 
   textOut += "\n----------------------------------------\n";
-  textOut += "• GRAND TOTAL BARS TO BUY: " + grandTotalBars + " Full Bars (" + stockFt + " Ft each)\n";
+  var mixCounts = {};
+  Object.keys(groups).forEach(function(pn) {
+    var pk = pack1DBarsWithWorkshopStock(groups[pn], stockLenIn, kerfIn, pn, useStock);
+    pk.newBars.forEach(function(b) { var f = b.stockFt || 12; mixCounts[f] = (mixCounts[f] || 0) + 1; });
+  });
+  var mixSummaryStr = Object.keys(mixCounts).sort(function(a,b){return a-b;}).map(function(f){ return mixCounts[f] + " × " + f + " Ft"; }).join("  +  ") || "0 Bars";
+  textOut += "• BUY BREAKDOWN: " + mixSummaryStr + "  (Total: " + grandNewBars + " New Bars)\n";
+  if (grandStockReused > 0) textOut += "• REUSED FROM WORKSHOP STOCK: " + grandStockReused + " Remnant Piece(s)\n";
+  textOut += "• USABLE OFFCUTS (≥12\" — QR Eligible): " + grandUsableOffcuts + " pc(s)  |  SCRAP (<12\" — No QR): " + grandScrapCount + " pc(s)\n";
   textOut += "• OVERALL UTILIZATION: " + totalUtil + "%  |  WASTAGE: " + totalWaste + "%\n";
 
-  if (box) {
-    box.style.display = 'block';
-    box.innerHTML = html;
-  }
+  if (box) { box.style.display = 'block'; box.innerHTML = html; }
   if (outEl) outEl.textContent = textOut;
 }
 
-function groupIdenticalBars(bars) {
-  var grouped = [];
-  var map = {};
-  bars.forEach(function(bar) {
-    var sig = bar.cuts.map(function(c) { return c.len.toFixed(3); }).join('|') + '||' + bar.remaining.toFixed(3);
-    if (map[sig]) {
-      map[sig].qty += 1;
-      map[sig].barNos.push(bar.barNo);
-    } else {
-      var entry = { qty: 1, barNos: [bar.barNo], bar: bar };
-      map[sig] = entry;
-      grouped.push(entry);
-    }
+function exportRemnantQrStickersPdf() {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+  var stock = loadWorkshopRemnants().filter(function(r) { return r.qty > 0 && r.len_in >= BC_MIN_USABLE_IN; });
+  var sourceList = stock.length > 0 ? stock : bc_last_plan_offcuts.filter(function(o) { return o.len_in >= BC_MIN_USABLE_IN; }).map(function(o, i) {
+    return { id: o.remId || ('#' + (101 + i)), profile: o.profile, len_in: o.len_in, qty: o.qty, date: new Date().toLocaleDateString('en-GB') };
   });
-  return grouped;
+
+  if (!sourceList.length) {
+    alert("No usable offcuts (≥ 12\" / 1 Foot) found! Pieces below 12\" are Scrap.");
+    return;
+  }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { alert("PDF library is loading, please try again."); return; }
+
+  var isMm = document.getElementById('bc_unit') && document.getElementById('bc_unit').value.indexOf('Millimeter') !== -1;
+  var disp = function(v) { return isMm ? toMmStr(v) : toFractionInch(v); };
+
+  var doc = new jsPDF('p', 'mm', 'a4');
+  drawDocHeaderWithLogo(doc, "WORKSHOP PIPE NUMBER TAG STICKERS (≥12\" ONLY)", "Slim Pipe Labels — Print, Cut & Stick on Leftover Pipes (No QR Needed)", [15, 118, 110]);
+
+  // 3 cols x 10 rows = 30 slim pipe stickers per A4 page (60mm x 22mm each!)
+  var cols = 3, cardW = 59, cardH = 22, gapX = 3.5, gapY = 3;
+  var startX = 14, startY = 34;
+  var col = 0, row = 0;
+
+  sourceList.forEach(function(item) {
+    var x = startX + col * (cardW + gapX);
+    var y = startY + row * (cardH + gapY);
+    if (y + cardH > 286) {
+      doc.addPage('a4', 'p');
+      startY = 14; row = 0; col = 0;
+      x = startX; y = startY;
+    }
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(100, 116, 139);
+    doc.setLineWidth(0.35);
+    doc.roundedRect(x, y, cardW, cardH, 1.8, 1.8, 'FD');
+
+    // Bold Left Number Tag Box (#101)
+    doc.setFillColor(15, 118, 110);
+    doc.roundedRect(x, y, 19, cardH, 1.8, 1.8, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text(String(item.id), x + 9.5, y + 11, { align: "center" });
+    doc.setFontSize(6.5);
+    doc.setTextColor(204, 251, 241);
+    doc.text("QTY: " + item.qty, x + 9.5, y + 17.5, { align: "center" });
+
+    // Right Side: Huge Length + Profile Name
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.text(disp(item.len_in), x + 22, y + 9.5);
+
+    doc.setFontSize(6.8);
+    doc.setTextColor(51, 65, 85);
+    var pLines = doc.splitTextToSize(item.profile, 35);
+    doc.text(pLines.slice(0, 2), x + 22, y + 14.8);
+
+    col++;
+    if (col >= cols) { col = 0; row++; }
+  });
+
+  doc.save("Pipe_Number_Tag_Stickers_" + Date.now() + ".pdf");
 }
 
 function exportBarCuttingPdf() {
@@ -12719,90 +13079,98 @@ function exportBarCuttingPdf() {
   var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
   if (!jsPDF) { alert("PDF library is loading, please try again."); return; }
 
-  var stockLenIn = parseFloat(document.getElementById('bc_stock_len')?.value) || 144.0;
-  var stockFt = Math.round(stockLenIn / 12);
+  var rawStockVal = document.getElementById('bc_stock_len')?.value || 'AUTO_MIX';
+  var isAutoMix = (rawStockVal === 'AUTO_MIX');
+  var stockLenIn = isAutoMix ? 'AUTO_MIX' : (parseFloat(rawStockVal) || 144.0);
+  var stockFt = isAutoMix ? 'AUTO MIX (12/15/16)' : Math.round(stockLenIn / 12);
   var kerfIn = parseFloat(document.getElementById('bc_kerf')?.value);
   if (isNaN(kerfIn)) kerfIn = 0.125;
   var isMm = document.getElementById('bc_unit') && document.getElementById('bc_unit').value.indexOf('Millimeter') !== -1;
+  var useStock = document.getElementById('bc_use_stock_chk') ? document.getElementById('bc_use_stock_chk').checked : true;
   var disp = function(v) { return isMm ? toMmStr(v) : toFractionInch(v); };
 
   var doc = new jsPDF('l', 'mm', 'a4');
-  drawDocHeaderWithLogo(doc, stockFt + " FT ALUMINIUM BAR / PIPE CUTTING DRAWING", "Compact Grouped Cutting Plan (Qty Per Pattern)", [15, 118, 110]);
+  drawDocHeaderWithLogo(doc, stockFt + " FT ALUMINIUM BAR / PIPE CUTTING DRAWING", "Compact Plan • Workshop Stock Reused First", [15, 118, 110]);
 
   var groups = groupBarItemsByProfile(bc_items_list);
   var y = 34;
-  var startX = 38;   // Wide left column for clean "× 100 Bars" badge (never overlaps!)
-  var barDrawW = 216; // mm
-  var scale = barDrawW / stockLenIn;
+  var startX = 42;
+  var barDrawW = 208;
   var colors = [[2,132,199], [15,118,110], [124,58,237], [37,99,235], [8,145,178]];
-  var grandTotalBars = 0;
+  var grandNewBars = 0, grandStockReused = 0;
 
   Object.keys(groups).forEach(function(pName) {
-    var bars = pack1DBarsBestFit(groups[pName], stockLenIn, kerfIn);
-    var groupedBars = groupIdenticalBars(bars);
-    grandTotalBars += bars.length;
+    var packed = pack1DBarsWithWorkshopStock(groups[pName], stockLenIn, kerfIn, pName, useStock);
+    var groupedStock = groupIdenticalBars(packed.stockUsedBars);
+    var groupedNew = groupIdenticalBars(packed.newBars);
+    grandStockReused += packed.stockUsedBars.length;
+    grandNewBars += packed.newBars.length;
 
     if (y > 174) { doc.addPage('a4', 'l'); y = 16; }
     doc.setFillColor(240, 253, 250);
     doc.setDrawColor(15, 118, 110);
     doc.roundedRect(14, y, 269, 7, 1.5, 1.5, 'FD');
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.8);
+    doc.setFontSize(8.6);
     doc.setTextColor(15, 118, 110);
-    doc.text(pName.toUpperCase() + "  —  BUY " + bars.length + " BAR(S) OF " + stockFt + " FT (" + Math.round(stockLenIn) + '")', 17, y + 4.9);
+    var hdrTxt = pName.toUpperCase() + "  —  BUY " + packed.newBars.length + " NEW BAR(S) OF " + stockFt + " FT" + (packed.stockUsedBars.length > 0 ? ("  +  REUSE " + packed.stockUsedBars.length + " FROM WORKSHOP STOCK") : "");
+    doc.text(hdrTxt, 17, y + 4.9);
     y += 9.5;
 
-    groupedBars.forEach(function(gEntry) {
-      var bar = gEntry.bar;
-      var qty = gEntry.qty;
+    groupedStock.forEach(function(gEntry) {
+      var bar = gEntry.bar, qty = gEntry.qty;
       if (y > 186) { doc.addPage('a4', 'l'); y = 16; }
+      doc.setFillColor(22, 163, 74);
+      doc.roundedRect(14, y, 25.5, 9, 1.5, 1.5, 'F');
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.1); doc.setTextColor(255, 255, 255);
+      doc.text("STK x" + qty + " " + bar.remId, 26.75, y + 5.7, { align: "center" });
 
-      // Crisp Left Quantity Pill Badge (e.g., "× 100 Bars" or "1 Bar")
-      doc.setFillColor(qty > 1 ? 15 : 71, qty > 1 ? 118 : 85, qty > 1 ? 110 : 105);
-      doc.roundedRect(14, y, 21.5, 9, 1.5, 1.5, 'F');
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.8);
-      doc.setTextColor(255, 255, 255);
-      var qTxt = qty > 1 ? ("x " + qty + " Bars") : "1 Bar";
-      doc.text(qTxt, 24.75, y + 5.8, { align: "center" });
-
-      // Full stock bar amber background (offcut)
-      doc.setFillColor(254, 243, 199);
-      doc.setDrawColor(15, 23, 42);
-      doc.setLineWidth(0.35);
+      var sc = barDrawW / bar.stockLen;
+      doc.setFillColor(220, 252, 231); doc.setDrawColor(22, 101, 52); doc.setLineWidth(0.35);
       doc.rect(startX, y, barDrawW, 9, 'FD');
-
-      bar.cuts.forEach(function(c, ci) {
-        var rx = startX + (c.offset * scale);
-        var rw = Math.max(2, Math.min(startX + barDrawW - rx, c.len * scale));
-        var col = colors[ci % colors.length];
-        doc.setFillColor(col[0], col[1], col[2]);
-        doc.setDrawColor(255, 255, 255);
+      bar.cuts.forEach(function(c) {
+        var rx = startX + (c.offset * sc), rw = Math.max(2, Math.min(startX + barDrawW - rx, c.len * sc));
+        doc.setFillColor(21, 128, 61); doc.setDrawColor(255, 255, 255);
         doc.rect(rx, y, rw, 9, 'FD');
-        if (rw >= 13) {
-          doc.setFontSize(7.2);
-          doc.setTextColor(255, 255, 255);
-          doc.text(disp(c.len), rx + rw / 2, y + 5.8, { align: "center" });
-        }
+        if (rw >= 13) { doc.setFontSize(7.1); doc.setTextColor(255, 255, 255); doc.text(disp(c.len), rx + rw / 2, y + 5.8, { align: "center" }); }
       });
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.2); doc.setTextColor(22, 101, 52);
+      doc.text((bar.remaining >= BC_MIN_USABLE_IN ? "Usable: " : "Scrap: ") + disp(bar.remaining), startX + barDrawW + 3, y + 5.8);
+      y += 11.5;
+    });
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.4);
-      doc.setTextColor(180, 83, 9);
-      doc.text("Offcut: " + disp(bar.remaining), startX + barDrawW + 3, y + 5.8);
+    var scale = barDrawW / 192;
+    groupedNew.forEach(function(gEntry) {
+      var bar = gEntry.bar, qty = gEntry.qty;
+      if (y > 186) { doc.addPage('a4', 'l'); y = 16; }
+      doc.setFillColor(qty > 1 ? 15 : 71, qty > 1 ? 118 : 85, qty > 1 ? 110 : 105);
+      doc.roundedRect(14, y, 25.5, 9, 1.5, 1.5, 'F');
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.6); doc.setTextColor(255, 255, 255);
+      var bFt = bar.stockFt || 12; var bScale = barDrawW / (bar.stockLen || 144); scale = bScale; doc.text((qty > 1 ? ("x" + qty) : "1") + " (" + bFt + "')", 26.75, y + 5.8, { align: "center" });
+
+      var isUsable = (bar.remaining >= BC_MIN_USABLE_IN);
+      doc.setFillColor(isUsable ? 254 : 226, isUsable ? 243 : 232, isUsable ? 199 : 240);
+      doc.setDrawColor(15, 23, 42); doc.setLineWidth(0.35);
+      doc.rect(startX, y, barDrawW, 9, 'FD');
+      bar.cuts.forEach(function(c, ci) {
+        var rx = startX + (c.offset * scale), rw = Math.max(2, Math.min(startX + barDrawW - rx, c.len * scale));
+        var col = colors[ci % colors.length];
+        doc.setFillColor(col[0], col[1], col[2]); doc.setDrawColor(255, 255, 255);
+        doc.rect(rx, y, rw, 9, 'FD');
+        if (rw >= 13) { doc.setFontSize(7.2); doc.setTextColor(255, 255, 255); doc.text(disp(c.len), rx + rw / 2, y + 5.8, { align: "center" }); }
+      });
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.2); doc.setTextColor(isUsable ? 180 : 100, isUsable ? 83 : 116, isUsable ? 9 : 139);
+      doc.text((isUsable ? "Usable: " : "Scrap: ") + disp(bar.remaining), startX + barDrawW + 3, y + 5.8);
       y += 11.5;
     });
     y += 3;
   });
 
-  // Grand Total Compact Summary Footer
   if (y > 188) { doc.addPage('a4', 'l'); y = 16; }
   doc.setFillColor(15, 23, 42);
   doc.roundedRect(14, y, 269, 8.5, 1.5, 1.5, 'F');
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.8);
-  doc.setTextColor(254, 240, 138);
-  doc.text("GRAND TOTAL TO BUY:  " + grandTotalBars + " FULL BAR(S) OF " + stockFt + " FT   |   Same cut patterns are grouped with Qty on left!", 18, y + 5.7);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8.6); doc.setTextColor(254, 240, 138);
+  doc.text("GRAND TOTAL TO BUY: " + grandNewBars + " NEW BAR(S) (" + stockFt + " FT)" + (grandStockReused > 0 ? ("  |  REUSED FROM WORKSHOP STOCK: " + grandStockReused + " PC(S)") : ""), 18, y + 5.7);
 
   doc.save("Alu_Bar_Cutting_" + stockFt + "ft_" + Date.now() + ".pdf");
 }
@@ -14101,3 +14469,280 @@ function setPtComboMode(mode) {
   else if (mode === 'PT_WIN') ptCadLoadPreset('hw_win');
   else if (mode === 'ALL_3') ptCadLoadPreset('door_hw');
 }
+
+
+// =========================================================================
+// v96: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
+// =========================================================================
+var SW_CUSTOM_GLASS_KEY = 'sw_custom_glass_types_v1';
+var SW_GLASS_SHOP_STOCK_KEY = 'sw_glass_shop_stock_v1';
+var SW_GLASS_REMNANT_KEY = 'sw_glass_remnants_v1';
+var gc_last_plan_offcuts = [];
+
+function loadCustomGlassTypes() {
+  try {
+    var raw = localStorage.getItem(SW_CUSTOM_GLASS_KEY);
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function syncCustomGlassDropdowns() {
+  var customList = loadCustomGlassTypes();
+  var selectIds = ['dm_g_type', 'sl_g_type', 'cc_g_type', 'dr_g_type', 'pt_g_type', 'gc_g_type', 'gc_shop_stock_type'];
+  selectIds.forEach(function(sid) {
+    var sel = document.getElementById(sid);
+    if (!sel) return;
+    // Remove previously injected custom options
+    Array.from(sel.options).forEach(function(opt) {
+      if (opt.getAttribute && opt.getAttribute('data-custom-glass') === '1') opt.remove();
+    });
+    customList.forEach(function(name) {
+      var o = document.createElement('option');
+      o.value = name;
+      o.textContent = name + ' (Custom)';
+      o.setAttribute('data-custom-glass', '1');
+      sel.appendChild(o);
+    });
+  });
+  renderCustomGlassSettingsList();
+}
+
+function renderCustomGlassSettingsList() {
+  var box = document.getElementById('custom_glass_types_list');
+  if (!box) return;
+  var list = loadCustomGlassTypes();
+  if (!list.length) {
+    box.innerHTML = '<span style="font-size:0.71rem; color:#94a3b8;">No custom glass added yet.</span>';
+    return;
+  }
+  box.innerHTML = list.map(function(name, idx) {
+    return '<span style="display:inline-flex; align-items:center; gap:5px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; border-radius:99px; padding:3px 9px; font-size:0.72rem; font-weight:800;">' +
+      name + ' <button type="button" onclick="deleteCustomGlassType(' + idx + ')" style="background:none; border:none; color:#dc2626; font-weight:900; cursor:pointer; padding:0;">✕</button></span>';
+  }).join('');
+}
+
+function addCustomGlassType() {
+  var inp = document.getElementById('custom_glass_name_inp');
+  var name = (inp ? inp.value : '').trim();
+  if (!name) { alert("Please enter a custom glass name (e.g. 5mm Fluted)."); return; }
+  var list = loadCustomGlassTypes();
+  if (list.some(function(x) { return x.toLowerCase() === name.toLowerCase(); })) {
+    alert("This glass name already exists!");
+    return;
+  }
+  list.push(name);
+  try { localStorage.setItem(SW_CUSTOM_GLASS_KEY, JSON.stringify(list)); } catch (e) {}
+  if (inp) inp.value = '';
+  syncCustomGlassDropdowns();
+}
+
+function deleteCustomGlassType(idx) {
+  var list = loadCustomGlassTypes();
+  list.splice(idx, 1);
+  try { localStorage.setItem(SW_CUSTOM_GLASS_KEY, JSON.stringify(list)); } catch (e) {}
+  syncCustomGlassDropdowns();
+}
+
+// --- GLASS SHOP FULL-SHEET INVENTORY ---
+function loadGlassShopStock() {
+  try {
+    var raw = localStorage.getItem(SW_GLASS_SHOP_STOCK_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function saveGlassShopFullStock() {
+  var gType = document.getElementById('gc_shop_stock_type')?.value || 'Clear';
+  var qty = parseInt(document.getElementById('gc_shop_stock_qty')?.value, 10);
+  if (isNaN(qty) || qty < 0) return;
+  var stock = loadGlassShopStock();
+  stock[gType] = qty;
+  try { localStorage.setItem(SW_GLASS_SHOP_STOCK_KEY, JSON.stringify(stock)); } catch (e) {}
+  renderGlassShopStockUI();
+}
+
+function renderGlassShopStockUI(neededSheetsByType) {
+  var box = document.getElementById('gc_shop_stock_list');
+  if (!box) return;
+  var stock = loadGlassShopStock();
+  var keys = Object.keys(stock);
+  if (!keys.length) {
+    box.innerHTML = 'No shop sheet stock set yet. Choose glass type &amp; sheets above, then tap <b>Set Stock</b>.';
+    return;
+  }
+  var html = '';
+  keys.forEach(function(k) {
+    var have = stock[k] || 0;
+    var need = (neededSheetsByType && neededSheetsByType[k]) ? neededSheetsByType[k] : 0;
+    var buyMore = Math.max(0, need - have);
+    var statusBadge = '';
+    if (need > 0) {
+      statusBadge = buyMore > 0
+        ? ('<span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:800;">Need ' + need + ' → BUY ' + buyMore + ' MORE</span>')
+        : ('<span style="background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; font-weight:800;">Need ' + need + ' → OK (Left: ' + (have - need) + ')</span>');
+    }
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #bae6fd; border-radius:6px; padding:5px 7px; margin-bottom:4px; gap:5px; flex-wrap:wrap;">';
+    html += '<span><b>' + k + '</b>: <b style="color:#0369a1;">' + have + ' Sheet(s)</b> in shop</span>' + statusBadge;
+    html += '</div>';
+  });
+  box.innerHTML = html;
+}
+
+// --- GLASS OFFCUT / REMNANT STOCK (#G101, #G102 — NO QR!) ---
+function loadGlassRemnants() {
+  try {
+    var raw = localStorage.getItem(SW_GLASS_REMNANT_KEY);
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function saveGlassRemnants(arr) {
+  try { localStorage.setItem(SW_GLASS_REMNANT_KEY, JSON.stringify(arr || [])); } catch (e) {}
+  renderGlassRemnantStockUI();
+}
+
+function nextGlassRemId(list) {
+  var maxN = 100;
+  (list || []).forEach(function(r) {
+    var m = String(r.id || '').match(/#G(\d+)/);
+    if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+  });
+  return '#G' + (maxN + 1);
+}
+
+function renderGlassRemnantStockUI(matchedIds) {
+  var box = document.getElementById('gc_remnant_stock_list');
+  if (!box) return;
+  var q = (document.getElementById('gc_remnant_search')?.value || '').trim().toLowerCase();
+  var list = loadGlassRemnants().filter(function(r) {
+    if (!(r.qty > 0 && r.h_in >= 12 && r.w_in >= 12)) return false;
+    if (!q) return true;
+    return String(r.id).toLowerCase().includes(q) || String(r.spec).toLowerCase().includes(q);
+  });
+  if (!list.length) {
+    box.innerHTML = 'No usable glass offcuts (≥12" × 12") saved yet. Pieces below 12" are treated as Scrap.';
+    return;
+  }
+  var h = '';
+  list.forEach(function(r, idx) {
+    var isHit = matchedIds && matchedIds.indexOf(r.id) !== -1;
+    h += '<div style="display:flex; justify-content:space-between; align-items:center; background:' + (isHit ? '#dcfce7' : '#fff') + '; border:1px solid ' + (isHit ? '#16a34a' : '#bbf7d0') + '; border-radius:6px; padding:5px 7px; margin-bottom:4px;">';
+    h += '<div><span style="background:#059669; color:#fff; padding:1px 5px; border-radius:4px; font-size:0.65rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + toFractionInch(r.h_in) + ' × ' + toFractionInch(r.w_in) + '</b> (' + r.spec + ') • Qty: <b>' + r.qty + '</b>' + (isHit ? ' <b style="color:#15803d;">★ MATCH FOR THIS JOB!</b>' : '') + '</div>';
+    h += '<button type="button" onclick="deleteGlassRemnant(' + idx + ')" style="background:#fee2e2; color:#b91c1c; border:none; border-radius:4px; padding:3px 6px; font-size:0.65rem; font-weight:800; cursor:pointer;">✕</button>';
+    h += '</div>';
+  });
+  box.innerHTML = h;
+}
+
+function deleteGlassRemnant(idx) {
+  var list = loadGlassRemnants();
+  list.splice(idx, 1);
+  saveGlassRemnants(list);
+}
+
+function saveUsableGlassOffcuts() {
+  if (!gc_last_plan_offcuts.length) {
+    alert("No usable glass offcuts (≥ 12\" × 12\") found in current sheet layout! Smaller pieces are treated as Scrap.");
+    return;
+  }
+  var list = loadGlassRemnants();
+  var added = 0;
+  gc_last_plan_offcuts.forEach(function(o) {
+    if (o.h_in < 12 || o.w_in < 12) return;
+    var ex = list.find(function(r) { return r.spec === o.spec && Math.abs(r.h_in - o.h_in) < 0.5 && Math.abs(r.w_in - o.w_in) < 0.5; });
+    if (ex) ex.qty += (o.qty || 1);
+    else list.push({ id: nextGlassRemId(list), spec: o.spec, h_in: o.h_in, w_in: o.w_in, qty: o.qty || 1 });
+    added += (o.qty || 1);
+  });
+  saveGlassRemnants(list);
+  alert("Saved " + added + " usable glass offcut(s) (≥12\" × 12\") with Number Tags (#G101...)!");
+}
+
+function exportGlassNumberStickersPdf() {
+  if (!isAppActivated()) { alert("PRO activation is required."); openScreen('activation', 'PRO UPGRADE & PLANS'); return; }
+  var list = loadGlassRemnants().filter(function(r) { return r.qty > 0 && r.h_in >= 12 && r.w_in >= 12; });
+  if (!list.length) { alert("No saved usable glass offcuts (≥12\" × 12\") yet!"); return; }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) return;
+
+  var doc = new jsPDF('p', 'mm', 'a4');
+  drawDocHeaderWithLogo(doc, "GLASS OFFCUT NUMBER TAG STICKERS (≥12\" ONLY)", "Bold Number Tags (#G101, #G102...) — No QR Code Needed", [2, 132, 199]);
+  var cols = 3, cardW = 59, cardH = 22, gapX = 3.5, gapY = 3, startX = 14, startY = 34, col = 0, row = 0;
+
+  list.forEach(function(item) {
+    var x = startX + col * (cardW + gapX), y = startY + row * (cardH + gapY);
+    if (y + cardH > 286) { doc.addPage('a4', 'p'); startY = 14; row = 0; col = 0; x = startX; y = startY; }
+    doc.setFillColor(255, 255, 255); doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.35);
+    doc.roundedRect(x, y, cardW, cardH, 1.8, 1.8, 'FD');
+    doc.setFillColor(2, 132, 199);
+    doc.roundedRect(x, y, 19, cardH, 1.8, 1.8, 'F');
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11.5); doc.setTextColor(255, 255, 255);
+    doc.text(String(item.id), x + 9.5, y + 11, { align: "center" });
+    doc.setFontSize(6.5); doc.setTextColor(224, 242, 254);
+    doc.text("QTY: " + item.qty, x + 9.5, y + 17.5, { align: "center" });
+
+    doc.setTextColor(15, 23, 42); doc.setFontSize(10);
+    doc.text(toFractionInch(item.h_in) + " x " + toFractionInch(item.w_in), x + 22, y + 9.5);
+    doc.setFontSize(6.8); doc.setTextColor(51, 65, 85);
+    doc.text(String(item.spec || 'Glass').slice(0, 26), x + 22, y + 15.5);
+    col++; if (col >= cols) { col = 0; row++; }
+  });
+  doc.save("Glass_Number_Tag_Stickers_" + Date.now() + ".pdf");
+}
+
+// Hook into recalculateGlassCuttingSheets to compute usable glass offcuts, check #G101 stock matches, and show Shop Stock vs Buy!
+(function() {
+  if (typeof recalculateGlassCuttingSheets === 'function') {
+    var _origRecalcGlass = recalculateGlassCuttingSheets;
+    recalculateGlassCuttingSheets = function() {
+      _origRecalcGlass();
+      gc_last_plan_offcuts = [];
+      var stockDim = getSelectedGlassStockSheetDims();
+      var sheets = (gc_items_list && gc_items_list.length) ? packGlassPanelsMinWaste(gc_items_list, stockDim.sL, stockDim.sW) : [];
+      var neededByType = {};
+      var matchedRemIds = [];
+      var remList = loadGlassRemnants();
+
+      (gc_items_list || []).forEach(function(it) {
+        var gType = (it.spec || 'Clear').replace(/^\d+(\.\d+)?\s*mm\s*/i, '').trim() || 'Clear';
+        neededByType[gType] = Math.max(neededByType[gType] || 0, sheets.length);
+        remList.forEach(function(r) {
+          if (r.qty > 0 && ((r.h_in >= it.h_in && r.w_in >= it.w_in) || (r.h_in >= it.w_in && r.w_in >= it.h_in))) {
+            if (matchedRemIds.indexOf(r.id) === -1) matchedRemIds.push(r.id);
+          }
+        });
+      });
+
+      sheets.forEach(function(sh) {
+        var usedL = 0, usedW = 0;
+        (sh.rects || []).forEach(function(rc) {
+          usedL = Math.max(usedL, (rc.x || 0) + (rc.w || 0));
+          usedW = Math.max(usedW, (rc.y || 0) + (rc.h || 0));
+        });
+        var remL = stockDim.sL - usedL;
+        var remW = stockDim.sW - usedW;
+        var mainSpec = (gc_items_list[0] && gc_items_list[0].spec) ? gc_items_list[0].spec : '5 mm Clear';
+        if (remL >= 12 && stockDim.sW >= 12) gc_last_plan_offcuts.push({ spec: mainSpec, h_in: stockDim.sW, w_in: remL, qty: 1 });
+        if (remW >= 12 && usedL >= 12) gc_last_plan_offcuts.push({ spec: mainSpec, h_in: remW, w_in: usedL, qty: 1 });
+      });
+
+      renderGlassShopStockUI(neededByType);
+      renderGlassRemnantStockUI(matchedRemIds);
+
+      var outEl = document.getElementById('gc_out');
+      if (outEl && matchedRemIds.length > 0 && gc_items_list.length > 0) {
+        outEl.textContent = "★ MATCHING GLASS STOCK TAGS FOUND: " + matchedRemIds.join(", ") + " (Check green list below!)\n\n" + outEl.textContent;
+      }
+    };
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', function() {
+      syncCustomGlassDropdowns();
+      renderWorkshopRemnantStockUI();
+      renderGlassShopStockUI();
+      renderGlassRemnantStockUI();
+    });
+  }
+})();
