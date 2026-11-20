@@ -5592,9 +5592,10 @@ function clearDoor() {
  // ========================================================
  // 7. PARTITION MODULE
  // ========================================================
- var pt_part_count = 0;
+ var pt_part_count = 0; pt_pdf_jobs = [];
  var pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
  var pt_glass_dict = {};
+ var pt_pdf_jobs = [];
 
  function onPartitionTypeChanged() {
   var pType = document.getElementById('pt_type') ? document.getElementById('pt_type').value : 'Fixed Partition';
@@ -5669,8 +5670,10 @@ function calculatePartition() {
   const tube_label = getPartitionTubeLabel();
   const sg_key = `Single Glazing [${tube_label}]`;
   const dg_key = `Double Glazing [${tube_label}]`;
+  const clip_key = `Glazing Clip (Partition + Door Same)`;
   if (!pt_buckets[sg_key]) pt_buckets[sg_key] = [];
   if (!pt_buckets[dg_key]) pt_buckets[dg_key] = [];
+  if (!pt_buckets[clip_key]) pt_buckets[clip_key] = [];
   const pt_gspec = getModuleGlassLabel('pt');
 
   const leaves = [], splits = [], doorGroups = [];
@@ -5680,20 +5683,34 @@ function calculatePartition() {
   const grossSqFt = (d.h * d.w) / 144.0;
   let minusWallSqFt = 0;
 
-  let out = `[Partition #${pt_part_count} — PRO CAD DESIGN (${disp(d.h)} H × ${disp(d.w)} W)]\n`;
   const intDoorType = document.getElementById('pt_int_door_type')?.value || 'Standard Door';
   const intWinSys = document.getElementById('pt_int_win_sys')?.value || '18x40 System';
   const intWinTrack = document.getElementById('pt_int_win_track')?.value || '2-Track';
   const ofFlags = `Top:${pt_outer_frame.top?'ON':'OFF'} | Bot:${pt_outer_frame.bot?'ON':'OFF'} | L:${pt_outer_frame.left?'ON':'OFF'} | R:${pt_outer_frame.right?'ON':'OFF'} | WinFrame:${pt_outer_frame.win?'ON':'OFF'}`;
+
+  const pdfJob = {
+    jobTitle: `Partition #${pt_part_count} (${disp(d.h)} H x ${disp(d.w)} W)`,
+    tubeLabel: `${tube_label} (${disp(tube_face)} Face)`,
+    aluLabel: getModuleAluLabel('pt'),
+    outerConfig: ofFlags,
+    doorSystem: intDoorType,
+    winSystem: `${intWinSys} (${intWinTrack})`,
+    partitionPipes: [],
+    doorRows: [],
+    windowRows: [],
+    panelRows: [],
+    clipSummary: null
+  };
+
+  let out = `[Partition #${pt_part_count} — PRO CAD DESIGN (${disp(d.h)} H × ${disp(d.w)} W)]\n`;
   out += `> Section Tube: ${tube_label} (${disp(tube_face)} Face) | Alu: ${getModuleAluLabel('pt')}\n`;
   out += `> Outer Frame Config: ${ofFlags}\n`;
   if (pt_active_combo_mode === 'PT_DOOR' || pt_active_combo_mode === 'ALL_3') out += `> Attached Door System: ${intDoorType}\n`;
   if (pt_active_combo_mode === 'PT_WIN' || pt_active_combo_mode === 'ALL_3') out += `> Attached Window System: ${intWinSys} (${intWinTrack})\n`;
   out += `-----------------------------------\n`;
-  out += `1. ALUMINIUM OUTER FRAME & DIVIDER TUBES (AUTO DEDUCTED)\n`;
+  out += `1. PARTITION OUTER FRAME & DIVIDER PIPES\n`;
   out += `-----------------------------------\n`;
 
-  // Compute active outer pipe lengths from actual cells with outerL/outerR/outerT/outerB = true!
   let leftOuterLen = 0, rightOuterLen = 0, topOuterLen = 0;
   let botOuterSegs = [];
   leaves.forEach(lf => {
@@ -5707,24 +5724,26 @@ function calculatePartition() {
   if (leftOuterLen > 2) {
     out += `> Left Outer Vertical (${tube_label}): ${disp(leftOuterLen)} (1 pc)\n`;
     pt_buckets[sg_key].push(leftOuterLen);
+    pdfJob.partitionPipes.push({ part: 'Left Outer Vertical', profile: tube_label, size: disp(leftOuterLen), qty: '1 pc' });
   } else {
-    out += `> Left Outer Vertical: NOT REQUIRED (0 pc — OFF / Wall / No Win Frame)\n`;
+    out += `> Left Outer Vertical: NOT REQUIRED (0 pc)\n`;
   }
   if (rightOuterLen > 2) {
     out += `> Right Outer Vertical (${tube_label}): ${disp(rightOuterLen)} (1 pc)\n`;
     pt_buckets[sg_key].push(rightOuterLen);
+    pdfJob.partitionPipes.push({ part: 'Right Outer Vertical', profile: tube_label, size: disp(rightOuterLen), qty: '1 pc' });
   } else {
-    out += `> Right Outer Vertical: NOT REQUIRED (0 pc — OFF / Wall / No Win Frame)\n`;
+    out += `> Right Outer Vertical: NOT REQUIRED (0 pc)\n`;
   }
   const topNetLen = Math.max(0, topOuterLen - (leftOuterLen > 2 ? tube_face : 0) - (rightOuterLen > 2 ? tube_face : 0));
   if (topNetLen > 2) {
     out += `> Top Outer Horizontal (${tube_label}): ${disp(topNetLen)} (1 pc)\n`;
     pt_buckets[sg_key].push(topNetLen);
+    pdfJob.partitionPipes.push({ part: 'Top Outer Horizontal', profile: tube_label, size: disp(topNetLen), qty: '1 pc' });
   } else {
     out += `> Top Outer Horizontal: NOT REQUIRED (0 pc)\n`;
   }
 
-  // Merge contiguous bottom outer segments
   botOuterSegs.sort((a, b) => a.x1 - b.x1);
   const mergedBot = [];
   botOuterSegs.forEach(s => {
@@ -5739,6 +5758,7 @@ function calculatePartition() {
       if (segLen > 2) {
         out += `> Bottom Base Tube #${sIdx + 1} (${tube_label}): ${disp(segLen)} (1 pc)\n`;
         pt_buckets[sg_key].push(segLen);
+        pdfJob.partitionPipes.push({ part: `Bottom Base Tube #${sIdx + 1}`, profile: tube_label, size: disp(segLen), qty: '1 pc' });
       }
     });
   } else {
@@ -5754,23 +5774,28 @@ function calculatePartition() {
     out += `> Multi-Part Door #${idx + 1} [Inner Clear: ${disp(clearH)} H × ${disp(clearW)} W -> Auto Shutter: ${disp(shutH)} × ${disp(shutW)}]:\n`;
     out += `   • Vertical Stiles (${disp(secVert)} Sec): ${disp(shutH)} (2 pc)\n`;
     out += `   • Top Rail (${disp(secTop)} Sec): ${disp(drw)} (1 pc) | Bottom Rail (${disp(secBot)} Sec): ${disp(drw)} (1 pc)\n`;
-    out += `   • Middle Rail Section: ${disp(secMid)} | Hardware: Hinges 3 pc + Lock 1 Set + Handle\n`;
     pt_buckets["Door Sash"].push(shutH, shutH, drw, drw);
+    pdfJob.doorRows.push({ part: `Multi-Part Door #${idx + 1} — Inner Clear`, detail: intDoorType, size: `${disp(clearH)} H x ${disp(clearW)} W`, qty: '1 Door' });
+    pdfJob.doorRows.push({ part: `Door #${idx + 1} — Vertical Stiles`, detail: `${disp(secVert)} Vert Section`, size: disp(shutH), qty: '2 pc' });
+    pdfJob.doorRows.push({ part: `Door #${idx + 1} — Top & Bottom Rails`, detail: `Top ${disp(secTop)} / Bot ${disp(secBot)}`, size: disp(drw), qty: '2 pc (1T + 1B)' });
   });
 
   splits.forEach(function(sp, idx) {
     const cutL = Math.max(4, sp.len - tube_face);
     const secTag = sp.dir === 'V' ? `Vert ${disp(secVert)}` : `Mid ${disp(secMid)}`;
-    out += `> Divider #${idx + 1} (${sp.dir === 'V' ? 'Vertical Post' : 'Horizontal Transom'} [${secTag}]): ${disp(cutL)} (1 pc)\n`;
+    const divName = sp.dir === 'V' ? `Divider #${idx + 1} (Vertical Post)` : `Divider #${idx + 1} (Horizontal Transom)`;
+    out += `> ${divName} [${secTag}]: ${disp(cutL)} (1 pc)\n`;
     pt_buckets[dg_key].push(cutL);
+    pdfJob.partitionPipes.push({ part: divName, profile: `${tube_label} (${secTag})`, size: disp(cutL), qty: '1 pc' });
   });
 
   out += `\n-----------------------------------\n`;
-  out += `2. TRUE INNER OPENING & AUTO CUTTING LIST\n`;
+  out += `2. DOOR, WINDOW & FIXED PANEL CUTTING LIST\n`;
   out += `-----------------------------------\n`;
   let totGlassPcs = 0, totGlassSqFt = 0;
   let totAcpPcs = 0, totAcpSqFt = 0;
   let totJaliPcs = 0, totJaliSqFt = 0;
+  let ptClipInches = 0, doorClipInches = 0;
 
   leaves.forEach(function(lf, idx) {
     const tag = `Box #${idx + 1}`;
@@ -5784,13 +5809,22 @@ function calculatePartition() {
     if (lf.mat === 'WALL_MINUS') {
       minusWallSqFt += boxSqFt;
       out += `• ${tag} [WALL / CUTOUT MINUS]: -${boxSqFt.toFixed(2)} Sq.Ft (${disp(lf.h)} × ${disp(lf.w)}) -> DEDUCTED!\n`;
+      pdfJob.panelRows.push({ part: tag, detail: 'WALL / BRICK MINUS (No Pipe)', size: `${disp(lf.h)} H x ${disp(lf.w)} W`, qty: `-${boxSqFt.toFixed(2)} Sq.Ft` });
     } else if (lf.mat === 'ACP') {
-      out += `• ${tag} [ACP BOARD] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${((cutH * cutW) / 144).toFixed(2)} Sq.Ft)\n`;
-      totAcpPcs++; totAcpSqFt += (cutH * cutW) / 144;
-      pt_acp_list.push({ rowTag: tag, cutStr: `${disp(cutH)} x ${disp(cutW)}`, h_in: cutH, w_in: cutW, qty: 1, buyLabel: '', areaSqFt: (cutH * cutW) / 144 });
+      const sq = (cutH * cutW) / 144;
+      ptClipInches += 2 * (iw + ih);
+      pt_buckets[clip_key].push(iw, iw, ih, ih);
+      out += `• ${tag} [PARTITION ACP BOARD] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${sq.toFixed(2)} Sq.Ft)\n`;
+      totAcpPcs++; totAcpSqFt += sq;
+      pt_acp_list.push({ rowTag: tag, cutStr: `${disp(cutH)} x ${disp(cutW)}`, h_in: cutH, w_in: cutW, qty: 1, buyLabel: '', areaSqFt: sq });
+      pdfJob.panelRows.push({ part: `${tag} (Partition)`, detail: 'ACP Board Panel', size: `${disp(cutH)} H x ${disp(cutW)} W`, qty: `1 pc (${sq.toFixed(2)} Sq.Ft)` });
     } else if (lf.mat === 'JALI') {
-      out += `• ${tag} [JALI / MESH] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${((cutH * cutW) / 144).toFixed(2)} Sq.Ft)\n`;
-      totJaliPcs++; totJaliSqFt += (cutH * cutW) / 144;
+      const sq = (cutH * cutW) / 144;
+      ptClipInches += 2 * (iw + ih);
+      pt_buckets[clip_key].push(iw, iw, ih, ih);
+      out += `• ${tag} [PARTITION JALI / MESH] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${sq.toFixed(2)} Sq.Ft)\n`;
+      totJaliPcs++; totJaliSqFt += sq;
+      pdfJob.panelRows.push({ part: `${tag} (Partition)`, detail: 'Mosquito / SS Jali Mesh', size: `${disp(cutH)} H x ${disp(cutW)} W`, qty: `1 pc (${sq.toFixed(2)} Sq.Ft)` });
     } else if (lf.mat === 'DOOR_1' || lf.mat === 'DOOR_2') {
       const nL = lf.mat === 'DOOR_2' ? 2 : 1;
       const dParts = (Array.isArray(lf.doorParts) && lf.doorParts.length) ? lf.doorParts : ptCadGetDefaultDoorParts();
@@ -5805,22 +5839,36 @@ function calculatePartition() {
         pt_buckets["Door Sash"].push(shutH, shutH, railW, railW);
         for (let mr = 0; mr < midRailCount; mr++) pt_buckets["Door Sash"].push(railW);
       }
-      out += `• ${tag} [${nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR'} — ${dParts.length} PART(S)] Inner Clear: ${disp(ih)} H × ${disp(iw)} W\n`;
+      const dTitle = nL === 2 ? 'DOUBLE DOOR' : 'SINGLE DOOR';
+      out += `• ${tag} [${dTitle} — ${dParts.length} PART(S)] Inner Clear: ${disp(ih)} H × ${disp(iw)} W\n`;
       out += `   -> Auto Shutter (${nL} Leaf): ${disp(shutH)} H × ${disp(shutW)} W | Top/Bot Rails: ${disp(railW)} (${2*nL} pc)${midRailCount > 0 ? ' | Mid Rails: ' + disp(railW) + ' (' + (midRailCount*nL) + ' pc)' : ''}\n`;
+
+      pdfJob.doorRows.push({ part: `${tag} ${dTitle} — Inner Clear`, detail: `${intDoorType} (${dParts.length} Parts)`, size: `${disp(ih)} H x ${disp(iw)} W`, qty: `${nL} Leaf` });
+      pdfJob.doorRows.push({ part: `${tag} Door Vertical Stiles`, detail: `${disp(secVert)} Vert Section`, size: disp(shutH), qty: `${2 * nL} pc` });
+      pdfJob.doorRows.push({ part: `${tag} Door Top & Bot Rails`, detail: `Top ${disp(secTop)} / Bot ${disp(secBot)}`, size: disp(railW), qty: `${2 * nL} pc` });
+      if (midRailCount > 0) {
+        pdfJob.doorRows.push({ part: `${tag} Door Middle Rails`, detail: `${disp(secMid)} Mid Section`, size: disp(railW), qty: `${midRailCount * nL} pc` });
+      }
+
       dParts.forEach(function(dp, pi) {
         const ph = Math.max(4, partHeights[pi] + 0.5);
         const pLabel = `Part ${pi + 1}`;
+        doorClipInches += 2 * (partHeights[pi] + railW) * nL;
+        for (let li = 0; li < nL; li++) pt_buckets[clip_key].push(partHeights[pi], partHeights[pi], railW, railW);
         if (dp.mat === 'ACP') {
           out += `   -> ${pLabel} [ACP BOARD]: ${disp(ph)} × ${disp(panelCutW)} (${nL} pc)\n`;
           pt_acp_list.push({ rowTag: `${tag} Door ${pLabel} ACP`, cutStr: `${disp(ph)} x ${disp(panelCutW)}`, h_in: ph, w_in: panelCutW, qty: nL, buyLabel: '', areaSqFt: (ph * panelCutW * nL) / 144 });
           totAcpPcs += nL; totAcpSqFt += (ph * panelCutW * nL) / 144;
+          pdfJob.doorRows.push({ part: `${tag} Door ${pLabel} Panel`, detail: 'ACP Board (Same Clip)', size: `${disp(ph)} H x ${disp(panelCutW)} W`, qty: `${nL} pc` });
         } else if (dp.mat === 'JALI') {
           out += `   -> ${pLabel} [JALI / MESH]: ${disp(ph)} × ${disp(panelCutW)} (${nL} pc)\n`;
           totJaliPcs += nL; totJaliSqFt += (ph * panelCutW * nL) / 144;
+          pdfJob.doorRows.push({ part: `${tag} Door ${pLabel} Panel`, detail: 'Jali / Mesh (Same Clip)', size: `${disp(ph)} H x ${disp(panelCutW)} W`, qty: `${nL} pc` });
         } else {
           out += `   -> ${pLabel} [GLASS]: ${disp(ph)} × ${disp(panelCutW)} (${nL} pc)\n`;
           pt_glass_dict[`${disp(ph)} x ${disp(panelCutW)} (${tag} Door ${pLabel}) || ${pt_gspec}`] = (pt_glass_dict[`${disp(ph)} x ${disp(panelCutW)} (${tag} Door ${pLabel}) || ${pt_gspec}`] || 0) + nL;
           totGlassPcs += nL; totGlassSqFt += (ph * panelCutW * nL) / 144;
+          pdfJob.doorRows.push({ part: `${tag} Door ${pLabel} Panel`, detail: `${pt_gspec} Glass (Same Clip)`, size: `${disp(ph)} H x ${disp(panelCutW)} W`, qty: `${nL} pc` });
         }
       });
     } else if (lf.mat === 'SLIDE_2T' || lf.mat === 'SLIDE_3T') {
@@ -5837,37 +5885,64 @@ function calculatePartition() {
       if (!pt_buckets[winShutKey]) pt_buckets[winShutKey] = [];
       pt_buckets[winKey].push(winOuterTopBot, winOuterTopBot, winOuterSide, winOuterSide);
       for (let ti = 0; ti < tr; ti++) pt_buckets[winShutKey].push(winShutH, winShutH, winShutW, winShutW);
-      out += `• ${tag} [${tr}-TRACK SLIDING — ${wfTag}]\n`;
+      out += `• ${tag} [${tr}-TRACK SLIDING WINDOW — ${wfTag}]\n`;
       out += `   -> Window Outer Frame Cut (${intWinSys}): Top/Bot Track ${disp(winOuterTopBot)} (2 pc) | Sides ${disp(winOuterSide)} (2 pc)\n`;
       out += `   -> Window Shutter Cut (${tr} Leaf): Vert/Interlock ${disp(winShutH)} (${2*tr} pc) | Top/Bot ${disp(winShutW)} (${2*tr} pc)\n`;
-      out += `   -> Glass Cut: ${disp(wgH)} × ${disp(wgW)} (2 pc)${tr === 3 ? ' + 1 Jali' : ''}\n`;
+      out += `   -> Window Glass Cut: ${disp(wgH)} × ${disp(wgW)} (2 pc)${tr === 3 ? ' + 1 Jali' : ''}\n`;
       pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${tag} ${tr}T Slide) || ${pt_gspec}`] = (pt_glass_dict[`${disp(wgH)} x ${disp(wgW)} (${tag} ${tr}T Slide) || ${pt_gspec}`] || 0) + 2;
       totGlassPcs += 2; totGlassSqFt += (wgH * wgW * 2) / 144;
       if (tr === 3) { totJaliPcs++; totJaliSqFt += (wgH * wgW) / 144; }
+
+      pdfJob.windowRows.push({ part: `${tag} ${tr}T Window — Outer Top/Bot Track`, detail: `${intWinSys} (${wfTag})`, size: disp(winOuterTopBot), qty: '2 pc' });
+      pdfJob.windowRows.push({ part: `${tag} ${tr}T Window — Outer Side Frame`, detail: `${intWinSys} (${tr}-Track)`, size: disp(winOuterSide), qty: '2 pc' });
+      pdfJob.windowRows.push({ part: `${tag} ${tr}T Shutter — Handle & Interlock`, detail: `${tr} Sliding Shutters`, size: disp(winShutH), qty: `${2 * tr} pc` });
+      pdfJob.windowRows.push({ part: `${tag} ${tr}T Shutter — Top & Bottom Rail`, detail: `${tr} Sliding Shutters`, size: disp(winShutW), qty: `${2 * tr} pc` });
+      pdfJob.windowRows.push({ part: `${tag} ${tr}T Window Glass${tr===3?' + Jali':''}`, detail: pt_gspec, size: `${disp(wgH)} H x ${disp(wgW)} W`, qty: tr === 3 ? '2 Glass + 1 Jali' : '2 pc' });
     } else if (lf.mat === 'H_OPEN') {
       const oh = Math.max(4, ih - 3.0), ow = Math.max(4, iw - 3.0);
       out += `• ${tag} [H-SEC OPENABLE WIN] Exact Size: ${disp(ih)} × ${disp(iw)} -> Glass: ${disp(oh)} × ${disp(ow)} (1 pc)\n`;
       pt_glass_dict[`${disp(oh)} x ${disp(ow)} (${tag} OpenWin) || ${pt_gspec}`] = (pt_glass_dict[`${disp(oh)} x ${disp(ow)} (${tag} OpenWin) || ${pt_gspec}`] || 0) + 1;
       totGlassPcs++; totGlassSqFt += (oh * ow) / 144;
+      pdfJob.windowRows.push({ part: `${tag} Openable Window Frame`, detail: 'H-Section Openable', size: `${disp(ih)} H x ${disp(iw)} W`, qty: '1 Set' });
+      pdfJob.windowRows.push({ part: `${tag} Openable Window Glass`, detail: pt_gspec, size: `${disp(oh)} H x ${disp(ow)} W`, qty: '1 pc' });
     } else {
-      out += `• ${tag} [FIXED GLASS] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${((cutH * cutW) / 144).toFixed(2)} Sq.Ft)\n`;
+      const sq = (cutH * cutW) / 144;
+      ptClipInches += 2 * (iw + ih);
+      pt_buckets[clip_key].push(iw, iw, ih, ih);
+      out += `• ${tag} [PARTITION FIXED GLASS] Clear: ${disp(ih)} × ${disp(iw)} -> Cut: ${disp(cutH)} × ${disp(cutW)} (1 pc | ${sq.toFixed(2)} Sq.Ft)\n`;
       pt_glass_dict[`${disp(cutH)} x ${disp(cutW)} (${tag} Glass) || ${pt_gspec}`] = (pt_glass_dict[`${disp(cutH)} x ${disp(cutW)} (${tag} Glass) || ${pt_gspec}`] || 0) + 1;
-      totGlassPcs++; totGlassSqFt += (cutH * cutW) / 144;
+      totGlassPcs++; totGlassSqFt += sq;
+      pdfJob.panelRows.push({ part: `${tag} (Partition)`, detail: `${pt_gspec} Fixed Glass`, size: `${disp(cutH)} H x ${disp(cutW)} W`, qty: `1 pc (${sq.toFixed(2)} Sq.Ft)` });
     }
   });
 
+  const ptClipFt = ptClipInches / 12.0;
+  const doorClipFt = doorClipInches / 12.0;
+  const totalClipFt = ptClipFt + doorClipFt;
+  const clipLengths12 = totalClipFt > 0 ? Math.ceil((totalClipFt * 1.08) / 12.0) : 0;
+  const gasketFt = totalClipFt * 2.0; // Both inner & outer sides of glass/ACP
   const netBillableSqFt = Math.max(0, grossSqFt - minusWallSqFt);
+  const packedAcp = totAcpPcs > 0 ? packPanelsOn4x8Sheets(pt_acp_list) : [];
+
+  pdfJob.clipSummary = {
+    ptClipFt, doorClipFt, totalClipFt, clipLengths12, gasketFt,
+    grossSqFt, minusWallSqFt, netBillableSqFt,
+    totGlassPcs, totGlassSqFt, totAcpPcs, acpSheets: packedAcp.length, totJaliPcs, totJaliSqFt
+  };
+  pt_pdf_jobs.unshift(pdfJob);
+
   out += `\n-----------------------------------\n`;
-  out += `3. NET AREA & MATERIAL SUMMARY\n`;
+  out += `3. GLAZING CLIP (PARTITION + DOOR SAME) & SUMMARY\n`;
   out += `-----------------------------------\n`;
+  out += `• GLAZING CLIP / BEAD (Partition + Door Combined — SAME CLIP):\n`;
+  out += `   -> Partition Panels Clip: ${ptClipFt.toFixed(1)} R.Ft | Door Panels Clip: ${doorClipFt.toFixed(1)} R.Ft\n`;
+  out += `   -> TOTAL CLIP TO BUY: ${totalClipFt.toFixed(1)} R.Ft => BUY ${clipLengths12} LENGTHS (12 Ft Standard Clip)\n`;
+  out += `• EPDM RUBBER GASKET (2 Sides): ${gasketFt.toFixed(1)} R.Ft\n`;
   out += `• GROSS WALL AREA: ${grossSqFt.toFixed(2)} Sq.Ft`;
   if (minusWallSqFt > 0) out += `  |  WALL MINUS: -${minusWallSqFt.toFixed(2)} Sq.Ft`;
   out += `\n• NET WORK AREA: ${netBillableSqFt.toFixed(2)} Sq.Ft\n`;
   out += `• TOTAL GLASS: ${totGlassPcs} Pcs (${totGlassSqFt.toFixed(2)} Sq.Ft) -> 2. GLASS PDF + QR\n`;
-  if (totAcpPcs > 0) {
-    const packed = packPanelsOn4x8Sheets(pt_acp_list);
-    out += `• TOTAL 4'x8' ACP BOARD: ${packed.length} Sheet(s) (${totAcpPcs} Cut Pcs) -> 3. ALU PURCHASE & 5. DRAWING PDF\n`;
-  }
+  if (totAcpPcs > 0) out += `• TOTAL 4'x8' ACP BOARD: ${packedAcp.length} Sheet(s) (${totAcpPcs} Cut Pcs)\n`;
   if (totJaliPcs > 0) out += `• TOTAL JALI / MESH: ${totJaliPcs} Pcs (${totJaliSqFt.toFixed(2)} Sq.Ft)\n`;
 
   const prevOut = document.getElementById('pt_out').textContent;
@@ -5878,7 +5953,7 @@ function calculatePartition() {
 }
 
 function clearPartition() {
- pt_part_count = 0;
+ pt_part_count = 0; pt_pdf_jobs = [];
  pt_buckets = { "Single Glazing": [], "Double Glazing": [], "Door Sash": [] };
  pt_glass_dict = {};
  pt_acp_list = [];
@@ -6245,7 +6320,144 @@ function clearCustomSeries() {
  }
 
  // 1. DEDICATED HORIZONTAL CUTTING SHEET PDF (Landscape, Horizontal Columns, Zero Extra Clutter)
+function exportPartitionProCutPdf(filename) {
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { alert("PDF library is loading, please try again in a moment."); return; }
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+
+  pt_pdf_jobs.forEach(function(job, jIdx) {
+    if (jIdx > 0) doc.addPage();
+    drawDocHeaderWithLogo(doc, "WORKSHOP CUTTING SHEET — PARTITION, DOOR & WINDOW", job.jobTitle, [25, 42, 74]);
+
+    let y = 33;
+    // Job Meta Info Banner
+    doc.setFillColor(241, 245, 249);
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(14, y, 182, 16, 2, 2, 'FD');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text("JOB: " + job.jobTitle + "    |    DATE: " + today, 17, y + 5.2);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.6);
+    doc.setTextColor(51, 65, 85);
+    doc.text("Tube: " + job.tubeLabel + "   |   Alu: " + job.aluLabel, 17, y + 10.0);
+    doc.text("Outer Frame: " + job.outerConfig, 17, y + 14.3);
+    y += 20;
+
+    function addSectionTable(heading, headerRgb, headCols, rows) {
+      if (!rows || !rows.length) return;
+      if (y > 255) { doc.addPage(); y = 16; }
+      doc.setFillColor(headerRgb[0], headerRgb[1], headerRgb[2]);
+      doc.rect(14, y, 182, 6.5, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.3);
+      doc.setTextColor(255, 255, 255);
+      doc.text(heading, 17, y + 4.5);
+      y += 6.5;
+
+      doc.autoTable({
+        startY: y,
+        head: [headCols],
+        body: rows,
+        theme: 'grid',
+        margin: { left: 14, right: 14 },
+        headStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 7.5, cellPadding: 2 },
+        bodyStyles: { fontSize: 7.8, textColor: [15, 23, 42], cellPadding: 2.2 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 56 },
+          1: { cellWidth: 54 },
+          2: { fontStyle: 'bold', textColor: [3, 105, 161], cellWidth: 44 },
+          3: { halign: 'center', fontStyle: 'bold', cellWidth: 28 }
+        },
+        didDrawPage: function(data) { y = data.cursor.y + 4; }
+      });
+      y = doc.lastAutoTable.finalY + 5;
+    }
+
+    // 1. PARTITION FRAME & DIVIDER PIPES
+    addSectionTable(
+      "1. PARTITION FRAME & DIVIDER PIPES",
+      [30, 58, 138],
+      ["Partition Pipe / Part", "Section Profile", "Exact Cut Size", "Qty"],
+      job.partitionPipes.map(r => [r.part, r.profile, r.size, r.qty])
+    );
+
+    // 2. DOOR CUTTING LIST
+    if (job.doorRows.length > 0) {
+      addSectionTable(
+        "2. DOOR CUTTING LIST (SHUTTER, RAILS & DOOR PANELS)",
+        [180, 83, 9],
+        ["Door Part", "Detail / Material", "Exact Cut Size", "Qty"],
+        job.doorRows.map(r => [r.part, r.detail, r.size, r.qty])
+      );
+    }
+
+    // 3. WINDOW CUTTING LIST
+    if (job.windowRows.length > 0) {
+      addSectionTable(
+        "3. WINDOW CUTTING LIST (OUTER TRACK, SHUTTER & GLASS)",
+        [109, 40, 217],
+        ["Window Part", "System / Track", "Exact Cut Size", "Qty"],
+        job.windowRows.map(r => [r.part, r.detail, r.size, r.qty])
+      );
+    }
+
+    // 4. FIXED PARTITION PANELS (GLASS / ACP / JALI / WALL MINUS)
+    if (job.panelRows.length > 0) {
+      addSectionTable(
+        "4. PARTITION FIXED GLASS / ACP / JALI & WALL MINUS",
+        [15, 118, 110],
+        ["Box / Section", "Material", "Exact Cut Size", "Qty / Area"],
+        job.panelRows.map(r => [r.part, r.detail, r.size, r.qty])
+      );
+    }
+
+    // 5. GLAZING CLIP (PARTITION + DOOR SAME!) & MATERIAL SUMMARY BOX
+    if (job.clipSummary) {
+      const cs = job.clipSummary;
+      if (y > 240) { doc.addPage(); y = 16; }
+      doc.setFillColor(236, 253, 245);
+      doc.setDrawColor(16, 185, 129);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(14, y, 182, 31, 2.5, 2.5, 'FD');
+
+      doc.setFillColor(6, 95, 70);
+      doc.rect(14, y, 182, 6.5, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.3);
+      doc.setTextColor(255, 255, 255);
+      doc.text("5. GLAZING CLIP PURCHASE (PARTITION + DOOR SAME CLIP) & AREA SUMMARY", 17, y + 4.5);
+
+      doc.setTextColor(6, 78, 59);
+      doc.setFontSize(8.2);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        "GLAZING CLIP TO BUY:  " + cs.clipLengths12 + " LENGTHS (12 Ft Clip)   [Total: " + cs.totalClipFt.toFixed(1) + " R.Ft = Partition " + cs.ptClipFt.toFixed(1) + " Ft + Door " + cs.doorClipFt.toFixed(1) + " Ft]",
+        17, y + 12.2
+      );
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.8);
+      doc.setTextColor(15, 23, 42);
+      doc.text("EPDM Rubber Gasket (Both Sides): " + cs.gasketFt.toFixed(1) + " R.Ft    |    Net Work Area: " + cs.netBillableSqFt.toFixed(2) + " Sq.Ft (Gross: " + cs.grossSqFt.toFixed(2) + (cs.minusWallSqFt > 0 ? ", Wall Minus: -" + cs.minusWallSqFt.toFixed(2) : "") + ")", 17, y + 18.5);
+      doc.text("Total Glass: " + cs.totGlassPcs + " Pcs (" + cs.totGlassSqFt.toFixed(2) + " Sq.Ft)   |   4'x8' ACP Board: " + cs.acpSheets + " Sheet(s) (" + cs.totAcpPcs + " Pcs)   |   Jali: " + cs.totJaliPcs + " Pcs", 17, y + 24.5);
+    }
+  });
+
+  doc.save(filename);
+}
+
  function exportCutPdf(filename, title, outId, matId) {
+  if (outId === 'pt_out' && Array.isArray(pt_pdf_jobs) && pt_pdf_jobs.length > 0) {
+    if (!isAppActivated()) {
+      alert("PRO activation is required to generate PDF documents.");
+      openScreen('activation', 'PRO UPGRADE & PLANS');
+      return;
+    }
+    exportPartitionProCutPdf(filename);
+    return;
+  }
   if (!isAppActivated()) {
     alert("PRO activation is required to generate PDF documents.");
     openScreen('activation', 'PRO UPGRADE & PLANS');
@@ -12210,7 +12422,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v92') === -1) caches.delete(k);
+                if (k.indexOf('v94') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -12419,16 +12631,20 @@ function recalculateBarCuttingPlan() {
     html += '<span style="font-size:0.72rem; font-weight:800; color:#0f766e; background:#dcfce7; padding:2px 8px; border-radius:8px;">Buy ' + bars.length + ' Bar' + (bars.length > 1 ? 's' : '') + ' (' + stockFt + ' Ft) • ' + pUtilPct + '% Used</span>';
     html += '</div>';
 
-    bars.forEach(function(bar) {
+    var groupedBars = groupIdenticalBars(bars);
+    groupedBars.forEach(function(gEntry) {
+      var bar = gEntry.bar;
+      var qty = gEntry.qty;
+      var qtyLabel = qty > 1 ? ('× ' + qty + ' Bars') : '1 Bar';
       var cutListStr = bar.cuts.map(function(c) { return disp(c.len); }).join(' + ');
-      textOut += "  Bar #" + bar.barNo + ": " + cutListStr + "  |  Offcut: " + disp(bar.remaining) + "\n";
+      textOut += "  [" + qtyLabel + "]  " + cutListStr + "  |  Offcut: " + disp(bar.remaining) + "\n";
 
-      var svgW = 500, svgH = 38;
+      var svgW = 500, svgH = 36;
       var scale = (svgW - 12) / stockLenIn;
       html += '<div style="margin-bottom:8px;">';
-      html += '<div style="display:flex; justify-content:space-between; font-size:0.69rem; font-weight:700; color:#334155; margin-bottom:2px;">';
-      html += '<span><b>Bar #' + bar.barNo + '</b> (' + bar.cuts.length + ' cuts)</span>';
-      html += '<span style="color:#b45309;">Leftover / Offcut: ' + disp(bar.remaining) + '</span>';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.69rem; font-weight:700; color:#334155; margin-bottom:2px;">';
+      html += '<span><span style="background:#0f766e; color:#fff; padding:1px 6px; border-radius:4px; font-weight:800; margin-right:5px;">' + qtyLabel + '</span> (' + bar.cuts.length + ' cuts each)</span>';
+      html += '<span style="color:#b45309;">Offcut: ' + disp(bar.remaining) + '</span>';
       html += '</div>';
       html += '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%; height:auto; background:#ffffff; border:1px solid #94a3b8; border-radius:6px; display:block;">';
       // Full bar amber background (represents offcut/waste)
@@ -12473,6 +12689,23 @@ function recalculateBarCuttingPlan() {
   if (outEl) outEl.textContent = textOut;
 }
 
+function groupIdenticalBars(bars) {
+  var grouped = [];
+  var map = {};
+  bars.forEach(function(bar) {
+    var sig = bar.cuts.map(function(c) { return c.len.toFixed(3); }).join('|') + '||' + bar.remaining.toFixed(3);
+    if (map[sig]) {
+      map[sig].qty += 1;
+      map[sig].barNos.push(bar.barNo);
+    } else {
+      var entry = { qty: 1, barNos: [bar.barNo], bar: bar };
+      map[sig] = entry;
+      grouped.push(entry);
+    }
+  });
+  return grouped;
+}
+
 function exportBarCuttingPdf() {
   if (!isAppActivated()) {
     alert("PRO activation is required to generate PDF documents.");
@@ -12494,39 +12727,50 @@ function exportBarCuttingPdf() {
   var disp = function(v) { return isMm ? toMmStr(v) : toFractionInch(v); };
 
   var doc = new jsPDF('l', 'mm', 'a4');
-  drawDocHeaderWithLogo(doc, stockFt + " FT ALUMINIUM BAR / PIPE CUTTING DRAWING", "Minimum-Waste 1D Cutting Plan", [15, 118, 110]);
+  drawDocHeaderWithLogo(doc, stockFt + " FT ALUMINIUM BAR / PIPE CUTTING DRAWING", "Compact Grouped Cutting Plan (Qty Per Pattern)", [15, 118, 110]);
 
   var groups = groupBarItemsByProfile(bc_items_list);
-  var y = 36;
-  var barDrawW = 240; // mm
-  var startX = 24;
+  var y = 34;
+  var startX = 38;   // Wide left column for clean "× 100 Bars" badge (never overlaps!)
+  var barDrawW = 216; // mm
   var scale = barDrawW / stockLenIn;
   var colors = [[2,132,199], [15,118,110], [124,58,237], [37,99,235], [8,145,178]];
+  var grandTotalBars = 0;
 
   Object.keys(groups).forEach(function(pName) {
     var bars = pack1DBarsBestFit(groups[pName], stockLenIn, kerfIn);
-    if (y > 170) { doc.addPage('a4', 'l'); y = 18; }
+    var groupedBars = groupIdenticalBars(bars);
+    grandTotalBars += bars.length;
+
+    if (y > 174) { doc.addPage('a4', 'l'); y = 16; }
     doc.setFillColor(240, 253, 250);
     doc.setDrawColor(15, 118, 110);
-    doc.roundedRect(14, y, 269, 8, 1.5, 1.5, 'FD');
+    doc.roundedRect(14, y, 269, 7, 1.5, 1.5, 'FD');
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
+    doc.setFontSize(8.8);
     doc.setTextColor(15, 118, 110);
-    doc.text(pName.toUpperCase() + "  —  TOTAL " + bars.length + " BAR(S) OF " + stockFt + " FT (" + Math.round(stockLenIn) + '")', 18, y + 5.5);
-    y += 12;
+    doc.text(pName.toUpperCase() + "  —  BUY " + bars.length + " BAR(S) OF " + stockFt + " FT (" + Math.round(stockLenIn) + '")', 17, y + 4.9);
+    y += 9.5;
 
-    bars.forEach(function(bar) {
-      if (y > 184) { doc.addPage('a4', 'l'); y = 18; }
+    groupedBars.forEach(function(gEntry) {
+      var bar = gEntry.bar;
+      var qty = gEntry.qty;
+      if (y > 186) { doc.addPage('a4', 'l'); y = 16; }
+
+      // Crisp Left Quantity Pill Badge (e.g., "× 100 Bars" or "1 Bar")
+      doc.setFillColor(qty > 1 ? 15 : 71, qty > 1 ? 118 : 85, qty > 1 ? 110 : 105);
+      doc.roundedRect(14, y, 21.5, 9, 1.5, 1.5, 'F');
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(15, 23, 42);
-      doc.text("Bar #" + bar.barNo, 14, y + 7);
+      doc.setFontSize(7.8);
+      doc.setTextColor(255, 255, 255);
+      var qTxt = qty > 1 ? ("x " + qty + " Bars") : "1 Bar";
+      doc.text(qTxt, 24.75, y + 5.8, { align: "center" });
 
-      // Amber full stock bar
+      // Full stock bar amber background (offcut)
       doc.setFillColor(254, 243, 199);
       doc.setDrawColor(15, 23, 42);
-      doc.setLineWidth(0.4);
-      doc.rect(startX, y, barDrawW, 11, 'FD');
+      doc.setLineWidth(0.35);
+      doc.rect(startX, y, barDrawW, 9, 'FD');
 
       bar.cuts.forEach(function(c, ci) {
         var rx = startX + (c.offset * scale);
@@ -12534,21 +12778,31 @@ function exportBarCuttingPdf() {
         var col = colors[ci % colors.length];
         doc.setFillColor(col[0], col[1], col[2]);
         doc.setDrawColor(255, 255, 255);
-        doc.rect(rx, y, rw, 11, 'FD');
-        if (rw >= 14) {
-          doc.setFontSize(7.5);
+        doc.rect(rx, y, rw, 9, 'FD');
+        if (rw >= 13) {
+          doc.setFontSize(7.2);
           doc.setTextColor(255, 255, 255);
-          doc.text(disp(c.len), rx + rw / 2, y + 6.8, { align: "center" });
+          doc.text(disp(c.len), rx + rw / 2, y + 5.8, { align: "center" });
         }
       });
 
-      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.4);
       doc.setTextColor(180, 83, 9);
-      doc.text("Offcut: " + disp(bar.remaining), startX + barDrawW + 3, y + 7);
-      y += 15;
+      doc.text("Offcut: " + disp(bar.remaining), startX + barDrawW + 3, y + 5.8);
+      y += 11.5;
     });
-    y += 4;
+    y += 3;
   });
+
+  // Grand Total Compact Summary Footer
+  if (y > 188) { doc.addPage('a4', 'l'); y = 16; }
+  doc.setFillColor(15, 23, 42);
+  doc.roundedRect(14, y, 269, 8.5, 1.5, 1.5, 'F');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.8);
+  doc.setTextColor(254, 240, 138);
+  doc.text("GRAND TOTAL TO BUY:  " + grandTotalBars + " FULL BAR(S) OF " + stockFt + " FT   |   Same cut patterns are grouped with Qty on left!", 18, y + 5.7);
 
   doc.save("Alu_Bar_Cutting_" + stockFt + "ft_" + Date.now() + ".pdf");
 }
