@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=104').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=105').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=104">
+  <link rel="stylesheet" href="style.css?v=105">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -4080,138 +4080,139 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
    </div>
  </div>
 
- <!-- CORPORATE EDITION HEADER BADGE -->
- <div style="background:linear-gradient(90deg, #1e1b4b, #0f172a, #1e1b4b); border:1.5px solid #fbbf24; border-radius:12px; padding:10px 12px; margin-bottom:14px; text-align:center; box-shadow:0 4px 15px rgba(251,191,36,0.2);">
-   <div style="font-size:0.86rem; font-weight:900; color:#fde047; letter-spacing:0.6px; text-transform:uppercase;">
-     <i class="fa-solid fa-crown" style="color:#fbbf24;"></i> EXECUTIVE SINGLE-USER PRO PLANS
-   </div>
-   <div style="font-size:0.72rem; color:#e2e8f0; margin-top:2px;">
-     Strict 1-Person License • Valid for <b>1 Mobile Device Only</b> from Activation Day
-   </div>
- </div>
+ <!-- v105: LIVE 9:00 AM – 9:00 PM ACTIVATION DESK STATUS BANNER -->
+  <div id="actDeskTimingBadge" style="background:linear-gradient(90deg,#ecfdf5,#d1fae5); border:1.5px solid #10b981; color:#065f46; border-radius:12px; padding:9px 12px; margin-bottom:12px; font-size:0.76rem; font-weight:800; text-align:center;">
+    ● Activation Desk: 9:00 AM – 9:00 PM • Fast Auto-Unlock (0% Gateway Fee)
+  </div>
 
- <!-- 1. RADIANT 24K GOLDEN VIP EDITION (365 DAYS / 1 YEAR - FLAGSHIP GOLDEN CARD) -->
- <div class="corp-plan-golden-vip">
-   <div style="background:linear-gradient(90deg, #fef08a, #fbbf24, #f59e0b, #fef08a); color:#1c1917; font-size:0.68rem; font-weight:900; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; margin-bottom:8px; box-shadow:0 2px 10px rgba(254,240,138,0.5);">
-     <i class="fa-solid fa-crown"></i> GOLDEN VIP CROWN PACK • BEST VALUE (SAVE 33%)
-   </div>
-   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-     <div>
-       <div style="font-size:1.05rem; font-weight:900; color:#fef08a; text-shadow:0 2px 8px rgba(0,0,0,0.45); letter-spacing:0.3px;">
-         365 DAYS ANNUAL PRO
-       </div>
-       <div style="font-size:0.74rem; color:#fde68a; font-weight:600;">
-         Full 1 Year Uninterrupted Access • <b>1 User Only</b>
-       </div>
-     </div>
-     <div style="text-align:right; background:rgba(0,0,0,0.35); border:1.5px solid #fde047; padding:6px 12px; border-radius:12px;">
-       <div style="font-size:1.45rem; font-weight:900; color:#fef08a; line-height:1; text-shadow:0 0 12px rgba(253,224,71,0.75);">₹799</div>
-       <div style="font-size:0.65rem; color:#fff; font-weight:700; margin-top:2px;">365 Days • 1 User</div>
-     </div>
-   </div>
-   <div style="font-size:0.73rem; color:#fffbeb; background:rgba(0,0,0,0.28); border:1px solid rgba(253,224,71,0.4); border-radius:8px; padding:6px 10px; margin-bottom:10px;">
-     ✨ All 4 Horizontal Workshop PDFs + Custom Logo & QR Bill + Site Khata + Cloud Backup
-   </div>
-   <button class="action-btn corp-gold-btn" style="width:100%; padding:12px; font-size:0.88rem; border-radius:10px;" onclick="subscribeViaWhatsApp('Karigar_Annual')">
-     <i class="fa-solid fa-crown"></i> ACTIVATE 365 DAYS GOLDEN VIP (₹799)
-   </button>
- </div>
+  <!-- LIGHT GOLD & SIMPLE PRO HEADER -->
+  <div style="background:linear-gradient(135deg,#fffdf5 0%,#fef3c7 100%); border:1.5px solid #f59e0b; border-radius:14px; padding:11px 14px; margin-bottom:14px; text-align:center; box-shadow:0 4px 14px rgba(245,158,11,0.16);">
+    <div style="font-size:0.9rem; font-weight:900; color:#92400e; letter-spacing:0.4px; text-transform:uppercase;">
+      <i class="fa-solid fa-crown" style="color:#d97706;"></i> GOLDEN PRO PLANS • 1 USER / 1 DEVICE
+    </div>
+    <div style="font-size:0.72rem; color:#78350f; margin-top:2px; font-weight:600;">
+      Simple, Transparent Pricing • Zero Extra Charges • Instant Auto-Unlock on Approval
+    </div>
+  </div>
 
- <!-- OTHER 3 DISTINCT VIBRANT CORPORATE PLANS (30 DAYS, 90 DAYS, 180 DAYS) -->
- <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+  <!-- 1. LIGHT GOLD FLAGSHIP VIP CARD: 365 DAYS — ₹1,199 -->
+  <div style="background:linear-gradient(135deg,#fffef7 0%,#fef3c7 52%,#fde68a 100%); border:2px solid #d97706; border-radius:16px; padding:14px; margin-bottom:13px; box-shadow:0 8px 22px rgba(217,119,6,0.22); position:relative;">
+    <div style="background:linear-gradient(90deg,#f59e0b,#d97706); color:#fff; font-size:0.66rem; font-weight:900; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; margin-bottom:8px; letter-spacing:0.3px;">
+      <i class="fa-solid fa-crown"></i> GOLDEN VIP OFFER • BEST VALUE (SAVE ₹589)
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+      <div>
+        <div style="font-size:1.05rem; font-weight:900; color:#78350f;">365 DAYS ANNUAL PRO</div>
+        <div style="font-size:0.73rem; color:#92400e; font-weight:700;">Only ₹100/Month • Full 1 Year Access</div>
+      </div>
+      <div style="text-align:right; background:#ffffff; border:1.5px solid #f59e0b; padding:6px 12px; border-radius:12px; box-shadow:0 2px 6px rgba(217,119,6,0.12);">
+        <div style="font-size:1.45rem; font-weight:900; color:#b45309; line-height:1;">₹1,199</div>
+        <div style="font-size:0.64rem; color:#78350f; font-weight:700; margin-top:2px;">365 Days • 1 User</div>
+      </div>
+    </div>
+    <div style="font-size:0.72rem; color:#78350f; background:rgba(255,255,255,0.75); border:1px solid #fcd34d; border-radius:10px; padding:7px 10px; margin-bottom:10px; font-weight:600;">
+      ✨ All PDFs + 4'x8' Glass Optimizer + Cut Stickers + Thermal Print + Cloud Sync + Profit Tracker
+    </div>
+    <button type="button" class="action-btn" style="width:100%; background:linear-gradient(90deg,#f59e0b,#d97706); color:#ffffff; font-weight:900; padding:12px; font-size:0.86rem; border-radius:11px; border:none; box-shadow:0 4px 12px rgba(217,119,6,0.32);" onclick="openEasyUpiPlan('Karigar_Annual', 1199, 365, '365 Days Golden VIP')">
+      <i class="fa-solid fa-crown"></i> SELECT GOLDEN VIP — ₹1,199 (1 YEAR)
+    </button>
+  </div>
 
-   <!-- 2. 180 DAYS (6 MONTHS) - ROYAL AMETHYST VIOLET-MAGENTA CARD -->
-   <div class="corp-plan-amethyst">
-     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-       <div>
-         <span style="background:#e879f9; color:#2e1065; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:12px; text-transform:uppercase;">
-           <i class="fa-solid fa-gem"></i> HALF-YEARLY CORPORATE PACK
-         </span>
-         <div style="font-size:0.96rem; font-weight:900; color:#fff; margin-top:4px;">
-           180 DAYS (6 MONTHS) PRO
-         </div>
-         <div style="font-size:0.72rem; color:#f5d0fe;">Valid for 180 Days • Strictly 1 User / 1 Device</div>
-       </div>
-       <div style="text-align:right; background:rgba(15,23,42,0.45); border:1.5px solid #e879f9; padding:6px 11px; border-radius:10px;">
-         <div style="font-size:1.3rem; font-weight:900; color:#f0abfc; line-height:1;">₹550</div>
-         <div style="font-size:0.64rem; color:#fff; font-weight:700; margin-top:2px;">180 Days</div>
-       </div>
-     </div>
-     <button class="action-btn" style="width:100%; background:linear-gradient(90deg, #e879f9, #a855f7, #7e22ce); color:#fff; font-weight:800; padding:10px; font-size:0.82rem; border-radius:8px; border:1px solid #f5d0fe; box-shadow:0 4px 12px rgba(217,70,239,0.4);" onclick="subscribeViaWhatsApp('Karigar_6M')">
-       <i class="fa-solid fa-bolt"></i> SELECT 180 DAYS PLAN — ₹550 (1 User)
-     </button>
-   </div>
+  <!-- 2, 3, 4: CLEAN LIGHT-GOLD & SIMPLE CARDS (180 / 90 / 30 DAYS) -->
+  <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
 
-   <!-- 3. 90 DAYS (3 MONTHS) - RADIANT EMERALD TEAL-GREEN CARD -->
-   <div class="corp-plan-emerald">
-     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-       <div>
-         <span style="background:#34d399; color:#022c22; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:12px; text-transform:uppercase;">
-           <i class="fa-solid fa-shield-halved"></i> QUARTERLY SMART PACK
-         </span>
-         <div style="font-size:0.96rem; font-weight:900; color:#fff; margin-top:4px;">
-           90 DAYS (3 MONTHS) PRO
-         </div>
-         <div style="font-size:0.72rem; color:#a7f3d0;">Valid for 90 Days • Strictly 1 User / 1 Device</div>
-       </div>
-       <div style="text-align:right; background:rgba(15,23,42,0.45); border:1.5px solid #34d399; padding:6px 11px; border-radius:10px;">
-         <div style="font-size:1.3rem; font-weight:900; color:#6ee7b7; line-height:1;">₹280</div>
-         <div style="font-size:0.64rem; color:#fff; font-weight:700; margin-top:2px;">90 Days</div>
-       </div>
-     </div>
-     <button class="action-btn" style="width:100%; background:linear-gradient(90deg, #10b981, #059669, #047857); color:#fff; font-weight:800; padding:10px; font-size:0.82rem; border-radius:8px; border:1px solid #a7f3d0; box-shadow:0 4px 12px rgba(16,185,129,0.4);" onclick="subscribeViaWhatsApp('Karigar_3M')">
-       <i class="fa-solid fa-circle-check"></i> SELECT 90 DAYS PLAN — ₹280 (1 User)
-     </button>
-   </div>
+    <!-- 180 DAYS — ₹749 -->
+    <div style="background:linear-gradient(135deg,#ffffff 0%,#fffbeb 100%); border:1.5px solid #fcd34d; border-radius:14px; padding:12px; box-shadow:0 2px 8px rgba(15,23,42,0.06);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div>
+          <span style="background:#fef3c7; color:#92400e; font-size:0.63rem; font-weight:800; padding:2px 8px; border-radius:10px; border:1px solid #fde68a;">HALF-YEARLY PACK • SAVE ₹145</span>
+          <div style="font-size:0.94rem; font-weight:900; color:#0f172a; margin-top:4px;">180 DAYS (6 MONTHS) PRO</div>
+          <div style="font-size:0.71rem; color:#64748b; font-weight:600;">₹125/Month • 1 User / 1 Device</div>
+        </div>
+        <div style="text-align:right; background:#fffbeb; border:1px solid #f59e0b; padding:5px 11px; border-radius:10px;">
+          <div style="font-size:1.25rem; font-weight:900; color:#b45309; line-height:1;">₹749</div>
+          <div style="font-size:0.62rem; color:#78350f; font-weight:700; margin-top:2px;">180 Days</div>
+        </div>
+      </div>
+      <button type="button" class="action-btn" style="width:100%; background:#0f172a; color:#fef08a; font-weight:800; padding:10px; font-size:0.8rem; border-radius:9px; border:1px solid #f59e0b;" onclick="openEasyUpiPlan('Karigar_6M', 749, 180, '180 Days PRO')">
+        <i class="fa-solid fa-bolt"></i> SELECT 180 DAYS — ₹749
+      </button>
+    </div>
 
-   <!-- 4. 30 DAYS (1 MONTH) - ELECTRIC SAPPHIRE CYAN-BLUE CARD -->
-   <div class="corp-plan-sapphire">
-     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-       <div>
-         <span style="background:#38bdf8; color:#082f49; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:12px; text-transform:uppercase;">
-           <i class="fa-solid fa-rocket"></i> MONTHLY STARTER PACK
-         </span>
-         <div style="font-size:0.96rem; font-weight:900; color:#fff; margin-top:4px;">
-           30 DAYS (1 MONTH) PRO
-         </div>
-         <div style="font-size:0.72rem; color:#bae6fd;">Valid for 30 Days • Strictly 1 User / 1 Device</div>
-       </div>
-       <div style="text-align:right; background:rgba(15,23,42,0.45); border:1.5px solid #38bdf8; padding:6px 11px; border-radius:10px;">
-         <div style="font-size:1.3rem; font-weight:900; color:#7dd3fc; line-height:1;">₹99</div>
-         <div style="font-size:0.64rem; color:#fff; font-weight:700; margin-top:2px;">30 Days</div>
-       </div>
-     </div>
-     <button class="action-btn" style="width:100%; background:linear-gradient(90deg, #38bdf8, #0284c7, #0369a1); color:#fff; font-weight:800; padding:10px; font-size:0.82rem; border-radius:8px; border:1px solid #bae6fd; box-shadow:0 4px 12px rgba(2,132,199,0.4);" onclick="subscribeViaWhatsApp('Karigar_Monthly')">
-       <i class="fa-solid fa-key"></i> SELECT 30 DAYS PLAN — ₹99 (1 User)
-     </button>
-   </div>
+    <!-- 90 DAYS — ₹399 -->
+    <div style="background:linear-gradient(135deg,#ffffff 0%,#fffbeb 100%); border:1.5px solid #fde68a; border-radius:14px; padding:12px; box-shadow:0 2px 8px rgba(15,23,42,0.06);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div>
+          <span style="background:#fef3c7; color:#92400e; font-size:0.63rem; font-weight:800; padding:2px 8px; border-radius:10px; border:1px solid #fde68a;">QUARTERLY PACK • SAVE ₹48</span>
+          <div style="font-size:0.94rem; font-weight:900; color:#0f172a; margin-top:4px;">90 DAYS (3 MONTHS) PRO</div>
+          <div style="font-size:0.71rem; color:#64748b; font-weight:600;">₹133/Month • 1 User / 1 Device</div>
+        </div>
+        <div style="text-align:right; background:#fffbeb; border:1px solid #f59e0b; padding:5px 11px; border-radius:10px;">
+          <div style="font-size:1.25rem; font-weight:900; color:#b45309; line-height:1;">₹399</div>
+          <div style="font-size:0.62rem; color:#78350f; font-weight:700; margin-top:2px;">90 Days</div>
+        </div>
+      </div>
+      <button type="button" class="action-btn" style="width:100%; background:#1e293b; color:#fde68a; font-weight:800; padding:10px; font-size:0.8rem; border-radius:9px; border:1px solid #fbbf24;" onclick="openEasyUpiPlan('Karigar_3M', 399, 90, '90 Days PRO')">
+        <i class="fa-solid fa-circle-check"></i> SELECT 90 DAYS — ₹399
+      </button>
+    </div>
 
- </div>
+    <!-- 30 DAYS — ₹149 -->
+    <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-radius:14px; padding:12px; box-shadow:0 2px 8px rgba(15,23,42,0.05);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div>
+          <span style="background:#f1f5f9; color:#334155; font-size:0.63rem; font-weight:800; padding:2px 8px; border-radius:10px;">MONTHLY STARTER • JUST ₹5/DAY</span>
+          <div style="font-size:0.94rem; font-weight:900; color:#0f172a; margin-top:4px;">30 DAYS (1 MONTH) PRO</div>
+          <div style="font-size:0.71rem; color:#64748b; font-weight:600;">Full PRO Features • 1 User / 1 Device</div>
+        </div>
+        <div style="text-align:right; background:#f8fafc; border:1px solid #cbd5e1; padding:5px 11px; border-radius:10px;">
+          <div style="font-size:1.25rem; font-weight:900; color:#0f172a; line-height:1;">₹149</div>
+          <div style="font-size:0.62rem; color:#475569; font-weight:700; margin-top:2px;">30 Days</div>
+        </div>
+      </div>
+      <button type="button" class="action-btn" style="width:100%; background:#334155; color:#ffffff; font-weight:800; padding:10px; font-size:0.8rem; border-radius:9px; border:none;" onclick="openEasyUpiPlan('Karigar_Monthly', 149, 30, '30 Days Starter PRO')">
+        <i class="fa-solid fa-rocket"></i> SELECT 30 DAYS — ₹149
+      </button>
+    </div>
 
- <!-- Pro Benefits -->
- <div style="background:#0b1329; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.78rem; line-height:1.6;">
- <div style="color:#fbbf24; font-weight:bold; font-size:0.85rem; margin-bottom:6px;">PRO VERSION BENEFITS:</div>
- <div style="color:#e2e8f0;">✔ Professional PDF Bills & Quotations with Shop Name & Logo</div>
- <div style="color:#e2e8f0;">✔ Unlimited Domal, Sliding, Door & Partition Cutting Lists</div>
- <div style="color:#e2e8f0;">✔ Glass & Material Cutting Schedules (Saves 10-15% Wastage)</div>
- <div style="color:#e2e8f0;">✔ 1-Click WhatsApp Quotation Share with Customer</div>
- <div style="color:#e2e8f0;">✔ 100% Ad-Free & Superfast Experience</div>
- </div>
+  </div>
 
- <!-- Device ID Box -->
- <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
- <label style="font-weight:bold; color:#fff; font-size:0.85rem; width:28%;">Device ID:</label>
- <input type="text" id="actDeviceId" readonly style="flex:1; background:#fff; color:#000; font-weight:bold; font-size:1.1rem; text-align:center; padding:8px;" value="LOADING...">
- <button class="action-btn" id="actCopyBtn" style="background:#2563eb; flex:0.35; padding:8px;" onclick="copyDeviceId()">COPY</button>
- </div>
+  <!-- v105: 0% FEE EASY UPI PAY & AUTO-UNLOCK REQUEST BOX -->
+  <div id="easyUpiPayBox" style="background:#ffffff; color:#0f172a; border:2px solid #f59e0b; border-radius:14px; padding:13px; margin-bottom:14px; box-shadow:0 4px 14px rgba(245,158,11,0.14);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <div style="font-size:0.84rem; font-weight:900; color:#92400e;">
+        <i class="fa-solid fa-indian-rupee-sign"></i> 0% FEE UPI PAY &amp; AUTO-UNLOCK
+      </div>
+      <span id="easyUpiPlanTag" style="background:#fef3c7; color:#92400e; font-size:0.68rem; font-weight:900; padding:2px 8px; border-radius:10px; border:1px solid #f59e0b;">365 Days • ₹1,199</span>
+    </div>
+    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:8px 10px; font-size:0.75rem; color:#78350f; margin-bottom:10px; text-align:center; font-weight:700;">
+      PhonePe / Google Pay / Paytm Number:<br>
+      <span style="font-size:1.05rem; font-weight:900; color:#0f172a; letter-spacing:0.5px;">9239413517</span>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+      <input type="text" id="easy_upi_payer" placeholder="Your Name / PhonePe Name (e.g. Ramesh Das)" style="width:100%; padding:9px 10px; border:1.5px solid #cbd5e1; border-radius:9px; font-size:0.8rem; font-weight:600; box-sizing:border-box;">
+      <input type="text" id="easy_upi_phone" placeholder="Your Mobile Number (10 digits)" style="width:100%; padding:9px 10px; border:1.5px solid #cbd5e1; border-radius:9px; font-size:0.8rem; font-weight:600; box-sizing:border-box;">
+      <input type="text" id="easy_upi_utr" placeholder="12-Digit UTR No. (Optional if you send Name/Screenshot)" style="width:100%; padding:9px 10px; border:1.5px solid #cbd5e1; border-radius:9px; font-size:0.8rem; font-weight:600; box-sizing:border-box;">
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <button type="button" class="action-btn" style="background:linear-gradient(90deg,#16a34a,#15803d); color:#fff; font-weight:800; padding:10px 8px; font-size:0.76rem; border-radius:9px; border:none;" onclick="submitEasyUpiRecharge()">
+        <i class="fa-solid fa-paper-plane"></i> SUBMIT FOR AUTO-UNLOCK
+      </button>
+      <button type="button" class="action-btn" style="background:#25d366; color:#fff; font-weight:800; padding:10px 8px; font-size:0.76rem; border-radius:9px; border:none;" onclick="sendUpiScreenshotWhatsApp()">
+        <i class="fa-brands fa-whatsapp"></i> SEND SCREENSHOT
+      </button>
+    </div>
+    <div id="easyUpiStatusMsg" style="display:none; margin-top:8px; padding:8px; border-radius:8px; font-size:0.73rem; font-weight:700; text-align:center;"></div>
+  </div>
 
- <!-- Trust Note -->
- <div style="background:#0b1329; border-radius:10px; padding:10px; text-align:center; margin-bottom:14px; font-size:0.75rem;">
- <div style="color:#4ade80; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-credit-card"></i> PhonePe / Google Pay / Paytm: 9239413517</div>
- <div style="color:#94a3b8; margin-top:2px;">⚡ Send payment screenshot to get Activation Key</div>
- </div>
+  <!-- Device ID Box -->
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+  <label style="font-weight:bold; color:#fff; font-size:0.85rem; width:28%;">Device ID:</label>
+  <input type="text" id="actDeviceId" readonly style="flex:1; background:#fff; color:#000; font-weight:bold; font-size:1.05rem; text-align:center; padding:8px; border-radius:8px;" value="LOADING...">
+  <button type="button" class="action-btn" id="actCopyBtn" style="background:#2563eb; flex:0.35; padding:8px; border-radius:8px;" onclick="copyDeviceId()">COPY</button>
+  </div>
 
- <!-- WhatsApp Activation Button -->
+  <!-- WhatsApp Activation Button -->
  <button class="action-btn btn-wa" style="width:100%; padding:12px; font-size:0.95rem; margin-bottom:16px;" onclick="subscribeViaWhatsApp('General')">
  <i class="fa-brands fa-whatsapp"></i> WHATSAPP ACTIVATION (9239413517)
  </button>
@@ -4695,12 +4696,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=104"></script>
+  <script src="app.js?v=105"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=104').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=105').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

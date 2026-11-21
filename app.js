@@ -9988,25 +9988,25 @@ function addTeamMember() {
 function subscribeViaWhatsApp(plan) {
   const deviceId = getDeviceId();
   let planKey = "KARIGAR_1M";
-  let planStr = "Karigar Plan (Single User - Rs. 99 / 30 Days)";
-  let amount = 99;
+  let planStr = "Karigar Plan (Single User - Rs. 149 / 30 Days)";
+  let amount = 149;
 
   if (plan === "Karigar_Monthly") {
     planKey = "KARIGAR_1M";
-    planStr = "Karigar Plan (Single User - Rs. 99 / 30 Days)";
-    amount = 99;
+    planStr = "Karigar Plan (Single User - Rs. 149 / 30 Days)";
+    amount = 149;
   } else if (plan === "Karigar_3M") {
     planKey = "KARIGAR_3M";
-    planStr = "Karigar Plan (Single User - Rs. 280 / 90 Days)";
-    amount = 280;
+    planStr = "Karigar Plan (Single User - Rs. 399 / 90 Days)";
+    amount = 399;
   } else if (plan === "Karigar_6M") {
     planKey = "KARIGAR_6M";
-    planStr = "Karigar Plan (Single User - Rs. 550 / 180 Days)";
-    amount = 550;
+    planStr = "Karigar Plan (Single User - Rs. 749 / 180 Days)";
+    amount = 749;
   } else if (plan === "Karigar_Annual") {
     planKey = "KARIGAR_1Y";
-    planStr = "Karigar Plan (Single User - Rs. 799 / 365 Days)";
-    amount = 799;
+    planStr = "Karigar Plan (Single User - Rs. 1,199 / 365 Days)";
+    amount = 1199;
   } else if (plan === "Workshop_Monthly") {
     planKey = "TEAM_1M";
     planStr = "Workshop Team Plan (10 Users - Rs. 499 / 30 Days)";
@@ -10025,8 +10025,8 @@ function subscribeViaWhatsApp(plan) {
     amount = 14999;
   } else {
     planKey = "KARIGAR_1M";
-    planStr = "Smart Worker PRO Membership (Rs. 99 / 30 Days)";
-    amount = 99;
+    planStr = "Smart Worker PRO Membership (Rs. 149 / 30 Days)";
+    amount = 149;
   }
 
   // Retrieve or prompt customer profile
@@ -11017,7 +11017,7 @@ function applyLanguageTranslations(lang) {
         var obs = new MutationObserver(function() {
           if (_swI18nApplying || currentAppLang === 'en') return;
           if (_mutTimer) clearTimeout(_mutTimer);
-          _mutTimer = setTimeout(function() { applyLanguageTranslations(currentAppLang); }, 70);
+          _mutTimer = setTimeout(function() { applyLanguageTranslations(currentAppLang); }, 250);
         });
         obs.observe(document.body, { childList: true, subtree: true });
       }
@@ -16105,12 +16105,14 @@ function translateSelectOptionText(orig, lang) {
 
 function translateAllSelectOptions(lang) {
   if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  if (document.activeElement && document.activeElement.tagName === 'SELECT') return;
   document.querySelectorAll('select option').forEach(function(opt) {
     if (!opt.dataset) return;
     if (!opt.dataset.origEn) opt.dataset.origEn = opt.textContent || '';
     var orig = opt.dataset.origEn;
-    // NEVER modify opt.value! Only update visible textContent
-    opt.textContent = (lang === 'en') ? orig : translateSelectOptionText(orig, lang);
+    var nextTxt = (lang === 'en') ? orig : translateSelectOptionText(orig, lang);
+    // NEVER modify opt.value! Only update visible textContent if changed
+    if (opt.textContent !== nextTxt) opt.textContent = nextTxt;
   });
 }
 
@@ -16171,7 +16173,9 @@ function injectQuickRoomChipsAllScreens() {
       var lbl = (lang === 'bn') ? r.bn : ((lang === 'hi') ? r.hi : r.en);
       return '<button type="button" onclick="pickQuickRoom(\'' + id + '\',\'' + r.en + '\')" style="flex-shrink:0; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:99px; padding:3px 8px; font-size:0.66rem; font-weight:700; cursor:pointer;">' + lbl + '</button>';
     }).join('');
+    if (bar.dataset && bar.dataset.renderedLang === lang && bar.children.length > 0) return;
     bar.innerHTML = numBtns + chips;
+    if (bar.dataset) bar.dataset.renderedLang = lang;
   });
 }
 
@@ -16182,8 +16186,13 @@ function injectQuickRoomChipsAllScreens() {
     applyLanguageTranslations = function(lang) {
       _origApplyI18n(lang);
       var activeL = (lang === 'bn' || lang === 'hi' || lang === 'en') ? lang : (currentAppLang || 'en');
-      translateAllSelectOptions(activeL);
-      injectQuickRoomChipsAllScreens();
+      if (typeof _swI18nApplying !== 'undefined') _swI18nApplying = true;
+      try {
+        translateAllSelectOptions(activeL);
+        injectQuickRoomChipsAllScreens();
+      } finally {
+        if (typeof _swI18nApplying !== 'undefined') _swI18nApplying = false;
+      }
     };
   }
   if (typeof window !== 'undefined' && window.addEventListener) {
@@ -16289,3 +16298,166 @@ async function deleteMyAccountAndAllData() {
     window.addEventListener('DOMContentLoaded', updatePrivacyPinBtnUI);
   }
 })();
+
+
+// =========================================================================
+// v105: 0% FEE UPI EASY RECHARGE + 9 AM - 9 PM DESK TIMING + LIVE AUTO-UNLOCK
+// =========================================================================
+var _swSelectedUpiPlan = { code: 'Karigar_Annual', planKey: 'KARIGAR_1Y', amount: 1199, days: 365, label: '365 Days Golden VIP' };
+var _swLiveUnlockUnsub = null;
+
+function isActivationDeskOnline() {
+  var hr = new Date().getHours();
+  return hr >= 9 && hr < 21;
+}
+
+function updateActivationDeskTimingUI() {
+  var el = document.getElementById('actDeskTimingBadge');
+  if (!el) return;
+  if (isActivationDeskOnline()) {
+    el.style.background = 'linear-gradient(90deg,#ecfdf5,#d1fae5)';
+    el.style.borderColor = '#10b981';
+    el.style.color = '#065f46';
+    el.textContent = '● Activation Desk ONLINE (9:00 AM – 9:00 PM) • Instant Auto-Unlock in 5–10 mins';
+  } else {
+    el.style.background = 'linear-gradient(90deg,#fffbeb,#fef3c7)';
+    el.style.borderColor = '#f59e0b';
+    el.style.color = '#92400e';
+    el.textContent = '● Activation Desk: 9:00 AM – 9:00 PM • Requests sent now auto-unlock at 9:00 AM tomorrow';
+  }
+}
+
+function openEasyUpiPlan(planCode, amount, days, label) {
+  var pKey = (days >= 365) ? 'KARIGAR_1Y' : ((days >= 180) ? 'KARIGAR_6M' : ((days >= 90) ? 'KARIGAR_3M' : 'KARIGAR_1M'));
+  _swSelectedUpiPlan = { code: planCode, planKey: pKey, amount: amount, days: days, label: label };
+  var tag = document.getElementById('easyUpiPlanTag');
+  if (tag) tag.textContent = days + ' Days • ₹' + Number(amount).toLocaleString('en-IN');
+  var box = document.getElementById('easyUpiPayBox');
+  if (box && typeof box.scrollIntoView === 'function') {
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  // Auto-fill name/phone from profile if saved
+  try {
+    var prof = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+    var pEl = document.getElementById('easy_upi_payer');
+    var phEl = document.getElementById('easy_upi_phone');
+    if (pEl && !pEl.value && prof.name) pEl.value = prof.name;
+    if (phEl && !phEl.value && prof.phone) phEl.value = prof.phone;
+  } catch (e) {}
+}
+
+function submitEasyUpiRecharge() {
+  var payer = (document.getElementById('easy_upi_payer')?.value || '').trim();
+  var phone = (document.getElementById('easy_upi_phone')?.value || '').trim();
+  var utr = (document.getElementById('easy_upi_utr')?.value || '').trim();
+  if (!payer && !phone && !utr) {
+    alert('Please enter your Name/PhonePe Name, Mobile Number, or 12-digit UTR number.');
+    return;
+  }
+  if (utr && !/^\d{12}$/.test(utr) && utr.length < 4) {
+    alert('Please enter a valid 12-digit UTR number, or leave it blank and enter your PhonePe/GPay Name.');
+    return;
+  }
+  var devId = (typeof getDeviceId === 'function') ? getDeviceId() : 'DEV_UNKNOWN';
+  var online = isActivationDeskOnline();
+  var reqObj = {
+    id: 'REQ_' + Date.now(),
+    device_id: devId,
+    name: payer || 'Fabricator',
+    phone: phone || 'N/A',
+    plan: _swSelectedUpiPlan.planKey,
+    plan_label: _swSelectedUpiPlan.label,
+    amount: _swSelectedUpiPlan.amount,
+    days: _swSelectedUpiPlan.days,
+    utr: utr || ('UPI Name: ' + (payer || phone)),
+    status: 'Pending',
+    submitted_at: new Date().toISOString(),
+    date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  try {
+    var list = JSON.parse(localStorage.getItem('sw_recharge_requests') || '[]');
+    list.unshift(reqObj);
+    localStorage.setItem('sw_recharge_requests', JSON.stringify(list));
+  } catch (e) {}
+
+  try {
+    if (window.fbDb) {
+      window.fbDb.collection('recharge_requests').doc(devId).set(reqObj, { merge: true }).catch(function(){});
+      window.fbDb.collection('recharge_requests').doc(reqObj.id).set(reqObj).catch(function(){});
+    }
+  } catch (e) {}
+
+  var statusBox = document.getElementById('easyUpiStatusMsg');
+  if (statusBox) {
+    statusBox.style.display = 'block';
+    if (online) {
+      statusBox.style.background = '#dcfce7';
+      statusBox.style.color = '#166534';
+      statusBox.textContent = '✅ Request Sent! Our team is online (9 AM – 9 PM). Your PRO plan will unlock automatically within 5–10 minutes.';
+    } else {
+      statusBox.style.background = '#fef3c7';
+      statusBox.style.color = '#92400e';
+      statusBox.textContent = '🌙 Payment Request Received! Activation desk runs 9:00 AM – 9:00 PM. Your PRO plan will auto-unlock at 9:00 AM tomorrow (no need to re-pay).';
+    }
+  }
+  startLiveProAutoUnlockListener();
+}
+
+function sendUpiScreenshotWhatsApp() {
+  var payer = (document.getElementById('easy_upi_payer')?.value || '').trim() || 'Partner';
+  var phone = (document.getElementById('easy_upi_phone')?.value || '').trim();
+  var utr = (document.getElementById('easy_upi_utr')?.value || '').trim();
+  var devId = (typeof getDeviceId === 'function') ? getDeviceId() : 'N/A';
+  // Also log pending request so admin can 1-click approve immediately
+  if (payer || phone || utr) {
+    try { submitEasyUpiRecharge(); } catch (e) {}
+  }
+  var msg = 'Hello Smart Worker Pro!\nI have paid for PRO Plan:\n• Plan: ' + _swSelectedUpiPlan.label + ' (Rs. ' + _swSelectedUpiPlan.amount + ')\n• Name: ' + payer + (phone ? ('\n• Mobile: ' + phone) : '') + (utr ? ('\n• UTR: ' + utr) : '') + '\n• Device ID: ' + devId + '\n(Attaching payment screenshot below)';
+  window.open('https://wa.me/919239413517?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function startLiveProAutoUnlockListener() {
+  try {
+    if (!window.fbDb || typeof getDeviceId !== 'function') return;
+    if (_swLiveUnlockUnsub) return;
+    var devId = getDeviceId();
+    _swLiveUnlockUnsub = window.fbDb.collection('recharge_requests').doc(devId).onSnapshot(function(doc) {
+      if (!doc || !doc.exists) return;
+      var d = doc.data() || {};
+      var st = String(d.status || '').toUpperCase();
+      if (st === 'APPROVED' || st === 'ACTIVE') {
+        var days = parseInt(d.days, 10) || 30;
+        var expTs = d.expiry_ts || (Date.now() + days * 24 * 60 * 60 * 1000);
+        try {
+          var lic = {
+            activated: true,
+            plan: d.plan || 'KARIGAR_1M',
+            days: days,
+            start_ts: Date.now(),
+            expiry_ts: expTs,
+            device_id: devId,
+            auto_unlocked: true
+          };
+          localStorage.setItem('sw_pro_license', JSON.stringify(lic));
+          localStorage.setItem('sw_pro_expiry', String(expTs));
+        } catch (e) {}
+        if (typeof updateActivationScreenUI === 'function') updateActivationScreenUI();
+        var statusBox = document.getElementById('easyUpiStatusMsg');
+        if (statusBox) {
+          statusBox.style.display = 'block';
+          statusBox.style.background = '#dcfce7';
+          statusBox.style.color = '#14532d';
+          statusBox.textContent = '🎉 PRO Activated Automatically for ' + days + ' Days! Enjoy full Smart Worker Pro.';
+        }
+      }
+    }, function() {});
+  } catch (e) {}
+}
+
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('DOMContentLoaded', function() {
+    updateActivationDeskTimingUI();
+    setTimeout(startLiveProAutoUnlockListener, 1500);
+  });
+}
