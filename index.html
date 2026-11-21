@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=103').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=104').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=103">
+  <link rel="stylesheet" href="style.css?v=104">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -582,7 +582,15 @@
   transform: translateX(20px);
   background-color: var(--calc-accent);
 }
-  </style>
+  
+/* v104: Global Mobile Anti-Overflow & Responsive Layout Fix */
+html, body { max-width: 100vw !important; overflow-x: hidden !important; }
+.screen, .screen-container, .card, .form-box, .form-grid, .form-group, .input-row, .grid-2 {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+</style>
 </head>
 <body>
 
@@ -720,6 +728,12 @@
  <div class="form-group" style="margin-bottom:14px;">
  <label style="font-weight:700; color:#334155;">Confirm Password * (Re-enter same password)</label>
  <input type="password" id="auth_reg_pass_confirm" placeholder="Re-enter identical password">
+ </div>
+ <div style="margin:10px 0 12px 0; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px;">
+   <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.75rem; font-weight:700; color:#334155; cursor:pointer;">
+     <input type="checkbox" id="auth_reg_agree_chk" style="width:17px; height:17px; margin-top:1px; accent-color:#16a34a; flex-shrink:0;">
+     <span>I agree to the <b>Privacy Policy &amp; Terms of Service</b> (My workshop data is private and used only for my account).</span>
+   </label>
  </div>
  <button type="button" class="action-btn" style="background:#16a34a; width:100%; padding:13px; font-size:0.96rem; font-weight:800; border-radius:8px; margin-bottom:12px; cursor:pointer;" onclick="doEmailRegister()">
  <i class="fa-solid fa-user-plus"></i> REGISTER WORKSHOP & CREATE ID
@@ -936,7 +950,7 @@
  <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
  </div>
 
- <!-- 2B. Workshop Profit & Worker Attendance Tracker (v103) -->
+ <!-- 2B. Workshop Profit & Worker Attendance Tracker (v104) -->
  <div class="pro-card" onclick="openScreen('profit_attendance', 'PROFIT & ATTENDANCE'); renderProfitAttendanceScreen();">
  <div class="pro-card-header">
  <div class="pro-card-icon" style="background:#ecfdf5; color:#059669;">
@@ -2760,6 +2774,24 @@
  <i class="fa-solid fa-chevron-right gemini-chevron"></i>
  </div>
 
+ <!-- PRIVACY PIN LOCK & ACCOUNT DELETION (v104 Security) -->
+ <div class="gemini-card" style="padding:14px 16px; margin-top:12px; margin-bottom:12px; border:1.5px solid #6366f1;">
+   <div style="font-size:0.86rem; font-weight:800; color:#4338ca; margin-bottom:4px;">
+     <i class="fa-solid fa-shield-halved"></i> PRIVACY PIN LOCK &amp; ACCOUNT DATA
+   </div>
+   <div style="font-size:0.71rem; color:#64748b; margin-bottom:8px;">
+     Optionally lock Customer Khata, Bills &amp; Profit screens with a 4-digit PIN, or permanently delete your account &amp; all data.
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
+     <button type="button" onclick="setupPrivacyPinLock()" style="background:#4f46e5; color:#fff; border:none; border-radius:8px; padding:9px 6px; font-size:0.74rem; font-weight:800; cursor:pointer;">
+       <i class="fa-solid fa-lock"></i> <span id="privacyPinBtnLabel">Set 4-Digit PIN Lock</span>
+     </button>
+     <button type="button" onclick="deleteMyAccountAndAllData()" style="background:#dc2626; color:#fff; border:none; border-radius:8px; padding:9px 6px; font-size:0.74rem; font-weight:800; cursor:pointer;">
+       <i class="fa-solid fa-user-slash"></i> Delete My Account &amp; Data
+     </button>
+   </div>
+ </div>
+
  <!-- GLASS SETTINGS: Add Your Own Custom Glass Types -->
  <div class="gemini-card" style="padding:14px 16px; margin-top:12px; margin-bottom:12px; border:1.5px solid #0284c7;">
    <div style="font-size:0.86rem; font-weight:800; color:#0369a1; margin-bottom:4px;">
@@ -3580,7 +3612,7 @@
    <div class="output-area" id="gc_out"></div>
 
    <!-- ================================================================== -->
-   <!-- v103: COMPLETE GLASS STOCK MANAGEMENT & CUSTOM NUMBER TAG SYSTEM    -->
+   <!-- v104: COMPLETE GLASS STOCK MANAGEMENT & CUSTOM NUMBER TAG SYSTEM    -->
    <!-- ================================================================== -->
    <div style="margin-top:12px; background:#f0f9ff; border:2px solid #0284c7; border-radius:12px; padding:11px;">
      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
@@ -3756,7 +3788,7 @@
    </div>
  </div>
 
- <!-- ================= 14A3. WORKSHOP PROFIT & WORKER ATTENDANCE SCREEN (v103) ================= -->
+ <!-- ================= 14A3. WORKSHOP PROFIT & WORKER ATTENDANCE SCREEN (v104) ================= -->
  <div id="screen-profit_attendance" class="screen">
    <div class="form-box" style="border-top: 4px solid #059669;">
      <div style="font-size:1.0rem; font-weight:800; color:#065f46; margin-bottom:4px;">
@@ -4663,12 +4695,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=103"></script>
+  <script src="app.js?v=104"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=103').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=104').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

@@ -1,3 +1,14 @@
+// v104: Global XSS Protection Helper
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 
 // =========================================================================
 // 1. LIVE CUSTOMER 2D ALUMINIUM COLOR & GLASS SHADE VISUALIZER (v69)
@@ -3764,7 +3775,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
 
  // Nisha Creations Firebase Cloud & Realtime Database Configuration
  const defaultFbConfig = {
-  apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv103idLAhJys2-M",
+  apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv104idLAhJys2-M",
   authDomain: "nisha-creations.firebaseapp.com",
   databaseURL: "https://nisha-creations-default-rtdb.firebaseio.com",
   projectId: "nisha-creations",
@@ -4242,6 +4253,12 @@ function switchAuthMode(mode) {
  if (confirmInput) confirmInput.focus();
  return;
  }
+ const agreeChk = document.getElementById('auth_reg_agree_chk');
+ if (agreeChk && !agreeChk.checked) {
+ alert("Please tick 'I agree to the Privacy Policy & Terms of Service' before registering.");
+ agreeChk.focus();
+ return;
+ }
  if (pass !== passConfirm) {
  alert("Passwords do not match! Please make sure both password fields are exactly identical.");
  if (confirmInput) confirmInput.focus();
@@ -4265,7 +4282,6 @@ function switchAuthMode(mode) {
  shop_name: shop,
  phone: cleanPhone,
  email: finalEmail,
- password: pass,
  created_at: new Date().toISOString()
  };
  if (email) {
@@ -4286,6 +4302,8 @@ function switchAuthMode(mode) {
  localStorage.setItem('sw_customers', '{}');
  localStorage.setItem('sw_site_khata', '[]');
  localStorage.setItem('sw_expenses', '[]');
+    ['sw_glass_shop_stock_v1','sw_glass_remnants_v1','sw_custom_glass_types_v1','sw_glass_inward_log_v1','sw_workshop_remnants_v1','sw_profit_attendance_v1','sw_short_glass_orders','sw_user_password'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+    try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf('sw_profit_att_') === 0) localStorage.removeItem(k); }); } catch(e){}
 
   // New workshops start on Free Plan so they subscribe to the ₹99 Karigar Pro Plan!
   const defaultLicense = {
@@ -4298,7 +4316,7 @@ function switchAuthMode(mode) {
   localStorage.setItem('sw_license', JSON.stringify(defaultLicense));
 
   localStorage.setItem('sw_cloud_user', cleanPhone);
- localStorage.setItem('sw_user_password', pass);
+ localStorage.removeItem('sw_user_password');
  localStorage.setItem('sw_user_vault_id', vaultId);
  localStorage.removeItem('sw_guest_mode');
 
@@ -4388,7 +4406,6 @@ function finalizeSwAccountSignIn(cleanUser, pass, accountObj, welcomeMsg) {
     shop_name: mergedProfile.shop_name,
     email: mergedProfile.email,
     address: mergedProfile.address,
-    password: pass,
     password_hash: passHash,
     vault_id: vaultId
   });
@@ -4397,7 +4414,7 @@ function finalizeSwAccountSignIn(cleanUser, pass, accountObj, welcomeMsg) {
   clearWorkingUserDataForAccountSwitch(cleanUser);
   localStorage.setItem('sw_profile', JSON.stringify(mergedProfile));
   localStorage.setItem('sw_cloud_user', cleanUser);
-  localStorage.setItem('sw_user_password', pass);
+  localStorage.removeItem('sw_user_password');
   localStorage.setItem('sw_user_vault_id', vaultId);
   localStorage.removeItem('sw_guest_mode');
 
@@ -4438,10 +4455,10 @@ async function doEmailLogin() {
     const _rtR = window.fbRtdb || (typeof fbRtdb !== 'undefined' ? fbRtdb : null);
     const nowIso = new Date().toISOString();
     if (_dbR) {
-      try { _dbR.collection('users').doc(cleanUser).set({ phone: cleanUser, password: upperPass, password_hash: '', updated_at: nowIso }, { merge: true }).catch(() => {}); } catch (e) {}
+      try { _dbR.collection('users').doc(cleanUser).set({ phone: cleanUser, password_hash: passHash, updated_at: nowIso }, { merge: true }).catch(() => {}); } catch (e) {}
     }
     if (_rtR) {
-      try { _rtR.ref('users/' + cleanUser).update({ phone: cleanUser, password: upperPass, password_hash: '', updated_at: nowIso }); } catch (e) {}
+      try { _rtR.ref('users/' + cleanUser).update({ phone: cleanUser, password_hash: passHash, updated_at: nowIso }); } catch (e) {}
     }
     finalizeSwAccountSignIn(
       cleanUser,
@@ -4453,7 +4470,7 @@ async function doEmailLogin() {
   }
 
   // 1. Check local cache first — IF password matches, sign in immediately!
-  //    (CRITICAL FIX v103: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
+  //    (CRITICAL FIX v104: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
   const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
   const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
   if (userAccount && (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash))) {
@@ -4667,7 +4684,7 @@ function doGoogleSignIn() {
  phone: cleanPhone,
  name: name,
  shop: shop,
- registered_password: registeredPass,
+ registered_password: 'ADMIN_RESET_REQUIRED',
  status: "PENDING_VERIFICATION",
  timestamp: Date.now(),
  date_str: new Date().toLocaleString('en-GB')
@@ -4745,6 +4762,9 @@ function doGoogleSignIn() {
  currentCloudUser = null;
  localStorage.removeItem('sw_cloud_user');
  localStorage.removeItem('sw_user_password');
+ localStorage.removeItem('sw_user_vault_id');
+ ['sw_glass_shop_stock_v1','sw_glass_remnants_v1','sw_custom_glass_types_v1','sw_glass_inward_log_v1','sw_workshop_remnants_v1','sw_profit_attendance_v1','sw_short_glass_orders'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+ try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf('sw_profit_att_') === 0) localStorage.removeItem(k); }); } catch(e){}
  localStorage.removeItem('sw_user_vault_id');
  localStorage.removeItem('sw_guest_mode');
  updateCloudUserUI(null);
@@ -6853,8 +6873,15 @@ function generateShortGlassOrderId(swgPayload) {
         hash = ((hash << 5) - hash) + s.charCodeAt(i);
         hash |= 0;
     }
-    const num = 1000 + (Math.abs(hash) % 9000);
-    return String(num);
+    // v104: 6-char high-entropy alphanumeric code (no confusing 0/O/1/I)
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code6 = '';
+    let h = Math.abs(hash) ^ (Date.now() & 0xFFFFFF);
+    for (let k = 0; k < 6; k++) {
+      code6 += chars[Math.abs(h + k * 7) % chars.length];
+      h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
+    }
+    return code6;
 }
 
 function saveShortGlassOrderToCloud(shortId, swgPayload) {
@@ -6873,8 +6900,9 @@ function saveShortGlassOrderToCloud(shortId, swgPayload) {
         if (db) {
             db.collection('glass_orders').doc(shortId).set({
                 code: shortId,
-                payload: swgPayload,
-                createdAt: Date.now()
+                payload: String(swgPayload || '').replace(/\b(?:\+?91[-\s]?)?[6-9]\d{9}\b/g, ''),
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (48 * 60 * 60 * 1000)
             }).catch(() => {});
         }
     } catch (e) {}
@@ -6883,8 +6911,9 @@ function saveShortGlassOrderToCloud(shortId, swgPayload) {
         if (rtdb) {
             rtdb.ref('glass_orders/' + shortId).set({
                 code: shortId,
-                payload: swgPayload,
-                createdAt: Date.now()
+                payload: String(swgPayload || '').replace(/\b(?:\+?91[-\s]?)?[6-9]\d{9}\b/g, ''),
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (48 * 60 * 60 * 1000)
             }).catch(() => {});
         }
     } catch (e) {}
@@ -6896,7 +6925,7 @@ async function fetchShortGlassOrderFromCloud(shortId) {
     // 1. Check localStorage first
     try {
         const map = JSON.parse(localStorage.getItem('sw_short_glass_orders') || '{}');
-        if (map[cleanId] && map[cleanId].payload) return map[cleanId].payload;
+        if (map[cleanId] && map[cleanId].payload) { if (map[cleanId].expiresAt && Date.now() > map[cleanId].expiresAt) { alert('This glass order code has expired (valid for 48 hours).'); return null; } return map[cleanId].payload; }
     } catch (e) {}
     // 2. Check Firebase Firestore
     try {
@@ -11869,6 +11898,10 @@ function evaluateRawMathExpression(rawExpr) {
   s = s.replace(/[+\-*/.]+$/, '');
   if (!s) return null;
 
+  // v104: Strict whitelist validation before expression evaluation
+  var _safeExprCheck = s.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|cbrt|abs|log|ln|exp|pow|pi|PI|E|Math|floor|ceil|round)\b/g, '');
+  if (/[^0-9+\-*/().,%\s^eE]/.test(_safeExprCheck)) return null;
+
   try {
     var fn = new Function('DEG_MODE', '"use strict"; ' +
       'var _toRad = function(x){ return DEG_MODE ? (x * Math.PI / 180) : x; }; ' +
@@ -12843,7 +12876,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v103') === -1) caches.delete(k);
+                if (k.indexOf('v104') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -13046,7 +13079,7 @@ function renderWorkshopRemnantStockUI() {
   var h = '<div style="font-weight:800; color:#065f46; margin-bottom:5px;">Total Available in Workshop: ' + totalPcs + ' Usable Piece(s) (≥12")</div>';
   list.forEach(function(r, idx) {
     h += '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #fde68a; border-radius:6px; padding:5px 7px; margin-bottom:4px; gap:6px;">';
-    h += '<div><span style="background:#0f766e; color:#fff; padding:1px 5px; border-radius:4px; font-size:0.63rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + r.profile + '</b><div style="font-size:0.67rem; color:#475569; margin-top:1px;">Length: <b style="color:#b45309;">' + disp(r.len_in) + '</b>  •  Qty: <b style="color:#059669;">' + r.qty + ' pc(s)</b></div></div>';
+    h += '<div><span style="background:#0f766e; color:#fff; padding:1px 5px; border-radius:4px; font-size:0.63rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + escapeHtml(r.profile) + '</b><div style="font-size:0.67rem; color:#475569; margin-top:1px;">Length: <b style="color:#b45309;">' + disp(r.len_in) + '</b>  •  Qty: <b style="color:#059669;">' + r.qty + ' pc(s)</b></div></div>';
     h += '<button type="button" onclick="deleteWorkshopRemnant(' + idx + ')" style="background:#fee2e2; color:#b91c1c; border:none; border-radius:5px; padding:4px 7px; font-size:0.66rem; font-weight:800; cursor:pointer;">✕</button>';
     h += '</div>';
   });
@@ -14893,7 +14926,7 @@ function setPtComboMode(mode) {
 
 
 // =========================================================================
-// v103: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
+// v104: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
 // =========================================================================
 var SW_CUSTOM_GLASS_KEY = 'sw_custom_glass_types_v1';
 var SW_GLASS_SHOP_STOCK_KEY = 'sw_glass_shop_stock_v1';
@@ -14940,7 +14973,7 @@ function renderCustomGlassSettingsList() {
   }
   box.innerHTML = list.map(function(name, idx) {
     return '<span style="display:inline-flex; align-items:center; gap:5px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; border-radius:99px; padding:3px 9px; font-size:0.72rem; font-weight:800;">' +
-      name + ' <button type="button" onclick="deleteCustomGlassType(' + idx + ')" style="background:none; border:none; color:#dc2626; font-weight:900; cursor:pointer; padding:0;">✕</button></span>';
+      escapeHtml(name) + ' <button type="button" onclick="deleteCustomGlassType(' + idx + ')" style="background:none; border:none; color:#dc2626; font-weight:900; cursor:pointer; padding:0;">✕</button></span>';
   }).join('');
 }
 
@@ -14968,7 +15001,7 @@ function deleteCustomGlassType(idx) {
   syncCustomGlassDropdowns();
 }
 
-// --- v103: COMPLETE GLASS STOCK MANAGEMENT (LOCAL NAMES + RATE + STOCK IN + AUTO-MINUS + BILL PDF) ---
+// --- v104: COMPLETE GLASS STOCK MANAGEMENT (LOCAL NAMES + RATE + STOCK IN + AUTO-MINUS + BILL PDF) ---
 var SW_GLASS_INWARD_LOG_KEY = 'sw_glass_inward_log_v1';
 var gc_last_needed_sheets = {};
 
@@ -15129,7 +15162,7 @@ function renderGlassShopStockUI(neededSheetsByType) {
     }
     var safeK = k.replace(/'/g, "\\'");
     html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #bae6fd; border-radius:7px; padding:6px 8px; margin-bottom:5px; gap:6px;">';
-    html += '<div><b style="color:#0f172a;">' + k + '</b> <span style="color:#0369a1; font-weight:800;">(' + have + ' Sh • ' + sq.toFixed(0) + ' Sq.Ft)</span><div style="font-size:0.66rem; color:#64748b;">Rate: ₹' + rate + '/Sq.Ft  •  Value: <b>₹' + val.toLocaleString('en-IN') + '</b></div>' + statusBadge + '</div>';
+    html += '<div><b style="color:#0f172a;">' + escapeHtml(k) + '</b> <span style="color:#0369a1; font-weight:800;">(' + have + ' Sh • ' + sq.toFixed(0) + ' Sq.Ft)</span><div style="font-size:0.66rem; color:#64748b;">Rate: ₹' + rate + '/Sq.Ft  •  Value: <b>₹' + val.toLocaleString('en-IN') + '</b></div>' + statusBadge + '</div>';
     html += '<div style="display:flex; gap:3px; align-items:center;">' +
       '<button type="button" onclick="adjustGlassStockQty(\'' + safeK + '\', -1)" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:4px; width:24px; height:24px; font-weight:900; cursor:pointer;">-</button>' +
       '<button type="button" onclick="adjustGlassStockQty(\'' + safeK + '\', 1)" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; border-radius:4px; width:24px; height:24px; font-weight:900; cursor:pointer;">+</button>' +
@@ -15236,7 +15269,7 @@ function renderGlassRemnantStockUI(matchedIds) {
   list.forEach(function(r, idx) {
     var isHit = matchedIds && matchedIds.indexOf(r.id) !== -1;
     h += '<div style="display:flex; justify-content:space-between; align-items:center; background:' + (isHit ? '#dcfce7' : '#fff') + '; border:1px solid ' + (isHit ? '#16a34a' : '#bbf7d0') + '; border-radius:6px; padding:5px 7px; margin-bottom:4px;">';
-    h += '<div><span style="background:#059669; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.66rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + toFractionInch(r.h_in) + ' × ' + toFractionInch(r.w_in) + '</b> (' + r.spec + ') • Qty: <b>' + r.qty + '</b>' + (isHit ? ' <b style="color:#15803d;">★ USE THIS CHHAT!</b>' : '') + '</div>';
+    h += '<div><span style="background:#059669; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.66rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + toFractionInch(r.h_in) + ' × ' + toFractionInch(r.w_in) + '</b> (' + escapeHtml(r.spec) + ') • Qty: <b>' + r.qty + '</b>' + (isHit ? ' <b style="color:#15803d;">★ USE THIS CHHAT!</b>' : '') + '</div>';
     h += '<button type="button" onclick="deleteGlassRemnant(' + idx + ')" style="background:#fee2e2; color:#b91c1c; border:none; border-radius:4px; padding:3px 6px; font-size:0.65rem; font-weight:800; cursor:pointer;">✕</button>';
     h += '</div>';
   });
@@ -15308,7 +15341,7 @@ function exportGlassNumberStickersPdf() {
   doc.save("Glass_Number_Tag_Stickers_" + Date.now() + ".pdf");
 }
 
-// v103: MULTI-GLASS-TYPE PER-SPEC 4x8 SHEET PACKING + EXACT OFFCUT SPEC + PER-TYPE STOCK AUTO-MINUS
+// v104: MULTI-GLASS-TYPE PER-SPEC 4x8 SHEET PACKING + EXACT OFFCUT SPEC + PER-TYPE STOCK AUTO-MINUS
 (function() {
   if (typeof recalculateGlassCuttingSheets === 'function') {
     var _origRecalcGlass = recalculateGlassCuttingSheets;
@@ -15394,7 +15427,7 @@ function exportGlassNumberStickersPdf() {
 })();
 
 // =========================================================================
-// v103: 1-CLICK CUT GLASS PIECE DELIVERY STICKERS PDF (NO QR — 1 PER PIECE)
+// v104: 1-CLICK CUT GLASS PIECE DELIVERY STICKERS PDF (NO QR — 1 PER PIECE)
 // =========================================================================
 function exportCutGlassPieceStickersPdf() {
   if (!isAppActivated()) {
@@ -15501,7 +15534,7 @@ function exportCutGlassPieceStickersPdf() {
 
 
 // =========================================================================
-// v103: AUTO-FILL CUSTOMER/ORDER + 58MM THERMAL STICKERS + VOICE + PROFIT/ATTENDANCE
+// v104: AUTO-FILL CUSTOMER/ORDER + 58MM THERMAL STICKERS + VOICE + PROFIT/ATTENDANCE
 // =========================================================================
 function getActiveGlassOrderCustomerInfo() {
   var cName = '';
@@ -15734,7 +15767,7 @@ function renderProfitAttendanceScreen() {
         var stToday = logs[todayKey] || '';
         return '<div style="background:#fff; border:1px solid #e2e8f0; border-radius:7px; padding:6px 8px; margin-bottom:5px;">' +
           '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-            '<span><b>' + w.name + '</b> (₹' + w.wage + '/day) • <b>' + daysWorked + 'd = ₹' + payable.toLocaleString('en-IN') + '</b></span>' +
+            '<span><b>' + escapeHtml(w.name) + '</b> (₹' + w.wage + '/day) • <b>' + daysWorked + 'd = ₹' + payable.toLocaleString('en-IN') + '</b></span>' +
             '<button type="button" onclick="paDeleteWorker(' + idx + ')" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:2px 6px; font-size:0.65rem; font-weight:800; cursor:pointer;">✕</button>' +
           '</div>' +
           '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">' +
@@ -15769,7 +15802,7 @@ function renderProfitAttendanceScreen() {
       tBox.innerHTML = d.tx.slice(0, 30).map(function(t, idx) {
         var isInc = (t.type === 'INCOME');
         return '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid ' + (isInc?'#bbf7d0':'#fecaca') + '; border-radius:6px; padding:5px 7px; margin-bottom:4px;">' +
-          '<span><b style="color:' + (isInc?'#15803d':'#b91c1c') + ';">' + (isInc?'+₹':'-₹') + Math.round(t.amt).toLocaleString('en-IN') + '</b> • ' + t.note + ' <span style="color:#94a3b8; font-size:0.64rem;">(' + t.date + ')</span></span>' +
+          '<span><b style="color:' + (isInc?'#15803d':'#b91c1c') + ';">' + (isInc?'+₹':'-₹') + Math.round(t.amt).toLocaleString('en-IN') + '</b> • ' + escapeHtml(t.note) + ' <span style="color:#94a3b8; font-size:0.64rem;">(' + t.date + ')</span></span>' +
           '<button type="button" onclick="paDeleteTx(' + idx + ')" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:2px 6px; font-size:0.64rem; font-weight:800; cursor:pointer;">✕</button>' +
           '</div>';
       }).join('');
@@ -15779,7 +15812,7 @@ function renderProfitAttendanceScreen() {
 
 
 // =========================================================================
-// v103: GLOBAL ENGLISH DIGITS + SELECT 3-LANG + toEnglishPdfSafe + QUICK ROOM CHIPS
+// v104: GLOBAL ENGLISH DIGITS + SELECT 3-LANG + toEnglishPdfSafe + QUICK ROOM CHIPS
 // =========================================================================
 
 // --- TASK 4: GLOBAL ENGLISH DIGITS LOCK (0-9 EVERYWHERE) ---
@@ -16128,7 +16161,7 @@ function injectQuickRoomChipsAllScreens() {
       bar = document.createElement('div');
       bar.id = barId;
       bar.className = 'sw-qroom-bar';
-      bar.style.cssText = 'display:flex; align-items:center; gap:4px; overflow-x:auto; white-space:nowrap; padding:4px 0 2px 0; margin-top:4px; -webkit-overflow-scrolling:touch;';
+      bar.style.cssText = 'display:flex; flex-wrap:wrap; align-items:center; gap:5px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; padding:5px 0 2px 0; margin-top:4px;';
       inp.parentElement.appendChild(bar);
     }
     var numBtns = ['1','2','3'].map(function(n) {
@@ -16160,5 +16193,99 @@ function injectQuickRoomChipsAllScreens() {
       injectQuickRoomChipsAllScreens();
       translateAllSelectOptions(typeof currentAppLang !== 'undefined' ? currentAppLang : 'en');
     });
+  }
+})();
+
+
+// =========================================================================
+// v104: 4-DIGIT PRIVACY PIN LOCK & DELETE MY ACCOUNT AND ALL DATA
+// =========================================================================
+var SW_PRIVACY_PIN_KEY = 'sw_privacy_pin_hash_v1';
+var _swPinUnlockedSession = false;
+
+function updatePrivacyPinBtnUI() {
+  var lbl = document.getElementById('privacyPinBtnLabel');
+  if (!lbl) return;
+  var hasPin = !!localStorage.getItem(SW_PRIVACY_PIN_KEY);
+  lbl.textContent = hasPin ? 'Change / Remove PIN' : 'Set 4-Digit PIN Lock';
+}
+
+function setupPrivacyPinLock() {
+  var existingHash = localStorage.getItem(SW_PRIVACY_PIN_KEY);
+  if (existingHash) {
+    var cur = prompt("Enter current 4-digit Privacy PIN (or leave blank to cancel):");
+    if (!cur) return;
+    var curH = (typeof sha256 === 'function') ? sha256(cur.trim() + '_SW_PIN_2026') : cur.trim();
+    if (curH !== existingHash) { alert("Incorrect current PIN!"); return; }
+    if (confirm("Tap OK to REMOVE Privacy PIN Lock, or Cancel to set a new 4-digit PIN.")) {
+      localStorage.removeItem(SW_PRIVACY_PIN_KEY);
+      _swPinUnlockedSession = true;
+      updatePrivacyPinBtnUI();
+      alert("Privacy PIN Lock removed.");
+      return;
+    }
+  }
+  var p1 = prompt("Set a new 4-digit Privacy PIN (locks Customer Khata, Bills & Profit):");
+  if (!p1) return;
+  p1 = normalizeDigitsToEnglish(p1).trim();
+  if (!/^\d{4}$/.test(p1)) { alert("Please enter exactly 4 digits (e.g. 2580)."); return; }
+  var p2 = prompt("Re-enter the same 4-digit PIN to confirm:");
+  if (!p2 || normalizeDigitsToEnglish(p2).trim() !== p1) { alert("PINs did not match!"); return; }
+  var h = (typeof sha256 === 'function') ? sha256(p1 + '_SW_PIN_2026') : p1;
+  localStorage.setItem(SW_PRIVACY_PIN_KEY, h);
+  _swPinUnlockedSession = true;
+  updatePrivacyPinBtnUI();
+  alert("✅ 4-Digit Privacy PIN Lock enabled for Customer Khata, Bills & Profit!");
+}
+
+async function deleteMyAccountAndAllData() {
+  if (!confirm("⚠️ WARNING: Permanently delete your Workshop Account and ALL local & cloud data? This cannot be undone!")) return;
+  var typed = prompt("Type DELETE to permanently erase your account and all data:");
+  if (!typed || typed.trim().toUpperCase() !== 'DELETE') {
+    alert("Account deletion cancelled.");
+    return;
+  }
+  var cloudUser = localStorage.getItem('sw_cloud_user') || '';
+  var vaultId = localStorage.getItem('sw_user_vault_id') || '';
+  var _db = window.fbDb || (typeof fbDb !== 'undefined' ? fbDb : null);
+  var _rt = window.fbRtdb || (typeof fbRtdb !== 'undefined' ? fbRtdb : null);
+  try {
+    if (_db && cloudUser) await _db.collection('users').doc(cloudUser).delete().catch(() => {});
+    if (_db && vaultId && vaultId !== cloudUser) await _db.collection('users').doc(vaultId).delete().catch(() => {});
+    if (_rt && cloudUser) await _rt.ref('users/' + cloudUser).remove().catch(() => {});
+    if (_rt && vaultId) await _rt.ref('nisha_creations/smart_worker/' + vaultId).remove().catch(() => {});
+  } catch (e) {}
+  try {
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.indexOf('sw_') === 0) localStorage.removeItem(k);
+    });
+  } catch (e) {}
+  alert("Your account and all workshop data have been permanently deleted.");
+  if (typeof openScreen === 'function') openScreen('auth', 'SIGN IN');
+  else if (typeof location !== 'undefined' && location.reload) location.reload();
+}
+
+// Enforce 4-Digit Privacy PIN before opening Customer Khata, Quotation/Bills, or Profit & Attendance!
+(function() {
+  if (typeof openScreen === 'function') {
+    var _origOpenScreenPin = openScreen;
+    var _lockedScreens = { customer_lookup: 1, quotation: 1, profit_attendance: 1 };
+    openScreen = function(screenName, title) {
+      var pinHash = localStorage.getItem(SW_PRIVACY_PIN_KEY);
+      if (pinHash && !_swPinUnlockedSession && _lockedScreens[screenName]) {
+        var entered = prompt("🔒 Enter 4-Digit Privacy PIN to open " + (title || screenName) + ":");
+        if (!entered) return;
+        var eHash = (typeof sha256 === 'function') ? sha256(normalizeDigitsToEnglish(entered).trim() + '_SW_PIN_2026') : entered.trim();
+        if (eHash !== pinHash) {
+          alert("Incorrect Privacy PIN!");
+          return;
+        }
+        _swPinUnlockedSession = true;
+      }
+      return _origOpenScreenPin(screenName, title);
+    };
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', updatePrivacyPinBtnUI);
   }
 })();
