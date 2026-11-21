@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=102').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=103').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=102">
+  <link rel="stylesheet" href="style.css?v=103">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -936,7 +936,7 @@
  <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
  </div>
 
- <!-- 2B. Workshop Profit & Worker Attendance Tracker (v102) -->
+ <!-- 2B. Workshop Profit & Worker Attendance Tracker (v103) -->
  <div class="pro-card" onclick="openScreen('profit_attendance', 'PROFIT & ATTENDANCE'); renderProfitAttendanceScreen();">
  <div class="pro-card-header">
  <div class="pro-card-icon" style="background:#ecfdf5; color:#059669;">
@@ -3580,7 +3580,7 @@
    <div class="output-area" id="gc_out"></div>
 
    <!-- ================================================================== -->
-   <!-- v102: COMPLETE GLASS STOCK MANAGEMENT & CUSTOM NUMBER TAG SYSTEM    -->
+   <!-- v103: COMPLETE GLASS STOCK MANAGEMENT & CUSTOM NUMBER TAG SYSTEM    -->
    <!-- ================================================================== -->
    <div style="margin-top:12px; background:#f0f9ff; border:2px solid #0284c7; border-radius:12px; padding:11px;">
      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
@@ -3756,7 +3756,7 @@
    </div>
  </div>
 
- <!-- ================= 14A3. WORKSHOP PROFIT & WORKER ATTENDANCE SCREEN (v102) ================= -->
+ <!-- ================= 14A3. WORKSHOP PROFIT & WORKER ATTENDANCE SCREEN (v103) ================= -->
  <div id="screen-profit_attendance" class="screen">
    <div class="form-box" style="border-top: 4px solid #059669;">
      <div style="font-size:1.0rem; font-weight:800; color:#065f46; margin-bottom:4px;">
@@ -4663,12 +4663,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=102"></script>
+  <script src="app.js?v=103"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=102').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=103').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

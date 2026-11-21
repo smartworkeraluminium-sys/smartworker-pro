@@ -3764,7 +3764,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
 
  // Nisha Creations Firebase Cloud & Realtime Database Configuration
  const defaultFbConfig = {
-  apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv102idLAhJys2-M",
+  apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv103idLAhJys2-M",
   authDomain: "nisha-creations.firebaseapp.com",
   databaseURL: "https://nisha-creations-default-rtdb.firebaseio.com",
   projectId: "nisha-creations",
@@ -4453,7 +4453,7 @@ async function doEmailLogin() {
   }
 
   // 1. Check local cache first — IF password matches, sign in immediately!
-  //    (CRITICAL FIX v102: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
+  //    (CRITICAL FIX v103: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
   const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
   const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
   if (userAccount && (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash))) {
@@ -10592,7 +10592,7 @@ function setupDb() {
     btn_open: "খুলুন",
     btn_edit: "এডিট",
     sub_domal: "27x65 / 45mm সেকশন কাটিং",
-    sub_sliding: "২, ৩, ৪ ট্র্যাক ও ইন্টারলক কাটিং",
+    sub_sliding: "2, 3, 4 ট্র্যাক ও ইন্টারলক কাটিং",
     sub_casement: "জেড-সেকশন ও ওপেনেবল জানালা",
     sub_partition: "অফিস পার্টিশন ও শিট কাটিং",
     sub_door: "হিঞ্জ ডোর ও বাথরুম শাটার",
@@ -10661,10 +10661,10 @@ const SW_UI_PHRASES = {
   "Logout": { bn: "লগআউট", hi: "लॉगआउट" },
 
   // Home Cards & Modules
-  "Glass Cutting (4'x8' Sheet Chart)": { bn: "গ্লাস কাটিং (৪'x৮' শিট চার্ট)", hi: "ग्लास कटिंग (4'x8' शीट चार्ट)" },
-  "Enter Glass Sizes -> Auto 4'x8' Min-Waste Cutting Drawing & PDF": { bn: "গ্লাসের মাপ দিন -> অটো ৪'x৮' কাটিং ড্রয়িং ও PDF", hi: "ग्लास साइज डालें -> ऑटो 4'x8' कटिंग ड्राइंग और PDF" },
-  "Alu Bar / Pipe Cutting (12' & 16')": { bn: "পাইপ / বার কাটিং (১২' ও ১৬')", hi: "पाइप / बार कटिंग (12' और 16')" },
-  "Min-Waste 12ft / 16ft Pipe Cutting Drawing, Kerf Loss & PDF": { bn: "কম ওয়েস্টেজ ১২'/১৬' পাইপ কাটিং ও PDF", hi: "कम वेस्टेज 12'/16' पाइप कटिंग और PDF" },
+  "Glass Cutting (4'x8' Sheet Chart)": { bn: "গ্লাস কাটিং (4'x8' শিট চার্ট)", hi: "ग्लास कटिंग (4'x8' शीट चार्ट)" },
+  "Enter Glass Sizes -> Auto 4'x8' Min-Waste Cutting Drawing & PDF": { bn: "গ্লাসের মাপ দিন -> অটো 4'x8' কাটিং ড্রয়িং ও PDF", hi: "ग्लास साइज डालें -> ऑटो 4'x8' कटिंग ड्राइंग और PDF" },
+  "Alu Bar / Pipe Cutting (12' & 16')": { bn: "পাইপ / বার কাটিং (12' ও 16')", hi: "पाइप / बार कटिंग (12' और 16')" },
+  "Min-Waste 12ft / 16ft Pipe Cutting Drawing, Kerf Loss & PDF": { bn: "কম ওয়েস্টেজ 12'/16' পাইপ কাটিং ও PDF", hi: "कम वेस्टेज 12'/16' पाइप कटिंग और PDF" },
   "Profit & Attendance": { bn: "লাভ ও হাজিরা খাতা", hi: "मुनाफा और हाज़िरी" },
   "Worker Hazira & Net Profit": { bn: "মিস্ত্রি হাজিরা ও মোট লাভ", hi: "कारीगर हाज़िरी और नेट प्रॉफ़िट" },
   "Order Tracker": { bn: "অর্ডার ট্র্যাকার", hi: "ऑर्डर ट्रैकर" },
@@ -10717,19 +10717,19 @@ const SW_UI_PHRASES = {
   "UNDO": { bn: "আগের ধাপ", hi: "अंडू (Undo)" },
   "Reset": { bn: "রিসেট", hi: "रीसेट" },
   "+ ADD TO BILL": { bn: "+ বিলে যোগ করুন", hi: "+ बिल में जोड़ें" },
-  "1. CUTTING PDF": { bn: "১. কাটিং PDF", hi: "1. कटिंग PDF" },
-  "2. GLASS PDF + QR": { bn: "২. গ্লাস PDF", hi: "2. ग्लास PDF" },
-  "3. ALU PURCHASE": { bn: "৩. মাল কেনার লিস্ট", hi: "3. माल खरीद लिस्ट" },
-  "4. HARDWARE PDF": { bn: "৪. হার্ডওয়্যার PDF", hi: "4. हार्डवेयर PDF" },
+  "1. CUTTING PDF": { bn: "1. কাটিং PDF", hi: "1. कटिंग PDF" },
+  "2. GLASS PDF + QR": { bn: "2. গ্লাস PDF", hi: "2. ग्लास PDF" },
+  "3. ALU PURCHASE": { bn: "3. মাল কেনার লিস্ট", hi: "3. माल खरीद लिस्ट" },
+  "4. HARDWARE PDF": { bn: "4. হার্ডওয়্যার PDF", hi: "4. हार्डवेयर PDF" },
   "CUTTING SIZES:": { bn: "কাটিং সাইজ লিস্ট:", hi: "कटिंग साइज लिस्ट:" },
   "MATERIAL PURCHASE LIST:": { bn: "মাল কেনার তালিকা:", hi: "मटेरियल खरीद लिस्ट:" },
 
   // Partition CAD & Custom Door
   "SELECT WORK MODE (SINGLE OR COMBINED):": { bn: "কাজের ধরন বেছে নিন (আলাদা বা একসঙ্গে):", hi: "काम का मोड चुनें (अकेले या एक साथ):" },
-  "1. Only Partition": { bn: "১. শুধু পার্টিশন", hi: "1. केवल पार्टीशन" },
-  "2. Partition + Door": { bn: "২. পার্টিশন + দরজা", hi: "2. पार्टीशन + डोर" },
-  "3. Partition + Window": { bn: "৩. পার্টিশন + জানালা", hi: "3. पार्टीशन + विंडो" },
-  "4. All 3 (Pt + Door + Win)": { bn: "৪. তিনটিই একসঙ্গে", hi: "4. तीनों एक साथ" },
+  "1. Only Partition": { bn: "1. শুধু পার্টিশন", hi: "1. केवल पार्टीशन" },
+  "2. Partition + Door": { bn: "2. পার্টিশন + দরজা", hi: "2. पार्टीशन + डोर" },
+  "3. Partition + Window": { bn: "3. পার্টিশন + জানালা", hi: "3. पार्टीशन + विंडो" },
+  "4. All 3 (Pt + Door + Win)": { bn: "4. তিনটিই একসঙ্গে", hi: "4. तीनों एक साथ" },
   "ATTACHED DOOR SYSTEM:": { bn: "যুক্ত দরজার সিস্টেম:", hi: "जुड़ा हुआ डोर सिस्टम:" },
   "ATTACHED WINDOW SYSTEM:": { bn: "যুক্ত জানালার সিস্টেম:", hi: "जुड़ा हुआ विंडो सिस्टम:" },
   "OUTER FRAME PIPES (TAP TO ON / OFF):": { bn: "আউটার ফ্রেম পাইপ (ট্যাপ করে ON/OFF):", hi: "आउटर फ्रेम पाइप (टैप करके ON/OFF):" },
@@ -10752,53 +10752,53 @@ const SW_UI_PHRASES = {
   "Jali / Mesh": { bn: "জালি / নেট", hi: "जाली / मेश" },
   "Single Door": { bn: "সিঙ্গেল দরজা", hi: "सिंगल डोर" },
   "Half Wall": { bn: "হাফ ওয়াল", hi: "हाफ वॉल" },
-  "2T Sliding": { bn: "২-ট্র্যাক স্লাইডিং", hi: "2-ट्रैक स्लाइडिंग" },
-  "3T Slide+Jali": { bn: "৩-ট্র্যাক + জালি", hi: "3-ट्रैक + जाली" },
+  "2T Sliding": { bn: "2-ট্র্যাক স্লাইডিং", hi: "2-ट्रैक स्लाइडिंग" },
+  "3T Slide+Jali": { bn: "3-ট্র্যাক + জালি", hi: "3-ट्रैक + जाली" },
   "Open Window": { bn: "ওপেন জানালা", hi: "ओपन विंडो" },
-  "CUSTOM DOOR DESIGN (1–4 PARTS):": { bn: "কাস্টম দরজা ডিজাইন (১–৪ ভাগ):", hi: "कस्टम डोर डिज़ाइन (1–4 भाग):" },
-  "1 Part": { bn: "১ ভাগ", hi: "1 भाग" },
-  "2 Parts": { bn: "২ ভাগ", hi: "2 भाग" },
-  "3 Parts": { bn: "৩ ভাগ", hi: "3 भाग" },
-  "4 Parts": { bn: "৪ ভাগ", hi: "4 भाग" },
+  "CUSTOM DOOR DESIGN (1–4 PARTS):": { bn: "কাস্টম দরজা ডিজাইন (1–4 ভাগ):", hi: "कस्टम डोर डिज़ाइन (1–4 भाग):" },
+  "1 Part": { bn: "1 ভাগ", hi: "1 भाग" },
+  "2 Parts": { bn: "2 ভাগ", hi: "2 भाग" },
+  "3 Parts": { bn: "3 ভাগ", hi: "3 भाग" },
+  "4 Parts": { bn: "4 ভাগ", hi: "4 भाग" },
   "Full Glass": { bn: "পুরোটাই গ্লাস", hi: "पूरा ग्लास" },
   "Full Jali": { bn: "পুরোটাই জালি", hi: "पूरी जाली" },
   "Full ACP": { bn: "পুরোটাই ACP", hi: "पूरा ACP" },
 
   // Glass Cutting, Stock Management & Stickers
-  "4'x8' GLASS SHEET CUTTING MASTER": { bn: "৪'x৮' গ্লাস শিট কাটিং মাস্টার", hi: "4'x8' ग्लास शीट कटिंग मास्टर" },
-  "4-DIGIT ORDER CODE & WHATSAPP SHARE (NO QR)": { bn: "৪-সংখ্যার অর্ডার কোড ও হোয়াটসঅ্যাপ শেয়ার", hi: "4-अंकीय ऑर्डर कोड और व्हाट्सएप शेयर" },
-  "ENTER 4-DIGIT CODE": { bn: "৪-সংখ্যার কোড দিন", hi: "4-अंकीय कोड डालें" },
+  "4'x8' GLASS SHEET CUTTING MASTER": { bn: "4'x8' গ্লাস শিট কাটিং মাস্টার", hi: "4'x8' ग्लास शीट कटिंग मास्टर" },
+  "4-DIGIT ORDER CODE & WHATSAPP SHARE (NO QR)": { bn: "4-সংখ্যার অর্ডার কোড ও হোয়াটসঅ্যাপ শেয়ার", hi: "4-अंकीय ऑर्डर कोड और व्हाट्सएप शेयर" },
+  "ENTER 4-DIGIT CODE": { bn: "4-সংখ্যার কোড দিন", hi: "4-अंकीय कोड डालें" },
   "SEND TO CUTTER": { bn: "কাটারকে পাঠান", hi: "कटर को भेजें" },
   "Stock Sheet Size:": { bn: "স্টক শিটের মাপ:", hi: "स्टॉक शीट साइज:" },
-  "1. SHEET DRAWING PDF": { bn: "১. শিট ড্রয়িং PDF", hi: "1. शीट ड्राइंग PDF" },
-  "2. GLASS CUTTING LIST PDF": { bn: "২. গ্লাস কাটিং লিস্ট PDF", hi: "2. ग्लास कटिंग लिस्ट PDF" },
-  "3. PRINT CUT GLASS STICKERS PDF (1 STICKER PER GLASS PIECE)": { bn: "৩. কাট গ্লাস স্টিকার PDF (প্রতি পিসে ১ স্টিকার)", hi: "3. कट ग्लास स्टिकर PDF (हर पीस पर 1 स्टिकर)" },
-  "4. 58MM THERMAL / BLUETOOTH STICKERS (1-CLICK)": { bn: "৪. ৫৮মিমি থার্মাল / ব্লুটুথ স্টিকার (১-ক্লিক)", hi: "4. 58mm थर्मल / ब्लूटूथ स्टिकर (1-क्लिक)" },
-  "GLASS CUTTING & 4'x8' SHEET SUMMARY:": { bn: "গ্লাস কাটিং ও ৪'x৮' শিটের হিসাব:", hi: "ग्लास कटिंग और 4'x8' शीट सारांश:" },
+  "1. SHEET DRAWING PDF": { bn: "1. শিট ড্রয়িং PDF", hi: "1. शीट ड्राइंग PDF" },
+  "2. GLASS CUTTING LIST PDF": { bn: "2. গ্লাস কাটিং লিস্ট PDF", hi: "2. ग्लास कटिंग लिस्ट PDF" },
+  "3. PRINT CUT GLASS STICKERS PDF (1 STICKER PER GLASS PIECE)": { bn: "3. কাট গ্লাস স্টিকার PDF (প্রতি পিসে 1 স্টিকার)", hi: "3. कट ग्लास स्टिकर PDF (हर पीस पर 1 स्टिकर)" },
+  "4. 58MM THERMAL / BLUETOOTH STICKERS (1-CLICK)": { bn: "4. 58মিমি থার্মাল / ব্লুটুথ স্টিকার (1-ক্লিক)", hi: "4. 58mm थर्मल / ब्लूटूथ स्टिकर (1-क्लिक)" },
+  "GLASS CUTTING & 4'x8' SHEET SUMMARY:": { bn: "গ্লাস কাটিং ও 4'x8' শিটের হিসাব:", hi: "ग्लास कटिंग और 4'x8' शीट सारांश:" },
   "GLASS STOCK MANAGEMENT (NO QR)": { bn: "গ্লাস স্টক ম্যানেজমেন্ট", hi: "ग्लास स्टॉक मैनेजमेंट" },
   "Stock Bill PDF": { bn: "স্টক বিল PDF", hi: "स्टॉक बिल PDF" },
   "+ Add New Stock (IN)": { bn: "+ নতুন স্টক যোগ করুন", hi: "+ नया स्टॉक जोड़ें (IN)" },
   "Confirm Cut (Auto-Minus)": { bn: "কাটিং কনফার্ম (অটো-মাইনাস)", hi: "कट कन्फर्म (ऑटो-माइनस)" },
-  "GLASS OFFCUTS / CHHAT (≥12\" • NUMBER TAGS)": { bn: "গ্লাস ছাঁট / অফকাট (≥১২\" • নম্বর ট্যাগ)", hi: "ग्लास छांट / ऑफकट (≥12\" • नंबर टैग)" },
+  "GLASS OFFCUTS / CHHAT (≥12\" • NUMBER TAGS)": { bn: "গ্লাস ছাঁট / অফকাট (≥12\" • নম্বর ট্যাগ)", hi: "ग्लास छांट / ऑफकट (≥12\" • नंबर टैग)" },
   "Save Offcuts": { bn: "ছাঁট সেভ করুন", hi: "ऑफकट सेव करें" },
   "Number Stickers": { bn: "নম্বর স্টিকার", hi: "नंबर स्टिकर" },
 
   // 12'/16' Pipe Bar Cutting & Remnants
-  "12' / 16' ALU PIPE CUTTING MASTER": { bn: "১২' / ১৬' অ্যালুমিনিয়াম পাইপ কাটিং মাস্টার", hi: "12' / 16' एल्युमिनियम पाइप कटिंग मास्टर" },
-  "1-CLICK IMPORT CUT SIZES FROM CALCULATORS:": { bn: "ক্যালকুলেটর থেকে ১-ক্লিকে মাপ আনুন:", hi: "कैलकुलेटर से 1-क्लिक में साइज लाएं:" },
+  "12' / 16' ALU PIPE CUTTING MASTER": { bn: "12' / 16' অ্যালুমিনিয়াম পাইপ কাটিং মাস্টার", hi: "12' / 16' एल्युमिनियम पाइप कटिंग मास्टर" },
+  "1-CLICK IMPORT CUT SIZES FROM CALCULATORS:": { bn: "ক্যালকুলেটর থেকে 1-ক্লিকে মাপ আনুন:", hi: "कैलकुलेटर से 1-क्लिक में साइज लाएं:" },
   "Stock Bar Length:": { bn: "স্টক বারের দৈর্ঘ্য:", hi: "स्टॉक बार की लंबाई:" },
   "Section / Pipe Name:": { bn: "সেকশন / পাইপের নাম:", hi: "सेक्शन / पाइप का नाम:" },
   "Blade Kerf (Cut Loss):": { bn: "ব্লেড কার্ফ (কাট লস):", hi: "ब्लेड कर्फ (कट लॉस):" },
   "Cut Piece Length:": { bn: "কাট পিসের দৈর্ঘ্য:", hi: "कट पीस की लंबाई:" },
   "Piece Tag / Note (Optional):": { bn: "পিসের নাম / নোট (ঐচ্ছিক):", hi: "पीस टैग / नोट (वैकल्पिक):" },
   "+ ADD & OPTIMIZE": { bn: "+ যোগ ও অপ্টিমাইজ করুন", hi: "+ जोड़ें और ऑप्टिमाइज़ करें" },
-  "EXPORT 12' / 16' BAR CUTTING DRAWING PDF": { bn: "১২' / ১৬' বার কাটিং ড্রয়িং PDF", hi: "12' / 16' बार कटिंग ड्राइंग PDF" },
-  "WORKSHOP REMNANT STOCK (≥12\" ONLY)": { bn: "ওয়ার্কশপ ছাঁট স্টক (শুধু ≥১২\")", hi: "वर्कशॉप ऑफकट स्टॉक (केवल ≥12\")" },
+  "EXPORT 12' / 16' BAR CUTTING DRAWING PDF": { bn: "12' / 16' বার কাটিং ড্রয়িং PDF", hi: "12' / 16' बार कटिंग ड्राइंग PDF" },
+  "WORKSHOP REMNANT STOCK (≥12\" ONLY)": { bn: "ওয়ার্কশপ ছাঁট স্টক (শুধু ≥12\")", hi: "वर्कशॉप ऑफकट स्टॉक (केवल ≥12\")" },
   "Auto-Use Stock First": { bn: "আগে স্টক ব্যবহার করুন", hi: "पहले स्टॉक इस्तेमाल करें" },
-  "Save Offcuts (≥12\")": { bn: "ছাঁট সেভ করুন (≥১২\")", hi: "ऑफकट सेव करें (≥12\")" },
+  "Save Offcuts (≥12\")": { bn: "ছাঁট সেভ করুন (≥12\")", hi: "ऑफकट सेव करें (≥12\")" },
   "Number Tag Stickers PDF": { bn: "নম্বর ট্যাগ স্টিকার PDF", hi: "नंबर टैग स्टिकर PDF" },
-  "WORKSHOP / WAREHOUSE STOCK (≥12\")": { bn: "ওয়ার্কশপ / গোডাউন স্টক (≥১২\")", hi: "वर्कशॉप / गोदाम स्टॉक (≥12\")" },
-  "12' / 16' BAR CUTTING SUMMARY & STOCK LIST:": { bn: "১২' / ১৬' বার কাটিং ও স্টক তালিকা:", hi: "12' / 16' बार कटिंग और स्टॉक लिस्ट:" },
+  "WORKSHOP / WAREHOUSE STOCK (≥12\")": { bn: "ওয়ার্কশপ / গোডাউন স্টক (≥12\")", hi: "वर्कशॉप / गोदाम स्टॉक (≥12\")" },
+  "12' / 16' BAR CUTTING SUMMARY & STOCK LIST:": { bn: "12' / 16' বার কাটিং ও স্টক তালিকা:", hi: "12' / 16' बार कटिंग और स्टॉक लिस्ट:" },
 
   // Quotation, Customer Book, Profit & Attendance, Settings
   "Customer Details": { bn: "কাস্টমারের বিবরণ", hi: "कस्टमर विवरण" },
@@ -10811,8 +10811,8 @@ const SW_UI_PHRASES = {
   "INCOME": { bn: "আয় (Income)", hi: "आय (Income)" },
   "EXPENSE+WAGE": { bn: "খরচ + মজুরি", hi: "खर्च + मज़दूरी" },
   "NET PROFIT": { bn: "নিট লাভ (Profit)", hi: "नेट प्रॉफ़िट" },
-  "1. WORKER ATTENDANCE (HAZIRA)": { bn: "১. কর্মী হাজিরা খাতা", hi: "1. कारीगर हाज़िरी खाता" },
-  "2. PROJECT INCOME & EXPENSE ENTRY": { bn: "২. প্রজেক্ট আয় ও খরচের হিসাব", hi: "2. प्रोजेक्ट आय और खर्च एंट्री" },
+  "1. WORKER ATTENDANCE (HAZIRA)": { bn: "1. কর্মী হাজিরা খাতা", hi: "1. कारीगर हाज़िरी खाता" },
+  "2. PROJECT INCOME & EXPENSE ENTRY": { bn: "2. প্রজেক্ট আয় ও খরচের হিসাব", hi: "2. प्रोजेक्ट आय और खर्च एंट्री" },
   "+ SAVE INCOME / EXPENSE ENTRY": { bn: "+ আয় / খরচের এন্ট্রি সেভ করুন", hi: "+ आय / खर्च एंट्री सेव करें" },
   "Present ✓": { bn: "উপস্থিত ✓", hi: "हाज़िर ✓" },
   "Half Day": { bn: "হাফ ডে", hi: "हाफ डे" },
@@ -10829,8 +10829,8 @@ const SW_UI_PHRASES = {
   "e.g. Living Room, Bedroom": { bn: "যেমন: বেডরুম, হল রুম", hi: "जैसे: लिविंग रूम, बेडरूम" },
   "e.g. Main Entrance, Office, Balcony": { bn: "যেমন: মেইন গেট, অফিস, বারান্দা", hi: "जैसे: मेन गेट, ऑफिस, बालकनी" },
   "e.g. Vertical, Top Rail, Transom": { bn: "যেমন: ভার্টিক্যাল, টপ রেল", hi: "जैसे: वर्टिकल, टॉप रेल" },
-  "Glass Name (e.g. 5mm Ghosa Kach)": { bn: "গ্লাসের নাম (যেমন: ৫মিমি ঘষা কাঁচ)", hi: "ग्लास नाम (जैसे: 5mm घिसा कांच)" },
-  "e.g. 5mm Fluted / 8mm Frost": { bn: "যেমন: ৫মিমি ফ্লুটেড / ৮মিমি ফ্রস্ট", hi: "जैसे: 5mm फ्लूटेड / 8mm फ्रॉस्ट" },
+  "Glass Name (e.g. 5mm Ghosa Kach)": { bn: "গ্লাসের নাম (যেমন: 5মিমি ঘষা কাঁচ)", hi: "ग्लास नाम (जैसे: 5mm घिसा कांच)" },
+  "e.g. 5mm Fluted / 8mm Frost": { bn: "যেমন: 5মিমি ফ্লুটেড / 8মিমি ফ্রস্ট", hi: "जैसे: 5mm फ्लूटेड / 8mm फ्रॉस्ट" },
   "Search Tag #...": { bn: "ট্যাগ # খুঁজুন...", hi: "टैग # खोजें..." },
   "Search #101...": { bn: "#101 খুঁজুন...", hi: "#101 खोजें..." },
   "Custom # (Opt)": { bn: "নিজস্ব # (ঐচ্ছিক)", hi: "कस्टम # (वैकल्पिक)" },
@@ -12843,7 +12843,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v102') === -1) caches.delete(k);
+                if (k.indexOf('v103') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -14893,7 +14893,7 @@ function setPtComboMode(mode) {
 
 
 // =========================================================================
-// v102: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
+// v103: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
 // =========================================================================
 var SW_CUSTOM_GLASS_KEY = 'sw_custom_glass_types_v1';
 var SW_GLASS_SHOP_STOCK_KEY = 'sw_glass_shop_stock_v1';
@@ -14927,6 +14927,7 @@ function syncCustomGlassDropdowns() {
     });
   });
   renderCustomGlassSettingsList();
+  if (typeof applyLanguageTranslations === 'function' && typeof currentAppLang !== 'undefined' && currentAppLang !== 'en') applyLanguageTranslations(currentAppLang);
 }
 
 function renderCustomGlassSettingsList() {
@@ -14967,7 +14968,7 @@ function deleteCustomGlassType(idx) {
   syncCustomGlassDropdowns();
 }
 
-// --- v102: COMPLETE GLASS STOCK MANAGEMENT (LOCAL NAMES + RATE + STOCK IN + AUTO-MINUS + BILL PDF) ---
+// --- v103: COMPLETE GLASS STOCK MANAGEMENT (LOCAL NAMES + RATE + STOCK IN + AUTO-MINUS + BILL PDF) ---
 var SW_GLASS_INWARD_LOG_KEY = 'sw_glass_inward_log_v1';
 var gc_last_needed_sheets = {};
 
@@ -15307,7 +15308,7 @@ function exportGlassNumberStickersPdf() {
   doc.save("Glass_Number_Tag_Stickers_" + Date.now() + ".pdf");
 }
 
-// v102: MULTI-GLASS-TYPE PER-SPEC 4x8 SHEET PACKING + EXACT OFFCUT SPEC + PER-TYPE STOCK AUTO-MINUS
+// v103: MULTI-GLASS-TYPE PER-SPEC 4x8 SHEET PACKING + EXACT OFFCUT SPEC + PER-TYPE STOCK AUTO-MINUS
 (function() {
   if (typeof recalculateGlassCuttingSheets === 'function') {
     var _origRecalcGlass = recalculateGlassCuttingSheets;
@@ -15393,7 +15394,7 @@ function exportGlassNumberStickersPdf() {
 })();
 
 // =========================================================================
-// v102: 1-CLICK CUT GLASS PIECE DELIVERY STICKERS PDF (NO QR — 1 PER PIECE)
+// v103: 1-CLICK CUT GLASS PIECE DELIVERY STICKERS PDF (NO QR — 1 PER PIECE)
 // =========================================================================
 function exportCutGlassPieceStickersPdf() {
   if (!isAppActivated()) {
@@ -15411,7 +15412,7 @@ function exportCutGlassPieceStickersPdf() {
   var autoInfo = getActiveGlassOrderCustomerInfo();
   var partyName = prompt("Customer Name / Order Code for Stickers (Auto-Filled — Edit if needed):", autoInfo) || "";
   partyName = partyName.trim();
-  var shopName = (document.getElementById('homeShop')?.textContent || 'SMART WORKER ALUMINIUM').trim();
+  var shopName = toEnglishPdfSafe((document.getElementById('homeShop')?.textContent || 'SMART WORKER ALUMINIUM').trim());
   var today = new Date().toLocaleDateString('en-GB');
 
   // Expand every glass item by its Qty so EVERY physical glass sheet gets its own sticker!
@@ -15500,7 +15501,7 @@ function exportCutGlassPieceStickersPdf() {
 
 
 // =========================================================================
-// v102: AUTO-FILL CUSTOMER/ORDER + 58MM THERMAL STICKERS + VOICE + PROFIT/ATTENDANCE
+// v103: AUTO-FILL CUSTOMER/ORDER + 58MM THERMAL STICKERS + VOICE + PROFIT/ATTENDANCE
 // =========================================================================
 function getActiveGlassOrderCustomerInfo() {
   var cName = '';
@@ -15540,8 +15541,8 @@ async function printCutGlassStickersThermal58mm() {
     return;
   }
   var autoInfo = getActiveGlassOrderCustomerInfo();
-  var partyName = (prompt("Customer Name / Order Code for 58mm Thermal Stickers:", autoInfo) || "").trim();
-  var shopName = (document.getElementById('homeShop')?.textContent || 'SMART WORKER ALUMINIUM').trim();
+  var partyName = toEnglishPdfSafe((prompt("Customer Name / Order Code for 58mm Thermal Stickers:", autoInfo) || "").trim());
+  var shopName = toEnglishPdfSafe((document.getElementById('homeShop')?.textContent || 'SMART WORKER ALUMINIUM').trim());
   var today = new Date().toLocaleDateString('en-GB');
 
   var allPieces = [];
@@ -15775,3 +15776,389 @@ function renderProfitAttendanceScreen() {
     }
   }
 }
+
+
+// =========================================================================
+// v103: GLOBAL ENGLISH DIGITS + SELECT 3-LANG + toEnglishPdfSafe + QUICK ROOM CHIPS
+// =========================================================================
+
+// --- TASK 4: GLOBAL ENGLISH DIGITS LOCK (0-9 EVERYWHERE) ---
+function normalizeDigitsToEnglish(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/[০-৯]/g, function(ch) { return String(ch.charCodeAt(0) - 0x09E6); })
+    .replace(/[०-९]/g, function(ch) { return String(ch.charCodeAt(0) - 0x0966); });
+}
+
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('input', function(ev) {
+    var t = ev && ev.target;
+    if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) return;
+    if (typeof t.value === 'string' && /[০-৯०-९]/.test(t.value)) {
+      var pos = t.selectionStart;
+      t.value = normalizeDigitsToEnglish(t.value);
+      try { if (pos !== null && t.setSelectionRange) t.setSelectionRange(pos, pos); } catch (e) {}
+    }
+    if (t.dataset && t.dataset.pdfPreviewId) updatePdfLivePreview(t);
+  }, true);
+}
+
+// --- TASK 2: OFFLINE BENGALI & HINDI -> ENGLISH TRANSLITERATOR FOR PDF & THERMAL ---
+var SW_PDF_WORD_DICT = {
+  // Bengali common rooms, places & surnames
+  'রান্নাঘর': 'Kitchen', 'কিচেন': 'Kitchen', 'বেডরুম': 'Bedroom', 'মাস্টার': 'Master',
+  'বাথরুম': 'Bathroom', 'টয়লেট': 'Toilet', 'বারান্দা': 'Balcony', 'হল': 'Hall',
+  'ডাইনিং': 'Dining', 'বসার': 'Drawing', 'ঘর': 'Room', 'সিঁড়ি': 'Staircase',
+  'সিড়ি': 'Staircase', 'অফিস': 'Office', 'দোকান': 'Shop', 'ঠাকুরঘর': 'Puja Room',
+  'পুজো': 'Puja', 'ফ্লোর': 'Floor', 'তলা': 'Floor', 'জানালা': 'Window', 'দরজা': 'Door',
+  'পার্টিশন': 'Partition', 'গ্লাস': 'Glass', 'কাঁচ': 'Glass', 'ঘষা': 'Frosted',
+  'হাওড়া': 'Howrah', 'হাওড়া': 'Howrah', 'কলকাতা': 'Kolkata', 'আমতা': 'Amta',
+  'বাগনান': 'Bagnan', 'উলুবেড়িয়া': 'Uluberia', 'মেদিনীপুর': 'Midnapore', 'হুগলি': 'Hooghly',
+  'সাহেব': 'Saheb', 'ঘাঁটি': 'Ghanti', 'অমিত': 'Amit', 'অমিতাভ': 'Amitava',
+  'কুমার': 'Kumar', 'দাস': 'Das', 'মণ্ডল': 'Mandal', 'বিশ্বাস': 'Biswas',
+  'ঘোষ': 'Ghosh', 'রায়': 'Roy', 'রায়': 'Roy', 'পাল': 'Pal', 'সেন': 'Sen',
+  'বসু': 'Basu', 'মিত্র': 'Mitra', 'মুখার্জী': 'Mukherjee', 'ব্যানার্জী': 'Banerjee',
+  'চ্যাটার্জী': 'Chatterjee', 'শর্মা': 'Sharma', 'বর্মা': 'Verma', 'সিং': 'Singh',
+  'শেখ': 'Sheikh', 'মল্লিক': 'Mallick', 'রহমান': 'Rahman', 'আলী': 'Ali', 'বাবু': 'Babu',
+  // Hindi common rooms, places & surnames
+  'किचन': 'Kitchen', 'रसोई': 'Kitchen', 'बेडरूम': 'Bedroom', 'मास्टर': 'Master',
+  'बाथरूम': 'Bathroom', 'टॉयलेट': 'Toilet', 'बालकनी': 'Balcony', 'हॉल': 'Hall',
+  'डाइनिंग': 'Dining', 'ड्राइंग': 'Drawing', 'रूम': 'Room', 'सीढ़ी': 'Staircase',
+  'ऑफिस': 'Office', 'दुकान': 'Shop', 'पूजा': 'Puja', 'फ्लोर': 'Floor',
+  'खिड़की': 'Window', 'दरवाज़ा': 'Door', 'दरवाजा': 'Door', 'पार्टीशन': 'Partition',
+  'ग्लास': 'Glass', 'कांच': 'Glass', 'हावड़ा': 'Howrah', 'कोलकाता': 'Kolkata',
+  'दिल्ली': 'Delhi', 'मुंबई': 'Mumbai', 'पटना': 'Patna', 'रांची': 'Ranchi',
+  'अमित': 'Amit', 'कुमार': 'Kumar', 'दास': 'Das', 'शर्मा': 'Sharma', 'वर्मा': 'Verma',
+  'सिंह': 'Singh', 'पटेल': 'Patel', 'यादव': 'Yadav', 'गुप्ता': 'Gupta', 'राजेश': 'Rajesh',
+  'रमेश': 'Ramesh', 'सुरेश': 'Suresh', 'राजू': 'Raju', 'साहब': 'Saheb'
+};
+
+var BN_VOW = { 'অ':'a','আ':'a','ই':'i','ঈ':'i','উ':'u','ঊ':'u','ঋ':'ri','এ':'e','ঐ':'oi','ও':'o','ঔ':'ou' };
+var BN_MATRA = { 'া':'a','ি':'i','ী':'i','ু':'u','ূ':'u','ৃ':'ri','ে':'e','ৈ':'oi','ো':'o','ৌ':'ou','ং':'ng','ঃ':'h','ঁ':'n','্':'' };
+var BN_CONS = {
+  'ক':'k','খ':'kh','গ':'g','ঘ':'gh','ঙ':'ng','চ':'ch','ছ':'chh','জ':'j','ঝ':'jh','ঞ':'n',
+  'ট':'t','ঠ':'th','ড':'d','ঢ':'dh','ণ':'n','ত':'t','থ':'th','দ':'d','ধ':'dh','ন':'n',
+  'প':'p','ফ':'ph','ব':'b','ভ':'bh','ম':'m','য':'j','র':'r','ল':'l','শ':'sh','ষ':'sh',
+  'স':'s','হ':'h','ড়':'r','ঢ়':'rh','য়':'y','ৎ':'t','ড়':'r','ঢ়':'rh','য়':'y'
+};
+
+var HI_VOW = { 'अ':'a','आ':'a','इ':'i','ई':'i','उ':'u','ऊ':'u','ऋ':'ri','ए':'e','ऐ':'ai','ओ':'o','औ':'au' };
+var HI_MATRA = { 'ा':'a','ि':'i','ी':'i','ु':'u','ू':'u','ृ':'ri','े':'e','ै':'ai','ो':'o','ौ':'au','ं':'n','ः':'h','ँ':'n','्':'' };
+var HI_CONS = {
+  'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'ng','च':'ch','छ':'chh','ज':'j','झ':'jh','ञ':'n',
+  'ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n','त':'t','थ':'th','द':'d','ध':'dh','न':'n',
+  'प':'p','फ':'ph','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v','श':'sh',
+  'ष':'sh','स':'s','ह':'h','ड़':'r','ढ़':'rh','क़':'q','ख़':'kh','ग़':'g','ज़':'z','फ़':'f'
+};
+
+function transliterateIndicWord(word) {
+  if (!word) return '';
+  if (SW_PDF_WORD_DICT[word]) return SW_PDF_WORD_DICT[word];
+  var isBn = /[\u0980-\u09FF]/.test(word);
+  var isHi = /[\u0900-\u097F]/.test(word);
+  if (!isBn && !isHi) return word;
+
+  var V = isBn ? BN_VOW : HI_VOW;
+  var M = isBn ? BN_MATRA : HI_MATRA;
+  var C = isBn ? BN_CONS : HI_CONS;
+  var halant = isBn ? '্' : '्';
+  var out = '';
+
+  for (var i = 0; i < word.length; i++) {
+    var ch = word[i];
+    var next = word[i + 1] || '';
+    if (V[ch] !== undefined) {
+      out += V[ch];
+    } else if (C[ch] !== undefined) {
+      out += C[ch];
+      if (next === halant) {
+        i++; // skip halant (conjunct)
+      } else if (M[next] !== undefined) {
+        out += M[next];
+        i++;
+      } else if (next && (C[next] !== undefined || V[next] !== undefined) && i < word.length - 1) {
+        out += 'a'; // inherent schwa between consonants (dropped at word end)
+      }
+    } else if (M[ch] !== undefined) {
+      out += M[ch];
+    } else if (/[\x20-\x7E]/.test(ch)) {
+      out += ch;
+    }
+  }
+  if (!out) return '';
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
+
+function toEnglishPdfSafe(text) {
+  if (text === null || text === undefined) return '';
+  var s = normalizeDigitsToEnglish(String(text));
+  // Replace common symbols for jsPDF Helvetica compatibility
+  s = s.replace(/₹/g, 'Rs.').replace(/×/g, 'x').replace(/—/g, '-').replace(/–/g, '-').replace(/•/g, '|').replace(/→/g, '->').replace(/≥/g, '>=').replace(/≤/g, '<=');
+  if (/[\u0900-\u09FF]/.test(s)) {
+    s = s.replace(/[\u0900-\u09FF]+/g, function(tok) { return transliterateIndicWord(tok); });
+  }
+  // Strip any leftover non-ASCII glyphs so jsPDF NEVER renders garbled boxes
+  s = s.replace(/[^\x20-\x7E\n\r\t]/g, '');
+  return s.replace(/[ \t]{2,}/g, ' ').trim();
+}
+
+// Global jsPDF safety patch: guarantees ALL PDFs stay 100% clean English even if user typed Bengali/Hindi!
+function patchJsPdfSafeText() {
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF || !jsPDF.API || jsPDF.API._swPdfSafePatched) return;
+  jsPDF.API._swPdfSafePatched = true;
+  var origText = jsPDF.API.text;
+  jsPDF.API.text = function(txt, x, y, opts, transform) {
+    if (typeof txt === 'string') txt = toEnglishPdfSafe(txt);
+    else if (Array.isArray(txt)) txt = txt.map(function(line) { return typeof line === 'string' ? toEnglishPdfSafe(line) : line; });
+    return origText.call(this, txt, x, y, opts, transform);
+  };
+  if (jsPDF.API.autoTable) {
+    var origAT = jsPDF.API.autoTable;
+    jsPDF.API.autoTable = function(opts) {
+      if (opts && Array.isArray(opts.head)) {
+        opts.head = opts.head.map(function(row) { return Array.isArray(row) ? row.map(function(c) { return typeof c === 'string' ? toEnglishPdfSafe(c) : c; }) : row; });
+      }
+      if (opts && Array.isArray(opts.body)) {
+        opts.body = opts.body.map(function(row) { return Array.isArray(row) ? row.map(function(c) { return typeof c === 'string' ? toEnglishPdfSafe(c) : c; }) : row; });
+      }
+      return origAT.call(this, opts);
+    };
+  }
+}
+
+// Live "PDF Print: ..." preview under Customer Name & Room/Location inputs when Bengali/Hindi is typed
+function updatePdfLivePreview(inp) {
+  if (!inp || !inp.dataset || !inp.dataset.pdfPreviewId) return;
+  var el = document.getElementById(inp.dataset.pdfPreviewId);
+  if (!el) return;
+  var v = (inp.value || '').trim();
+  if (/[\u0900-\u09FF]/.test(v)) {
+    el.style.display = 'block';
+    el.textContent = 'PDF Print: ' + toEnglishPdfSafe(v);
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function attachPdfLivePreviews() {
+  var ids = ['q_name','sk_client_name','sk_site_loc','new_cust_name','new_cust_site','ot_client','set_name','dm_loc','sl_loc','cc_loc','dr_loc','q_loc','sk_room','gc_tag'];
+  ids.forEach(function(id) {
+    var inp = document.getElementById(id);
+    if (!inp || !inp.parentElement || inp.dataset.pdfPreviewId) return;
+    var pid = 'pdf_prev_' + id;
+    inp.dataset.pdfPreviewId = pid;
+    var div = document.createElement('div');
+    div.id = pid;
+    div.style.cssText = 'display:none; font-size:0.65rem; font-weight:800; color:#0369a1; background:#e0f2fe; border-radius:4px; padding:2px 6px; margin-top:3px;';
+    inp.parentElement.appendChild(div);
+  });
+}
+
+// --- TASK 1: ALL <select> <option> 3-LANGUAGE TRANSLATION (VALUE ALWAYS ENGLISH, DIGITS ALWAYS 0-9!) ---
+var SW_OPT_EXACT_MAP = {
+  // Units & Tracks
+  'Inch': { bn: 'ইঞ্চি (Inch)', hi: 'इंच (Inch)' },
+  'Millimeter': { bn: 'মিলিমিটার (mm)', hi: 'मिलीमीटर (mm)' },
+  '2-Track': { bn: '2-ট্র্যাক', hi: '2-ट्रैक' },
+  '3-Track': { bn: '3-ট্র্যাক', hi: '3-ट्रैक' },
+  '4-Track': { bn: '4-ট্র্যাক', hi: '4-ट्रैक' },
+  '2-Track Sliding': { bn: '2-ট্র্যাক স্লাইডিং', hi: '2-ट्रैक स्लाइडिंग' },
+  '3-Track (2G + 1 Jali)': { bn: '3-ট্র্যাক (2 গ্লাস + 1 জালি)', hi: '3-ट्रैक (2 ग्लास + 1 जाली)' },
+  '4-Track Sliding': { bn: '4-ট্র্যাক স্লাইডিং', hi: '4-ट्रैक स्लाइडिंग' },
+  'Center Open': { bn: 'সেন্টার ওপেন', hi: 'सेंटर ओपन' },
+  'Openable (H-Section)': { bn: 'ওপেনেবল (H-সেকশন)', hi: 'ओपनेबल (H-सेक्शन)' },
+  // Glass Types
+  'Clear': { bn: 'ক্লিয়ার গ্লাস (Clear)', hi: 'क्लियर ग्लास (Clear)' },
+  'Clear Glass': { bn: 'ক্লিয়ার গ্লাস', hi: 'क्लियर ग्लास' },
+  'Extra Clear': { bn: 'এক্সট্রা ক্লিয়ার গ্লাস', hi: 'एक्स्ट्रा क्लियर ग्लास' },
+  'Frosted': { bn: 'ফ্রস্টেড / ঘষা কাঁচ', hi: 'फ्रॉस्टेड / घिसा कांच' },
+  'Frosted Glass': { bn: 'ফ্রস্টেড / ঘষা কাঁচ', hi: 'फ्रॉस्टेड / घिसा कांच' },
+  'Toughened': { bn: 'টাফেন্ড গ্লাস (Toughened)', hi: 'टफन्ड ग्लास (Toughened)' },
+  'Toughened Glass': { bn: 'টাফেন্ড গ্লাস', hi: 'टफन्ड ग्लास' },
+  'Reflective': { bn: 'রিফ্লেক্টিভ গ্লাস', hi: 'रिफ्लेक्टिव ग्लास' },
+  'Reflective Glass': { bn: 'রিফ্লেক্টিভ গ্লাস', hi: 'रिफ्लेक्टिव ग्लास' },
+  'Tinted / Brown': { bn: 'টিন্টেড / ব্রাউন গ্লাস', hi: 'टिंटेड / ब्राउन ग्लास' },
+  'Pinhead': { bn: 'পিনহেড গ্লাস (Pinhead)', hi: 'पिनहेड ग्लास (Pinhead)' },
+  'Fluted': { bn: 'ফ্লুটেড গ্লাস (Fluted)', hi: 'फ्लूटेड ग्लास (Fluted)' },
+  'Mirror': { bn: 'আয়না (Mirror)', hi: 'शीशा (Mirror)' },
+  'Mosquito Jali / Mesh': { bn: 'মশারি জালি / নেট', hi: 'मच्छर जाली / मेश' },
+  'SS 304 Jali / Mesh': { bn: 'SS 304 স্টিল জালি', hi: 'SS 304 स्टील जाली' },
+  'Glass + Jali / Mesh': { bn: 'গ্লাস + জালি / নেট', hi: 'ग्लास + जाली / मेश' },
+  // Aluminium Colors & Finishes
+  'Silver (Natural)': { bn: 'সিলভার (ন্যাচারাল)', hi: 'सिल्वर (नेचुरल)' },
+  'Anodized Silver Glossy': { bn: 'অ্যানোডাইজড সিলভার গ্লসি', hi: 'एनोडाइज्ड सिल्वर ग्लॉसी' },
+  'Anodized Silver Matte': { bn: 'অ্যানোডাইজড সিলভার ম্যাট', hi: 'एनोडाइज्ड सिल्वर मैट' },
+  'Anodized Golden Glossy': { bn: 'অ্যানোডাইজড গোল্ডেন গ্লসি', hi: 'एनोडाइज्ड गोल्डन ग्लॉसी' },
+  'Anodized Golden Matte': { bn: 'অ্যানোডাইজড গোল্ডেন ম্যাট', hi: 'एनोडाइज्ड गोल्डन मैट' },
+  'Anodized Champagne Glossy': { bn: 'অ্যানোডাইজড শ্যাম্পেইন গ্লসি', hi: 'एनोडाइज्ड शैंपेन ग्लॉसी' },
+  'Anodized Champagne Matte': { bn: 'অ্যানোডাইজড শ্যাম্পেইন ম্যাট', hi: 'एनोडाइज्ड शैंपेन मैट' },
+  'Anodized Brown Glossy': { bn: 'অ্যানোডাইজড ব্রাউন গ্লসি', hi: 'एनोडाइज्ड ब्राउन ग्लॉसी' },
+  'Anodized Brown Matte': { bn: 'অ্যানোডাইজড ব্রাউন ম্যাট', hi: 'एनोडाइज्ड ब्राउन मैट' },
+  'Anodized Black Glossy': { bn: 'অ্যানোডাইজড ব্ল্যাক গ্লসি', hi: 'एनोडाइज्ड ब्लैक ग्लॉसी' },
+  'Anodized Black Matte': { bn: 'অ্যানোডাইজড ব্ল্যাক ম্যাট', hi: 'एनोडाइज्ड ब्लैक मैट' },
+  'Powder Coated Black': { bn: 'পাউডার কোটেড ব্ল্যাক', hi: 'पाउडर कोटेड ब्लैक' },
+  'Powder Coated White': { bn: 'পাউডার কোটেড হোয়াইট', hi: 'पाउडर कोटेड व्हाइट' },
+  'Powder Coated Brown': { bn: 'পাউডার কোটেড ব্রাউন', hi: 'पाउडर कोटेड ब्राउन' },
+  'Powder Coated Grey': { bn: 'পাউডার কোটেড গ্রে', hi: 'पाउडर कोटेड ग्रे' },
+  'Powder Coated Ivory': { bn: 'পাউডার কোটেড আইভরি', hi: 'पाउडर कोटेड आइवरी' },
+  'Powder Coated Red': { bn: 'পাউডার কোটেড লাল', hi: 'पाउडर कोटेड लाल' },
+  'Powder Coated Blue': { bn: 'পাউডার কোটেড নীল', hi: 'पाउडर कोटेड नीला' },
+  'Powder Coated Green': { bn: 'পাউডার কোটেড সবুজ', hi: 'पाउडर कोटेड हरा' },
+  'Wooden Finish Teak': { bn: 'উডেন ফিনিশ টিক (Teak)', hi: 'वुडन फिनिश टीक (Teak)' },
+  'Wooden Finish Walnut': { bn: 'উডেন ফিনিশ ওয়ালনাট', hi: 'वुडन फिनिश वॉलनट' },
+  'Custom Color...': { bn: 'অন্যান্য কালার লিখুন...', hi: 'कस्टम कलर लिखें...' },
+  // Door & Transaction Types
+  'Standard Door': { bn: 'স্ট্যান্ডার্ড দরজা', hi: 'स्टैंडर्ड डोर' },
+  'Standard Hinge Door': { bn: 'স্ট্যান্ডার্ড হিঞ্জ দরজা', hi: 'स्टैंडर्ड हिंज डोर' },
+  'Floor Spring Door': { bn: 'ফ্লোর স্প্রিং দরজা', hi: 'फ्लोर स्प्रिंग डोर' },
+  'Top Hung Sliding Door': { bn: 'টপ হাং স্লাইডিং দরজা', hi: 'टॉप हंग स्लाइडिंग डोर' },
+  'Single Door': { bn: 'সিঙ্গেল পাল্লা দরজা', hi: 'सिंगल पल्ला डोर' },
+  'Double Door': { bn: 'ডাবল পাল্লা দরজা', hi: 'डबल पल्ला डोर' },
+  '+ Income': { bn: '+ আয় (Income)', hi: '+ आय (Income)' },
+  '- Expense': { bn: '- খরচ (Expense)', hi: '- खर्च (Expense)' }
+};
+
+var SW_OPT_TOKENS = [
+  ['Anodized', 'অ্যানোডাইজড', 'एनोडाइज्ड'],
+  ['Powder Coated', 'পাউডার কোটেড', 'पाउडर कोटेड'],
+  ['Wooden Finish', 'উডেন ফিনিশ', 'वुडन फिनिश'],
+  ['One Way', 'ওয়ান ওয়ে', 'वन वे'],
+  ['Tinted', 'টিন্টেড', 'टिंटेड'],
+  ['Reflective', 'রিফ্লেক্টিভ', 'रिफ्लेक्टिव'],
+  ['Toughened', 'টাফেন্ড', 'टफन्ड'],
+  ['Frosted', 'ফ্রস্টেড', 'फ्रॉस्टेड'],
+  ['Extra Clear', 'এক্সট্রা ক্লিয়ার', 'एक्स्ट्रा क्लियर'],
+  ['Clear', 'ক্লিয়ার', 'क्लियर'],
+  ['Pinhead', 'পিনহেড', 'पिनहेड'],
+  ['Fluted', 'ফ্লুটেড', 'फ्लूटेड'],
+  ['Mirror', 'মিরর', 'मिरर'],
+  ['Glossy', 'গ্লসি', 'ग्लॉसी'],
+  ['Matte', 'ম্যাট', 'मैट'],
+  ['Golden', 'গোল্ডেন', 'गोल्डन'],
+  ['Champagne', 'শ্যাম্পেইন', 'शैंपेन'],
+  ['Silver', 'সিলভার', 'सिल्वर'],
+  ['Black', 'ব্ল্যাক', 'ब्लैक'],
+  ['White', 'হোয়াইট', 'व्हाइट'],
+  ['Brown', 'ব্রাউন', 'ब्राउन'],
+  ['Blue', 'নীল', 'नीला'],
+  ['Green', 'সবুজ', 'हरा'],
+  ['Grey', 'গ্রে', 'ग्रे'],
+  ['Ivory', 'আইভরি', 'आइवरी'],
+  ['Gold', 'গোল্ড', 'गोल्ड'],
+  ['Track', 'ট্র্যাক', 'ट्रैक'],
+  ['Sliding', 'স্লাইডিং', 'स्लाइडिंग'],
+  ['Tube', 'টিউব', 'ट्यूब'],
+  ['Sheet', 'শিট', 'शीट'],
+  ['Bar', 'বার', 'बार'],
+  ['Glass', 'গ্লাস', 'ग्लास'],
+  ['Jali', 'জালি', 'जाली']
+];
+
+function translateSelectOptionText(orig, lang) {
+  if (!orig || lang === 'en') return orig;
+  var t = orig.trim();
+  if (SW_OPT_EXACT_MAP[t] && SW_OPT_EXACT_MAP[t][lang]) {
+    return normalizeDigitsToEnglish(SW_OPT_EXACT_MAP[t][lang]);
+  }
+  var res = orig;
+  var colIdx = (lang === 'bn') ? 1 : 2;
+  SW_OPT_TOKENS.forEach(function(pair) {
+    var re = new RegExp('\\b' + pair[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    res = res.replace(re, pair[colIdx]);
+  });
+  return normalizeDigitsToEnglish(res);
+}
+
+function translateAllSelectOptions(lang) {
+  if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  document.querySelectorAll('select option').forEach(function(opt) {
+    if (!opt.dataset) return;
+    if (!opt.dataset.origEn) opt.dataset.origEn = opt.textContent || '';
+    var orig = opt.dataset.origEn;
+    // NEVER modify opt.value! Only update visible textContent
+    opt.textContent = (lang === 'en') ? orig : translateSelectOptionText(orig, lang);
+  });
+}
+
+// --- TASK 3: 1-TAP QUICK ROOM CHIPS + 1 / 2 / 3 SUFFIX BUTTONS ---
+var SW_QUICK_ROOMS = [
+  { en: 'Bedroom', bn: 'বেডরুম', hi: 'बेडरूम' },
+  { en: 'Master Bed', bn: 'মাস্টার বেড', hi: 'मास्टर बेड' },
+  { en: 'Kitchen', bn: 'রান্নাঘর', hi: 'किचन' },
+  { en: 'Balcony', bn: 'বারান্দা', hi: 'बालकनी' },
+  { en: 'Bathroom', bn: 'বাথরুম', hi: 'बाथरूम' },
+  { en: 'Toilet', bn: 'টয়লেট', hi: 'टॉयलेट' },
+  { en: 'Hall / Dining', bn: 'হল / ডাইনিং', hi: 'हॉल / डाइनिंग' },
+  { en: 'Drawing Room', bn: 'বসার ঘর', hi: 'ड्राइंग रूम' },
+  { en: 'Staircase', bn: 'সিঁড়ি', hi: 'सीढ़ी' },
+  { en: 'Office', bn: 'অফিস', hi: 'ऑफिस' },
+  { en: 'Shop', bn: 'দোকান', hi: 'दुकान' },
+  { en: 'Puja Room', bn: 'ঠাকুরঘর', hi: 'पूजा रूम' },
+  { en: '1st Floor', bn: '1st ফ্লোর', hi: '1st फ्लोर' },
+  { en: '2nd Floor', bn: '2nd ফ্লোর', hi: '2nd फ्लोर' }
+];
+
+function pickQuickRoom(inputId, roomEn) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.value = roomEn;
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function appendRoomNumber(inputId, numStr) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  var cur = (inp.value || '').trim().replace(/\s+\d+$/, '');
+  inp.value = (cur ? (cur + ' ') : 'Room ') + numStr;
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function injectQuickRoomChipsAllScreens() {
+  if (typeof document === 'undefined') return;
+  var roomInputIds = ['dm_loc', 'sl_loc', 'cc_loc', 'dr_loc', 'pt_loc', 'cl_loc', 'q_loc', 'sk_room', 'gc_tag'];
+  var lang = (typeof currentAppLang !== 'undefined') ? currentAppLang : 'en';
+
+  roomInputIds.forEach(function(id) {
+    var inp = document.getElementById(id);
+    if (!inp || !inp.parentElement) return;
+    var barId = 'qroom_bar_' + id;
+    var bar = document.getElementById(barId);
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = barId;
+      bar.className = 'sw-qroom-bar';
+      bar.style.cssText = 'display:flex; align-items:center; gap:4px; overflow-x:auto; white-space:nowrap; padding:4px 0 2px 0; margin-top:4px; -webkit-overflow-scrolling:touch;';
+      inp.parentElement.appendChild(bar);
+    }
+    var numBtns = ['1','2','3'].map(function(n) {
+      return '<button type="button" onclick="appendRoomNumber(\'' + id + '\',\'' + n + '\')" style="flex-shrink:0; background:#0284c7; color:#fff; border:none; border-radius:99px; width:22px; height:22px; font-size:0.68rem; font-weight:900; cursor:pointer;">' + n + '</button>';
+    }).join('');
+    var chips = SW_QUICK_ROOMS.map(function(r) {
+      var lbl = (lang === 'bn') ? r.bn : ((lang === 'hi') ? r.hi : r.en);
+      return '<button type="button" onclick="pickQuickRoom(\'' + id + '\',\'' + r.en + '\')" style="flex-shrink:0; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:99px; padding:3px 8px; font-size:0.66rem; font-weight:700; cursor:pointer;">' + lbl + '</button>';
+    }).join('');
+    bar.innerHTML = numBtns + chips;
+  });
+}
+
+// Hook applyLanguageTranslations so <select> options & Quick Room Chips update automatically on language change!
+(function() {
+  if (typeof applyLanguageTranslations === 'function') {
+    var _origApplyI18n = applyLanguageTranslations;
+    applyLanguageTranslations = function(lang) {
+      _origApplyI18n(lang);
+      var activeL = (lang === 'bn' || lang === 'hi' || lang === 'en') ? lang : (currentAppLang || 'en');
+      translateAllSelectOptions(activeL);
+      injectQuickRoomChipsAllScreens();
+    };
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', function() {
+      patchJsPdfSafeText();
+      attachPdfLivePreviews();
+      injectQuickRoomChipsAllScreens();
+      translateAllSelectOptions(typeof currentAppLang !== 'undefined' ? currentAppLang : 'en');
+    });
+  }
+})();
