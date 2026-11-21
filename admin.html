@@ -1664,54 +1664,92 @@
       window.open(waUrl, '_blank');
     }
 
-    function adminResetUserPassword(phone, name) {
-      const cleanPhone = String(phone).replace(/\D/g, '');
-      const newPass = prompt("Enter NEW custom password for " + name + " (" + cleanPhone + "):", "123456");
+    async function adminResetUserPassword(phone, name) {
+      const digits = String(phone || '').replace(/\D/g, '');
+      const cleanPhone = digits.length >= 10 ? digits.slice(-10) : digits;
+      if (cleanPhone.length < 10) {
+        alert("Invalid 10-digit mobile number.");
+        return;
+      }
+      const newPass = prompt("Enter NEW verified password for " + name + " (" + cleanPhone + "):", "");
       if (!newPass || newPass.trim().length < 6) {
         alert("Password must be at least 6 characters.");
         return;
       }
 
       const p = newPass.trim();
+      const nowIso = new Date().toISOString();
 
-      // 1. Update in sw_registered_users
+      // 1. Update in local sw_registered_users
       const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
-      if (users[cleanPhone]) {
-        users[cleanPhone].password = p;
-        localStorage.setItem('sw_registered_users', JSON.stringify(users));
-      }
+      if (!users[cleanPhone]) users[cleanPhone] = { phone: cleanPhone, name: name || "Customer", shop_name: "Workshop" };
+      users[cleanPhone].password = p;
+      users[cleanPhone].admin_reset_at = nowIso;
+      localStorage.setItem('sw_registered_users', JSON.stringify(users));
 
-      // 2. Update in reset requests
+      // 2. Update in local reset requests
       let requests = JSON.parse(localStorage.getItem('sw_password_reset_requests') || '[]');
-      requests = requests.map(r => r.phone === cleanPhone ? { ...r, registered_password: p, status: "VERIFIED_RESOLVED" } : r);
+      requests = requests.map(r => {
+        const rp = String(r.phone || '').replace(/\D/g, '').slice(-10);
+        return rp === cleanPhone ? { ...r, phone: cleanPhone, registered_password: p, status: "VERIFIED_RESOLVED", resolved_at: nowIso } : r;
+      });
       localStorage.setItem('sw_password_reset_requests', JSON.stringify(requests));
 
-      // 3. Update in Cloud Firestore
+      // 3. Push to Cloud Firestore & Realtime Database (await so Admin knows it saved!)
+      let cloudSaved = false;
+      const tasks = [];
       if (window.fbDb) {
-        fbDb.collection('users').doc(cleanPhone).set({
-          password: p,
-          updated_at: new Date().toISOString()
-        }, { merge: true }).catch(() => {});
-
-        fbDb.collection('password_reset_requests').doc(cleanPhone).set({
-          registered_password: p,
-          status: "VERIFIED_RESOLVED",
-          resolved_at: new Date().toISOString()
-        }, { merge: true }).catch(() => {});
+        tasks.push(
+          fbDb.collection('users').doc(cleanPhone).set({
+            phone: cleanPhone,
+            password: p,
+            password_hash: "",
+            admin_reset_at: nowIso,
+            updated_at: nowIso
+          }, { merge: true }).then(() => { cloudSaved = true; }).catch(e => console.warn("Firestore users reset err:", e))
+        );
+        tasks.push(
+          fbDb.collection('password_reset_requests').doc(cleanPhone).set({
+            phone: cleanPhone,
+            name: name || "Customer",
+            registered_password: p,
+            status: "VERIFIED_RESOLVED",
+            resolved_at: nowIso
+          }, { merge: true }).then(() => { cloudSaved = true; }).catch(e => console.warn("Firestore reset_req err:", e))
+        );
       }
-
-      // 4. Update in Realtime Database
       if (window.fbRtdb) {
         try {
-          fbRtdb.ref('users/' + cleanPhone).update({ password: p });
-          fbRtdb.ref('password_reset_requests/' + cleanPhone).update({ registered_password: p, status: "VERIFIED_RESOLVED" });
-        } catch(e){}
+          tasks.push(
+            fbRtdb.ref('users/' + cleanPhone).update({
+              phone: cleanPhone,
+              password: p,
+              password_hash: "",
+              admin_reset_at: nowIso,
+              updated_at: nowIso
+            }).then(() => { cloudSaved = true; }).catch(e => console.warn("RTDB users reset err:", e))
+          );
+          tasks.push(
+            fbRtdb.ref('password_reset_requests/' + cleanPhone).update({
+              phone: cleanPhone,
+              registered_password: p,
+              status: "VERIFIED_RESOLVED",
+              resolved_at: nowIso
+            }).then(() => { cloudSaved = true; }).catch(e => console.warn("RTDB reset_req err:", e))
+          );
+        } catch (e) {}
       }
 
-      renderPasswordResetQueue();
-      alert("Password successfully updated to: " + p);
+      if (tasks.length) await Promise.all(tasks);
 
-      if (confirm("Send this new password to " + name + " on WhatsApp now?")) {
+      renderPasswordResetQueue();
+      if (cloudSaved) {
+        alert("✅ Cloud Verified! New password (" + p + ") saved to Firebase for " + cleanPhone + ". Customer can now sign in immediately!");
+      } else {
+        alert("⚠️ Password saved locally (" + p + "), but Cloud Firebase sync could not confirm. Check internet connection before sending.");
+      }
+
+      if (confirm("Send this new verified password to " + name + " on WhatsApp now?")) {
         sendVerifiedPasswordWhatsApp(cleanPhone, name, "Workshop", p);
       }
     }

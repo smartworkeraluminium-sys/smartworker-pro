@@ -4213,7 +4213,8 @@ function switchAuthMode(mode) {
  if (shopInput) shopInput.focus();
  return;
  }
- const cleanPhone = phone.replace(/\D/g, '');
+ const rawDigits = phone.replace(/\D/g, '');
+ const cleanPhone = rawDigits.length >= 10 ? rawDigits.slice(-10) : rawDigits;
  if (!cleanPhone || cleanPhone.length < 10) {
  alert("Please enter a valid 10-digit Mobile Number.");
  if (phoneInput) phoneInput.focus();
@@ -4321,136 +4322,183 @@ function switchAuthMode(mode) {
  goHome();
  }
 
- function doEmailLogin() {
- const userInput = document.getElementById('auth_login_email') || document.getElementById('login_email');
- const passInput = document.getElementById('auth_login_pass') || document.getElementById('login_password');
- const userRaw = userInput ? userInput.value.trim() : '';
- const pass = passInput ? passInput.value : '';
+ function normalizeSwLoginId(raw) {
+  var s = String(raw || '').trim();
+  if (s.includes('@')) return s.toLowerCase();
+  var digits = s.replace(/\D/g, '');
+  if (digits.length >= 10) return digits.slice(-10);
+  return s.toLowerCase();
+}
 
- if (!userRaw) {
- alert("Please enter your 10-digit Mobile Number or Email.");
- if (userInput) userInput.focus();
- return;
- }
- if (!pass) {
- alert("Please enter your Password.");
- if (passInput) passInput.focus();
- return;
- }
+function finalizeSwAccountSignIn(cleanUser, pass, accountObj, welcomeMsg) {
+  var users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+  var existing = users[cleanUser] || {};
+  var mergedProfile = Object.assign(
+    {},
+    JSON.parse(localStorage.getItem('sw_profile') || '{}'),
+    accountObj && accountObj.profile ? accountObj.profile : {},
+    {
+      name: (accountObj && accountObj.name) || existing.name || "Fabricator",
+      shop_name: (accountObj && accountObj.shop_name) || existing.shop_name || "Fabrication Workshop",
+      phone: (accountObj && accountObj.phone) || cleanUser,
+      email: (accountObj && accountObj.email) || existing.email || "",
+      address: (accountObj && accountObj.address) || existing.address || "Fabrication Workshop"
+    }
+  );
+  var passHash = (typeof sha256 === 'function') ? sha256(pass + "_SW_AUTH_SALT_2026") : pass;
+  var vaultId = (accountObj && accountObj.vault_id) || existing.vault_id || computeUserVaultId(cleanUser, pass);
 
- const cleanUser = userRaw.replace(/\D/g, '').length >= 10 ? userRaw.replace(/\D/g, '') : userRaw.toLowerCase();
+  // Sync updated password locally so future offline logins work seamlessly!
+  users[cleanUser] = Object.assign({}, existing, {
+    phone: cleanUser,
+    name: mergedProfile.name,
+    shop_name: mergedProfile.shop_name,
+    email: mergedProfile.email,
+    address: mergedProfile.address,
+    password: pass,
+    password_hash: passHash,
+    vault_id: vaultId
+  });
+  localStorage.setItem('sw_registered_users', JSON.stringify(users));
 
- // 1. Check local registered users database
- const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
- const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
+  clearWorkingUserDataForAccountSwitch(cleanUser);
+  localStorage.setItem('sw_profile', JSON.stringify(mergedProfile));
+  localStorage.setItem('sw_cloud_user', cleanUser);
+  localStorage.setItem('sw_user_password', pass);
+  localStorage.setItem('sw_user_vault_id', vaultId);
+  localStorage.removeItem('sw_guest_mode');
 
- const passHash = (typeof sha256 === 'function') ? sha256(pass + "_SW_AUTH_SALT_2026") : pass;
- if (userAccount) {
- if (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash)) {
- const targetUserKey = userAccount.phone || cleanUser;
- clearWorkingUserDataForAccountSwitch(targetUserKey);
- const restoredProf = JSON.parse(localStorage.getItem('sw_profile') || '{}');
- localStorage.setItem('sw_profile', JSON.stringify(Object.assign({}, restoredProf, {
- name: userAccount.name || restoredProf.name,
- shop_name: userAccount.shop_name || restoredProf.shop_name,
- phone: userAccount.phone || restoredProf.phone,
- email: userAccount.email || restoredProf.email,
- address: userAccount.address || restoredProf.address || "Fabrication Workshop"
- })));
- const vaultId = userAccount.vault_id || computeUserVaultId(targetUserKey, pass);
- localStorage.setItem('sw_cloud_user', targetUserKey);
- localStorage.setItem('sw_user_password', pass);
- localStorage.setItem('sw_user_vault_id', vaultId);
- localStorage.removeItem('sw_guest_mode');
- simulateLocalAuth(targetUserKey);
- syncAllDataFromCloud(vaultId);
- loadSavedProfile();
- alert("Sign-in successful! Welcome back, " + userAccount.name + " (" + userAccount.shop_name + ")");
- goHome();
- return;
- } else {
- alert("Incorrect password! Please re-check your password.");
- if (passInput) passInput.focus();
- return;
- }
- }
+  simulateLocalAuth(cleanUser);
+  syncAllDataFromCloud(vaultId);
+  loadSavedProfile();
+  alert(welcomeMsg || ("Sign-in successful! Welcome back, " + mergedProfile.name));
+  goHome();
+}
 
- // 2. Check local saved profile
- const savedUser = localStorage.getItem('sw_cloud_user');
- const savedPass = localStorage.getItem('sw_user_password');
- const savedProfile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+async function doEmailLogin() {
+  const userInput = document.getElementById('auth_login_email') || document.getElementById('login_email');
+  const passInput = document.getElementById('auth_login_pass') || document.getElementById('login_password');
+  const userRaw = userInput ? userInput.value.trim() : '';
+  const pass = passInput ? passInput.value.trim() : '';
 
- if (savedUser && (savedUser === cleanUser || savedProfile.phone === cleanUser || savedProfile.email === userRaw)) {
- if (!savedPass || savedPass !== pass) {
- alert("Incorrect password! Please re-check your password.");
- if (passInput) passInput.focus();
- return;
- }
- const vaultId = computeUserVaultId(savedUser, pass);
- localStorage.setItem('sw_user_vault_id', vaultId);
- simulateLocalAuth(savedUser);
- loadSavedProfile();
- alert("Sign-in successful! Welcome back.");
- goHome();
- return;
- }
+  if (!userRaw) {
+    alert("Please enter your 10-digit Mobile Number or Email.");
+    if (userInput) userInput.focus();
+    return;
+  }
+  if (!pass) {
+    alert("Please enter your Password.");
+    if (passInput) passInput.focus();
+    return;
+  }
 
- // 3. Check Google Cloud Firestore if registered from another device (Strict Password Verification Required!)
- if (window.fbDb) {
- fbDb.collection('users').doc(cleanUser).get().then(doc => {
- if (doc.exists) {
- const d = doc.data();
- const validPass = (d.password_hash && d.password_hash === passHash) || (d.password && d.password === pass);
- if (!validPass) {
- alert("Incorrect password! Access to this workshop account is strictly protected.");
- if (passInput) passInput.focus();
- } else {
- clearWorkingUserDataForAccountSwitch(cleanUser);
- if (d.profile) localStorage.setItem('sw_profile', JSON.stringify(d.profile));
- const vaultId = d.vault_id || computeUserVaultId(cleanUser, pass);
- localStorage.setItem('sw_cloud_user', cleanUser);
- localStorage.setItem('sw_user_password', pass);
- localStorage.setItem('sw_user_vault_id', vaultId);
- localStorage.removeItem('sw_guest_mode');
- simulateLocalAuth(cleanUser);
- syncAllDataFromCloud(vaultId);
- alert("Sign-in successful! Restored workshop data from your private Cloud Vault.");
- goHome();
- }
- } else {
- // Try Firebase Auth if user entered email
- if (window.firebase && fbAuth) {
- const fbMail = userRaw.includes('@') ? userRaw : (cleanUser + "@smartworker.app");
- fbAuth.signInWithEmailAndPassword(fbMail, pass).then(res => {
- currentCloudUser = res.user;
- localStorage.setItem('sw_cloud_user', cleanUser);
- localStorage.setItem('sw_user_password', pass);
- localStorage.removeItem('sw_guest_mode');
- updateCloudUserUI(res.user);
- syncAllDataFromCloud(res.user.uid);
- alert("Sign-in successful!");
- goHome();
- }).catch(err => {
- if (err.code === 'auth/wrong-password') {
- alert("Incorrect password! Please enter the correct password.");
- } else {
- alert("No account found for this Mobile Number / Email. Please click 'Register Workshop' to create your account.");
- }
- });
- } else {
- alert("No account found for this Mobile Number. Please click 'Register Workshop' to create your account.");
- }
- }
- }).catch(() => {
- alert("Account verification error. Please check your credentials or click 'Register Workshop'.");
- });
- return;
- }
+  const cleanUser = normalizeSwLoginId(userRaw);
+  const passHash = (typeof sha256 === 'function') ? sha256(pass + "_SW_AUTH_SALT_2026") : pass;
 
- alert("No registered account found for this Mobile Number. Please click 'Register Workshop' to create your account.");
- }
+  // 1. Check local cache first — IF password matches, sign in immediately!
+  //    (CRITICAL FIX v97: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
+  const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+  const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
+  if (userAccount && (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash))) {
+    finalizeSwAccountSignIn(userAccount.phone || cleanUser, pass, userAccount, "Sign-in successful! Welcome back, " + (userAccount.name || "Fabricator") + " (" + (userAccount.shop_name || "Workshop") + ")");
+    return;
+  }
 
- function doGoogleSignIn() {
+  const savedUser = normalizeSwLoginId(localStorage.getItem('sw_cloud_user') || '');
+  const savedPass = localStorage.getItem('sw_user_password');
+  const savedProfile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+  if (savedUser && (savedUser === cleanUser || normalizeSwLoginId(savedProfile.phone) === cleanUser || savedProfile.email === userRaw)) {
+    if (savedPass && savedPass === pass) {
+      finalizeSwAccountSignIn(cleanUser, pass, savedProfile, "Sign-in successful! Welcome back.");
+      return;
+    }
+  }
+
+  // 2. Check Cloud Firestore (`users` + `password_reset_requests`) AND Firebase RTDB (`users` + `password_reset_requests`)!
+  let cloudAccountFound = false;
+  const checkRecordMatch = (d) => {
+    if (!d) return false;
+    if (d.password && String(d.password).trim() === pass) return true;
+    if (d.password_hash && d.password_hash === passHash) return true;
+    if (d.status === 'VERIFIED_RESOLVED' && d.registered_password && String(d.registered_password).trim() === pass) return true;
+    return false;
+  };
+
+  // 2A. Firestore users/<cleanUser>
+  const _db = window.fbDb || (typeof fbDb !== 'undefined' ? fbDb : null);
+  const _rtdb = window.fbRtdb || (typeof fbRtdb !== 'undefined' ? fbRtdb : null);
+  if (_db) {
+    try {
+      const uDoc = await _db.collection('users').doc(cleanUser).get();
+      if (uDoc && uDoc.exists) {
+        cloudAccountFound = true;
+        const d = uDoc.data();
+        if (checkRecordMatch(d)) {
+          finalizeSwAccountSignIn(cleanUser, pass, d, "Sign-in successful! Password verified & workshop data restored from Cloud.");
+          return;
+        }
+      }
+    } catch (e) { console.warn("Firestore users check err:", e); }
+
+    // 2B. Firestore password_reset_requests/<cleanUser> (Admin verified reset fallback)
+    try {
+      const rDoc = await _db.collection('password_reset_requests').doc(cleanUser).get();
+      if (rDoc && rDoc.exists) {
+        const rd = rDoc.data();
+        if (checkRecordMatch(rd)) {
+          finalizeSwAccountSignIn(cleanUser, pass, { phone: cleanUser, name: rd.name, shop_name: rd.shop }, "Sign-in successful! Admin-verified new password accepted.");
+          return;
+        }
+      }
+    } catch (e) { console.warn("Firestore reset check err:", e); }
+  }
+
+  // 2C. Firebase Realtime Database users/<cleanUser> & password_reset_requests/<cleanUser>
+  if (_rtdb) {
+    try {
+      const uSnap = await _rtdb.ref('users/' + cleanUser).once('value');
+      const ud = uSnap ? uSnap.val() : null;
+      if (ud) {
+        cloudAccountFound = true;
+        if (checkRecordMatch(ud)) {
+          finalizeSwAccountSignIn(cleanUser, pass, ud, "Sign-in successful! Verified via Cloud Database.");
+          return;
+        }
+      }
+    } catch (e) { console.warn("RTDB users check err:", e); }
+
+    try {
+      const rSnap = await _rtdb.ref('password_reset_requests/' + cleanUser).once('value');
+      const rd = rSnap ? rSnap.val() : null;
+      if (rd && checkRecordMatch(rd)) {
+        finalizeSwAccountSignIn(cleanUser, pass, { phone: cleanUser, name: rd.name, shop_name: rd.shop }, "Sign-in successful! Admin-verified new password accepted.");
+        return;
+      }
+    } catch (e) { console.warn("RTDB reset check err:", e); }
+  }
+
+  // 3. Firebase Email/Password Auth fallback
+  if (window.firebase && typeof fbAuth !== 'undefined' && fbAuth) {
+    try {
+      const fbMail = userRaw.includes('@') ? userRaw : (cleanUser + "@smartworker.app");
+      const res = await fbAuth.signInWithEmailAndPassword(fbMail, pass);
+      currentCloudUser = res.user;
+      finalizeSwAccountSignIn(cleanUser, pass, { vault_id: res.user.uid }, "Sign-in successful!");
+      return;
+    } catch (err) {
+      if (err && err.code === 'auth/wrong-password') cloudAccountFound = true;
+    }
+  }
+
+  if (cloudAccountFound || userAccount) {
+    alert("Incorrect password! Please re-check your password or tap 'Forgot Password' to request Admin verification.");
+    if (passInput) passInput.focus();
+  } else {
+    alert("No account found for this Mobile Number (" + cleanUser + "). Please tap 'Register Workshop' to create your account.");
+  }
+}
+
+function doGoogleSignIn() {
  if (window.firebase && fbAuth) {
  try {
  const provider = new firebase.auth.GoogleAuthProvider();
@@ -4555,7 +4603,7 @@ function switchAuthMode(mode) {
 
  const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
  const user = users[cleanPhone] || users[phone];
- const registeredPass = user ? user.password : (localStorage.getItem('sw_user_password') || "123456");
+ const registeredPass = (user && user.password) ? user.password : "ADMIN_RESET_REQUIRED";
 
  const reqObj = {
  id: "RST_" + Date.now(),
@@ -12422,7 +12470,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v96') === -1) caches.delete(k);
+                if (k.indexOf('v97') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -14472,7 +14520,7 @@ function setPtComboMode(mode) {
 
 
 // =========================================================================
-// v96: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
+// v97: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
 // =========================================================================
 var SW_CUSTOM_GLASS_KEY = 'sw_custom_glass_types_v1';
 var SW_GLASS_SHOP_STOCK_KEY = 'sw_glass_shop_stock_v1';
