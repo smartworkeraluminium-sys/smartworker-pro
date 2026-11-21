@@ -3764,7 +3764,7 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
 
  // Nisha Creations Firebase Cloud & Realtime Database Configuration
  const defaultFbConfig = {
-  apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv98idLAhJys2-M",
+  apiKey: "AIzaSyBYBRTvmuf3mHuP1kveMv102idLAhJys2-M",
   authDomain: "nisha-creations.firebaseapp.com",
   databaseURL: "https://nisha-creations-default-rtdb.firebaseio.com",
   projectId: "nisha-creations",
@@ -4082,6 +4082,10 @@ function drawDocHeaderWithLogo(doc, title, subtitle, themeColor) {
       license: JSON.parse(localStorage.getItem('sw_license') || '{}'),
       custom_logo: localStorage.getItem('sw_custom_logo') || '',
       custom_qr: localStorage.getItem('sw_custom_qr') || '',
+      glass_shop_stock: JSON.parse(localStorage.getItem('sw_glass_shop_stock_v1') || '{}'),
+      glass_remnants: JSON.parse(localStorage.getItem('sw_glass_remnants_v1') || '[]'),
+      custom_glass_types: JSON.parse(localStorage.getItem('sw_custom_glass_types_v1') || '[]'),
+      profit_attendance: JSON.parse(localStorage.getItem('sw_profit_attendance_v1') || '{}'),
       updated_at: new Date().toISOString()
     };
     if (fbRtdb) {
@@ -4119,6 +4123,14 @@ function syncAllDataFromCloud(uid) {
       else localStorage.removeItem('sw_custom_logo');
       if (d.custom_qr) localStorage.setItem('sw_custom_qr', d.custom_qr);
       else localStorage.removeItem('sw_custom_qr');
+      if (d.glass_shop_stock && typeof d.glass_shop_stock === 'object') localStorage.setItem('sw_glass_shop_stock_v1', JSON.stringify(d.glass_shop_stock));
+      if (Array.isArray(d.glass_remnants)) localStorage.setItem('sw_glass_remnants_v1', JSON.stringify(d.glass_remnants));
+      if (Array.isArray(d.custom_glass_types)) localStorage.setItem('sw_custom_glass_types_v1', JSON.stringify(d.custom_glass_types));
+      if (d.profit_attendance && typeof d.profit_attendance === 'object') localStorage.setItem('sw_profit_attendance_v1', JSON.stringify(d.profit_attendance));
+      if (typeof syncCustomGlassDropdowns === 'function') syncCustomGlassDropdowns();
+      if (typeof renderGlassShopStockUI === 'function') renderGlassShopStockUI();
+      if (typeof renderGlassRemnantStockUI === 'function') renderGlassRemnantStockUI();
+      if (typeof renderProfitAttendanceScreen === 'function') renderProfitAttendanceScreen();
 
       if (typeof loadSavedProfile === 'function') loadSavedProfile();
       if (typeof loadBillSettings === 'function') loadBillSettings();
@@ -4441,7 +4453,7 @@ async function doEmailLogin() {
   }
 
   // 1. Check local cache first — IF password matches, sign in immediately!
-  //    (CRITICAL FIX v98: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
+  //    (CRITICAL FIX v102: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
   const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
   const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
   if (userAccount && (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash))) {
@@ -9441,6 +9453,7 @@ function autofillCustomer() {
 // =========================================================================
 
  function openScreen(screenName, title) {
+  setTimeout(function() { try { if (typeof applyLanguageTranslations === 'function' && currentAppLang !== 'en') applyLanguageTranslations(currentAppLang); } catch(e){} }, 40);
   if (screenName === 'partition') {
     setTimeout(function() { try { renderPtCadDesigner(); } catch(e){} }, 20);
   } else if (screenName === 'door') {
@@ -10522,6 +10535,7 @@ function setupDb() {
  const I18N_DICT = {
   en: {
     title_app: "SMART WORKER PRO",
+    lbl_quick_lang: "Language:",
     nav_home: "Home",
     nav_dashboard: "Dashboard",
     nav_records: "Records",
@@ -10531,7 +10545,7 @@ function setupDb() {
     sec_fab_systems: "Window & Door Systems",
     sec_business_billing: "Business & Billing",
     mod_khata_title: "Site Measurement Khata",
-    mod_khata_sub: "Digital Measurement Book: Room Tracking, Auto Labor & Billing",
+    mod_khata_sub: "Digital Khata Book: Room Tracking, Auto Labour & Billing",
     mod_domal: "Domal Window",
     mod_sliding: "Sliding Window",
     mod_casement: "Custom Casement",
@@ -10539,134 +10553,448 @@ function setupDb() {
     mod_door: "Simple Door Option",
     mod_quotation: "Pro Quotation",
     mod_ceiling: "Ceiling Estimator",
-    btn_open: "OPEN", btn_edit: "EDIT",
-    sub_domal: "27x65 / 45mm Section Cutting",
-    sub_sliding: "2, 3, 4 Track & Interlock Cutting",
+    mod_customer_khata: "Customer Khata",
+    mod_calculator: "Smart Calculator",
+    btn_open: "OPEN",
+    btn_edit: "Edit",
+    sub_domal: "27x65 / 45mm Section Cuts",
+    sub_sliding: "2, 3, 4 Track & Interlock Cuts",
     sub_casement: "Z-Section & Openable Window",
     sub_partition: "Office Partition & Sheet Cutting",
     sub_door: "Hinge Door & Bathroom Shutter",
     sub_ceiling: "False Ceiling Grid & Perimeter",
     sub_quotation: "Client GST Invoice & PDF Bill",
-    sub_customer_khata: "Client Balance & Ledger Records",
-    mod_customer_khata: "Customer Ledger",
-    mod_calculator: "Smart Calculator",
-    sub_calculator: "Standard, Scientific, Unit Converter & Discount",
-    mod_custom_series: "Custom & New Series",
-    sub_custom_series: "Folding, Glass Door, Jasmine & Custom Profiles",
-    lbl_select_series: "Select Product / Series:",
-    lbl_panels: "Number of Shutters / Panels:",
-    lbl_door_palla: "Door Shutter (Palla):",
-    btn_clear: "Clear",
-    btn_calculate: "+ Calculate",
-    btn_save: "Save",
-    btn_cut_pdf: "Cutting PDF",
-    btn_glass_pdf: "Glass PDF",
-    btn_order_slip: "Order Slip",
-    lbl_cutting_sizes: "Cutting Sizes:",
-    lbl_mat_purchase: "Material Purchase (Auto-Optimized):",
-    lbl_height: "Height:",
-    lbl_width: "Width:",
-    lbl_qty: "Quantity (Pcs):",
-    lbl_unit: "Measurement Unit:",
-    lbl_room_tag: "Room / Location Tag:",
-    btn_add_khata: "+ Add to Site Khata",
-    btn_process_all: "⚡ Process All Cutting Together",
-    btn_khata_master_pdf: "📄 Generate Master Site Khata PDF",
-    btn_client_bill: "Client Billing",
-    btn_generate_bill: "Generate Bill",
-    btn_save_bill: "Save Bill",
-    btn_pdf_bill: "Download PDF Bill",
-    lbl_client_details: "Client & Invoice Details",
-    lbl_add_item: "Add Bill Item",
-    lbl_rate_sqft: "Rate (Rs / Sq.Ft):",
-    lbl_advance: "Advance Paid (Rs):",
-    lbl_due_balance: "Balance Due:",
-    lbl_total_sales: "Total Sales",
-    lbl_purchases: "Material Purchases",
-    lbl_balance: "Net Balance",
-    btn_add_purchase: "+ Add Material Purchase",
-    btn_update_profile: "Update Profile",
-    btn_save_settings: "Save All Settings",
-    auth_heading: "Smart Worker Pro",
-    auth_subheading: "Aluminium & uPVC Fabrication Management",
-    tab_signin: "Sign In (Login)",
-    tab_register: "Workshop Registration",
-    btn_signin_acc: "Sign In to Account",
-    btn_create_acc: "Create Account & Sync",
-    btn_guest_demo: "Continue in Guest Mode →",
-    lbl_panel_mode: "Panel Cutting & 4'x8' Optimization:",
-    opt_panel_4x8: "✨ 4'x8' Sheet Optimized (Equal Bottom & Middle, Small Top Header - Zero Waste)",
-    opt_panel_3ft: "Bottom 3 ft (36 in) ACP, Middle 3 ft (36 in) Glass, Top Header",
-    opt_panel_2_5ft: "Bottom 2.5 ft (30 in) ACP, Middle 2.5 ft (30 in) Glass, Top Header",
-    opt_panel_equal: "Standard Equal Divide",
-    keypad_title: "Smart Measurement Keypad",
-    keypad_ok: "Apply OK",
-    keypad_numbers: "Numbers",
-    keypad_fractions: "Fractions (16 Suta Steps)",
-    suta_1: "(1 Suta)", suta_2: "(2 Suta)", suta_3: "(3 Suta)", suta_4: "(4 Suta)", suta_5: "(5 Suta)", suta_6: "(6 Suta)", suta_7: "(7 Suta)"
+    sub_customer_khata: "Client Balance & Records",
+    sub_calculator: "Quick Inch & Sq.Ft Math"
+  },
+  bn: {
+    title_app: "স্মার্ট ওয়ার্কার প্রো",
+    lbl_quick_lang: "ভাষা:",
+    nav_home: "হোম",
+    nav_dashboard: "ড্যাশবোর্ড",
+    nav_records: "রেকর্ডস",
+    nav_profile: "প্রোফাইল",
+    nav_login: "লগইন",
+    welcome_prefix: "স্বাগতম,",
+    sec_fab_systems: "জানালা ও দরজা সিস্টেম",
+    sec_business_billing: "ব্যবসা ও বিলিং",
+    mod_khata_title: "সাইট মেজারমেন্ট খাতা",
+    mod_khata_sub: "ডিজিটাল খাতা: রুম মাপ, অটো লেবার ও বিলিং",
+    mod_domal: "ডোমাল জানালা",
+    mod_sliding: "স্লাইডিং জানালা",
+    mod_casement: "কাস্টম কেসমেন্ট",
+    mod_partition: "পার্টিশন ও দরজা",
+    mod_door: "সাধারণ দরজা",
+    mod_quotation: "প্রো কোটেশন / বিল",
+    mod_ceiling: "সিলিং এস্টিমেটর",
+    mod_customer_khata: "কাস্টমার খাতা",
+    mod_calculator: "স্মার্ট ক্যালকুলেটর",
+    btn_open: "খুলুন",
+    btn_edit: "এডিট",
+    sub_domal: "27x65 / 45mm সেকশন কাটিং",
+    sub_sliding: "২, ৩, ৪ ট্র্যাক ও ইন্টারলক কাটিং",
+    sub_casement: "জেড-সেকশন ও ওপেনেবল জানালা",
+    sub_partition: "অফিস পার্টিশন ও শিট কাটিং",
+    sub_door: "হিঞ্জ ডোর ও বাথরুম শাটার",
+    sub_ceiling: "ফলস সিলিং গ্রিড ও পেরিমিটার",
+    sub_quotation: "ক্লায়েন্ট GST ইনভয়েস ও PDF বিল",
+    sub_customer_khata: "কাস্টমার বাকি ও হিসাব",
+    sub_calculator: "দ্রুত ইঞ্চি ও স্কয়ার ফুট হিসাব"
+  },
+  hi: {
+    title_app: "स्मार्ट वर्कर प्रो",
+    lbl_quick_lang: "भाषा:",
+    nav_home: "होम",
+    nav_dashboard: "डैशबोर्ड",
+    nav_records: "रिकॉर्ड्स",
+    nav_profile: "प्रोफ़ाइल",
+    nav_login: "लॉगिन",
+    welcome_prefix: "स्वागत है,",
+    sec_fab_systems: "खिड़की और दरवाज़ा सिस्टम",
+    sec_business_billing: "बिज़नेस और बिलिंग",
+    mod_khata_title: "साइट मेज़रमेंट खाता",
+    mod_khata_sub: "डिजिटल खाता: रूम ट्रैकिंग, ऑटो लेबर और बिलिंग",
+    mod_domal: "डोमल विंडो",
+    mod_sliding: "स्लाइडिंग विंडो",
+    mod_casement: "कस्टम केसमेंट",
+    mod_partition: "पार्टीशन और डोर",
+    mod_door: "सिंपल डोर ऑप्शन",
+    mod_quotation: "प्रो कोटेशन / बिल",
+    mod_ceiling: "सीलिंग एस्टीमेटर",
+    mod_customer_khata: "कस्टमर खाता",
+    mod_calculator: "स्मार्ट कैलकुलेटर",
+    btn_open: "खोलें",
+    btn_edit: "एडिट",
+    sub_domal: "27x65 / 45mm सेक्शन कटिंग",
+    sub_sliding: "2, 3, 4 ट्रैक और इंटरलॉक कटिंग",
+    sub_casement: "Z-सेक्शन और ओपनेबल विंडो",
+    sub_partition: "ऑफिस पार्टीशन और शीट कटिंग",
+    sub_door: "हिंज डोर और बाथरूम शटर",
+    sub_ceiling: "फॉल्स सीलिंग ग्रिड और पेरीमीटर",
+    sub_quotation: "क्लाइंट GST इनवॉइस और PDF बिल",
+    sub_customer_khata: "कस्टमर बकाया और हिसाब",
+    sub_calculator: "तुरंत इंच और Sq.Ft कैलकुलेशन"
   }
 };
-I18N_DICT.bn = I18N_DICT.en;
-I18N_DICT.hi = I18N_DICT.en;
 
-let currentAppLang = 'en';
-localStorage.setItem('sw_lang', 'en');
+// Layer 2: Comprehensive 260+ Phrase Map covering ALL 24 Screens (Bengali & Hindi)
+const SW_UI_PHRASES = {
+  // Navigation, Auth & Profile
+  "SMART WORKER PRO": { bn: "স্মার্ট ওয়ার্কার প্রো", hi: "स्मार्ट वर्कर प्रो" },
+  "Register Workshop": { bn: "ওয়ার্কশপ রেজিস্টার করুন", hi: "वर्कशॉप रजिस्टर करें" },
+  "Sign In": { bn: "সাইন ইন", hi: "साइन इन" },
+  "SIGN IN TO WORKSHOP": { bn: "ওয়ার্কশপে সাইন ইন করুন", hi: "वर्कशॉप में साइन इन करें" },
+  "CREATE WORKSHOP ACCOUNT": { bn: "ওয়ার্কশপ অ্যাকাউন্ট তৈরি করুন", hi: "वर्कशॉप अकाउंट बनाएं" },
+  "Forgot Password?": { bn: "পাসওয়ার্ড ভুলে গেছেন?", hi: "पासवर्ड भूल गए?" },
+  "Continue as Demo / Guest Mode →": { bn: "ডেমো / গেস্ট মোডে চালান →", hi: "डेमो / गेस्ट मोड में चलाएं →" },
+  "Mobile Number / Email": { bn: "মোবাইল নম্বর / ইমেইল", hi: "मोबाइल नंबर / ईमेल" },
+  "Password": { bn: "পাসওয়ার্ড", hi: "पासवर्ड" },
+  "Full Name": { bn: "পুরো নাম", hi: "पूरा नाम" },
+  "Workshop Name": { bn: "ওয়ার্কশপের নাম", hi: "वर्कशॉप का नाम" },
+  "Manage Google Cloud Sync": { bn: "গুগল ক্লাউড সিঙ্ক পরিচালনা করুন", hi: "गूगल क्लाउड सिंक मैनेज करें" },
+  "App Language / Language": { bn: "অ্যাপের ভাষা (Language)", hi: "ऐप की भाषा (Language)" },
+  "Workshop Profile & Branding": { bn: "ওয়ার্কশপ প্রোফাইল ও ব্র্যান্ডিং", hi: "वर्कशॉप प्रोफ़ाइल और ब्रांडिंग" },
+  "Dynamic Costing & Bill Rates": { bn: "রেট ও বিলিং সেটিংস", hi: "रेट और बिलिंग सेटिंग्स" },
+  "PRO Upgrade & Activation": { bn: "প্রো আপগ্রেড ও অ্যাক্টিভেশন", hi: "प्रो अपग्रेड और एक्टिवेशन" },
+  "Save Profile": { bn: "প্রোফাইল সেভ করুন", hi: "प्रोफ़ाइल सेव करें" },
+  "Save Settings": { bn: "সেটিংস সেভ করুন", hi: "सेटिंग्स सेव करें" },
+  "Logout": { bn: "লগআউট", hi: "लॉगआउट" },
+
+  // Home Cards & Modules
+  "Glass Cutting (4'x8' Sheet Chart)": { bn: "গ্লাস কাটিং (৪'x৮' শিট চার্ট)", hi: "ग्लास कटिंग (4'x8' शीट चार्ट)" },
+  "Enter Glass Sizes -> Auto 4'x8' Min-Waste Cutting Drawing & PDF": { bn: "গ্লাসের মাপ দিন -> অটো ৪'x৮' কাটিং ড্রয়িং ও PDF", hi: "ग्लास साइज डालें -> ऑटो 4'x8' कटिंग ड्राइंग और PDF" },
+  "Alu Bar / Pipe Cutting (12' & 16')": { bn: "পাইপ / বার কাটিং (১২' ও ১৬')", hi: "पाइप / बार कटिंग (12' और 16')" },
+  "Min-Waste 12ft / 16ft Pipe Cutting Drawing, Kerf Loss & PDF": { bn: "কম ওয়েস্টেজ ১২'/১৬' পাইপ কাটিং ও PDF", hi: "कम वेस्टेज 12'/16' पाइप कटिंग और PDF" },
+  "Profit & Attendance": { bn: "লাভ ও হাজিরা খাতা", hi: "मुनाफा और हाज़िरी" },
+  "Worker Hazira & Net Profit": { bn: "মিস্ত্রি হাজিরা ও মোট লাভ", hi: "कारीगर हाज़िरी और नेट प्रॉफ़िट" },
+  "Order Tracker": { bn: "অর্ডার ট্র্যাকার", hi: "ऑर्डर ट्रैकर" },
+  "Wastage / Offcut Stock": { bn: "ছাঁট / ওয়েস্টেজ স্টক", hi: "वेस्टेज / ऑफकट स्टॉक" },
+  "Dashboard": { bn: "ড্যাশবোর্ড", hi: "डैशबोर्ड" },
+  "Records": { bn: "রেকর্ডস", hi: "रिकॉर्ड्स" },
+  "History": { bn: "হিস্ট্রি", hi: "हिस्ट्री" },
+  "Profile": { bn: "প্রোফাইল", hi: "प्रोफ़ाइल" },
+  "Settings": { bn: "সেটিংস", hi: "सेटिंग्स" },
+
+  // Common Form Labels & Buttons (All Fabrication Screens)
+  "Input Unit:": { bn: "মাপের একক (Unit):", hi: "माप की इकाई (Unit):" },
+  "System Size:": { bn: "সিস্টেম সাইজ:", hi: "सिस्टम साइज:" },
+  "Track Type:": { bn: "ট্র্যাকের ধরন:", hi: "ट्रैक टाइप:" },
+  "Track Height:": { bn: "ট্র্যাক হাইট:", hi: "ट्रैक हाइट:" },
+  "Track & Sash Type:": { bn: "ট্র্যাক ও শাটার ধরন:", hi: "ट्रैक और शटर टाइप:" },
+  "Handle (HxW):": { bn: "হ্যান্ডেল (HxW):", hi: "हैंडल (HxW):" },
+  "Height:": { bn: "উচ্চতা (Height):", hi: "ऊंचाई (Height):" },
+  "Width:": { bn: "চওড়া (Width):", hi: "चौड़ाई (Width):" },
+  "Height (Inches):": { bn: "উচ্চতা (ইঞ্চি):", hi: "ऊंचाई (इंच):" },
+  "Width (Inches):": { bn: "চওড়া (ইঞ্চি):", hi: "चौड़ाई (इंच):" },
+  "Total Height (H):": { bn: "মোট উচ্চতা (H):", hi: "कुल ऊंचाई (H):" },
+  "Total Width (W):": { bn: "মোট চওড়া (W):", hi: "कुल चौड़ाई (W):" },
+  "Total Wall Height (H):": { bn: "দেয়ালের মোট উচ্চতা (H):", hi: "दीवार की कुल ऊंचाई (H):" },
+  "Total Wall Width (W):": { bn: "দেয়ালের মোট চওড়া (W):", hi: "दीवार की कुल चौड़ाई (W):" },
+  "Glass Height (H):": { bn: "গ্লাসের উচ্চতা (H):", hi: "ग्लास की ऊंचाई (H):" },
+  "Glass Width (W):": { bn: "গ্লাসের চওড়া (W):", hi: "ग्लास की चौड़ाई (W):" },
+  "Room / Location Tag:": { bn: "রুম / জায়গার নাম:", hi: "रूम / लोकेशन का नाम:" },
+  "Window Quantity (Pcs):": { bn: "জানালার সংখ্যা (পিস):", hi: "खिड़की की संख्या (पीस):" },
+  "Quantity (Pcs):": { bn: "পরিমাণ (পিস):", hi: "मात्रा (पीस):" },
+  "Alu Color:": { bn: "অ্যালুমিনিয়াম কালার:", hi: "एल्युमिनियम कलर:" },
+  "Alu Thick (0.8 - 3mm):": { bn: "অ্যালুমিনিয়াম গেজ (mm):", hi: "एल्युमिनियम गेज (mm):" },
+  "Glass Type:": { bn: "গ্লাসের ধরন:", hi: "ग्लास टाइप:" },
+  "Thickness (3.5 - 12mm):": { bn: "গ্লাসের পুরুত্ব (mm):", hi: "ग्लास की मोटाई (mm):" },
+  "Tube / Section Size:": { bn: "টিউব / সেকশন সাইজ:", hi: "ट्यूब / सेक्शन साइज:" },
+  "Door Type:": { bn: "দরজার ধরন:", hi: "दरवाज़े का प्रकार:" },
+  "Door Shutter (Palla):": { bn: "দরজার পাল্লা:", hi: "दरवाज़े का पल्ला:" },
+  "Vertical Stile:": { bn: "লম্বা স্টাইল:", hi: "वर्टिकल स्टाइल:" },
+  "Top Rail:": { bn: "টপ রেল:", hi: "टॉप रेल:" },
+  "Bottom Rail:": { bn: "বটম রেল:", hi: "बॉटम रेल:" },
+  "Mid Rail Section (In):": { bn: "মিডিল রেল (ইঞ্চি):", hi: "मिडिल रेल (इंच):" },
+  "Door Divisions (Parts / Rows):": { bn: "দরজার ভাগ (পার্ট সংখ্যা):", hi: "दरवाज़े के भाग (पार्ट्स):" },
+  "LIVE COLOR & GLASS PREVIEW": { bn: "লাইভ কালার ও গ্লাস প্রিভিউ", hi: "लाइव कलर और ग्लास प्रीव्यू" },
+  "Full-Screen View": { bn: "ফুল-স্ক্রিন দেখুন", hi: "फुल-स्क्रीन देखें" },
+  "Full-Screen": { bn: "ফুল-স্ক্রিন", hi: "फुल-स्क्रीन" },
+  "CLEAR": { bn: "মুছুন", hi: "क्लियर" },
+  "CALCULATE": { bn: "হিসাব করুন", hi: "कैलकुलेट करें" },
+  "+ CALCULATE": { bn: "+ হিসাব করুন", hi: "+ कैलकुलेट करें" },
+  "SAVE": { bn: "সেভ করুন", hi: "सेव करें" },
+  "UNDO": { bn: "আগের ধাপ", hi: "अंडू (Undo)" },
+  "Reset": { bn: "রিসেট", hi: "रीसेट" },
+  "+ ADD TO BILL": { bn: "+ বিলে যোগ করুন", hi: "+ बिल में जोड़ें" },
+  "1. CUTTING PDF": { bn: "১. কাটিং PDF", hi: "1. कटिंग PDF" },
+  "2. GLASS PDF + QR": { bn: "২. গ্লাস PDF", hi: "2. ग्लास PDF" },
+  "3. ALU PURCHASE": { bn: "৩. মাল কেনার লিস্ট", hi: "3. माल खरीद लिस्ट" },
+  "4. HARDWARE PDF": { bn: "৪. হার্ডওয়্যার PDF", hi: "4. हार्डवेयर PDF" },
+  "CUTTING SIZES:": { bn: "কাটিং সাইজ লিস্ট:", hi: "कटिंग साइज लिस्ट:" },
+  "MATERIAL PURCHASE LIST:": { bn: "মাল কেনার তালিকা:", hi: "मटेरियल खरीद लिस्ट:" },
+
+  // Partition CAD & Custom Door
+  "SELECT WORK MODE (SINGLE OR COMBINED):": { bn: "কাজের ধরন বেছে নিন (আলাদা বা একসঙ্গে):", hi: "काम का मोड चुनें (अकेले या एक साथ):" },
+  "1. Only Partition": { bn: "১. শুধু পার্টিশন", hi: "1. केवल पार्टीशन" },
+  "2. Partition + Door": { bn: "২. পার্টিশন + দরজা", hi: "2. पार्टीशन + डोर" },
+  "3. Partition + Window": { bn: "৩. পার্টিশন + জানালা", hi: "3. पार्टीशन + विंडो" },
+  "4. All 3 (Pt + Door + Win)": { bn: "৪. তিনটিই একসঙ্গে", hi: "4. तीनों एक साथ" },
+  "ATTACHED DOOR SYSTEM:": { bn: "যুক্ত দরজার সিস্টেম:", hi: "जुड़ा हुआ डोर सिस्टम:" },
+  "ATTACHED WINDOW SYSTEM:": { bn: "যুক্ত জানালার সিস্টেম:", hi: "जुड़ा हुआ विंडो सिस्टम:" },
+  "OUTER FRAME PIPES (TAP TO ON / OFF):": { bn: "আউটার ফ্রেম পাইপ (ট্যাপ করে ON/OFF):", hi: "आउटर फ्रेम पाइप (टैप करके ON/OFF):" },
+  "QUICK READY DESIGNS (OR TAP 'CUSTOM DESIGN'):": { bn: "রেডি ডিজাইন (অথবা কাস্টম ডিজাইন):", hi: "रेडी डिज़ाइन (या कस्टम डिज़ाइन):" },
+  "Full Partition": { bn: "ফুল পার্টিশন", hi: "फुल पार्टीशन" },
+  "Middle Door": { bn: "মাঝে দরজা", hi: "बीच में दरवाज़ा" },
+  "Door + Win": { bn: "দরজা + জানালা", hi: "डोर + विंडो" },
+  "Half Wall+Win": { bn: "হাফ ওয়াল + জানালা", hi: "हाफ वॉल + विंडो" },
+  "Door+HalfWall": { bn: "দরজা + হাফ ওয়াল", hi: "डोर + हाफ वॉल" },
+  "Double Door": { bn: "ডাবল দরজা", hi: "डबल डोर" },
+  "Custom Design (Blank)": { bn: "কাস্টম ডিজাইন (খালি)", hi: "कस्टम डिज़ाइन (खाली)" },
+  "Split Left/Right": { bn: "ডান-বাঁ ভাগ করুন", hi: "दाएं-बाएं बांटें" },
+  "Split Top/Bot": { bn: "ওপর-নিচ ভাগ করুন", hi: "ऊपर-नीचे बांटें" },
+  "Set Exact Size": { bn: "সঠিক মাপ দিন", hi: "सटीक साइज डालें" },
+  "Group = Door": { bn: "গ্রুপ = দরজা", hi: "ग्रुप = डोर" },
+  "Merge": { bn: "জুড়ে দিন", hi: "जोड़ें (Merge)" },
+  "PUT INSIDE SELECTED BOX:": { bn: "সিলেক্ট করা বক্সে বসান:", hi: "चुने हुए बॉक्स में लगाएं:" },
+  "Glass": { bn: "গ্লাস", hi: "ग्लास" },
+  "ACP Board": { bn: "ACP বোর্ড", hi: "ACP बोर्ड" },
+  "Jali / Mesh": { bn: "জালি / নেট", hi: "जाली / मेश" },
+  "Single Door": { bn: "সিঙ্গেল দরজা", hi: "सिंगल डोर" },
+  "Half Wall": { bn: "হাফ ওয়াল", hi: "हाफ वॉल" },
+  "2T Sliding": { bn: "২-ট্র্যাক স্লাইডিং", hi: "2-ट्रैक स्लाइडिंग" },
+  "3T Slide+Jali": { bn: "৩-ট্র্যাক + জালি", hi: "3-ट्रैक + जाली" },
+  "Open Window": { bn: "ওপেন জানালা", hi: "ओपन विंडो" },
+  "CUSTOM DOOR DESIGN (1–4 PARTS):": { bn: "কাস্টম দরজা ডিজাইন (১–৪ ভাগ):", hi: "कस्टम डोर डिज़ाइन (1–4 भाग):" },
+  "1 Part": { bn: "১ ভাগ", hi: "1 भाग" },
+  "2 Parts": { bn: "২ ভাগ", hi: "2 भाग" },
+  "3 Parts": { bn: "৩ ভাগ", hi: "3 भाग" },
+  "4 Parts": { bn: "৪ ভাগ", hi: "4 भाग" },
+  "Full Glass": { bn: "পুরোটাই গ্লাস", hi: "पूरा ग्लास" },
+  "Full Jali": { bn: "পুরোটাই জালি", hi: "पूरी जाली" },
+  "Full ACP": { bn: "পুরোটাই ACP", hi: "पूरा ACP" },
+
+  // Glass Cutting, Stock Management & Stickers
+  "4'x8' GLASS SHEET CUTTING MASTER": { bn: "৪'x৮' গ্লাস শিট কাটিং মাস্টার", hi: "4'x8' ग्लास शीट कटिंग मास्टर" },
+  "4-DIGIT ORDER CODE & WHATSAPP SHARE (NO QR)": { bn: "৪-সংখ্যার অর্ডার কোড ও হোয়াটসঅ্যাপ শেয়ার", hi: "4-अंकीय ऑर्डर कोड और व्हाट्सएप शेयर" },
+  "ENTER 4-DIGIT CODE": { bn: "৪-সংখ্যার কোড দিন", hi: "4-अंकीय कोड डालें" },
+  "SEND TO CUTTER": { bn: "কাটারকে পাঠান", hi: "कटर को भेजें" },
+  "Stock Sheet Size:": { bn: "স্টক শিটের মাপ:", hi: "स्टॉक शीट साइज:" },
+  "1. SHEET DRAWING PDF": { bn: "১. শিট ড্রয়িং PDF", hi: "1. शीट ड्राइंग PDF" },
+  "2. GLASS CUTTING LIST PDF": { bn: "২. গ্লাস কাটিং লিস্ট PDF", hi: "2. ग्लास कटिंग लिस्ट PDF" },
+  "3. PRINT CUT GLASS STICKERS PDF (1 STICKER PER GLASS PIECE)": { bn: "৩. কাট গ্লাস স্টিকার PDF (প্রতি পিসে ১ স্টিকার)", hi: "3. कट ग्लास स्टिकर PDF (हर पीस पर 1 स्टिकर)" },
+  "4. 58MM THERMAL / BLUETOOTH STICKERS (1-CLICK)": { bn: "৪. ৫৮মিমি থার্মাল / ব্লুটুথ স্টিকার (১-ক্লিক)", hi: "4. 58mm थर्मल / ब्लूटूथ स्टिकर (1-क्लिक)" },
+  "GLASS CUTTING & 4'x8' SHEET SUMMARY:": { bn: "গ্লাস কাটিং ও ৪'x৮' শিটের হিসাব:", hi: "ग्लास कटिंग और 4'x8' शीट सारांश:" },
+  "GLASS STOCK MANAGEMENT (NO QR)": { bn: "গ্লাস স্টক ম্যানেজমেন্ট", hi: "ग्लास स्टॉक मैनेजमेंट" },
+  "Stock Bill PDF": { bn: "স্টক বিল PDF", hi: "स्टॉक बिल PDF" },
+  "+ Add New Stock (IN)": { bn: "+ নতুন স্টক যোগ করুন", hi: "+ नया स्टॉक जोड़ें (IN)" },
+  "Confirm Cut (Auto-Minus)": { bn: "কাটিং কনফার্ম (অটো-মাইনাস)", hi: "कट कन्फर्म (ऑटो-माइनस)" },
+  "GLASS OFFCUTS / CHHAT (≥12\" • NUMBER TAGS)": { bn: "গ্লাস ছাঁট / অফকাট (≥১২\" • নম্বর ট্যাগ)", hi: "ग्लास छांट / ऑफकट (≥12\" • नंबर टैग)" },
+  "Save Offcuts": { bn: "ছাঁট সেভ করুন", hi: "ऑफकट सेव करें" },
+  "Number Stickers": { bn: "নম্বর স্টিকার", hi: "नंबर स्टिकर" },
+
+  // 12'/16' Pipe Bar Cutting & Remnants
+  "12' / 16' ALU PIPE CUTTING MASTER": { bn: "১২' / ১৬' অ্যালুমিনিয়াম পাইপ কাটিং মাস্টার", hi: "12' / 16' एल्युमिनियम पाइप कटिंग मास्टर" },
+  "1-CLICK IMPORT CUT SIZES FROM CALCULATORS:": { bn: "ক্যালকুলেটর থেকে ১-ক্লিকে মাপ আনুন:", hi: "कैलकुलेटर से 1-क्लिक में साइज लाएं:" },
+  "Stock Bar Length:": { bn: "স্টক বারের দৈর্ঘ্য:", hi: "स्टॉक बार की लंबाई:" },
+  "Section / Pipe Name:": { bn: "সেকশন / পাইপের নাম:", hi: "सेक्शन / पाइप का नाम:" },
+  "Blade Kerf (Cut Loss):": { bn: "ব্লেড কার্ফ (কাট লস):", hi: "ब्लेड कर्फ (कट लॉस):" },
+  "Cut Piece Length:": { bn: "কাট পিসের দৈর্ঘ্য:", hi: "कट पीस की लंबाई:" },
+  "Piece Tag / Note (Optional):": { bn: "পিসের নাম / নোট (ঐচ্ছিক):", hi: "पीस टैग / नोट (वैकल्पिक):" },
+  "+ ADD & OPTIMIZE": { bn: "+ যোগ ও অপ্টিমাইজ করুন", hi: "+ जोड़ें और ऑप्टिमाइज़ करें" },
+  "EXPORT 12' / 16' BAR CUTTING DRAWING PDF": { bn: "১২' / ১৬' বার কাটিং ড্রয়িং PDF", hi: "12' / 16' बार कटिंग ड्राइंग PDF" },
+  "WORKSHOP REMNANT STOCK (≥12\" ONLY)": { bn: "ওয়ার্কশপ ছাঁট স্টক (শুধু ≥১২\")", hi: "वर्कशॉप ऑफकट स्टॉक (केवल ≥12\")" },
+  "Auto-Use Stock First": { bn: "আগে স্টক ব্যবহার করুন", hi: "पहले स्टॉक इस्तेमाल करें" },
+  "Save Offcuts (≥12\")": { bn: "ছাঁট সেভ করুন (≥১২\")", hi: "ऑफकट सेव करें (≥12\")" },
+  "Number Tag Stickers PDF": { bn: "নম্বর ট্যাগ স্টিকার PDF", hi: "नंबर टैग स्टिकर PDF" },
+  "WORKSHOP / WAREHOUSE STOCK (≥12\")": { bn: "ওয়ার্কশপ / গোডাউন স্টক (≥১২\")", hi: "वर्कशॉप / गोदाम स्टॉक (≥12\")" },
+  "12' / 16' BAR CUTTING SUMMARY & STOCK LIST:": { bn: "১২' / ১৬' বার কাটিং ও স্টক তালিকা:", hi: "12' / 16' बार कटिंग और स्टॉक लिस्ट:" },
+
+  // Quotation, Customer Book, Profit & Attendance, Settings
+  "Customer Details": { bn: "কাস্টমারের বিবরণ", hi: "कस्टमर विवरण" },
+  "Customer Name:": { bn: "কাস্টমারের নাম:", hi: "कस्टमर का नाम:" },
+  "Mobile Number:": { bn: "মোবাইল নম্বর:", hi: "मोबाइल नंबर:" },
+  "Advance Paid:": { bn: "অগ্রিম জমা (Advance):", hi: "एडवांस जमा:" },
+  "Balance Due:": { bn: "বাকি টাকা (Balance):", hi: "बकाया राशि (Balance):" },
+  "Grand Total:": { bn: "সর্বমোট (Grand Total):", hi: "कुल राशि (Grand Total):" },
+  "WORKSHOP PROFIT & WORKER ATTENDANCE": { bn: "ওয়ার্কশপ লাভ ও কর্মী হাজিরা", hi: "वर्कशॉप मुनाफा और कारीगर हाज़िरी" },
+  "INCOME": { bn: "আয় (Income)", hi: "आय (Income)" },
+  "EXPENSE+WAGE": { bn: "খরচ + মজুরি", hi: "खर्च + मज़दूरी" },
+  "NET PROFIT": { bn: "নিট লাভ (Profit)", hi: "नेट प्रॉफ़िट" },
+  "1. WORKER ATTENDANCE (HAZIRA)": { bn: "১. কর্মী হাজিরা খাতা", hi: "1. कारीगर हाज़िरी खाता" },
+  "2. PROJECT INCOME & EXPENSE ENTRY": { bn: "২. প্রজেক্ট আয় ও খরচের হিসাব", hi: "2. प्रोजेक्ट आय और खर्च एंट्री" },
+  "+ SAVE INCOME / EXPENSE ENTRY": { bn: "+ আয় / খরচের এন্ট্রি সেভ করুন", hi: "+ आय / खर्च एंट्री सेव करें" },
+  "Present ✓": { bn: "উপস্থিত ✓", hi: "हाज़िर ✓" },
+  "Half Day": { bn: "হাফ ডে", hi: "हाफ डे" },
+  "Absent ✕": { bn: "অনুপস্থিত ✕", hi: "गैरहाज़िर ✕" },
+  "GLASS SETTINGS (ADD CUSTOM GLASS NAMES)": { bn: "গ্লাস সেটিংস (নতুন গ্লাসের নাম যোগ করুন)", hi: "ग्लास सेटिंग्स (नया ग्लास नाम जोड़ें)" },
+  "+ Add Glass": { bn: "+ গ্লাস যোগ", hi: "+ ग्लास जोड़ें" },
+  "Clear": { bn: "মুছুন", hi: "क्लियर" },
+  "+ Add": { bn: "+ যোগ", hi: "+ जोड़ें" },
+
+  // Placeholders
+  "Height": { bn: "উচ্চতা", hi: "ऊंचाई" },
+  "Width": { bn: "চওড়া", hi: "चौड़ाई" },
+  "Length": { bn: "দৈর্ঘ্য", hi: "लंबाई" },
+  "e.g. Living Room, Bedroom": { bn: "যেমন: বেডরুম, হল রুম", hi: "जैसे: लिविंग रूम, बेडरूम" },
+  "e.g. Main Entrance, Office, Balcony": { bn: "যেমন: মেইন গেট, অফিস, বারান্দা", hi: "जैसे: मेन गेट, ऑफिस, बालकनी" },
+  "e.g. Vertical, Top Rail, Transom": { bn: "যেমন: ভার্টিক্যাল, টপ রেল", hi: "जैसे: वर्टिकल, टॉप रेल" },
+  "Glass Name (e.g. 5mm Ghosa Kach)": { bn: "গ্লাসের নাম (যেমন: ৫মিমি ঘষা কাঁচ)", hi: "ग्लास नाम (जैसे: 5mm घिसा कांच)" },
+  "e.g. 5mm Fluted / 8mm Frost": { bn: "যেমন: ৫মিমি ফ্লুটেড / ৮মিমি ফ্রস্ট", hi: "जैसे: 5mm फ्लूटेड / 8mm फ्रॉस्ट" },
+  "Search Tag #...": { bn: "ট্যাগ # খুঁজুন...", hi: "टैग # खोजें..." },
+  "Search #101...": { bn: "#101 খুঁজুন...", hi: "#101 खोजें..." },
+  "Custom # (Opt)": { bn: "নিজস্ব # (ঐচ্ছিক)", hi: "कस्टम # (वैकल्पिक)" },
+  "Worker Name (e.g. Raju)": { bn: "কর্মীর নাম (যেমন: রাজু)", hi: "कारीगर का नाम (जैसे: राजू)" },
+  "Project / Material Note": { bn: "প্রজেক্ট বা মালের বিবরণ", hi: "प्रोजेक्ट / मटेरियल नोट" }
+};
+
+// Build case-insensitive normalized lookup for instant O(1) matching
+const SW_UI_PHRASES_NORM = {};
+Object.keys(SW_UI_PHRASES).forEach(function(k) {
+  SW_UI_PHRASES_NORM[k.trim().toLowerCase()] = SW_UI_PHRASES[k];
+});
+
+let currentAppLang = (function() {
+  try {
+    var s = localStorage.getItem('sw_lang');
+    return (s === 'bn' || s === 'hi' || s === 'en') ? s : 'en';
+  } catch (e) { return 'en'; }
+})();
+
+var _swI18nApplying = false;
+var _swOrigTextMap = (typeof WeakMap !== 'undefined') ? new WeakMap() : null;
+
+function swTranslateString(origStr, lang) {
+  if (!origStr || lang === 'en') return origStr;
+  var trimmed = origStr.trim();
+  if (!trimmed || /^[\d\s.,'"+\-*/%₹$:()x×#|]+$/.test(trimmed)) return origStr;
+  var hit = SW_UI_PHRASES_NORM[trimmed.toLowerCase()];
+  if (hit && hit[lang]) {
+    return origStr.replace(trimmed, hit[lang]);
+  }
+  return origStr;
+}
+
+function swWalkAndTranslateDom(rootEl, lang) {
+  if (!rootEl || typeof document === 'undefined') return;
+  var skipTags = { SCRIPT: 1, STYLE: 1, SVG: 1, OPTION: 1, TEXTAREA: 1, CODE: 1, PRE: 1 };
+
+  // 1. Translate Placeholders safely with dataset.origPh preservation
+  var inputs = rootEl.querySelectorAll ? rootEl.querySelectorAll('input[placeholder], textarea[placeholder]') : [];
+  inputs.forEach(function(inp) {
+    if (!inp.dataset) return;
+    if (!inp.dataset.origPh) inp.dataset.origPh = inp.getAttribute('placeholder') || '';
+    var origPh = inp.dataset.origPh;
+    inp.setAttribute('placeholder', lang === 'en' ? origPh : swTranslateString(origPh, lang));
+  });
+
+  // 2. Walk all text nodes safely (never touching output-area, SVG, scripts, or input values!)
+  if (typeof document.createTreeWalker === 'function') {
+    var walker = document.createTreeWalker(rootEl, 4 /* NodeFilter.SHOW_TEXT */, null, false);
+    var node;
+    while ((node = walker.nextNode())) {
+      var p = node.parentElement;
+      if (!p) continue;
+      if (skipTags[p.tagName]) continue;
+      if (p.closest && (p.closest('svg') || p.closest('.output-area') || p.closest('[data-i18n]'))) continue;
+      var curText = node.nodeValue || '';
+      if (!curText.trim()) continue;
+      var orig = _swOrigTextMap ? _swOrigTextMap.get(node) : null;
+      if (!orig) {
+        orig = curText;
+        if (_swOrigTextMap) _swOrigTextMap.set(node, orig);
+      }
+      var target = (lang === 'en') ? orig : swTranslateString(orig, lang);
+      if (node.nodeValue !== target) node.nodeValue = target;
+    }
+  }
+}
 
 function changeLanguage(lang) {
-  currentAppLang = 'en';
-  localStorage.setItem('sw_lang', 'en');
+  lang = (lang === 'bn' || lang === 'hi') ? lang : 'en';
+  currentAppLang = lang;
+  try { localStorage.setItem('sw_lang', lang); } catch (e) {}
   const selector = document.getElementById('langSelector');
-  if (selector) selector.value = 'en';
-  applyLanguageTranslations('en');
+  if (selector) selector.value = lang;
+  applyLanguageTranslations(lang);
 }
 
 function applyLanguageTranslations(lang) {
-  lang = 'en';
-  currentAppLang = 'en';
-  const sEn = document.getElementById('setLangEn');
-  const badge = document.getElementById('currentLangBadge');
-  if (sEn) sEn.classList.add('active');
-  if (badge) badge.textContent = 'English';
+  if (_swI18nApplying) return;
+  _swI18nApplying = true;
+  try {
+    lang = (lang === 'bn' || lang === 'hi' || lang === 'en') ? lang : (currentAppLang || 'en');
+    currentAppLang = lang;
 
-  const d = I18N_DICT['en'];
+    // Update Settings 3-Language buttons & badge
+    var badgeNames = { en: 'English', bn: 'বাংলা', hi: 'हिन्दी' };
+    ['En', 'Bn', 'Hi'].forEach(function(sfx) {
+      var code = sfx.toLowerCase();
+      var sBtn = document.getElementById('setLang' + sfx);
+      if (sBtn && sBtn.classList) {
+        if (code === lang) sBtn.classList.add('active');
+        else sBtn.classList.remove('active');
+      }
+      var hBtn = document.getElementById('homeLang' + sfx);
+      if (hBtn && hBtn.style) {
+        hBtn.style.background = (code === lang) ? '#0284c7' : 'transparent';
+        hBtn.style.color = (code === lang) ? '#ffffff' : '#334155';
+      }
+    });
+    const badge = document.getElementById('currentLangBadge');
+    if (badge) badge.textContent = badgeNames[lang] || 'English';
 
-  const titleElem = document.getElementById('titleText');
-  if (titleElem) titleElem.textContent = d.title_app;
+    const d = I18N_DICT[lang] || I18N_DICT['en'];
 
-  const secHeaders = document.querySelectorAll('.menu-section-title');
-  if (secHeaders.length >= 2) {
-    secHeaders[0].textContent = d.sec_fab_systems;
-    secHeaders[1].textContent = d.sec_business_billing;
+    const titleElem = document.getElementById('titleText');
+    if (titleElem) titleElem.textContent = d.title_app;
+
+    const secHeaders = document.querySelectorAll('.menu-section-title');
+    if (secHeaders.length >= 2) {
+      secHeaders[0].textContent = d.sec_fab_systems;
+      secHeaders[1].textContent = d.sec_business_billing;
+    }
+
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item span');
+    if (navItems.length >= 4) {
+      navItems[0].textContent = d.nav_home;
+      navItems[1].textContent = d.nav_dashboard;
+      navItems[2].textContent = d.nav_records;
+      navItems[3].textContent = d.nav_profile;
+    }
+
+    const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+    const greetingElem = document.getElementById('homeGreeting');
+    if (greetingElem) {
+      let pName = profile.name || "Partner";
+      greetingElem.textContent = `${d.welcome_prefix} ${pName}!`;
+    }
+
+    // Layer 1: Translate all data-i18n elements (preserving origEn)
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      if (el.dataset && !el.dataset.origEn) el.dataset.origEn = el.textContent;
+      if (d[key]) el.textContent = d[key];
+      else if (lang === 'en' && el.dataset && el.dataset.origEn) el.textContent = el.dataset.origEn;
+    });
+
+    // Layer 2: Auto-translate all 24 screens DOM labels, buttons, tabs & placeholders!
+    if (document.body) swWalkAndTranslateDom(document.body, lang);
+
+    const selector = document.getElementById('langSelector');
+    if (selector) selector.value = lang;
+  } finally {
+    _swI18nApplying = false;
   }
+}
 
-  const navItems = document.querySelectorAll('.bottom-nav .nav-item span');
-  if (navItems.length >= 4) {
-    navItems[0].textContent = d.nav_home;
-    navItems[1].textContent = d.nav_dashboard;
-    navItems[2].textContent = d.nav_records;
-    navItems[3].textContent = d.nav_profile;
+// Auto-apply saved language on load + Safe debounced MutationObserver for dynamic lists!
+(function() {
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', function() {
+      applyLanguageTranslations(currentAppLang);
+      if (typeof MutationObserver !== 'undefined' && document.body) {
+        var _mutTimer = null;
+        var obs = new MutationObserver(function() {
+          if (_swI18nApplying || currentAppLang === 'en') return;
+          if (_mutTimer) clearTimeout(_mutTimer);
+          _mutTimer = setTimeout(function() { applyLanguageTranslations(currentAppLang); }, 70);
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+      }
+    });
   }
-
-  const profile = JSON.parse(localStorage.getItem('sw_profile') || '{}');
-  const greetingElem = document.getElementById('homeGreeting');
-  if (greetingElem) {
-    let pName = profile.name || "Partner";
-    greetingElem.textContent = `${d.welcome_prefix} ${pName}!`;
-  }
-
-  // Translate all data-i18n elements
- document.querySelectorAll('[data-i18n]').forEach(el => {
- const key = el.getAttribute('data-i18n');
- if (d[key]) {
- el.textContent = d[key];
- }
- });
-
- // Update selector value cleanly
- const selector = document.getElementById('langSelector');
- if (selector) selector.value = lang;
- }
-
+})();
 
 function updateProfile() {
  const profile = {
@@ -12515,7 +12843,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v98') === -1) caches.delete(k);
+                if (k.indexOf('v102') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -14565,7 +14893,7 @@ function setPtComboMode(mode) {
 
 
 // =========================================================================
-// v98: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
+// v102: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
 // =========================================================================
 var SW_CUSTOM_GLASS_KEY = 'sw_custom_glass_types_v1';
 var SW_GLASS_SHOP_STOCK_KEY = 'sw_glass_shop_stock_v1';
@@ -14628,6 +14956,8 @@ function addCustomGlassType() {
   try { localStorage.setItem(SW_CUSTOM_GLASS_KEY, JSON.stringify(list)); } catch (e) {}
   if (inp) inp.value = '';
   syncCustomGlassDropdowns();
+  if (typeof syncToGoogleSheet === 'function') syncToGoogleSheet('CustomGlass', [new Date().toLocaleDateString('en-GB'), name]);
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser ? currentCloudUser.uid : null);
 }
 
 function deleteCustomGlassType(idx) {
@@ -14637,22 +14967,128 @@ function deleteCustomGlassType(idx) {
   syncCustomGlassDropdowns();
 }
 
-// --- GLASS SHOP FULL-SHEET INVENTORY ---
+// --- v102: COMPLETE GLASS STOCK MANAGEMENT (LOCAL NAMES + RATE + STOCK IN + AUTO-MINUS + BILL PDF) ---
+var SW_GLASS_INWARD_LOG_KEY = 'sw_glass_inward_log_v1';
+var gc_last_needed_sheets = {};
+
 function loadGlassShopStock() {
   try {
     var raw = localStorage.getItem(SW_GLASS_SHOP_STOCK_KEY);
-    return raw ? JSON.parse(raw) : {};
+    var obj = raw ? JSON.parse(raw) : {};
+    // Normalize legacy numeric entries into rich objects { qty, rate, sheetSqFt }
+    Object.keys(obj).forEach(function(k) {
+      if (typeof obj[k] === 'number') obj[k] = { qty: obj[k], rate: 55, sheetSqFt: 32 };
+    });
+    return obj;
   } catch (e) { return {}; }
 }
 
-function saveGlassShopFullStock() {
-  var gType = document.getElementById('gc_shop_stock_type')?.value || 'Clear';
-  var qty = parseInt(document.getElementById('gc_shop_stock_qty')?.value, 10);
-  if (isNaN(qty) || qty < 0) return;
+function saveGlassShopStockObj(obj) {
+  try { localStorage.setItem(SW_GLASS_SHOP_STOCK_KEY, JSON.stringify(obj || {})); } catch (e) {}
+}
+
+function addIncomingGlassStock() {
+  var nameInp = document.getElementById('gc_stock_name_inp');
+  var rateInp = document.getElementById('gc_stock_rate_inp');
+  var qtyInp = document.getElementById('gc_stock_add_qty');
+  var name = (nameInp ? nameInp.value : '').trim();
+  var rate = parseFloat(rateInp ? rateInp.value : 55) || 0;
+  var addQty = parseInt(qtyInp ? qtyInp.value : 0, 10) || 0;
+  if (!name) { alert("Please enter Glass Name (e.g. 5mm Ghosa Kach, 5mm Clear)."); return; }
+  if (addQty <= 0) { alert("Please enter valid incoming sheet quantity (+Sheets)."); return; }
+
+  var stockDim = (typeof getSelectedGlassStockSheetDims === 'function') ? getSelectedGlassStockSheetDims() : { sL: 96, sW: 48 };
+  var sheetSqFt = (stockDim.sL * stockDim.sW) / 144.0;
   var stock = loadGlassShopStock();
-  stock[gType] = qty;
-  try { localStorage.setItem(SW_GLASS_SHOP_STOCK_KEY, JSON.stringify(stock)); } catch (e) {}
-  renderGlassShopStockUI();
+
+  // Case-insensitive match existing glass name
+  var matchKey = Object.keys(stock).find(function(k) { return k.toLowerCase() === name.toLowerCase(); }) || name;
+  if (!stock[matchKey]) stock[matchKey] = { qty: 0, rate: rate, sheetSqFt: sheetSqFt };
+  stock[matchKey].qty += addQty;
+  if (rate > 0) stock[matchKey].rate = rate;
+  stock[matchKey].sheetSqFt = sheetSqFt;
+  saveGlassShopStockObj(stock);
+
+  // Also register this local glass name into Custom Glass Types so it appears in all calculators!
+  var customList = loadCustomGlassTypes();
+  if (!customList.some(function(x) { return x.toLowerCase() === matchKey.toLowerCase(); })) {
+    customList.push(matchKey);
+    try { localStorage.setItem(SW_CUSTOM_GLASS_KEY, JSON.stringify(customList)); } catch (e) {}
+    syncCustomGlassDropdowns();
+  }
+
+  // Record Stock Inward entry for Purchase Bill
+  try {
+    var logs = JSON.parse(localStorage.getItem(SW_GLASS_INWARD_LOG_KEY) || '[]');
+    logs.unshift({
+      date: new Date().toLocaleDateString('en-GB'),
+      name: matchKey,
+      addedQty: addQty,
+      sheetSqFt: sheetSqFt,
+      rate: stock[matchKey].rate,
+      amount: Math.round(addQty * sheetSqFt * stock[matchKey].rate)
+    });
+    localStorage.setItem(SW_GLASS_INWARD_LOG_KEY, JSON.stringify(logs.slice(0, 60)));
+  } catch (e) {}
+
+  if (nameInp) nameInp.value = '';
+  renderGlassShopStockUI(gc_last_needed_sheets);
+  if (typeof syncToGoogleSheet === 'function') syncToGoogleSheet('GlassStock', [new Date().toLocaleDateString('en-GB'), 'STOCK_IN', matchKey, addQty, stock[matchKey].qty, stock[matchKey].rate]);
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser ? currentCloudUser.uid : null);
+  alert("✅ Added +" + addQty + " Sheet(s) of '" + matchKey + "'! Total in Stock: " + stock[matchKey].qty + " Sheet(s).");
+}
+
+function adjustGlassStockQty(name, delta) {
+  var stock = loadGlassShopStock();
+  if (!stock[name]) return;
+  stock[name].qty = Math.max(0, (stock[name].qty || 0) + delta);
+  saveGlassShopStockObj(stock);
+  renderGlassShopStockUI(gc_last_needed_sheets);
+}
+
+function deleteGlassStockEntry(name) {
+  if (!confirm("Remove '" + name + "' from Glass Stock?")) return;
+  var stock = loadGlassShopStock();
+  delete stock[name];
+  saveGlassShopStockObj(stock);
+  renderGlassShopStockUI(gc_last_needed_sheets);
+}
+
+function confirmGlassCutAndDeductStock() {
+  var keys = Object.keys(gc_last_needed_sheets || {});
+  if (!keys.length && (!gc_items_list || !gc_items_list.length)) {
+    alert("Please add glass cutting sizes first before confirming cut!");
+    return;
+  }
+  var stock = loadGlassShopStock();
+  var deductedSummary = [];
+  keys.forEach(function(gName) {
+    var need = gc_last_needed_sheets[gName] || 0;
+    if (need <= 0) return;
+    var matchKey = Object.keys(stock).find(function(k) {
+      return k.toLowerCase() === gName.toLowerCase() || k.toLowerCase().includes(gName.toLowerCase()) || gName.toLowerCase().includes(k.toLowerCase());
+    });
+    if (matchKey) {
+      var prev = stock[matchKey].qty || 0;
+      stock[matchKey].qty = Math.max(0, prev - need);
+      deductedSummary.push(matchKey + ": -" + need + " Sheet(s) (Left: " + stock[matchKey].qty + ")");
+    }
+  });
+  saveGlassShopStockObj(stock);
+
+  // Also auto-save usable offcuts (>= 12" x 12") if any
+  var savedOff = 0;
+  if (gc_last_plan_offcuts && gc_last_plan_offcuts.length) {
+    savedOff = saveUsableGlassOffcuts(true);
+  }
+  renderGlassShopStockUI(gc_last_needed_sheets);
+  if (typeof syncToGoogleSheet === 'function') syncToGoogleSheet('GlassStock', [new Date().toLocaleDateString('en-GB'), 'CUT_DEDUCT', deductedSummary.join('; '), 0, 0, 0]);
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser ? currentCloudUser.uid : null);
+  alert(
+    "✂️ Cut Confirmed!\n" +
+    (deductedSummary.length ? ("Auto-Deducted from Stock:\n• " + deductedSummary.join("\n• ")) : "No matching full-sheet stock entry found (add Glass Name in Stock Management to auto-deduct).") +
+    (savedOff > 0 ? ("\n\n✅ Also saved " + savedOff + " usable offcut(s) (≥12\") with Number Tags!") : "")
+  );
 }
 
 function renderGlassShopStockUI(neededSheetsByType) {
@@ -14661,28 +15097,105 @@ function renderGlassShopStockUI(neededSheetsByType) {
   var stock = loadGlassShopStock();
   var keys = Object.keys(stock);
   if (!keys.length) {
-    box.innerHTML = 'No shop sheet stock set yet. Choose glass type &amp; sheets above, then tap <b>Set Stock</b>.';
+    box.innerHTML = 'No glass stock added yet. Enter Glass Name (e.g. <b>5mm Ghosa Kach</b>), Rate &amp; +Sheets above!';
     return;
   }
+  var grandVal = 0;
   var html = '';
   keys.forEach(function(k) {
-    var have = stock[k] || 0;
-    var need = (neededSheetsByType && neededSheetsByType[k]) ? neededSheetsByType[k] : 0;
+    var rec = stock[k];
+    var have = rec.qty || 0;
+    var rate = rec.rate || 0;
+    var sq = have * (rec.sheetSqFt || 32);
+    var val = Math.round(sq * rate);
+    grandVal += val;
+
+    // Match needed sheets case-insensitively
+    var need = 0;
+    if (neededSheetsByType) {
+      Object.keys(neededSheetsByType).forEach(function(nk) {
+        if (nk.toLowerCase() === k.toLowerCase() || k.toLowerCase().includes(nk.toLowerCase()) || nk.toLowerCase().includes(k.toLowerCase())) {
+          need += neededSheetsByType[nk];
+        }
+      });
+    }
     var buyMore = Math.max(0, need - have);
     var statusBadge = '';
     if (need > 0) {
       statusBadge = buyMore > 0
-        ? ('<span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:800;">Need ' + need + ' → BUY ' + buyMore + ' MORE</span>')
-        : ('<span style="background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; font-weight:800;">Need ' + need + ' → OK (Left: ' + (have - need) + ')</span>');
+        ? ('<div style="margin-top:3px;"><span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:800; font-size:0.66rem;">Job Needs ' + need + ' → BUY ' + buyMore + ' MORE</span></div>')
+        : ('<div style="margin-top:3px;"><span style="background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; font-weight:800; font-size:0.66rem;">Job Needs ' + need + ' → IN STOCK (Left: ' + (have - need) + ')</span></div>');
     }
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #bae6fd; border-radius:6px; padding:5px 7px; margin-bottom:4px; gap:5px; flex-wrap:wrap;">';
-    html += '<span><b>' + k + '</b>: <b style="color:#0369a1;">' + have + ' Sheet(s)</b> in shop</span>' + statusBadge;
-    html += '</div>';
+    var safeK = k.replace(/'/g, "\\'");
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #bae6fd; border-radius:7px; padding:6px 8px; margin-bottom:5px; gap:6px;">';
+    html += '<div><b style="color:#0f172a;">' + k + '</b> <span style="color:#0369a1; font-weight:800;">(' + have + ' Sh • ' + sq.toFixed(0) + ' Sq.Ft)</span><div style="font-size:0.66rem; color:#64748b;">Rate: ₹' + rate + '/Sq.Ft  •  Value: <b>₹' + val.toLocaleString('en-IN') + '</b></div>' + statusBadge + '</div>';
+    html += '<div style="display:flex; gap:3px; align-items:center;">' +
+      '<button type="button" onclick="adjustGlassStockQty(\'' + safeK + '\', -1)" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:4px; width:24px; height:24px; font-weight:900; cursor:pointer;">-</button>' +
+      '<button type="button" onclick="adjustGlassStockQty(\'' + safeK + '\', 1)" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; border-radius:4px; width:24px; height:24px; font-weight:900; cursor:pointer;">+</button>' +
+      '<button type="button" onclick="deleteGlassStockEntry(\'' + safeK + '\')" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; width:24px; height:24px; font-weight:800; cursor:pointer;">✕</button>' +
+      '</div></div>';
   });
+  html += '<div style="text-align:right; font-size:0.72rem; font-weight:900; color:#0369a1; padding-top:2px;">Total Stock Value: ₹' + grandVal.toLocaleString('en-IN') + '</div>';
   box.innerHTML = html;
 }
 
-// --- GLASS OFFCUT / REMNANT STOCK (#G101, #G102 — NO QR!) ---
+function exportGlassStockBillPdf() {
+  if (!isAppActivated()) { alert("PRO activation is required."); openScreen('activation', 'PRO UPGRADE & PLANS'); return; }
+  var stock = loadGlassShopStock();
+  var keys = Object.keys(stock);
+  var rems = loadGlassRemnants().filter(function(r) { return r.qty > 0 && r.h_in >= 12 && r.w_in >= 12; });
+  if (!keys.length && !rems.length) { alert("No glass stock or offcuts saved yet!"); return; }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) return;
+
+  var doc = new jsPDF('p', 'mm', 'a4');
+  var today = new Date().toLocaleDateString('en-GB');
+  drawDocHeaderWithLogo(doc, "GLASS STOCK & PURCHASE INVENTORY BILL", "Date: " + today + " • Full Sheets + Usable Offcuts (No QR)", [3, 105, 161]);
+
+  var y = 35;
+  if (keys.length) {
+    var rows = [];
+    var grandAmt = 0;
+    keys.forEach(function(k, idx) {
+      var rec = stock[k];
+      var sq = (rec.qty || 0) * (rec.sheetSqFt || 32);
+      var amt = Math.round(sq * (rec.rate || 0));
+      grandAmt += amt;
+      rows.push([idx + 1, k, (rec.qty || 0) + " Sheets", sq.toFixed(1) + " Sq.Ft", "Rs." + (rec.rate || 0), "Rs." + amt.toLocaleString('en-IN')]);
+    });
+    rows.push(["", "GRAND TOTAL STOCK VALUE", "", "", "", "Rs." + grandAmt.toLocaleString('en-IN')]);
+
+    doc.autoTable({
+      startY: y,
+      head: [["#", "Glass Name (Local / Type)", "In Stock", "Total Sq.Ft", "Rate/Sq.Ft", "Stock Value"]],
+      body: rows,
+      theme: 'grid',
+      margin: { left: 14, right: 14 },
+      headStyles: { fillColor: [3, 105, 161], textColor: 255, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8 }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (rems.length) {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(6, 95, 70);
+    doc.text("USABLE GLASS OFFCUTS / CHHAT IN SHOP (≥12\" NUMBER TAGS):", 14, y);
+    y += 3;
+    doc.autoTable({
+      startY: y,
+      head: [["Tag #", "Glass Type", "Offcut Size (H x W)", "Qty"]],
+      body: rems.map(function(r) { return [r.id, r.spec, toFractionInch(r.h_in) + " x " + toFractionInch(r.w_in), r.qty + " pc"]; }),
+      theme: 'grid',
+      margin: { left: 14, right: 14 },
+      headStyles: { fillColor: [5, 150, 105], textColor: 255, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8 }
+    });
+  }
+
+  doc.save("Glass_Stock_Bill_" + Date.now() + ".pdf");
+}
+
+// --- GLASS OFFCUT / CHHAT STOCK (#G101 OR USER CUSTOM NUMBER — NO QR!) ---
 function loadGlassRemnants() {
   try {
     var raw = localStorage.getItem(SW_GLASS_REMNANT_KEY);
@@ -14722,7 +15235,7 @@ function renderGlassRemnantStockUI(matchedIds) {
   list.forEach(function(r, idx) {
     var isHit = matchedIds && matchedIds.indexOf(r.id) !== -1;
     h += '<div style="display:flex; justify-content:space-between; align-items:center; background:' + (isHit ? '#dcfce7' : '#fff') + '; border:1px solid ' + (isHit ? '#16a34a' : '#bbf7d0') + '; border-radius:6px; padding:5px 7px; margin-bottom:4px;">';
-    h += '<div><span style="background:#059669; color:#fff; padding:1px 5px; border-radius:4px; font-size:0.65rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + toFractionInch(r.h_in) + ' × ' + toFractionInch(r.w_in) + '</b> (' + r.spec + ') • Qty: <b>' + r.qty + '</b>' + (isHit ? ' <b style="color:#15803d;">★ MATCH FOR THIS JOB!</b>' : '') + '</div>';
+    h += '<div><span style="background:#059669; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.66rem; font-weight:800; margin-right:5px;">' + r.id + '</span><b>' + toFractionInch(r.h_in) + ' × ' + toFractionInch(r.w_in) + '</b> (' + r.spec + ') • Qty: <b>' + r.qty + '</b>' + (isHit ? ' <b style="color:#15803d;">★ USE THIS CHHAT!</b>' : '') + '</div>';
     h += '<button type="button" onclick="deleteGlassRemnant(' + idx + ')" style="background:#fee2e2; color:#b91c1c; border:none; border-radius:4px; padding:3px 6px; font-size:0.65rem; font-weight:800; cursor:pointer;">✕</button>';
     h += '</div>';
   });
@@ -14735,22 +15248,31 @@ function deleteGlassRemnant(idx) {
   saveGlassRemnants(list);
 }
 
-function saveUsableGlassOffcuts() {
+function saveUsableGlassOffcuts(silent) {
   if (!gc_last_plan_offcuts.length) {
-    alert("No usable glass offcuts (≥ 12\" × 12\") found in current sheet layout! Smaller pieces are treated as Scrap.");
-    return;
+    if (!silent) alert("No usable glass offcuts (≥ 12\" × 12\") found in current sheet layout! Smaller pieces are treated as Scrap.");
+    return 0;
   }
+  var customTagInp = document.getElementById('gc_custom_tag_inp');
+  var customTag = (customTagInp ? customTagInp.value : '').trim();
+  if (customTag && !customTag.startsWith('#')) customTag = '#' + customTag;
+
   var list = loadGlassRemnants();
   var added = 0;
-  gc_last_plan_offcuts.forEach(function(o) {
+  gc_last_plan_offcuts.forEach(function(o, i) {
     if (o.h_in < 12 || o.w_in < 12) return;
-    var ex = list.find(function(r) { return r.spec === o.spec && Math.abs(r.h_in - o.h_in) < 0.5 && Math.abs(r.w_in - o.w_in) < 0.5; });
+    var tagId = customTag ? (i === 0 ? customTag : (customTag + '-' + (i + 1))) : nextGlassRemId(list);
+    var ex = !customTag && list.find(function(r) { return r.spec === o.spec && Math.abs(r.h_in - o.h_in) < 0.5 && Math.abs(r.w_in - o.w_in) < 0.5; });
     if (ex) ex.qty += (o.qty || 1);
-    else list.push({ id: nextGlassRemId(list), spec: o.spec, h_in: o.h_in, w_in: o.w_in, qty: o.qty || 1 });
+    else list.push({ id: tagId, spec: o.spec, h_in: o.h_in, w_in: o.w_in, qty: o.qty || 1 });
     added += (o.qty || 1);
   });
+  if (customTagInp) customTagInp.value = '';
   saveGlassRemnants(list);
-  alert("Saved " + added + " usable glass offcut(s) (≥12\" × 12\") with Number Tags (#G101...)!");
+  if (typeof syncToGoogleSheet === 'function') syncToGoogleSheet('GlassOffcuts', [new Date().toLocaleDateString('en-GB'), added + ' pcs saved', list.slice(-3).map(function(x){return x.id+':'+x.spec;}).join(', ')]);
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser ? currentCloudUser.uid : null);
+  if (!silent) alert("Saved " + added + " usable glass offcut(s) (≥12\" × 12\") with Number Tags!");
+  return added;
 }
 
 function exportGlassNumberStickersPdf() {
@@ -14761,7 +15283,7 @@ function exportGlassNumberStickersPdf() {
   if (!jsPDF) return;
 
   var doc = new jsPDF('p', 'mm', 'a4');
-  drawDocHeaderWithLogo(doc, "GLASS OFFCUT NUMBER TAG STICKERS (≥12\" ONLY)", "Bold Number Tags (#G101, #G102...) — No QR Code Needed", [2, 132, 199]);
+  drawDocHeaderWithLogo(doc, "GLASS OFFCUT NUMBER TAG STICKERS (≥12\" ONLY)", "Bold Custom / Auto Number Tags — No QR Code Needed", [2, 132, 199]);
   var cols = 3, cardW = 59, cardH = 22, gapX = 3.5, gapY = 3, startX = 14, startY = 34, col = 0, row = 0;
 
   list.forEach(function(item) {
@@ -14771,7 +15293,7 @@ function exportGlassNumberStickersPdf() {
     doc.roundedRect(x, y, cardW, cardH, 1.8, 1.8, 'FD');
     doc.setFillColor(2, 132, 199);
     doc.roundedRect(x, y, 19, cardH, 1.8, 1.8, 'F');
-    doc.setFont("helvetica", "bold"); doc.setFontSize(11.5); doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
     doc.text(String(item.id), x + 9.5, y + 11, { align: "center" });
     doc.setFontSize(6.5); doc.setTextColor(224, 242, 254);
     doc.text("QTY: " + item.qty, x + 9.5, y + 17.5, { align: "center" });
@@ -14785,48 +15307,77 @@ function exportGlassNumberStickersPdf() {
   doc.save("Glass_Number_Tag_Stickers_" + Date.now() + ".pdf");
 }
 
-// Hook into recalculateGlassCuttingSheets to compute usable glass offcuts, check #G101 stock matches, and show Shop Stock vs Buy!
+// v102: MULTI-GLASS-TYPE PER-SPEC 4x8 SHEET PACKING + EXACT OFFCUT SPEC + PER-TYPE STOCK AUTO-MINUS
 (function() {
   if (typeof recalculateGlassCuttingSheets === 'function') {
     var _origRecalcGlass = recalculateGlassCuttingSheets;
     recalculateGlassCuttingSheets = function() {
       _origRecalcGlass();
       gc_last_plan_offcuts = [];
+      gc_last_needed_sheets = {};
+      if (!gc_items_list || !gc_items_list.length) {
+        renderGlassShopStockUI({});
+        renderGlassRemnantStockUI([]);
+        return;
+      }
+
       var stockDim = getSelectedGlassStockSheetDims();
-      var sheets = (gc_items_list && gc_items_list.length) ? packGlassPanelsMinWaste(gc_items_list, stockDim.sL, stockDim.sW) : [];
-      var neededByType = {};
+      // Group items strictly by Glass Spec so each glass type packs onto its OWN 4'x8' sheets!
+      var itemsBySpec = {};
+      gc_items_list.forEach(function(it) {
+        var sp = (it.spec || '5 mm Clear').trim() || '5 mm Clear';
+        if (!itemsBySpec[sp]) itemsBySpec[sp] = [];
+        itemsBySpec[sp].push(it);
+      });
+
       var matchedRemIds = [];
       var remList = loadGlassRemnants();
+      var specNames = Object.keys(itemsBySpec);
+      var breakdownLines = [];
 
-      (gc_items_list || []).forEach(function(it) {
-        var gType = (it.spec || 'Clear').replace(/^\d+(\.\d+)?\s*mm\s*/i, '').trim() || 'Clear';
-        neededByType[gType] = Math.max(neededByType[gType] || 0, sheets.length);
-        remList.forEach(function(r) {
-          if (r.qty > 0 && ((r.h_in >= it.h_in && r.w_in >= it.w_in) || (r.h_in >= it.w_in && r.w_in >= it.h_in))) {
-            if (matchedRemIds.indexOf(r.id) === -1) matchedRemIds.push(r.id);
-          }
+      specNames.forEach(function(spName) {
+        var spItems = itemsBySpec[spName];
+        var spSheets = packGlassPanelsMinWaste(spItems, stockDim.sL, stockDim.sW);
+        gc_last_needed_sheets[spName] = spSheets.length;
+        breakdownLines.push("• " + spName + ": " + spSheets.length + " Full Sheet(s) (" + spItems.reduce(function(s,x){return s+(x.qty||1);}, 0) + " Pcs)");
+
+        // Match usable remnants strictly for THIS glass spec!
+        spItems.forEach(function(it) {
+          remList.forEach(function(r) {
+            var sameSpec = !r.spec || r.spec.toLowerCase() === spName.toLowerCase() || r.spec.toLowerCase().includes(spName.toLowerCase()) || spName.toLowerCase().includes(r.spec.toLowerCase());
+            if (sameSpec && r.qty > 0 && ((r.h_in >= it.h_in && r.w_in >= it.w_in) || (r.h_in >= it.w_in && r.w_in >= it.h_in))) {
+              if (matchedRemIds.indexOf(r.id) === -1) matchedRemIds.push(r.id);
+            }
+          });
+        });
+
+        // Compute exact usable offcuts (>= 12" x 12") tagged with THIS exact glass spec!
+        spSheets.forEach(function(sh) {
+          var usedL = 0, usedW = 0;
+          (sh.rects || []).forEach(function(rc) {
+            usedL = Math.max(usedL, (rc.x || 0) + (rc.w || 0));
+            usedW = Math.max(usedW, (rc.y || 0) + (rc.h || 0));
+          });
+          var remL = stockDim.sL - usedL;
+          var remW = stockDim.sW - usedW;
+          if (remL >= 12 && stockDim.sW >= 12) gc_last_plan_offcuts.push({ spec: spName, h_in: stockDim.sW, w_in: remL, qty: 1 });
+          if (remW >= 12 && usedL >= 12) gc_last_plan_offcuts.push({ spec: spName, h_in: remW, w_in: usedL, qty: 1 });
         });
       });
 
-      sheets.forEach(function(sh) {
-        var usedL = 0, usedW = 0;
-        (sh.rects || []).forEach(function(rc) {
-          usedL = Math.max(usedL, (rc.x || 0) + (rc.w || 0));
-          usedW = Math.max(usedW, (rc.y || 0) + (rc.h || 0));
-        });
-        var remL = stockDim.sL - usedL;
-        var remW = stockDim.sW - usedW;
-        var mainSpec = (gc_items_list[0] && gc_items_list[0].spec) ? gc_items_list[0].spec : '5 mm Clear';
-        if (remL >= 12 && stockDim.sW >= 12) gc_last_plan_offcuts.push({ spec: mainSpec, h_in: stockDim.sW, w_in: remL, qty: 1 });
-        if (remW >= 12 && usedL >= 12) gc_last_plan_offcuts.push({ spec: mainSpec, h_in: remW, w_in: usedL, qty: 1 });
-      });
-
-      renderGlassShopStockUI(neededByType);
+      renderGlassShopStockUI(gc_last_needed_sheets);
       renderGlassRemnantStockUI(matchedRemIds);
 
       var outEl = document.getElementById('gc_out');
-      if (outEl && matchedRemIds.length > 0 && gc_items_list.length > 0) {
-        outEl.textContent = "★ MATCHING GLASS STOCK TAGS FOUND: " + matchedRemIds.join(", ") + " (Check green list below!)\n\n" + outEl.textContent;
+      if (outEl) {
+        var prefix = "";
+        if (specNames.length > 1) {
+          prefix += "=== PER-GLASS-TYPE 4'x8' SHEET BREAKDOWN ===\n" + breakdownLines.join("\n") + "\n\n";
+        }
+        if (matchedRemIds.length > 0) {
+          prefix += "★ MATCHING CHHAT / OFFCUT TAGS IN SHOP: " + matchedRemIds.join(", ") + " (Check green list below!)\n\n";
+        }
+        if (prefix) outEl.textContent = prefix + outEl.textContent;
       }
     };
   }
@@ -14836,6 +15387,391 @@ function exportGlassNumberStickersPdf() {
       renderWorkshopRemnantStockUI();
       renderGlassShopStockUI();
       renderGlassRemnantStockUI();
+      renderProfitAttendanceScreen();
     });
   }
 })();
+
+// =========================================================================
+// v102: 1-CLICK CUT GLASS PIECE DELIVERY STICKERS PDF (NO QR — 1 PER PIECE)
+// =========================================================================
+function exportCutGlassPieceStickersPdf() {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+  if (!gc_items_list || !gc_items_list.length) {
+    alert("Please add glass cutting sizes first to generate stickers!");
+    return;
+  }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { alert("PDF library is loading, please try again."); return; }
+
+  var autoInfo = getActiveGlassOrderCustomerInfo();
+  var partyName = prompt("Customer Name / Order Code for Stickers (Auto-Filled — Edit if needed):", autoInfo) || "";
+  partyName = partyName.trim();
+  var shopName = (document.getElementById('homeShop')?.textContent || 'SMART WORKER ALUMINIUM').trim();
+  var today = new Date().toLocaleDateString('en-GB');
+
+  // Expand every glass item by its Qty so EVERY physical glass sheet gets its own sticker!
+  var allPieces = [];
+  gc_items_list.forEach(function(it, idx) {
+    var q = Math.max(1, parseInt(it.qty, 10) || 1);
+    for (var k = 1; k <= q; k++) {
+      allPieces.push({
+        tag: it.rowTag || ('Glass #' + (idx + 1)),
+        cutStr: it.cutStr || (toFractionInch(it.h_in) + ' x ' + toFractionInch(it.w_in)),
+        hStr: toFractionInch(it.h_in),
+        wStr: toFractionInch(it.w_in),
+        spec: it.spec || '5 mm Clear',
+        copyNo: k,
+        copyTotal: q
+      });
+    }
+  });
+
+  var totalPcs = allPieces.length;
+  var doc = new jsPDF('p', 'mm', 'a4');
+  drawDocHeaderWithLogo(
+    doc,
+    "CUT GLASS PIECE STICKERS (" + totalPcs + " LABELS)",
+    (partyName ? ("Customer: " + partyName + "  •  ") : "") + "Stick 1 Label on Each Cut Glass Piece • Date: " + today,
+    [124, 58, 237]
+  );
+
+  // 3 cols x 7 rows = 21 crisp stickers per A4 page (59mm x 32mm each)
+  var cols = 3, cardW = 59, cardH = 32, gapX = 3.5, gapY = 3.5;
+  var startX = 14, startY = 34;
+  var col = 0, row = 0;
+
+  allPieces.forEach(function(pc, pIdx) {
+    var x = startX + col * (cardW + gapX);
+    var y = startY + row * (cardH + gapY);
+    if (y + cardH > 286) {
+      doc.addPage('a4', 'p');
+      startY = 14; row = 0; col = 0;
+      x = startX; y = startY;
+    }
+
+    // Outer cut border
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(100, 116, 139);
+    doc.setLineWidth(0.35);
+    doc.roundedRect(x, y, cardW, cardH, 2, 2, 'FD');
+
+    // Top Header Band: Piece # + Location/Tag
+    doc.setFillColor(124, 58, 237);
+    doc.roundedRect(x, y, cardW, 7, 2, 2, 'F');
+    doc.rect(x, y + 4.5, cardW, 2.5, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("#" + (pIdx + 1) + "/" + totalPcs + "  •  " + String(pc.tag).slice(0, 16), x + 2.5, y + 4.8);
+
+    // HUGE BOLD GLASS SIZE (H x W) — readable from 5 feet away!
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42);
+    doc.text(pc.hStr + " H x " + pc.wStr + " W", x + cardW / 2, y + 14.5, { align: "center" });
+
+    // Glass Type / Local Name Pill
+    doc.setFillColor(240, 249, 255);
+    doc.setDrawColor(125, 211, 252);
+    doc.roundedRect(x + 2.5, y + 17, cardW - 5, 6.2, 1.2, 1.2, 'FD');
+    doc.setFontSize(7.6);
+    doc.setTextColor(3, 105, 161);
+    doc.text(String(pc.spec).slice(0, 26), x + cardW / 2, y + 21.3, { align: "center" });
+
+    // Footer: Customer Name / Shop Name + Piece Copy Info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.3);
+    doc.setTextColor(71, 85, 105);
+    var footL = partyName ? ("To: " + partyName.slice(0, 16)) : shopName.slice(0, 18);
+    doc.text(footL, x + 2.5, y + 28.8);
+    doc.text("Pc " + pc.copyNo + "/" + pc.copyTotal + " • " + today, x + cardW - 2.5, y + 28.8, { align: "right" });
+
+    col++;
+    if (col >= cols) { col = 0; row++; }
+  });
+
+  doc.save("Cut_Glass_Stickers_" + totalPcs + "pcs_" + Date.now() + ".pdf");
+}
+
+
+// =========================================================================
+// v102: AUTO-FILL CUSTOMER/ORDER + 58MM THERMAL STICKERS + VOICE + PROFIT/ATTENDANCE
+// =========================================================================
+function getActiveGlassOrderCustomerInfo() {
+  var cName = '';
+  var orderCode = '';
+  try {
+    // 1. Check imported 4-digit glass order status banner
+    var stEl = document.getElementById('gc_qr_import_status');
+    if (stEl && stEl.textContent) {
+      var mCode = stEl.textContent.match(/\b(\d{4})\b/);
+      if (mCode) orderCode = '#' + mCode[1];
+    }
+    // 2. Check active Site Khata customer
+    var skCust = document.getElementById('sk_cust_name') || document.getElementById('sk_client_name');
+    if (skCust && skCust.value && skCust.value.trim()) cName = skCust.value.trim();
+    if (!cName) {
+      var khata = JSON.parse(localStorage.getItem('sw_site_khata') || '[]');
+      if (Array.isArray(khata) && khata.length && khata[0].customer) cName = String(khata[0].customer).trim();
+    }
+    // 3. Check Quotation / Bill customer
+    if (!cName) {
+      var qEl = document.getElementById('q_cust_name') || document.getElementById('bill_cust_name');
+      if (qEl && qEl.value && qEl.value.trim()) cName = qEl.value.trim();
+    }
+  } catch (e) {}
+  if (cName && orderCode) return cName + ' (' + orderCode + ')';
+  return cName || orderCode || '';
+}
+
+async function printCutGlassStickersThermal58mm() {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to print stickers.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+  if (!gc_items_list || !gc_items_list.length) {
+    alert("Please add glass cutting sizes first!");
+    return;
+  }
+  var autoInfo = getActiveGlassOrderCustomerInfo();
+  var partyName = (prompt("Customer Name / Order Code for 58mm Thermal Stickers:", autoInfo) || "").trim();
+  var shopName = (document.getElementById('homeShop')?.textContent || 'SMART WORKER ALUMINIUM').trim();
+  var today = new Date().toLocaleDateString('en-GB');
+
+  var allPieces = [];
+  gc_items_list.forEach(function(it, idx) {
+    var q = Math.max(1, parseInt(it.qty, 10) || 1);
+    for (var k = 1; k <= q; k++) {
+      allPieces.push({
+        tag: it.rowTag || ('Glass #' + (idx + 1)),
+        hStr: toFractionInch(it.h_in),
+        wStr: toFractionInch(it.w_in),
+        spec: it.spec || '5 mm Clear',
+        copyNo: k,
+        copyTotal: q
+      });
+    }
+  });
+
+  // Try direct Bluetooth ESC/POS 58mm Thermal Printer if connected (or available)
+  if (typeof btThermalChar !== 'undefined' && btThermalChar) {
+    try {
+      var enc = new TextEncoder();
+      var esc = "";
+      allPieces.forEach(function(pc, idx) {
+        esc += "\x1B\x40\x1B\x61\x01"; // Init + Center
+        esc += "================================\n";
+        esc += "\x1B\x45\x01#" + (idx + 1) + "/" + allPieces.length + " | " + pc.tag + "\x1B\x45\x00\n";
+        esc += "\x1D\x21\x11" + pc.hStr + " x " + pc.wStr + "\x1D\x21\x00\n";
+        esc += pc.spec + "\n";
+        if (partyName) esc += "To: " + partyName + "\n";
+        esc += shopName.slice(0, 28) + " | " + today + "\n";
+        esc += "--------------------------------\n\n\n";
+      });
+      var bytes = enc.encode(esc);
+      for (var off = 0; off < bytes.length; off += 180) {
+        await btThermalChar.writeValue(bytes.slice(off, off + 180));
+      }
+      alert("✅ Sent " + allPieces.length + " Cut Glass Sticker(s) directly to 58mm Bluetooth Printer!");
+      return;
+    } catch (btErr) {
+      console.warn("BT Thermal write fallback:", btErr);
+    }
+  }
+
+  // Universal 58mm Thermal Roll Print Preview (works with any Bluetooth/USB 58mm printer app on Android!)
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>58mm Cut Glass Stickers</title>' +
+    '<style>@page{size:58mm auto;margin:0;}body{width:54mm;margin:0 auto;font-family:Arial,sans-serif;color:#000;}' +
+    '.st{border:1.5px dashed #000;border-radius:4px;padding:5px;margin:4px 0;text-align:center;page-break-inside:avoid;}' +
+    '.hdr{font-size:10px;font-weight:800;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:3px;}' +
+    '.sz{font-size:16px;font-weight:900;margin:3px 0;}' +
+    '.sp{font-size:11px;font-weight:700;background:#eee;padding:2px;border-radius:3px;}' +
+    '.ft{font-size:9px;margin-top:3px;}</style></head><body>';
+  allPieces.forEach(function(pc, idx) {
+    html += '<div class="st">' +
+      '<div class="hdr">#' + (idx + 1) + '/' + allPieces.length + ' • ' + pc.tag + ' (Pc ' + pc.copyNo + '/' + pc.copyTotal + ')</div>' +
+      '<div class="sz">' + pc.hStr + ' H × ' + pc.wStr + ' W</div>' +
+      '<div class="sp">' + pc.spec + '</div>' +
+      '<div class="ft">' + (partyName ? ('<b>' + partyName + '</b><br>') : '') + shopName + ' • ' + today + '</div>' +
+      '</div>';
+  });
+  html += '<script>window.onload=function(){window.print();};</script></body></html>';
+  var w = window.open('', '_blank', 'width=320,height=600');
+  if (w) { w.document.write(html); w.document.close(); }
+  else alert("Pop-up blocked! Please allow pop-ups to open 58mm Thermal Print view.");
+}
+
+// --- VOICE MEASUREMENT INPUT (SITE KHATA & GLASS CUTTING) ---
+function startVoiceMeasurement(hInputId, wInputId) {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert("Voice input works in Chrome on Android. Please type measurements using the keypad.");
+    return;
+  }
+  try {
+    var rec = new SR();
+    rec.lang = (currentAppLang === 'bn') ? 'bn-IN' : ((currentAppLang === 'hi') ? 'hi-IN' : 'en-IN');
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = function(ev) {
+      var spoken = (ev.results && ev.results[0] && ev.results[0][0]) ? ev.results[0][0].transcript : '';
+      var nums = spoken.match(/\d+(?:\.\d+)?/g);
+      if (nums && nums.length >= 2) {
+        var hEl = document.getElementById(hInputId);
+        var wEl = document.getElementById(wInputId);
+        if (hEl) hEl.value = nums[0];
+        if (wEl) wEl.value = nums[1];
+        alert("🎤 Voice Captured: Height = " + nums[0] + " , Width = " + nums[1] + "\n(Heard: \"" + spoken + "\")");
+      } else if (nums && nums.length === 1) {
+        var hEl1 = document.getElementById(hInputId);
+        if (hEl1) hEl1.value = nums[0];
+        alert("🎤 Captured Height = " + nums[0] + " (Say two numbers like '48 by 36' to fill both!)");
+      } else {
+        alert("Could not detect numbers in: \"" + spoken + "\". Try saying '48 by 36'.");
+      }
+    };
+    rec.onerror = function() { alert("Mic permission needed or voice not detected. Please try again."); };
+    rec.start();
+  } catch (e) {
+    alert("Voice measurement could not start on this device.");
+  }
+}
+
+// --- WORKSHOP PROFIT & WORKER ATTENDANCE (HAZIRA) TRACKER ---
+var SW_PROFIT_ATT_KEY = 'sw_profit_attendance_v1';
+
+function loadProfitAttData() {
+  try {
+    var raw = localStorage.getItem(SW_PROFIT_ATT_KEY);
+    var d = raw ? JSON.parse(raw) : {};
+    if (!Array.isArray(d.workers)) d.workers = [];
+    if (!Array.isArray(d.tx)) d.tx = [];
+    return d;
+  } catch (e) { return { workers: [], tx: [] }; }
+}
+
+function saveProfitAttData(d) {
+  try { localStorage.setItem(SW_PROFIT_ATT_KEY, JSON.stringify(d)); } catch (e) {}
+  if (typeof syncAllDataToCloud === 'function') syncAllDataToCloud(currentCloudUser ? currentCloudUser.uid : null);
+  renderProfitAttendanceScreen();
+}
+
+function paAddWorker() {
+  var name = (document.getElementById('pa_worker_name')?.value || '').trim();
+  var wage = parseFloat(document.getElementById('pa_worker_wage')?.value) || 0;
+  if (!name || wage <= 0) { alert("Enter Worker Name and Daily Wage (₹)."); return; }
+  var d = loadProfitAttData();
+  d.workers.push({ id: 'W' + Date.now(), name: name, wage: wage, logs: {} });
+  if (document.getElementById('pa_worker_name')) document.getElementById('pa_worker_name').value = '';
+  saveProfitAttData(d);
+}
+
+function paMarkAttendance(wIdx, status) {
+  var d = loadProfitAttData();
+  if (!d.workers[wIdx]) return;
+  var todayKey = new Date().toISOString().slice(0, 10);
+  if (!d.workers[wIdx].logs) d.workers[wIdx].logs = {};
+  d.workers[wIdx].logs[todayKey] = status; // 'P' = 1, 'H' = 0.5, 'A' = 0
+  if (typeof syncToGoogleSheet === 'function') syncToGoogleSheet('Attendance', [todayKey, d.workers[wIdx].name, status, d.workers[wIdx].wage]);
+  saveProfitAttData(d);
+}
+
+function paDeleteWorker(wIdx) {
+  if (!confirm("Remove this worker?")) return;
+  var d = loadProfitAttData();
+  d.workers.splice(wIdx, 1);
+  saveProfitAttData(d);
+}
+
+function paAddTransaction() {
+  var type = document.getElementById('pa_tx_type')?.value || 'INCOME';
+  var note = (document.getElementById('pa_tx_note')?.value || '').trim() || (type === 'INCOME' ? 'Project Payment' : 'Material Expense');
+  var amt = parseFloat(document.getElementById('pa_tx_amt')?.value) || 0;
+  if (amt <= 0) { alert("Enter valid amount (₹)."); return; }
+  var d = loadProfitAttData();
+  var dateStr = new Date().toLocaleDateString('en-GB');
+  d.tx.unshift({ date: dateStr, type: type, note: note, amt: amt });
+  if (document.getElementById('pa_tx_note')) document.getElementById('pa_tx_note').value = '';
+  if (document.getElementById('pa_tx_amt')) document.getElementById('pa_tx_amt').value = '';
+  if (typeof syncToGoogleSheet === 'function') syncToGoogleSheet('WorkshopProfit', [dateStr, type, note, amt]);
+  saveProfitAttData(d);
+}
+
+function paDeleteTx(idx) {
+  var d = loadProfitAttData();
+  d.tx.splice(idx, 1);
+  saveProfitAttData(d);
+}
+
+function renderProfitAttendanceScreen() {
+  var wBox = document.getElementById('pa_workers_list');
+  var tBox = document.getElementById('pa_tx_list');
+  if (!wBox && !tBox) return;
+  var d = loadProfitAttData();
+  var todayKey = new Date().toISOString().slice(0, 10);
+
+  var totalWages = 0;
+  if (wBox) {
+    if (!d.workers.length) {
+      wBox.innerHTML = 'No workers added yet. Add your mistri/helper above to track daily Hazira!';
+    } else {
+      wBox.innerHTML = d.workers.map(function(w, idx) {
+        var logs = w.logs || {};
+        var daysWorked = 0;
+        Object.keys(logs).forEach(function(k) {
+          if (logs[k] === 'P') daysWorked += 1;
+          else if (logs[k] === 'H') daysWorked += 0.5;
+        });
+        var payable = Math.round(daysWorked * (w.wage || 0));
+        totalWages += payable;
+        var stToday = logs[todayKey] || '';
+        return '<div style="background:#fff; border:1px solid #e2e8f0; border-radius:7px; padding:6px 8px; margin-bottom:5px;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+            '<span><b>' + w.name + '</b> (₹' + w.wage + '/day) • <b>' + daysWorked + 'd = ₹' + payable.toLocaleString('en-IN') + '</b></span>' +
+            '<button type="button" onclick="paDeleteWorker(' + idx + ')" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:2px 6px; font-size:0.65rem; font-weight:800; cursor:pointer;">✕</button>' +
+          '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">' +
+            '<button type="button" onclick="paMarkAttendance(' + idx + ',\'P\')" style="background:' + (stToday==='P'?'#16a34a':'#f1f5f9') + '; color:' + (stToday==='P'?'#fff':'#0f172a') + '; border:1px solid #cbd5e1; border-radius:5px; padding:4px; font-size:0.67rem; font-weight:800; cursor:pointer;">Present ✓</button>' +
+            '<button type="button" onclick="paMarkAttendance(' + idx + ',\'H\')" style="background:' + (stToday==='H'?'#f59e0b':'#f1f5f9') + '; color:' + (stToday==='H'?'#fff':'#0f172a') + '; border:1px solid #cbd5e1; border-radius:5px; padding:4px; font-size:0.67rem; font-weight:800; cursor:pointer;">Half Day</button>' +
+            '<button type="button" onclick="paMarkAttendance(' + idx + ',\'A\')" style="background:' + (stToday==='A'?'#dc2626':'#f1f5f9') + '; color:' + (stToday==='A'?'#fff':'#0f172a') + '; border:1px solid #cbd5e1; border-radius:5px; padding:4px; font-size:0.67rem; font-weight:800; cursor:pointer;">Absent ✕</button>' +
+          '</div></div>';
+      }).join('');
+    }
+  }
+
+  var totInc = 0, totExp = 0;
+  d.tx.forEach(function(t) {
+    if (t.type === 'INCOME') totInc += (t.amt || 0);
+    else totExp += (t.amt || 0);
+  });
+  var totalOut = totExp + totalWages;
+  var netProfit = totInc - totalOut;
+
+  if (document.getElementById('pa_tot_inc')) document.getElementById('pa_tot_inc').textContent = '₹' + Math.round(totInc).toLocaleString('en-IN');
+  if (document.getElementById('pa_tot_exp')) document.getElementById('pa_tot_exp').textContent = '₹' + Math.round(totalOut).toLocaleString('en-IN');
+  var netEl = document.getElementById('pa_net_profit');
+  if (netEl) {
+    netEl.textContent = (netProfit < 0 ? '-₹' : '₹') + Math.round(Math.abs(netProfit)).toLocaleString('en-IN');
+    netEl.style.color = netProfit < 0 ? '#dc2626' : '#065f46';
+  }
+
+  if (tBox) {
+    if (!d.tx.length) {
+      tBox.innerHTML = 'No income/expense entries yet.';
+    } else {
+      tBox.innerHTML = d.tx.slice(0, 30).map(function(t, idx) {
+        var isInc = (t.type === 'INCOME');
+        return '<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid ' + (isInc?'#bbf7d0':'#fecaca') + '; border-radius:6px; padding:5px 7px; margin-bottom:4px;">' +
+          '<span><b style="color:' + (isInc?'#15803d':'#b91c1c') + ';">' + (isInc?'+₹':'-₹') + Math.round(t.amt).toLocaleString('en-IN') + '</b> • ' + t.note + ' <span style="color:#94a3b8; font-size:0.64rem;">(' + t.date + ')</span></span>' +
+          '<button type="button" onclick="paDeleteTx(' + idx + ')" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:2px 6px; font-size:0.64rem; font-weight:800; cursor:pointer;">✕</button>' +
+          '</div>';
+      }).join('');
+    }
+  }
+}

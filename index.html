@@ -28,7 +28,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=98').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=102').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +66,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=98">
+  <link rel="stylesheet" href="style.css?v=102">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -779,6 +779,16 @@
  </button>
  </div>
 
+ <!-- 1-Tap Quick Language Switch Pill (EN | বাংলা | हिन्दी) -->
+ <div style="padding: 10px 16px 0 16px; display:flex; justify-content:space-between; align-items:center;">
+   <span style="font-size:0.72rem; font-weight:800; color:#475569;"><i class="fa-solid fa-language" style="color:#0284c7;"></i> <span data-i18n="lbl_quick_lang">Language:</span></span>
+   <div style="display:inline-flex; background:#e2e8f0; border-radius:99px; padding:2px; gap:2px;">
+     <button type="button" id="homeLangEn" onclick="changeLanguage('en')" style="border:none; border-radius:99px; padding:4px 10px; font-size:0.7rem; font-weight:800; cursor:pointer; background:#0284c7; color:#fff;">EN</button>
+     <button type="button" id="homeLangBn" onclick="changeLanguage('bn')" style="border:none; border-radius:99px; padding:4px 10px; font-size:0.7rem; font-weight:800; cursor:pointer; background:transparent; color:#334155;">বাংলা</button>
+     <button type="button" id="homeLangHi" onclick="changeLanguage('hi')" style="border:none; border-radius:99px; padding:4px 10px; font-size:0.7rem; font-weight:800; cursor:pointer; background:transparent; color:#334155;">हिन्दी</button>
+   </div>
+ </div>
+
  <!-- Smart Site Measurement Khata Card (Hero Feature) -->
  <div style="padding: 14px 16px 4px 16px;">
  <div class="menu-card" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); padding: 18px 14px; border: 1.5px solid #38bdf8; box-shadow: 0 6px 16px rgba(2, 132, 199, 0.25);" onclick="openScreen('site_khata', 'SITE MEASUREMENT KHATA')">
@@ -926,7 +936,19 @@
  <div class="pro-card-sub" data-i18n="sub_customer_khata">Client Balance & Records</div>
  </div>
 
- <!-- 3. Smart Calculator (Matching Exact Same White Card Style) -->
+ <!-- 2B. Workshop Profit & Worker Attendance Tracker (v102) -->
+ <div class="pro-card" onclick="openScreen('profit_attendance', 'PROFIT & ATTENDANCE'); renderProfitAttendanceScreen();">
+ <div class="pro-card-header">
+ <div class="pro-card-icon" style="background:#ecfdf5; color:#059669;">
+ <i class="fa-solid fa-users-gear"></i>
+ </div>
+ <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+ </div>
+ <div class="pro-card-title">Profit &amp; Attendance</div>
+ <div class="pro-card-sub">Worker Hazira &amp; Net Profit</div>
+ </div>
+
+  <!-- 3. Smart Calculator (Matching Exact Same White Card Style) -->
  <div class="pro-card" onclick="openScreen('calculator', 'SMART CALCULATOR')">
  <div class="pro-card-header">
  <div class="pro-card-icon" style="background:#eff6ff; color:#0284c7;">
@@ -2799,8 +2821,10 @@
  </div>
  <span id="currentLangBadge" style="font-size:0.75rem; color:#0284c7; font-weight:800; background:#e0f2fe; padding:2px 8px; border-radius:6px;">English</span>
  </div>
- <div class="gemini-lang-toggle" style="grid-template-columns: 1fr;">
- <button type="button" id="setLangEn" onclick="changeLanguage('en')" class="gemini-lang-btn active" style="width:100%;">English</button>
+ <div class="gemini-lang-toggle" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; width:100%;">
+ <button type="button" id="setLangEn" onclick="changeLanguage('en')" class="gemini-lang-btn active" style="width:100%; padding:8px 4px; font-weight:800;">English</button>
+ <button type="button" id="setLangBn" onclick="changeLanguage('bn')" class="gemini-lang-btn" style="width:100%; padding:8px 4px; font-weight:800;">বাংলা</button>
+ <button type="button" id="setLangHi" onclick="changeLanguage('hi')" class="gemini-lang-btn" style="width:100%; padding:8px 4px; font-weight:800;">हिन्दी</button>
  </div>
  </div>
 
@@ -3140,7 +3164,7 @@
  <div class="form-group">
  <label>Height (Inches):</label>
  <div class="input-wrapper">
- <input readonly inputmode="none" onclick="openKeypad('sk_h')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_h')"><i class="fa-solid fa-calculator"></i></button>
+ <input readonly inputmode="none" onclick="openKeypad('sk_h')" style="cursor:pointer; background:#fff;" type="text" id="sk_h" placeholder="Height"> <button type="button" class="keypad-trigger" onclick="openKeypad('sk_h')"><i class="fa-solid fa-calculator"></i></button> <button type="button" class="keypad-trigger" style="background:#ef4444; color:#fff; margin-left:3px;" title="Voice Input: say e.g. 48 by 36" onclick="startVoiceMeasurement('sk_h','sk_w')"><i class="fa-solid fa-microphone"></i></button>
  </div>
  </div>
  <div class="form-group">
@@ -3453,7 +3477,7 @@
          <label>Glass Height (H):</label>
          <div class="input-wrapper">
            <input readonly inputmode="none" onclick="openKeypad('gc_h')" style="cursor:pointer; background:#fff;" type="text" id="gc_h" placeholder="Height">
-           <button type="button" class="keypad-trigger" onclick="openKeypad('gc_h')"><i class="fa-solid fa-calculator"></i></button>
+           <button type="button" class="keypad-trigger" onclick="openKeypad('gc_h')"><i class="fa-solid fa-calculator"></i></button> <button type="button" class="keypad-trigger" style="background:#ef4444; color:#fff; margin-left:3px;" title="Voice Input: say e.g. 48 by 36" onclick="startVoiceMeasurement('gc_h','gc_w')"><i class="fa-solid fa-microphone"></i></button>
          </div>
        </div>
        <div class="form-group">
@@ -3537,7 +3561,13 @@
            <i class="fa-solid fa-compass-drafting"></i> <span>1. SHEET DRAWING PDF</span>
          </button>
          <button type="button" class="action-btn" style="background:#0284c7; padding:10px 4px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="exportGlassPdf('Glass_Cutting_Order', 'Glass Cutting Order', gc_glass_dict, 'gc_out')">
-           <i class="fa-solid fa-qrcode"></i> <span>2. GLASS LIST PDF + QR</span>
+           <i class="fa-solid fa-file-pdf"></i> <span>2. GLASS CUTTING LIST PDF</span>
+         </button>
+         <button type="button" class="action-btn" style="grid-column: 1 / -1; background:#7c3aed; color:#fff; padding:10px 8px; font-size:0.78rem; font-weight:800; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;" onclick="exportCutGlassPieceStickersPdf()">
+           <i class="fa-solid fa-tags"></i> <span>3. PRINT CUT GLASS STICKERS PDF (1 STICKER PER GLASS PIECE)</span>
+         </button>
+         <button type="button" class="action-btn" style="grid-column: 1 / -1; background:#0f172a; color:#fef08a; padding:10px 8px; font-size:0.78rem; font-weight:800; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px; border:1.5px solid #f59e0b;" onclick="printCutGlassStickersThermal58mm()">
+           <i class="fa-brands fa-bluetooth-b"></i> <span>4. 58MM THERMAL / BLUETOOTH STICKERS (1-CLICK)</span>
          </button>
        </div>
      </div>
@@ -3549,36 +3579,48 @@
    <div class="output-label" style="color:#0284c7;">GLASS CUTTING & 4'x8' SHEET SUMMARY:</div>
    <div class="output-area" id="gc_out"></div>
 
-   <!-- GLASS SHOP FULL-SHEET INVENTORY & NUMBER-TAG OFFCUT STOCK (#G101, #G102 — NO QR) -->
-   <div style="margin-top:12px; background:#f0f9ff; border:1.5px solid #0284c7; border-radius:11px; padding:10px;">
-     <div style="font-size:0.77rem; font-weight:800; color:#0369a1; margin-bottom:6px;">
-       <i class="fa-solid fa-warehouse"></i> GLASS SHOP FULL-SHEET STOCK (CHECK STOCK vs BUY)
+   <!-- ================================================================== -->
+   <!-- v102: COMPLETE GLASS STOCK MANAGEMENT & CUSTOM NUMBER TAG SYSTEM    -->
+   <!-- ================================================================== -->
+   <div style="margin-top:12px; background:#f0f9ff; border:2px solid #0284c7; border-radius:12px; padding:11px;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
+       <span style="font-size:0.8rem; font-weight:900; color:#0369a1;"><i class="fa-solid fa-warehouse"></i> GLASS STOCK MANAGEMENT (NO QR)</span>
+       <button type="button" onclick="exportGlassStockBillPdf()" style="background:#0369a1; color:#fff; border:none; border-radius:6px; padding:4px 9px; font-size:0.68rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-file-invoice"></i> Stock Bill PDF
+       </button>
      </div>
-     <div style="display:grid; grid-template-columns: 1fr 72px 72px; gap:5px; margin-bottom:7px;">
-       <select id="gc_shop_stock_type" style="padding:6px; border:1px solid #7dd3fc; border-radius:6px; font-size:0.72rem; font-weight:700; background:#fff;">
-         <option value="Clear">Clear Glass</option>
-         <option value="Tinted / Brown">Tinted / Brown</option>
-         <option value="Frosted">Frosted Glass</option>
-         <option value="Reflective">Reflective Glass</option>
-         <option value="Toughened">Toughened Glass</option>
-       </select>
-       <input type="number" id="gc_shop_stock_qty" min="0" value="10" placeholder="Sheets" style="padding:6px; border:1px solid #7dd3fc; border-radius:6px; font-size:0.74rem; font-weight:800; text-align:center;">
-       <button type="button" onclick="saveGlassShopFullStock()" style="background:#0284c7; color:#fff; border:none; border-radius:6px; font-size:0.71rem; font-weight:800; cursor:pointer;">Set Stock</button>
+     <div style="font-size:0.66rem; color:#475569; margin-bottom:7px;">
+       Add ANY local glass name (e.g. <b>Ghosa Kach / Kara Kach / 5mm Clear</b>), its Rate (₹/Sq.Ft) &amp; incoming sheets. Cutting auto-minuses from stock!
      </div>
-     <div id="gc_shop_stock_list" style="font-size:0.71rem; color:#334155;">No shop sheet stock set yet. Set your available sheets above!</div>
+     <div style="display:grid; grid-template-columns: 1.5fr 0.75fr 0.75fr; gap:5px; margin-bottom:6px;">
+       <input type="text" id="gc_stock_name_inp" placeholder="Glass Name (e.g. 5mm Ghosa Kach)" style="padding:7px; border:1.5px solid #7dd3fc; border-radius:7px; font-size:0.73rem; font-weight:700; background:#fff;">
+       <input type="number" id="gc_stock_rate_inp" min="0" placeholder="₹/Sq.Ft" value="55" style="padding:7px; border:1.5px solid #7dd3fc; border-radius:7px; font-size:0.73rem; font-weight:800; text-align:center; background:#fff;">
+       <input type="number" id="gc_stock_add_qty" min="1" placeholder="+Sheets" value="5" style="padding:7px; border:1.5px solid #7dd3fc; border-radius:7px; font-size:0.73rem; font-weight:800; text-align:center; background:#fff;">
+     </div>
+     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+       <button type="button" onclick="addIncomingGlassStock()" style="background:#0284c7; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-plus-circle"></i> + Add New Stock (IN)
+       </button>
+       <button type="button" onclick="confirmGlassCutAndDeductStock()" style="background:#059669; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.72rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-scissors"></i> Confirm Cut (Auto-Minus)
+       </button>
+     </div>
+     <div id="gc_shop_stock_list" style="font-size:0.71rem; color:#334155;">No glass stock added yet. Enter Glass Name, Rate &amp; +Sheets above!</div>
    </div>
 
-   <div style="margin-top:10px; background:#f0fdf4; border:1.5px solid #10b981; border-radius:11px; padding:10px;">
+   <!-- GLASS OFFCUT / CHHAT STOCK (≥12" • CUSTOM TAG NUMBERS — NO QR!) -->
+   <div style="margin-top:10px; background:#f0fdf4; border:1.5px solid #10b981; border-radius:12px; padding:10px;">
      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:5px; flex-wrap:wrap;">
-       <span style="font-size:0.74rem; font-weight:800; color:#065f46;"><i class="fa-solid fa-tags"></i> GLASS OFFCUT STOCK (≥12" • #G101 TAGS)</span>
-       <input type="text" id="gc_remnant_search" oninput="renderGlassRemnantStockUI()" placeholder="Search #G101..." style="width:98px; padding:3px 6px; border:1px solid #10b981; border-radius:5px; font-size:0.68rem; font-weight:700; background:#fff;">
+       <span style="font-size:0.75rem; font-weight:800; color:#065f46;"><i class="fa-solid fa-tags"></i> GLASS OFFCUTS / CHHAT (≥12" • NUMBER TAGS)</span>
+       <input type="text" id="gc_remnant_search" oninput="renderGlassRemnantStockUI()" placeholder="Search Tag #..." style="width:98px; padding:3px 6px; border:1px solid #10b981; border-radius:5px; font-size:0.68rem; font-weight:700; background:#fff;">
      </div>
-     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:7px;">
-       <button type="button" onclick="saveUsableGlassOffcuts()" style="background:#059669; color:#fff; border:none; border-radius:7px; padding:7px 5px; font-size:0.71rem; font-weight:800; cursor:pointer;">
-         <i class="fa-solid fa-floppy-disk"></i> Save Offcuts (≥12")
+     <div style="display:grid; grid-template-columns: 105px 1fr 1fr; gap:5px; margin-bottom:7px;">
+       <input type="text" id="gc_custom_tag_inp" placeholder="Custom # (Opt)" style="padding:6px; border:1px solid #10b981; border-radius:6px; font-size:0.7rem; font-weight:800; background:#fff; text-align:center;" title="Optional custom number like #12 or leave blank for auto #G101">
+       <button type="button" onclick="saveUsableGlassOffcuts()" style="background:#059669; color:#fff; border:none; border-radius:6px; padding:7px 4px; font-size:0.7rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-floppy-disk"></i> Save Offcuts
        </button>
-       <button type="button" onclick="exportGlassNumberStickersPdf()" style="background:#b45309; color:#fff; border:none; border-radius:7px; padding:7px 5px; font-size:0.71rem; font-weight:800; cursor:pointer;">
-         <i class="fa-solid fa-tag"></i> Glass Tag Stickers PDF
+       <button type="button" onclick="exportGlassNumberStickersPdf()" style="background:#b45309; color:#fff; border:none; border-radius:6px; padding:7px 4px; font-size:0.7rem; font-weight:800; cursor:pointer;">
+         <i class="fa-solid fa-tag"></i> Number Stickers
        </button>
      </div>
      <div id="gc_remnant_stock_list" style="font-size:0.71rem; color:#475569;">No glass offcuts saved yet. Pieces below 12" are treated as Scrap.</div>
@@ -3711,6 +3753,66 @@
        </div>
      </div>
      <div id="bc_workshop_stock_list" style="font-size:0.72rem; color:#475569;">No usable remnants saved yet. Run a cutting plan and tap <b>Save Offcuts (≥12")</b>!</div>
+   </div>
+ </div>
+
+ <!-- ================= 14A3. WORKSHOP PROFIT & WORKER ATTENDANCE SCREEN (v102) ================= -->
+ <div id="screen-profit_attendance" class="screen">
+   <div class="form-box" style="border-top: 4px solid #059669;">
+     <div style="font-size:1.0rem; font-weight:800; color:#065f46; margin-bottom:4px;">
+       <i class="fa-solid fa-users-gear"></i> WORKSHOP PROFIT &amp; WORKER ATTENDANCE
+     </div>
+     <div style="font-size:0.72rem; color:#64748b; margin-bottom:10px;">
+       Daily Worker Hazira (Present / Half / Absent) &amp; Project Income vs Expense Net Profit Tracker
+     </div>
+
+     <!-- Live Summary KPI Cards -->
+     <div id="pa_kpi_bar" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px; text-align:center;">
+       <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:7px;">
+         <div style="font-size:0.62rem; font-weight:800; color:#1d4ed8;">INCOME</div>
+         <div id="pa_tot_inc" style="font-size:0.9rem; font-weight:900; color:#0f172a;">₹0</div>
+       </div>
+       <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:7px;">
+         <div style="font-size:0.62rem; font-weight:800; color:#b91c1c;">EXPENSE+WAGE</div>
+         <div id="pa_tot_exp" style="font-size:0.9rem; font-weight:900; color:#991b1b;">₹0</div>
+       </div>
+       <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:7px;">
+         <div style="font-size:0.62rem; font-weight:800; color:#047857;">NET PROFIT</div>
+         <div id="pa_net_profit" style="font-size:0.9rem; font-weight:900; color:#065f46;">₹0</div>
+       </div>
+     </div>
+
+     <!-- SECTION A: WORKER ATTENDANCE (HAZIRA) -->
+     <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px; margin-bottom:12px;">
+       <div style="font-size:0.78rem; font-weight:800; color:#0f172a; margin-bottom:6px;">
+         <i class="fa-solid fa-clipboard-user" style="color:#0284c7;"></i> 1. WORKER ATTENDANCE (HAZIRA)
+       </div>
+       <div style="display:grid; grid-template-columns: 1.4fr 0.8fr 72px; gap:5px; margin-bottom:8px;">
+         <input type="text" id="pa_worker_name" placeholder="Worker Name (e.g. Raju)" style="padding:7px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.75rem; font-weight:700;">
+         <input type="number" id="pa_worker_wage" min="0" placeholder="₹/Day" value="600" style="padding:7px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.75rem; font-weight:800; text-align:center;">
+         <button type="button" onclick="paAddWorker()" style="background:#0284c7; color:#fff; border:none; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;">+ Add</button>
+       </div>
+       <div id="pa_workers_list" style="font-size:0.73rem; color:#475569;">No workers added yet.</div>
+     </div>
+
+     <!-- SECTION B: WORKSHOP INCOME & EXPENSE LEDGER -->
+     <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:10px;">
+       <div style="font-size:0.78rem; font-weight:800; color:#065f46; margin-bottom:6px;">
+         <i class="fa-solid fa-chart-line"></i> 2. PROJECT INCOME &amp; EXPENSE ENTRY
+       </div>
+       <div style="display:grid; grid-template-columns: 0.9fr 1.3fr 0.8fr; gap:5px; margin-bottom:6px;">
+         <select id="pa_tx_type" style="padding:7px; border:1px solid #86efac; border-radius:6px; font-size:0.73rem; font-weight:800; background:#fff;">
+           <option value="INCOME">+ Income</option>
+           <option value="EXPENSE">- Expense</option>
+         </select>
+         <input type="text" id="pa_tx_note" placeholder="Project / Material Note" style="padding:7px; border:1px solid #86efac; border-radius:6px; font-size:0.73rem; font-weight:700;">
+         <input type="number" id="pa_tx_amt" min="1" placeholder="₹ Amt" style="padding:7px; border:1px solid #86efac; border-radius:6px; font-size:0.74rem; font-weight:800; text-align:center;">
+       </div>
+       <button type="button" onclick="paAddTransaction()" style="width:100%; background:#059669; color:#fff; border:none; border-radius:7px; padding:8px; font-size:0.76rem; font-weight:800; cursor:pointer; margin-bottom:8px;">
+         + SAVE INCOME / EXPENSE ENTRY
+       </button>
+       <div id="pa_tx_list" style="font-size:0.72rem; color:#475569;">No income/expense entries yet.</div>
+     </div>
    </div>
  </div>
 
@@ -4561,12 +4663,12 @@
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=98"></script>
+  <script src="app.js?v=102"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=98').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=102').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
