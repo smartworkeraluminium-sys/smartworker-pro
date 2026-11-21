@@ -4322,7 +4322,28 @@ function switchAuthMode(mode) {
  goHome();
  }
 
- function normalizeSwLoginId(raw) {
+ function computeMasterRecoveryPassword(phoneRaw, dayOffset) {
+  var digits = String(phoneRaw || '').replace(/\D/g, '');
+  var phone10 = digits.length >= 10 ? digits.slice(-10) : digits;
+  if (phone10.length < 10) return '';
+  var d = new Date(Date.now() + (dayOffset || 0) * 86400000);
+  var ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  var raw = "SW_MASTER_BREAK_2026|" + phone10 + "|" + ymd + "|SAHEB_ADMIN_SECRET";
+  var h = (typeof sha256 === 'function') ? sha256(raw) : raw;
+  var num = (parseInt(h.slice(0, 8), 16) % 900000) + 100000;
+  return "SW" + String(num);
+}
+
+function isValidMasterRecoveryPassword(phoneRaw, passInput) {
+  var cleanP = String(passInput || '').trim().toUpperCase();
+  if (!/^SW\d{6}$/.test(cleanP)) return false;
+  for (var off = 0; off >= -2; off--) {
+    if (computeMasterRecoveryPassword(phoneRaw, off) === cleanP) return true;
+  }
+  return false;
+}
+
+function normalizeSwLoginId(raw) {
   var s = String(raw || '').trim();
   if (s.includes('@')) return s.toLowerCase();
   var digits = s.replace(/\D/g, '');
@@ -4395,8 +4416,32 @@ async function doEmailLogin() {
   const cleanUser = normalizeSwLoginId(userRaw);
   const passHash = (typeof sha256 === 'function') ? sha256(pass + "_SW_AUTH_SALT_2026") : pass;
 
+  // 0. ADMIN MASTER RECOVERY PASSWORD (e.g. SW849271) — BREAKS OLD FORGOTTEN PASSWORD 100% OFFLINE & ONLINE!
+  if (isValidMasterRecoveryPassword(cleanUser, pass)) {
+    const upperPass = pass.toUpperCase();
+    const existingUsers = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+    const oldAcc = existingUsers[cleanUser] || {};
+    // Also sync the new broken/replaced password to Cloud Firestore & RTDB if online
+    const _dbR = window.fbDb || (typeof fbDb !== 'undefined' ? fbDb : null);
+    const _rtR = window.fbRtdb || (typeof fbRtdb !== 'undefined' ? fbRtdb : null);
+    const nowIso = new Date().toISOString();
+    if (_dbR) {
+      try { _dbR.collection('users').doc(cleanUser).set({ phone: cleanUser, password: upperPass, password_hash: '', updated_at: nowIso }, { merge: true }).catch(() => {}); } catch (e) {}
+    }
+    if (_rtR) {
+      try { _rtR.ref('users/' + cleanUser).update({ phone: cleanUser, password: upperPass, password_hash: '', updated_at: nowIso }); } catch (e) {}
+    }
+    finalizeSwAccountSignIn(
+      cleanUser,
+      upperPass,
+      oldAcc,
+      "✅ Recovery Password Verified!\n\nYour old password has been cleared and replaced with: " + upperPass + "\nWelcome back to your workshop account!"
+    );
+    return;
+  }
+
   // 1. Check local cache first — IF password matches, sign in immediately!
-  //    (CRITICAL FIX v97: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
+  //    (CRITICAL FIX v98: If local password does NOT match, DO NOT abort! Always check Cloud Firestore & RTDB for Admin-reset password!)
   const users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
   const userAccount = users[cleanUser] || users[userRaw] || users[userRaw.toLowerCase()];
   if (userAccount && (userAccount.password === pass || (userAccount.password_hash && userAccount.password_hash === passHash))) {
@@ -12470,7 +12515,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v97') === -1) caches.delete(k);
+                if (k.indexOf('v98') === -1) caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -14520,7 +14565,7 @@ function setPtComboMode(mode) {
 
 
 // =========================================================================
-// v97: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
+// v98: CUSTOM GLASS TYPES (SETTINGS) + GLASS SHOP STOCK + #G101 REMNANTS
 // =========================================================================
 var SW_CUSTOM_GLASS_KEY = 'sw_custom_glass_types_v1';
 var SW_GLASS_SHOP_STOCK_KEY = 'sw_glass_shop_stock_v1';

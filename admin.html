@@ -567,6 +567,61 @@
       </div>
 
       <!-- Live Metric Status Cards (Tap any card to open its section) -->
+      <!-- ======================================================== -->
+      <!-- CLEAN OWNER QUICK CONTROL CENTER (2 SIMPLE CARDS)        -->
+      <!-- ======================================================== -->
+      <div style="display:grid; grid-template-columns: 1fr; gap:12px; margin-bottom:14px;">
+
+        <!-- QUICK CARD 1: 1-CLICK PASSWORD RESET (BREAKS OLD PASSWORD) -->
+        <div style="background:linear-gradient(135deg, #1e293b, #0f172a); border:2px solid #f59e0b; border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,0.28);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:0.9rem; font-weight:800; color:#fbbf24;"><i class="fa-solid fa-key"></i> 1. PASSWORD RESET (BREAK OLD PASSWORD)</div>
+            <span style="font-size:0.65rem; background:#f59e0b; color:#0f172a; padding:2px 7px; border-radius:99px; font-weight:800;">100% Guaranteed</span>
+          </div>
+          <div style="font-size:0.72rem; color:#cbd5e1; margin-bottom:8px;">
+            Pick a customer below (auto-loaded) or type their 10-digit mobile number to generate a <b>unique Recovery Password</b> that instantly unlocks their old account!
+          </div>
+          <select id="qa_customer_picker" onchange="qaFillFromCustomer(this.value)" style="width:100%; padding:9px; border-radius:8px; border:1px solid #475569; background:#0b1220; color:#f8fafc; font-size:0.78rem; font-weight:700; margin-bottom:7px;">
+            <option value="">-- Tap to Pick Registered / Reset Customer (Auto-Loaded) --</option>
+          </select>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+            <input type="tel" id="qa_reset_phone" placeholder="10-Digit Mobile No." style="padding:9px; border-radius:8px; border:1px solid #475569; background:#0b1220; color:#fff; font-size:0.82rem; font-weight:800;">
+            <input type="text" id="qa_reset_name" placeholder="Customer Name" style="padding:9px; border-radius:8px; border:1px solid #475569; background:#0b1220; color:#fff; font-size:0.82rem; font-weight:700;">
+          </div>
+          <button type="button" onclick="qaGenerateUniqueRecoveryPass()" style="width:100%; background:#f59e0b; color:#0f172a; border:none; border-radius:9px; padding:11px; font-size:0.84rem; font-weight:900; cursor:pointer; margin-bottom:6px;">
+            <i class="fa-solid fa-bolt"></i> GENERATE UNIQUE RECOVERY PASSWORD
+          </button>
+          <div id="qa_reset_result" style="display:none; background:#022c22; border:1.5px solid #10b981; border-radius:9px; padding:10px; margin-top:6px;"></div>
+        </div>
+
+        <!-- QUICK CARD 2: 1-CLICK DIRECT PRO ACTIVATION -->
+        <div style="background:linear-gradient(135deg, #064e3b, #0f172a); border:2px solid #10b981; border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,0.28);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:0.9rem; font-weight:800; color:#34d399;"><i class="fa-solid fa-crown"></i> 2. DIRECT PRO ACTIVATE (1-CLICK)</div>
+            <span style="font-size:0.65rem; background:#10b981; color:#022c22; padding:2px 7px; border-radius:99px; font-weight:800;">Instant Key + Cloud</span>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:7px;">
+            <input type="tel" id="qa_pro_phone" placeholder="10-Digit Mobile No." style="padding:9px; border-radius:8px; border:1px solid #34d399; background:#0b1220; color:#fff; font-size:0.8rem; font-weight:800;">
+            <input type="text" id="qa_pro_devid" placeholder="Device ID (e.g. SW-XXXX)" style="padding:9px; border-radius:8px; border:1px solid #34d399; background:#0b1220; color:#fff; font-size:0.8rem; font-weight:800; text-transform:uppercase;">
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+            <input type="text" id="qa_pro_name" placeholder="Workshop / Name" style="padding:9px; border-radius:8px; border:1px solid #34d399; background:#0b1220; color:#fff; font-size:0.8rem; font-weight:700;">
+            <select id="qa_pro_plan" style="padding:9px; border-radius:8px; border:1px solid #34d399; background:#0b1220; color:#fef08a; font-size:0.78rem; font-weight:800;">
+              <option value="KARIGAR_1M" selected>30 Days PRO (₹99)</option>
+              <option value="KARIGAR_3M">90 Days PRO (₹280)</option>
+              <option value="KARIGAR_6M">180 Days PRO (₹550)</option>
+              <option value="KARIGAR_1Y">365 Days PRO (₹799)</option>
+              <option value="LIFETIME">Lifetime VIP PRO</option>
+            </select>
+          </div>
+          <button type="button" onclick="qaDirectActivateProNow()" style="width:100%; background:#10b981; color:#022c22; border:none; border-radius:9px; padding:11px; font-size:0.84rem; font-weight:900; cursor:pointer;">
+            <i class="fa-solid fa-check-double"></i> ACTIVATE PRO &amp; SEND KEY ON WHATSAPP
+          </button>
+          <div id="qa_pro_result" style="display:none; background:#022c22; border:1.5px solid #34d399; border-radius:9px; padding:10px; margin-top:6px;"></div>
+        </div>
+
+      </div>
+
       <div class="status-grid">
         <div class="status-card red-alert" onclick="openAdminScreen('resets', 'PASSWORD RESET QUEUE')">
           <div class="status-label">
@@ -1671,7 +1726,8 @@
         alert("Invalid 10-digit mobile number.");
         return;
       }
-      const newPass = prompt("Enter NEW verified password for " + name + " (" + cleanPhone + "):", "");
+      const autoMasterPass = computeMasterRecoveryPassword(cleanPhone, 0);
+      const newPass = prompt("Unique Recovery Password for " + name + " (" + cleanPhone + ") — Tap OK to use:", autoMasterPass);
       if (!newPass || newPass.trim().length < 6) {
         alert("Password must be at least 6 characters.");
         return;
@@ -2613,7 +2669,188 @@
         }
       });
     })();
-  </script>
+  
+    // =========================================================================
+    // v98: MASTER RECOVERY PASSWORD + CLEAN 1-CLICK QUICK CONTROL CENTER
+    // =========================================================================
+    function computeMasterRecoveryPassword(phoneRaw, dayOffset) {
+      var digits = String(phoneRaw || '').replace(/\D/g, '');
+      var phone10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      if (phone10.length < 10) return '';
+      var d = new Date(Date.now() + (dayOffset || 0) * 86400000);
+      var ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      var raw = "SW_MASTER_BREAK_2026|" + phone10 + "|" + ymd + "|SAHEB_ADMIN_SECRET";
+      var h = (typeof sha256 === 'function') ? sha256(raw) : raw;
+      var num = (parseInt(h.slice(0, 8), 16) % 900000) + 100000;
+      return "SW" + String(num);
+    }
+
+    function qaPopulateCustomerPicker() {
+      var sel = document.getElementById('qa_customer_picker');
+      if (!sel) return;
+      var map = {};
+      try {
+        var resets = JSON.parse(localStorage.getItem('sw_password_reset_requests') || '[]');
+        resets.forEach(function(r) {
+          var p = String(r.phone || '').replace(/\D/g, '').slice(-10);
+          if (p.length === 10) map[p] = { phone: p, name: r.name || 'Customer', shop: r.shop || 'Workshop', devId: r.device_id || '', tag: '🔴 RESET REQ' };
+        });
+      } catch (e) {}
+      try {
+        var subs = JSON.parse(localStorage.getItem('sw_admin_subscribers') || '[]');
+        subs.forEach(function(s) {
+          var p = String(s.phone || '').replace(/\D/g, '').slice(-10);
+          if (p.length === 10) {
+            if (!map[p]) map[p] = { phone: p, name: s.name || 'Customer', shop: s.shop || 'Workshop', devId: s.device_id || '', tag: s.status || 'SUB' };
+            else if (!map[p].devId && s.device_id) map[p].devId = s.device_id;
+          }
+        });
+      } catch (e) {}
+      try {
+        var users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+        Object.keys(users).forEach(function(k) {
+          var u = users[k];
+          var p = String(u.phone || k).replace(/\D/g, '').slice(-10);
+          if (p.length === 10 && !map[p]) map[p] = { phone: p, name: u.name || 'Customer', shop: u.shop_name || 'Workshop', devId: u.device_id || '', tag: 'USER' };
+        });
+      } catch (e) {}
+
+      var opts = '<option value="">-- Tap to Pick Customer (' + Object.keys(map).length + ' Auto-Loaded) --</option>';
+      Object.keys(map).forEach(function(p) {
+        var c = map[p];
+        var val = encodeURIComponent(JSON.stringify(c));
+        opts += '<option value="' + val + '">[' + c.tag + '] ' + c.name + ' (' + c.phone + ') — ' + c.shop + '</option>';
+      });
+      sel.innerHTML = opts;
+    }
+
+    function qaFillFromCustomer(enc) {
+      if (!enc) return;
+      try {
+        var c = JSON.parse(decodeURIComponent(enc));
+        if (document.getElementById('qa_reset_phone')) document.getElementById('qa_reset_phone').value = c.phone || '';
+        if (document.getElementById('qa_reset_name')) document.getElementById('qa_reset_name').value = c.name || '';
+        if (document.getElementById('qa_pro_phone')) document.getElementById('qa_pro_phone').value = c.phone || '';
+        if (document.getElementById('qa_pro_name')) document.getElementById('qa_pro_name').value = c.shop || c.name || '';
+        if (document.getElementById('qa_pro_devid') && c.devId) document.getElementById('qa_pro_devid').value = c.devId;
+      } catch (e) {}
+    }
+
+    async function qaGenerateUniqueRecoveryPass() {
+      var rawP = (document.getElementById('qa_reset_phone')?.value || '').replace(/\D/g, '');
+      var cleanPhone = rawP.length >= 10 ? rawP.slice(-10) : rawP;
+      var name = (document.getElementById('qa_reset_name')?.value || 'Customer').trim();
+      if (cleanPhone.length < 10) { alert("Please enter a valid 10-digit mobile number."); return; }
+
+      var uniquePass = computeMasterRecoveryPassword(cleanPhone, 0);
+      var nowIso = new Date().toISOString();
+
+      // Sync to local + Cloud Firestore + RTDB (even if offline, Master Password STILL unlocks app!)
+      try {
+        var users = JSON.parse(localStorage.getItem('sw_registered_users') || '{}');
+        if (!users[cleanPhone]) users[cleanPhone] = { phone: cleanPhone, name: name, shop_name: 'Workshop' };
+        users[cleanPhone].password = uniquePass;
+        localStorage.setItem('sw_registered_users', JSON.stringify(users));
+      } catch (e) {}
+      if (window.fbDb) {
+        try {
+          fbDb.collection('users').doc(cleanPhone).set({ phone: cleanPhone, password: uniquePass, password_hash: '', admin_reset_at: nowIso }, { merge: true }).catch(() => {});
+          fbDb.collection('password_reset_requests').doc(cleanPhone).set({ phone: cleanPhone, name: name, registered_password: uniquePass, status: 'VERIFIED_RESOLVED', resolved_at: nowIso }, { merge: true }).catch(() => {});
+        } catch (e) {}
+      }
+      if (window.fbRtdb) {
+        try {
+          fbRtdb.ref('users/' + cleanPhone).update({ phone: cleanPhone, password: uniquePass, password_hash: '', admin_reset_at: nowIso });
+          fbRtdb.ref('password_reset_requests/' + cleanPhone).update({ registered_password: uniquePass, status: 'VERIFIED_RESOLVED', resolved_at: nowIso });
+        } catch (e) {}
+      }
+
+      var resBox = document.getElementById('qa_reset_result');
+      if (resBox) {
+        resBox.style.display = 'block';
+        resBox.innerHTML =
+          '<div style="font-size:0.72rem; color:#a7f3d0; font-weight:700;">UNIQUE RECOVERY PASSWORD FOR ' + cleanPhone + ':</div>' +
+          '<div style="font-size:1.45rem; font-weight:900; color:#fef08a; letter-spacing:2px; margin:4px 0;">' + uniquePass + '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">' +
+            '<button type="button" onclick="universalAdminCopyText(\'' + uniquePass + '\')" style="background:#0284c7; color:#fff; border:none; border-radius:7px; padding:8px; font-size:0.76rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-copy"></i> Copy Password</button>' +
+            '<button type="button" onclick="sendVerifiedPasswordWhatsApp(\'' + cleanPhone + '\',\'' + name.replace(/'/g,'') + '\',\'Workshop\',\'' + uniquePass + '\')" style="background:#16a34a; color:#fff; border:none; border-radius:7px; padding:8px; font-size:0.76rem; font-weight:800; cursor:pointer;"><i class="fa-brands fa-whatsapp"></i> Send WhatsApp</button>' +
+          '</div>';
+      }
+    }
+
+    async function qaDirectActivateProNow() {
+      var rawP = (document.getElementById('qa_pro_phone')?.value || '').replace(/\D/g, '');
+      var cleanPhone = rawP.length >= 10 ? rawP.slice(-10) : rawP;
+      var devId = (document.getElementById('qa_pro_devid')?.value || '').trim().toUpperCase();
+      var name = (document.getElementById('qa_pro_name')?.value || 'Workshop').trim();
+      var plan = document.getElementById('qa_pro_plan')?.value || 'KARIGAR_1M';
+
+      if (cleanPhone.length < 10 && !devId) {
+        alert("Please enter Customer Mobile Number or Device ID (SW-XXXX).");
+        return;
+      }
+      var targetId = devId || cleanPhone;
+      var proKey = (typeof computeKey === 'function') ? computeKey(targetId, plan) : 'PRO-KEY';
+      var valInfo = (typeof computeTelecomValidity === 'function') ? computeTelecomValidity(plan) : { validity_days: 30, expiry_date: '30 Days', expiry_timestamp: Date.now() + 30*86400000 };
+
+      // Save ACTIVE PRO status to Cloud Firestore + RTDB
+      var proRec = {
+        phone: cleanPhone,
+        device_id: devId,
+        name: name,
+        plan: plan,
+        key: proKey,
+        status: 'ACTIVE',
+        expiry_date: valInfo.expiry_date,
+        expiry_timestamp: valInfo.expiry_timestamp,
+        activated_at: new Date().toISOString()
+      };
+      if (window.fbDb && cleanPhone.length === 10) {
+        try {
+          fbDb.collection('users').doc(cleanPhone).set({ pro_active: true, pro_plan: plan, pro_key: proKey, pro_expiry_date: valInfo.expiry_date, pro_expiry_ts: valInfo.expiry_timestamp }, { merge: true }).catch(() => {});
+          fbDb.collection('subscribers').doc(cleanPhone).set(proRec, { merge: true }).catch(() => {});
+        } catch (e) {}
+      }
+      if (window.fbRtdb && cleanPhone.length === 10) {
+        try {
+          fbRtdb.ref('users/' + cleanPhone).update({ pro_active: true, pro_plan: plan, pro_key: proKey, pro_expiry_date: valInfo.expiry_date, pro_expiry_ts: valInfo.expiry_timestamp });
+          fbRtdb.ref('subscribers/' + cleanPhone).update(proRec);
+        } catch (e) {}
+      }
+
+      var msg = "*SMART WORKER PRO — DIRECT PRO ACTIVATION*\n" +
+        "----------------------------------------\n" +
+        "Workshop: *" + name + "*\n" +
+        (cleanPhone ? ("Mobile: *" + cleanPhone + "*\n") : "") +
+        (devId ? ("Device ID: *" + devId + "*\n") : "") +
+        "Plan: *" + plan + " (" + valInfo.validity_days + " Days)*\n" +
+        "Valid Until: *" + valInfo.expiry_date + "*\n" +
+        "----------------------------------------\n" +
+        "YOUR PRO ACTIVATION KEY:\n👉 *" + proKey + "*\n" +
+        "----------------------------------------\n" +
+        "Open Smart Worker Pro -> PRO Activation -> Enter Key -> Activate!";
+
+      var resBox = document.getElementById('qa_pro_result');
+      if (resBox) {
+        resBox.style.display = 'block';
+        resBox.innerHTML =
+          '<div style="font-size:0.72rem; color:#a7f3d0; font-weight:700;">PRO ACTIVATED (' + valInfo.validity_days + ' DAYS • Valid: ' + valInfo.expiry_date + '):</div>' +
+          '<div style="font-size:1.35rem; font-weight:900; color:#fef08a; letter-spacing:2px; margin:4px 0;">KEY: ' + proKey + '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">' +
+            '<button type="button" onclick="universalAdminCopyText(\'' + proKey + '\')" style="background:#0284c7; color:#fff; border:none; border-radius:7px; padding:8px; font-size:0.76rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-copy"></i> Copy Key</button>' +
+            '<button type="button" onclick="window.open(\'https://wa.me/91' + cleanPhone + '?text=' + encodeURIComponent(msg) + '\', \'_blank\')" style="background:#16a34a; color:#fff; border:none; border-radius:7px; padding:8px; font-size:0.76rem; font-weight:800; cursor:pointer;"><i class="fa-brands fa-whatsapp"></i> Send WhatsApp</button>' +
+          '</div>';
+      }
+      if (cleanPhone.length === 10) {
+        window.open('https://wa.me/91' + cleanPhone + '?text=' + encodeURIComponent(msg), '_blank');
+      }
+    }
+
+    // Auto-populate customer picker on load & after every refresh
+    setTimeout(qaPopulateCustomerPicker, 600);
+    setTimeout(qaPopulateCustomerPicker, 2500);
+
+</script>
 
 </body>
 </html>
