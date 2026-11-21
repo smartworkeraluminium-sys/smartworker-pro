@@ -607,10 +607,10 @@
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
             <input type="text" id="qa_pro_name" placeholder="Workshop / Name" style="padding:9px; border-radius:8px; border:1px solid #34d399; background:#0b1220; color:#fff; font-size:0.8rem; font-weight:700;">
             <select id="qa_pro_plan" style="padding:9px; border-radius:8px; border:1px solid #34d399; background:#0b1220; color:#fef08a; font-size:0.78rem; font-weight:800;">
-              <option value="KARIGAR_1M" selected>30 Days PRO (₹99)</option>
-              <option value="KARIGAR_3M">90 Days PRO (₹280)</option>
-              <option value="KARIGAR_6M">180 Days PRO (₹550)</option>
-              <option value="KARIGAR_1Y">365 Days PRO (₹799)</option>
+              <option value="KARIGAR_1M" selected>30 Days PRO (₹149)</option>
+              <option value="KARIGAR_3M">90 Days PRO (₹399)</option>
+              <option value="KARIGAR_6M">180 Days PRO (₹749)</option>
+              <option value="KARIGAR_1Y">365 Days PRO (₹1,199)</option>
               <option value="LIFETIME">Lifetime VIP PRO</option>
             </select>
           </div>
@@ -869,23 +869,23 @@
           <div class="form-group">
             <label>Select Duration & Plan *</label>
             <select id="in_plan" onchange="autoFillPlanCost()">
-              <option value="KARIGAR_1M">Single User (1 Person) - 30 Days / 1 Month (Rs.99)</option>
-              <option value="KARIGAR_3M">Single User (1 Person) - 90 Days / 3 Months (Rs.280)</option>
-              <option value="KARIGAR_6M">Single User (1 Person) - 180 Days / 6 Months (Rs.550)</option>
-              <option value="KARIGAR_1Y">Single User (1 Person) - 365 Days / 1 Year (Rs.799)</option>
+              <option value="KARIGAR_1M">Single User (1 Person) - 30 Days / 1 Month (Rs.149)</option>
+              <option value="KARIGAR_3M">Single User (1 Person) - 90 Days / 3 Months (Rs.399)</option>
+              <option value="KARIGAR_6M">Single User (1 Person) - 180 Days / 6 Months (Rs.749)</option>
+              <option value="KARIGAR_1Y">Single User (1 Person) - 365 Days / 1 Year (Rs.1,199)</option>
               <option value="LIFETIME">Single User VIP License - Lifetime (1 Person)</option>
             </select>
           </div>
           <div class="form-group">
             <label>Billing Amount (Rs.)</label>
-            <input type="number" id="in_bill" value="99" oninput="calculateBalanceDue()">
+            <input type="number" id="in_bill" value="149" oninput="calculateBalanceDue()">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Amount Received (Paid Rs.)</label>
-            <input type="number" id="in_paid" value="99" oninput="calculateBalanceDue()">
+            <input type="number" id="in_paid" value="149" oninput="calculateBalanceDue()">
           </div>
           <div class="form-group">
             <label>Balance Due (Rs.)</label>
@@ -1302,10 +1302,10 @@
   <!-- Admin JavaScript Engine -->
   <script>
     const PLAN_RATES = {
-      'KARIGAR_1M': 99,
-      'KARIGAR_3M': 280,
-      'KARIGAR_6M': 550,
-      'KARIGAR_1Y': 799,
+      'KARIGAR_1M': 149,
+      'KARIGAR_3M': 399,
+      'KARIGAR_6M': 749,
+      'KARIGAR_1Y': 1199,
       'TEAM_1M': 499,
       'TEAM_1Y': 3999,
       'CORP_1M': 1499,
@@ -1314,10 +1314,10 @@
     };
 
     const PLAN_NAMES = {
-      'KARIGAR_1M': 'Single User Pro (1 Person • 30 Days - Rs.99)',
-      'KARIGAR_3M': 'Single User Pro (1 Person • 90 Days - Rs.280)',
-      'KARIGAR_6M': 'Single User Pro (1 Person • 180 Days - Rs.550)',
-      'KARIGAR_1Y': 'Golden VIP Pro (1 Person • 365 Days - Rs.799)',
+      'KARIGAR_1M': 'Single User Pro (1 Person • 30 Days - Rs.149)',
+      'KARIGAR_3M': 'Single User Pro (1 Person • 90 Days - Rs.399)',
+      'KARIGAR_6M': 'Single User Pro (1 Person • 180 Days - Rs.749)',
+      'KARIGAR_1Y': 'Golden VIP Pro (1 Person • 365 Days - Rs.1,199)',
       'LIFETIME': 'Single User VIP Access (Lifetime)'
     };
 
@@ -1491,7 +1491,7 @@
 
     function autoFillPlanCost() {
       const plan = document.getElementById('in_plan').value;
-      const rate = PLAN_RATES[plan] || 99;
+      const rate = PLAN_RATES[plan] || 149;
       document.getElementById('in_bill').value = rate;
       document.getElementById('in_paid').value = rate;
       calculateBalanceDue();
@@ -1847,8 +1847,8 @@
         phone: r.phone,
         plan: r.plan,
         plan_name: PLAN_NAMES[r.plan] || r.plan,
-        bill_amount: PLAN_RATES[r.plan] || 99,
-        paid_amount: PLAN_RATES[r.plan] || 99,
+        bill_amount: PLAN_RATES[r.plan] || 149,
+        paid_amount: PLAN_RATES[r.plan] || 149,
         due_amount: 0,
         activation_key: r.generated_key || "PENDING",
         status: "PENDING_ACTIVATION",
@@ -1984,8 +1984,8 @@
         plan: plan,
         plan_name: PLAN_NAMES[plan] || plan,
         validity_days: validityObj.validity_days,
-        bill_amount: PLAN_RATES[plan] || 99,
-        paid_amount: PLAN_RATES[plan] || 99,
+        bill_amount: PLAN_RATES[plan] || 149,
+        paid_amount: PLAN_RATES[plan] || 149,
         due_amount: 0,
         activation_key: key,
         status: "ACTIVE",
@@ -2008,6 +2008,7 @@
 
       if (window.fbDb) {
         fbDb.collection('subscribers').doc(devId).set(record, { merge: true }).catch(() => {});
+        fbDb.collection('recharge_requests').doc(devId).set({ status: 'APPROVED', plan: plan, days: (validityObj && validityObj.validity_days) ? validityObj.validity_days : 30, expiry_ts: validityObj.expiry_timestamp, generated_key: key, approved_at: new Date().toISOString() }, { merge: true }).catch(() => {});
       }
 
       renderSubscribers();
@@ -2809,6 +2810,7 @@
         try {
           fbDb.collection('users').doc(cleanPhone).set({ pro_active: true, pro_plan: plan, pro_key: proKey, pro_expiry_date: valInfo.expiry_date, pro_expiry_ts: valInfo.expiry_timestamp }, { merge: true }).catch(() => {});
           fbDb.collection('subscribers').doc(cleanPhone).set(proRec, { merge: true }).catch(() => {});
+          if (typeof devId !== 'undefined' && devId) fbDb.collection('recharge_requests').doc(devId).set({ status: 'APPROVED', plan: plan, days: (valInfo && valInfo.validity_days) ? valInfo.validity_days : 30, expiry_ts: valInfo.expiry_timestamp, generated_key: proKey, approved_at: new Date().toISOString() }, { merge: true }).catch(() => {});
         } catch (e) {}
       }
       if (window.fbRtdb && cleanPhone.length === 10) {

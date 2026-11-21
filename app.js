@@ -16461,3 +16461,76 @@ if (typeof window !== 'undefined' && window.addEventListener) {
     setTimeout(startLiveProAutoUnlockListener, 1500);
   });
 }
+
+
+// =========================================================================
+// v106: PROFILE PAGE & PRO ACTIVATION PAGE 3-LANGUAGE TRANSLATOR (ZERO LAG)
+// =========================================================================
+var SW_PROFILE_ACT_I18N = {
+  'Your Name:': { bn: 'আপনার নাম:', hi: 'आपका नाम:' },
+  'Shop / Company Name:': { bn: 'দোকান / কোম্পানির নাম:', hi: 'दुकान / कंपनी का नाम:' },
+  'Phone Number:': { bn: 'ফোন নম্বর:', hi: 'फ़ोन नंबर:' },
+  'Email / Gmail ID:': { bn: 'ইমেল / Gmail আইডি:', hi: 'ईमेल / Gmail आईडी:' },
+  'GST Number (Optional):': { bn: 'GST নম্বর (ঐচ্ছিক):', hi: 'GST नंबर (वैकल्पिक):' },
+  'Shop Address:': { bn: 'দোকানের ঠিকানা:', hi: 'दुकान का पता:' },
+  'OPTIONAL: BANK & UPI DETAILS (PRINTED ON CUSTOMER BILLS IF FILLED)': { bn: 'ঐচ্ছিক: ব্যাঙ্ক ও UPI তথ্য (পূরণ করলে কাস্টমার বিলে প্রিন্ট হবে)', hi: 'वैकल्पिक: बैंक और UPI विवरण (भरने पर कस्टमर बिल पर प्रिंट होगा)' },
+  'Bank Name:': { bn: 'ব্যাঙ্কের নাম:', hi: 'बैंक का नाम:' },
+  'A/C Holder Name:': { bn: 'অ্যাকাউন্ট হোল্ডারের নাম:', hi: 'खाताधारक का नाम:' },
+  'Account Number:': { bn: 'অ্যাকাউন্ট নম্বর:', hi: 'खाता संख्या:' },
+  'IFSC Code:': { bn: 'IFSC কোড:', hi: 'IFSC कोड:' },
+  'Branch Name:': { bn: 'ব্রাঞ্চের নাম:', hi: 'शाखा का नाम:' },
+  'UPI ID (VPA):': { bn: 'UPI আইডি (VPA):', hi: 'UPI आईडी (VPA):' },
+  'Upload Workshop Logo (For Bills):': { bn: 'ওয়ার্কশপের লোগো আপলোড (বিলের জন্য):', hi: 'वर्कशॉप लोगो अपलोड करें (बिल के लिए):' },
+  'Upload UPI Payment QR Code (For Bills):': { bn: 'UPI পেমেন্ট QR কোড আপলোড (বিলের জন্য):', hi: 'UPI पेमेंट QR कोड अपलोड करें (बिल के लिए):' },
+  'Device ID:': { bn: 'ডিভাইস আইডি:', hi: 'डिवाइस आईडी:' },
+  '365 DAYS ANNUAL PRO': { bn: '365 দিনের বার্ষিক PRO', hi: '365 दिन वार्षिक PRO' },
+  '180 DAYS (6 MONTHS) PRO': { bn: '180 দিন (6 মাস) PRO', hi: '180 दिन (6 महीने) PRO' },
+  '90 DAYS (3 MONTHS) PRO': { bn: '90 দিন (3 মাস) PRO', hi: '90 दिन (3 महीने) PRO' },
+  '30 DAYS (1 MONTH) PRO': { bn: '30 দিন (1 মাস) PRO', hi: '30 दिन (1 महीना) PRO' },
+  'Only ₹100/Month • Full 1 Year Access': { bn: 'মাসে মাত্র ₹100 • পুরো 1 বছর আনলিমিটেড', hi: 'केवल ₹100/महीना • पूरे 1 साल का एक्सेस' },
+  '₹125/Month • 1 User / 1 Device': { bn: 'মাসে ₹125 • 1 ইউজার / 1 ফোন', hi: '₹125/महीना • 1 यूज़र / 1 डिवाइस' },
+  '₹133/Month • 1 User / 1 Device': { bn: 'মাসে ₹133 • 1 ইউজার / 1 ফোন', hi: '₹133/महीना • 1 यूज़र / 1 डिवाइस' },
+  'Full PRO Features • 1 User / 1 Device': { bn: 'সব PRO ফিচার • 1 ইউজার / 1 ফোন', hi: 'सभी PRO फीचर • 1 यूज़र / 1 डिवाइस' }
+};
+
+function translateProfileAndActivationUI(lang) {
+  if (typeof document === 'undefined') return;
+  var roots = [document.getElementById('screen-profile'), document.getElementById('screen-activation')];
+  roots.forEach(function(root) {
+    if (!root) return;
+    root.querySelectorAll('label, div, span, button').forEach(function(el) {
+      if (el.children.length > 0) return;
+      var cur = (el.textContent || '').trim();
+      if (!cur) return;
+      if (!el.dataset.origProfEn && SW_PROFILE_ACT_I18N[cur]) {
+        el.dataset.origProfEn = cur;
+      }
+      var orig = el.dataset.origProfEn;
+      if (!orig) return;
+      var target = (lang === 'bn' && SW_PROFILE_ACT_I18N[orig].bn) ? SW_PROFILE_ACT_I18N[orig].bn
+                 : ((lang === 'hi' && SW_PROFILE_ACT_I18N[orig].hi) ? SW_PROFILE_ACT_I18N[orig].hi : orig);
+      if (el.textContent.trim() !== target) el.textContent = target;
+    });
+  });
+}
+
+(function() {
+  if (typeof applyLanguageTranslations === 'function') {
+    var _origV105Apply = applyLanguageTranslations;
+    applyLanguageTranslations = function(lang) {
+      _origV105Apply(lang);
+      var activeL = (lang === 'bn' || lang === 'hi' || lang === 'en') ? lang : (typeof currentAppLang !== 'undefined' ? currentAppLang : 'en');
+      if (typeof _swI18nApplying !== 'undefined') _swI18nApplying = true;
+      try {
+        translateProfileAndActivationUI(activeL);
+      } finally {
+        if (typeof _swI18nApplying !== 'undefined') _swI18nApplying = false;
+      }
+    };
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', function() {
+      translateProfileAndActivationUI(typeof currentAppLang !== 'undefined' ? currentAppLang : 'en');
+    });
+  }
+})();
