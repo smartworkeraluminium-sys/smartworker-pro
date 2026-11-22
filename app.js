@@ -236,7 +236,9 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
   var svgStyle = isFullScreen
     ? 'width:100%; height:100%; max-height:100%; display:block; margin:0 auto;'
     : ('max-height:' + svgHeight + 'px; display:block; margin:0 auto;');
-  var svg = '<svg viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet" width="100%" style="' + svgStyle + '">';
+  var isCcTall = (prefix === 'cc');
+  var vbH = isCcTall ? 360 : 220;
+  var svg = '<svg viewBox="0 0 360 ' + vbH + '" preserveAspectRatio="xMidYMid meet" width="100%" style="' + svgStyle + '">';
   svg += '<defs>';
   svg += '<linearGradient id="aluGrad_' + uid + '" x1="0%" y1="0%" x2="100%" y2="100%">';
   svg += '<stop offset="0%" stop-color="' + aluPal.c1 + '"/>';
@@ -349,25 +351,69 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
     var topCols = cc_top_sections.length;
     var botCols = cc_bot_sections.length;
 
-    var wx = 18, wy = 10, ww = 324, wh = 200;
-    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.4"/>';
+    var rawCh = (typeof safeEval === 'function' && document.getElementById('cc_h')) ? safeEval(document.getElementById('cc_h').value) : 0;
+    var rawCw = (typeof safeEval === 'function' && document.getElementById('cc_w')) ? safeEval(document.getElementById('cc_w').value) : 0;
+    var rawBotH = (typeof safeEval === 'function' && document.getElementById('cc_bot_h')) ? safeEval(document.getElementById('cc_bot_h').value) : 0;
+    var isCcMm = document.getElementById('cc_unit') && document.getElementById('cc_unit').value.indexOf('Millimeter') !== -1;
+    var chIn = rawCh > 0 ? (isCcMm ? rawCh / 25.4 : rawCh) : 60;
+    var cwIn = rawCw > 0 ? (isCcMm ? rawCw / 25.4 : rawCw) : 54;
+    var cBotIn = rawBotH > 0 ? (isCcMm ? rawBotH / 25.4 : rawBotH) : 0;
+    var dispCc = function(vIn) {
+      if (isCcMm) return Math.round(vIn * 25.4) + ' mm';
+      return (typeof toFractionInch === 'function') ? toFractionInch(vIn) : (vIn.toFixed(1) + '"');
+    };
 
-    var innerX = wx + 8, innerY = wy + 8, innerW = ww - 16, innerH = wh - 16;
+    // Taller, grand CAD proportions inside 360x360 canvas
+    var maxDrawW = 296, maxDrawH = 304;
+    var ratio = cwIn / Math.max(12, chIn);
+    var ww, wh;
+    if (ratio >= 1.15) {
+      ww = maxDrawW;
+      wh = Math.max(216, Math.min(maxDrawH, Math.round(maxDrawW / ratio)));
+    } else {
+      wh = maxDrawH;
+      ww = Math.max(198, Math.min(maxDrawW, Math.round(maxDrawH * ratio)));
+    }
+    var wx = Math.round((360 - ww) / 2) + 8;
+    var wy = Math.round((360 - wh) / 2) + 10;
+
+    // CAD Dimension Lines (Top Total Width & Left Total Height)
+    svg += '<line x1="' + wx + '" y1="' + (wy - 11) + '" x2="' + (wx + ww) + '" y2="' + (wy - 11) + '" stroke="#0284c7" stroke-width="1.2"/>';
+    svg += '<line x1="' + wx + '" y1="' + (wy - 15) + '" x2="' + wx + '" y2="' + (wy - 7) + '" stroke="#0284c7" stroke-width="1.2"/>';
+    svg += '<line x1="' + (wx + ww) + '" y1="' + (wy - 15) + '" x2="' + (wx + ww) + '" y2="' + (wy - 7) + '" stroke="#0284c7" stroke-width="1.2"/>';
+    svg += '<rect x="' + (wx + ww / 2 - 34) + '" y="' + (wy - 20) + '" width="68" height="14" rx="3" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.8"/>';
+    svg += '<text x="' + (wx + ww / 2) + '" y="' + (wy - 10) + '" font-size="8.5" font-weight="bold" fill="#0369a1" text-anchor="middle">W: ' + dispCc(cwIn) + '</text>';
+
+    svg += '<line x1="' + (wx - 12) + '" y1="' + wy + '" x2="' + (wx - 12) + '" y2="' + (wy + wh) + '" stroke="#0284c7" stroke-width="1.2"/>';
+    svg += '<line x1="' + (wx - 16) + '" y1="' + wy + '" x2="' + (wx - 8) + '" y2="' + wy + '" stroke="#0284c7" stroke-width="1.2"/>';
+    svg += '<line x1="' + (wx - 16) + '" y1="' + (wy + wh) + '" x2="' + (wx - 8) + '" y2="' + (wy + wh) + '" stroke="#0284c7" stroke-width="1.2"/>';
+    svg += '<text x="' + (wx - 16) + '" y="' + (wy + wh / 2) + '" font-size="8.5" font-weight="bold" fill="#0369a1" text-anchor="middle" transform="rotate(-90 ' + (wx - 16) + ',' + (wy + wh / 2) + ')">H: ' + dispCc(chIn) + '</text>';
+
+    svg += '<rect x="' + wx + '" y="' + wy + '" width="' + ww + '" height="' + wh + '" rx="4" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="2.6"/>';
+
+    var innerX = wx + 9, innerY = wy + 9, innerW = ww - 18, innerH = wh - 18;
     svg += '<rect x="' + innerX + '" y="' + innerY + '" width="' + innerW + '" height="' + innerH + '" fill="#0f172a"/>';
 
     var hasBottom = (botCols > 0);
-    var transomH = hasBottom ? 6 : 0;
-    var topH = hasBottom ? Math.round((innerH - transomH) * 0.62) : innerH;
+    var transomH = hasBottom ? 7 : 0;
+    var topRatio = (typeof cc_cad_top_pct === 'number' && cc_cad_top_pct >= 30 && cc_cad_top_pct <= 85) ? (cc_cad_top_pct / 100) : 0.65;
+    if (hasBottom && cBotIn > 0 && cBotIn < chIn - 4) {
+      topRatio = Math.max(0.25, Math.min(0.85, (chIn - cBotIn) / chIn));
+    }
+    var topH = hasBottom ? Math.round((innerH - transomH) * topRatio) : innerH;
     var botH = hasBottom ? (innerH - transomH - topH) : 0;
+    var topRealH = hasBottom ? (cBotIn > 0 && cBotIn < chIn ? (chIn - cBotIn) : (chIn * topRatio)) : chIn;
+    var botRealH = hasBottom ? Math.max(1, chIn - topRealH) : 0;
 
-    var drawCasementRow = function(rowName, rowY, rowH, secArr) {
+    var drawCasementRow = function(rowName, rowY, rowH, secArr, rowRealH) {
       var colsCount = secArr.length;
-      var gap = 5;
+      var gap = 5.5;
       var secW = (innerW - ((colsCount - 1) * gap)) / colsCount;
+      var panelRealW = cwIn / Math.max(1, colsCount);
       for (var c = 0; c < colsCount; c++) {
         var sx = innerX + c * (secW + gap);
         if (c > 0) {
-          svg += '<rect x="' + (sx - gap) + '" y="' + rowY + '" width="' + gap + '" height="' + rowH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.7"/>';
+          svg += '<rect x="' + (sx - gap) + '" y="' + rowY + '" width="' + gap + '" height="' + rowH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.8"/>';
         }
         var secType = secArr[c];
         var clickAttr = 'onclick="toggleCasementSection(\'' + rowName + '\',' + c + ')"';
@@ -376,22 +422,25 @@ function buildWindowDoorSvgPreview(prefix, svgWidth, svgHeight, isFullScreen) {
 
         if (isOpen) {
           svg += '<g ' + clickAttr + ' style="cursor:pointer;">';
-          svg += '<rect x="' + (sx + 1) + '" y="' + (rowY + 1) + '" width="' + (secW - 2) + '" height="' + (rowH - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.4"/>';
-          var gx = sx + 6, gy = rowY + 6, gw = Math.max(6, secW - 12), gh = Math.max(6, rowH - 12);
+          svg += '<rect x="' + (sx + 1) + '" y="' + (rowY + 1) + '" width="' + (secW - 2) + '" height="' + (rowH - 2) + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1.5"/>';
+          var gx = sx + 6.5, gy = rowY + 6.5, gw = Math.max(6, secW - 13), gh = Math.max(6, rowH - 13);
           svg += drawPanelFill(gx, gy, gw, gh, matType, matType === 'JALI' ? 'JALI (OPEN)' : 'OPEN', '');
-          svg += '<polyline points="' + gx + ',' + gy + ' ' + (gx + gw) + ',' + (gy + gh / 2) + ' ' + gx + ',' + (gy + gh) + '" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-dasharray="4,2.5" stroke-opacity="0.85"/>';
-          svg += '<rect x="' + (sx + secW - 5) + '" y="' + (rowY + rowH / 2 - 7) + '" width="2.6" height="14" rx="1.2" fill="#fbbf24" stroke="#78350f" stroke-width="0.6"/>';
+          svg += '<polyline points="' + gx + ',' + gy + ' ' + (gx + gw) + ',' + (gy + gh / 2) + ' ' + gx + ',' + (gy + gh) + '" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="4,2.5" stroke-opacity="0.88"/>';
+          svg += '<rect x="' + (sx + secW - 5.5) + '" y="' + (rowY + rowH / 2 - 9) + '" width="3" height="18" rx="1.4" fill="#fbbf24" stroke="#78350f" stroke-width="0.7"/>';
           svg += '</g>';
         } else {
           svg += drawPanelFill(sx + 1, rowY + 1, secW - 2, rowH - 2, matType, matType === 'JALI' ? 'JALI (FIX)' : (matType === 'ACP' ? 'ACP' : 'FIX'), clickAttr);
         }
+        if (secW >= 36 && rowH >= 32) {
+          svg += '<text x="' + (sx + secW / 2) + '" y="' + (rowY + 16) + '" font-size="6.8" font-weight="bold" fill="#0f172a" fill-opacity="0.82" text-anchor="middle" style="pointer-events:none;">' + dispCc(panelRealW) + ' × ' + dispCc(rowRealH) + '</text>';
+        }
       }
     };
 
-    drawCasementRow('top', innerY, topH, cc_top_sections);
+    drawCasementRow('top', innerY, topH, cc_top_sections, topRealH);
     if (hasBottom) {
-      svg += '<rect x="' + innerX + '" y="' + (innerY + topH) + '" width="' + innerW + '" height="' + transomH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="0.9"/>';
-      drawCasementRow('bot', innerY + topH + transomH, botH, cc_bot_sections);
+      svg += '<rect x="' + innerX + '" y="' + (innerY + topH) + '" width="' + innerW + '" height="' + transomH + '" fill="url(#aluGrad_' + uid + ')" stroke="' + aluPal.stroke + '" stroke-width="1"/>';
+      drawCasementRow('bot', innerY + topH + transomH, botH, cc_bot_sections, botRealH);
     }
   } else if (isPart) {
     var ptCols = (prefix === 'pt' && document.getElementById('pt_cols')) ? Math.max(1, Math.min(10, parseInt(document.getElementById('pt_cols').value) || 3)) : 3;
@@ -601,6 +650,7 @@ function openCustomerShowroomModal(prefix) {
   holder.style.transform = 'scale(1)';
   holder.innerHTML = info.svg;
   if (sub) sub.textContent = info.aluColor + '  +  ' + info.gThick + ' ' + info.gType;
+  if (typeof renderCasementCadToolbar === 'function') renderCasementCadToolbar(prefix);
   if (badges) {
     badges.innerHTML =
       '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:7px 9px;">' +
@@ -5014,6 +5064,13 @@ function keypadEnter() {
  net_w_mod = handle_w - side_clearance;
  h_cut_mm = (w_mm + net_w_mod) / 2.0;
  s_c = 2; han_qty = 4; int_qty = 2;
+ } else if (t_text.includes('2-Shutter + 1-Jali')) {
+ // 3-Track Outer Frame, 2-Shutter width measurement, 2 Glass Shutters + 1 Jali Shutter material
+ net_w_mod = handle_w - side_clearance;
+ h_cut_mm = (w_mm + net_w_mod) / 2.0;
+ s_c = 2; han_qty = 4; int_qty = 2;
+ has_mesh = true;
+ mesh_w_mm = h_cut_mm;
  } else if (t_text.includes('3-Track (3-Sash)')) {
  net_w_mod = (handle_w * 2.0) - side_clearance;
  h_cut_mm = (w_mm + net_w_mod) / 3.0;
@@ -5139,11 +5196,16 @@ function keypadEnter() {
 
  let h_minus = 0, w_mod = 0, div = 2, g_h_minus = 0, g_w_mod = 0, g_c = 2;
  let han_qty = 2, int_qty = 2;
+ const is_3t_2s_1j = t_type.includes('2-Shutter + 1-Jali');
+ let total_shutters = 2;
 
- if (t_type.includes('2-Track')) { div = 2; g_c = 2; han_qty = 2; int_qty = 2; }
- else if (t_type.includes('3-Track')) { div = 3; g_c = 3; han_qty = 2; int_qty = 4; }
- else if (t_type.includes('4-Track')) { div = 4; g_c = 4; han_qty = 2; int_qty = 6; }
- else if (t_type.includes('Center Open')) { div = 4; g_c = 4; han_qty = 4; int_qty = 4; }
+ if (is_3t_2s_1j) {
+ // 3-Track Outer Frame, 2-Shutter width measurement (div=2), Material = 2 Glass Shutters + 1 Jali Shutter (3 shutters total)
+ div = 2; g_c = 2; total_shutters = 3; han_qty = 4; int_qty = 2;
+ } else if (t_type.includes('2-Track')) { div = 2; g_c = 2; total_shutters = 2; han_qty = 2; int_qty = 2; }
+ else if (t_type.includes('3-Track')) { div = 3; g_c = 3; total_shutters = 3; han_qty = 2; int_qty = 4; }
+ else if (t_type.includes('4-Track')) { div = 4; g_c = 4; total_shutters = 4; han_qty = 2; int_qty = 6; }
+ else if (t_type.includes('Center Open')) { div = 4; g_c = 4; total_shutters = 4; han_qty = 4; int_qty = 4; }
 
  const ovr = (typeof getFormulaOverrides === 'function') ? getFormulaOverrides() : {};
  if (sys_type.includes('18x40')) {
@@ -5188,21 +5250,24 @@ function keypadEnter() {
  const disp = (v) => is_mm ? toMmStr(v) : toFractionInch(v);
 
  let hw_txt = "--- HARDWARE & ACCESSORIES ---\n";
- hw_txt += `> Sliding Roller / Bearing: ${g_c * 2 * win_qty} pc\n`;
- hw_txt += `> Star Lock: ${(g_c >= 3 ? 2 : 1) * win_qty} pc\n> Rubber & Woolpile: Required\n`;
+ hw_txt += `> Sliding Roller / Bearing: ${total_shutters * 2 * win_qty} pc\n`;
+ hw_txt += `> Star Lock: ${(total_shutters >= 3 ? 2 : 1) * win_qty} pc\n> Rubber & Woolpile: Required\n`;
 
  const sl_aspec = getModuleAluLabel('sl');
- let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)} (${sys_type.split(' ')[0]})${qty_str}]\n`;
+ let alu_txt = `[Win #${sl_window_count}${loc_str} - H:${disp(h_in)} x W:${disp(w_in)} (${sys_type.split(' ')[0]} | ${t_type})${qty_str}]\n`;
  alu_txt += `> Alu Spec: ${sl_aspec}\n`;
- alu_txt += `> Track Top: ${disp(w_in)} (${1 * win_qty} pc)\n`;
- alu_txt += `> Track Bottom: ${disp(w_in)} (${1 * win_qty} pc)\n`;
- alu_txt += `> Track Vertical: ${disp(h_in)} (${2 * win_qty} pc)\n`;
- alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${g_c * 2 * win_qty} pc)\n`;
+ alu_txt += `> Track Top (${t_type.split(' ')[0]}): ${disp(w_in)} (${1 * win_qty} pc)\n`;
+ alu_txt += `> Track Bottom (${t_type.split(' ')[0]}): ${disp(w_in)} (${1 * win_qty} pc)\n`;
+ alu_txt += `> Track Vertical (${t_type.split(' ')[0]}): ${disp(h_in)} (${2 * win_qty} pc)\n`;
+ alu_txt += `> Sash Top/Bottom: ${disp(tb_w)} (${total_shutters * 2 * win_qty} pc${is_3t_2s_1j ? ' = 2 Glass + 1 Jali' : ''})\n`;
  alu_txt += `> Sash Handle: ${disp(handle_h)} (${han_qty * win_qty} pc)\n`;
  alu_txt += `> Sash Interlock: ${disp(handle_h)} (${int_qty * win_qty} pc)\n`;
 
  const sl_gspec = getModuleGlassLabel('sl');
- const glass_txt = `\n--- GLASS SIZES ---\n> Glass: ${sl_gspec}\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c * win_qty} pc)\n`;
+ let glass_txt = `\n--- GLASS SIZES ---\n> Glass: ${sl_gspec}\n> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${g_c * win_qty} pc)\n`;
+ if (is_3t_2s_1j) {
+   glass_txt += `> Mosquito Net / Jali Size: ${disp(glass_h)} x ${disp(glass_w)} (${1 * win_qty} pc)\n`;
+ }
  const glass_key = `${disp(glass_h)} x ${disp(glass_w)} || ${sl_gspec}`;
  sl_glass_dict[glass_key] = (sl_glass_dict[glass_key] || 0) + (g_c * win_qty);
 
@@ -5219,7 +5284,7 @@ function keypadEnter() {
 
  for(let q=0; q<win_qty; q++) sl_buckets[top_vert_track_key].push(w_in, h_in, h_in);
  for(let q=0; q<win_qty; q++) sl_buckets[bot_track_key].push(w_in);
- for (let q=0; q<win_qty; q++) { for (let i = 0; i < g_c * 2; i++) sl_buckets[sash_tb_key].push(tb_w); }
+ for (let q=0; q<win_qty; q++) { for (let i = 0; i < total_shutters * 2; i++) sl_buckets[sash_tb_key].push(tb_w); }
  for (let q=0; q<win_qty; q++) { for (let i = 0; i < han_qty; i++) sl_buckets[sash_handle_key].push(handle_h); }
  for (let q=0; q<win_qty; q++) { for (let i = 0; i < int_qty; i++) sl_buckets[sash_interlock_key].push(handle_h); }
 
@@ -5245,7 +5310,34 @@ function keypadEnter() {
  var cc_buckets = { "Casement Outer": [], "Casement Mullion": [], "Casement Z Handle": [], "Square Clip (Beading)": [] };
  var cc_glass_dict = {};
 
- function calculateCasement() {
+ const EURO_CASEMENT_PRESETS = {
+ "Euro 40 Series (21284)": { outerB: 24.8, mullionB: 24.8, overlap: 16, zGlass: 115, fixGlass: 7, tag: "Jindal 21284 / 21845" },
+ "Euro 42 Series (21337)": { outerB: 27.0, mullionB: 27.0, overlap: 16, zGlass: 101, fixGlass: 7, tag: "Jindal 21337 / 21577" },
+ "Euro 45 Series (21292)": { outerB: 28.0, mullionB: 28.0, overlap: 16, zGlass: 115, fixGlass: 7, tag: "Jindal 21292 / 21290" },
+ "Euro 50 Series (21314)": { outerB: 24.6, mullionB: 24.6, overlap: 16, zGlass: 109, fixGlass: 7, tag: "Jindal 21314 / 21352" },
+ "Custom Euro Series":     { outerB: 24.8, mullionB: 24.8, overlap: 16, zGlass: 100, fixGlass: 7, tag: "Custom Euro" }
+};
+
+function onCasementSeriesChange() {
+ const sel = document.getElementById('cc_series');
+ const panel = document.getElementById('cc_euro_panel');
+ if (!sel || !panel) return;
+ const val = sel.value;
+ if (val.includes("Euro")) {
+   panel.style.display = "block";
+   const p = EURO_CASEMENT_PRESETS[val] || EURO_CASEMENT_PRESETS["Custom Euro Series"];
+   if (document.getElementById('cc_euro_outer_b')) document.getElementById('cc_euro_outer_b').value = p.outerB;
+   if (document.getElementById('cc_euro_mullion_b')) document.getElementById('cc_euro_mullion_b').value = p.mullionB;
+   if (document.getElementById('cc_euro_overlap')) document.getElementById('cc_euro_overlap').value = p.overlap;
+   if (document.getElementById('cc_euro_z_glass')) document.getElementById('cc_euro_z_glass').value = p.zGlass;
+   if (document.getElementById('cc_euro_fix_glass')) document.getElementById('cc_euro_fix_glass').value = p.fixGlass;
+   if (document.getElementById('cc_euro_badge')) document.getElementById('cc_euro_badge').textContent = p.tag + " | Fixed: -7mm";
+ } else {
+   panel.style.display = "none";
+ }
+}
+
+function calculateCasement() {
  const raw_h = safeEval(document.getElementById('cc_h').value);
  const raw_w = safeEval(document.getElementById('cc_w').value);
  if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
@@ -5272,12 +5364,27 @@ function keypadEnter() {
  const mid_w_mm = is_mm ? mid_w_input : mid_w_input * 25.4;
 
  const series = document.getElementById('cc_series').value;
- const overlap = 11;
- const glass_m_open = 65;
- const glass_m_fixed = 7;
+ const isEuro = series.includes("Euro");
+ const isFrench = isEuro && document.getElementById('cc_french_mode') && document.getElementById('cc_french_mode').checked;
+ const weldAdd = (isEuro && document.getElementById('cc_upvc_weld') && document.getElementById('cc_upvc_weld').checked) ? 6 : 0;
 
- const outer_2 = series.includes("34") ? 56 : 46;
- const mullion = series.includes("34") ? 25 : 27;
+ let overlap = 11;
+ let glass_m_open = 65;
+ let glass_m_fixed = 7;
+ let outer_2 = series.includes("34") ? 56 : 46;
+ let mullion = series.includes("34") ? 25 : 27;
+
+ if (isEuro) {
+   const p = EURO_CASEMENT_PRESETS[series] || EURO_CASEMENT_PRESETS["Custom Euro Series"];
+   const outerB = parseFloat(document.getElementById('cc_euro_outer_b')?.value) || p.outerB;
+   mullion = parseFloat(document.getElementById('cc_euro_mullion_b')?.value) || p.mullionB;
+   outer_2 = outerB * 2;
+   overlap = parseFloat(document.getElementById('cc_euro_overlap')?.value);
+   if (isNaN(overlap)) overlap = p.overlap;
+   glass_m_open = parseFloat(document.getElementById('cc_euro_z_glass')?.value) || p.zGlass;
+   glass_m_fixed = parseFloat(document.getElementById('cc_euro_fix_glass')?.value);
+   if (isNaN(glass_m_fixed)) glass_m_fixed = 7;
+ }
 
  const rows = bot_gap_input_mm > 0 ? 2 : 1;
  const h_mullion_qty = rows === 2 ? 1 : 0;
@@ -5290,8 +5397,11 @@ function keypadEnter() {
  top_gap_h = h_mm - outer_2;
  }
 
- const top_v_mullion_qty = top_cols - 1;
- const bot_v_mullion_qty = Math.max(0, bot_cols - 1);
+ const topIsFrench = isFrench && top_cols === 2 && top_open === 2;
+ const botIsFrench = isFrench && rows === 2 && bot_cols === 2 && bot_open === 2;
+
+ const top_v_mullion_qty = topIsFrench ? 0 : (top_cols - 1);
+ const bot_v_mullion_qty = botIsFrench ? 0 : Math.max(0, bot_cols - 1);
 
  const top_gap_w = (w_mm - outer_2 - (top_v_mullion_qty * mullion)) / top_cols;
  let bot_gap_w = 0;
@@ -5301,7 +5411,6 @@ function keypadEnter() {
 
  cc_window_count += 1;
  const disp = (mmVal) => is_mm ? toMmStr(mmVal / 25.4) : toFractionInch(mmVal / 25.4);
- const unit_str = is_mm ? "mm" : "Inch";
  const win_loc = document.getElementById('cc_loc') ? document.getElementById('cc_loc').value.trim() : "";
  const win_qty = document.getElementById('cc_qty') ? Math.max(1, parseInt(document.getElementById('cc_qty').value) || 1) : 1;
  const loc_str = win_loc ? ` [${win_loc}]` : "";
@@ -5309,12 +5418,18 @@ function keypadEnter() {
  const total_sash_qty = (top_open + bot_open) * win_qty;
 
  const cc_aspec = getModuleAluLabel('cc');
- let out_txt = `[${series} Win #${cc_window_count}${loc_str} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty_str}]\n`;
+ const modeTag = (isEuro ? (weldAdd > 0 ? " | uPVC +6mm Weld" : " | Alu Euro") : "") + (isFrench ? " | French Mullion" : "");
+ let out_txt = `[${series} Win #${cc_window_count}${loc_str} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty_str}${modeTag}]\n`;
  out_txt += `> Alu Spec: ${cc_aspec}\n`;
+ if (isEuro) {
+   out_txt += `> Profile Deductions: Outer 2xB=${outer_2.toFixed(1)}mm, Mullion=${mullion.toFixed(1)}mm, Overlap=${overlap}mm, FixGlass=-${glass_m_fixed}mm\n`;
+ }
  out_txt += "--- 1. OUTER FRAME & MULLIONS ---\n";
- out_txt += `> Outer Vertical: ${disp(h_mm)} (${2 * win_qty} pc)\n> Outer Horizontal: ${disp(w_mm)} (${2 * win_qty} pc)\n`;
+ const out_v_cut = h_mm + weldAdd;
+ const out_h_cut = w_mm + weldAdd;
+ out_txt += `> Outer Vertical: ${disp(out_v_cut)} (${2 * win_qty} pc)\n> Outer Horizontal: ${disp(out_h_cut)} (${2 * win_qty} pc)\n`;
  for (let q = 0; q < win_qty; q++) {
-   cc_buckets["Casement Outer"].push(h_mm / 25.4, h_mm / 25.4, w_mm / 25.4, w_mm / 25.4);
+   cc_buckets["Casement Outer"].push(out_v_cut / 25.4, out_v_cut / 25.4, out_h_cut / 25.4, out_h_cut / 25.4);
  }
 
  if (h_mullion_qty > 0) {
@@ -5342,10 +5457,19 @@ function keypadEnter() {
 
  const cc_gspec = getModuleGlassLabel('cc');
  if (top_open > 0) {
- out_txt += `[OPENABLE SASH | Qty: ${top_open * win_qty} | Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}]\n`;
- const s1_h = top_gap_h + overlap, s1_w = w_gap_open + overlap;
- const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
+ const frenchGap = topIsFrench ? 4 : 0;
+ const s1_h_fin = top_gap_h + overlap;
+ const s1_w_fin = topIsFrench ? ((w_mm - outer_2 + overlap - frenchGap) / 2) : (w_gap_open + overlap);
+ const s1_h = s1_h_fin + weldAdd;
+ const s1_w = s1_w_fin + weldAdd;
+ const g_h = s1_h_fin - glass_m_open, g_w = s1_w_fin - glass_m_open;
+ const gapLabel = topIsFrench ? `French Opening: ${disp(top_gap_h)} x ${disp(w_mm - outer_2)} (4mm Center Gap)` : `Clear Gap: ${disp(top_gap_h)} x ${disp(w_gap_open)}`;
+ out_txt += `[OPENABLE SASH | Qty: ${top_open * win_qty} | ${gapLabel}]\n`;
  out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${top_open * win_qty} Sash)\n > Glass (${cc_gspec}): ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
+ if (topIsFrench) {
+   out_txt += ` > French / Flying Mullion: ${disp(s1_h_fin)} (${win_qty} pc)\n`;
+   for (let i = 0; i < win_qty; i++) cc_buckets["Casement Mullion"].push(s1_h_fin / 25.4);
+ }
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash) || ${cc_gspec}`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (top_open * win_qty);
  for (let i = 0; i < top_open * 2 * win_qty; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
@@ -5364,10 +5488,19 @@ function keypadEnter() {
  if (bot_cols > 0 && rows === 2) {
  out_txt += `\n--- 3. BOTTOM ROW DETAILS (${bot_cols} SECTIONS) ---\n`;
  if (bot_open > 0) {
- out_txt += `[OPENABLE SASH | Qty: ${bot_open * win_qty} | Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}]\n`;
- const s1_h = bot_gap_h + overlap, s1_w = bot_gap_w + overlap;
- const g_h = s1_h - glass_m_open, g_w = s1_w - glass_m_open;
+ const frenchGapB = botIsFrench ? 4 : 0;
+ const s1_h_fin = bot_gap_h + overlap;
+ const s1_w_fin = botIsFrench ? ((w_mm - outer_2 + overlap - frenchGapB) / 2) : (bot_gap_w + overlap);
+ const s1_h = s1_h_fin + weldAdd;
+ const s1_w = s1_w_fin + weldAdd;
+ const g_h = s1_h_fin - glass_m_open, g_w = s1_w_fin - glass_m_open;
+ const gapLabelB = botIsFrench ? `French Opening: ${disp(bot_gap_h)} x ${disp(w_mm - outer_2)} (4mm Center Gap)` : `Clear Gap: ${disp(bot_gap_h)} x ${disp(bot_gap_w)}`;
+ out_txt += `[OPENABLE SASH | Qty: ${bot_open * win_qty} | ${gapLabelB}]\n`;
  out_txt += ` > Z-Handle Sash: ${disp(s1_h)} x ${disp(s1_w)} (${bot_open * win_qty} Sash)\n > Glass (${cc_gspec}): ${disp(g_h)} x ${disp(g_w)} (${bot_open * win_qty} pc)\n`;
+ if (botIsFrench) {
+   out_txt += ` > French / Flying Mullion: ${disp(s1_h_fin)} (${win_qty} pc)\n`;
+   for (let i = 0; i < win_qty; i++) cc_buckets["Casement Mullion"].push(s1_h_fin / 25.4);
+ }
  const gKey = `${disp(g_h)} x ${disp(g_w)} (Sash) || ${cc_gspec}`;
  cc_glass_dict[gKey] = (cc_glass_dict[gKey] || 0) + (bot_open * win_qty);
  for (let i = 0; i < bot_open * 2 * win_qty; i++) cc_buckets["Casement Z Handle"].push(s1_h / 25.4, s1_w / 25.4);
@@ -5387,6 +5520,10 @@ function keypadEnter() {
  if (total_sash_qty > 0) {
  hw_txt += `> Friction Stay / Hinges: ${total_sash_qty * 2} pc\n`;
  hw_txt += `> Casement Handle: ${total_sash_qty} pc\n`;
+ if (isEuro) {
+   hw_txt += `> Euro Groove Espag Rod / Multi-Point Lock: ${total_sash_qty} set\n`;
+   hw_txt += `> Corner Cleats (Outer + Sash): ${(4 + total_sash_qty * 4) * win_qty} pc\n`;
+ }
  } else {
  hw_txt += "> No Sash Hardware Required (Fully Fixed)\n";
  }
@@ -14416,6 +14553,7 @@ function renderCadStudio() {
 }
 
 function openCadFullScreenCustomerView() {
+  var ccBar = document.getElementById('csm_cc_cad_bar'); if (ccBar) ccBar.style.display = 'none';
   var modal = document.getElementById('customerShowroomModal');
   var holder = document.getElementById('csm_svg_holder');
   var sub = document.getElementById('csm_subtitle');
@@ -15107,6 +15245,7 @@ function renderPtCadDesigner() {
 }
 
 function openPtCadFullScreen() {
+  var ccBar = document.getElementById('csm_cc_cad_bar'); if (ccBar) ccBar.style.display = 'none';
   var modal = document.getElementById('customerShowroomModal');
   var holder = document.getElementById('csm_svg_holder');
   var sub = document.getElementById('csm_subtitle');
@@ -16889,3 +17028,491 @@ function translateProfileAndActivationUI(lang) {
     });
   }
 })();
+
+
+// ========================================================
+// CASEMENT INTERACTIVE CAD CONTROLLER (v111)
+// ========================================================
+var cc_cad_top_pct = 65;
+
+function refreshCasementCadLive() {
+  if (typeof renderLiveColorGlassPreview === 'function') renderLiveColorGlassPreview('cc');
+  if (typeof renderCasementSectionGrid === 'function') renderCasementSectionGrid();
+  var modal = document.getElementById('customerShowroomModal');
+  if (modal && modal.style.display !== 'none' && csmCurrentPrefix === 'cc') {
+    var holder = document.getElementById('csm_svg_holder');
+    var info = buildWindowDoorSvgPreview('cc', 680, 560, true);
+    if (holder) holder.innerHTML = info.svg;
+    renderCasementCadToolbar('cc');
+  }
+}
+
+function ccCadAdjustCols(rowName, delta) {
+  var elId = (rowName === 'top') ? 'cc_top_cols' : 'cc_bot_cols';
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var cur = parseInt(el.value, 10) || 0;
+  var minV = (rowName === 'top') ? 1 : 0;
+  var next = Math.max(minV, Math.min(8, cur + delta));
+  el.value = String(next);
+  if (rowName === 'bot' && next > 0) {
+    var bh = document.getElementById('cc_bot_h');
+    var ch = (typeof safeEval === 'function' && document.getElementById('cc_h')) ? safeEval(document.getElementById('cc_h').value) : 0;
+    if (bh && (!bh.value || parseFloat(bh.value) <= 0) && ch > 0) {
+      bh.value = String(Math.round(ch * ((100 - cc_cad_top_pct) / 100)));
+    }
+  }
+  if (typeof syncCasementSectionsFromInputs === 'function') syncCasementSectionsFromInputs();
+  refreshCasementCadLive();
+}
+
+function ccCadSetTopSplit(pct) {
+  cc_cad_top_pct = Math.max(30, Math.min(85, parseInt(pct, 10) || 65));
+  var botColsEl = document.getElementById('cc_bot_cols');
+  if (botColsEl && (parseInt(botColsEl.value, 10) || 0) === 0) {
+    botColsEl.value = '1';
+    if (typeof syncCasementSectionsFromInputs === 'function') syncCasementSectionsFromInputs();
+  }
+  var ch = (typeof safeEval === 'function' && document.getElementById('cc_h')) ? safeEval(document.getElementById('cc_h').value) : 0;
+  var bhEl = document.getElementById('cc_bot_h');
+  if (bhEl && ch > 0) {
+    bhEl.value = String(Math.round(ch * ((100 - cc_cad_top_pct) / 100)));
+  }
+  refreshCasementCadLive();
+}
+
+function ccCadQuickPreset(mode) {
+  ensureCasementSectionsCount();
+  if (mode === 'all_open') {
+    cc_top_sections = cc_top_sections.map(function() { return 'OPEN'; });
+    var toEl = document.getElementById('cc_top_open');
+    if (toEl) toEl.value = String(cc_top_sections.length);
+  } else if (typeof applyCasementPreset === 'function') {
+    applyCasementPreset(mode);
+  }
+  refreshCasementCadLive();
+}
+
+function renderCasementCadToolbar(prefix) {
+  var bar = document.getElementById('csm_cc_cad_bar');
+  if (!bar) return;
+  if (prefix !== 'cc') {
+    bar.style.display = 'none';
+    return;
+  }
+  ensureCasementSectionsCount();
+  var tCols = cc_top_sections.length;
+  var bCols = cc_bot_sections.length;
+  bar.style.display = 'block';
+  bar.innerHTML =
+    '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px; margin-bottom:5px;">' +
+      '<div style="display:flex; align-items:center; gap:4px; font-size:0.69rem; font-weight:800; color:#0f172a;">' +
+        '<span>Top:</span>' +
+        '<button type="button" onclick="ccCadAdjustCols(\'top\',-1)" style="background:#e2e8f0; border:none; border-radius:5px; width:22px; height:22px; font-weight:900; cursor:pointer;">-</button>' +
+        '<span style="min-width:14px; text-align:center;">' + tCols + '</span>' +
+        '<button type="button" onclick="ccCadAdjustCols(\'top\',1)" style="background:#0284c7; color:#fff; border:none; border-radius:5px; width:22px; height:22px; font-weight:900; cursor:pointer;">+</button>' +
+      '</div>' +
+      '<div style="display:flex; align-items:center; gap:4px; font-size:0.69rem; font-weight:800; color:#0f172a;">' +
+        '<span>Bot:</span>' +
+        '<button type="button" onclick="ccCadAdjustCols(\'bot\',-1)" style="background:#e2e8f0; border:none; border-radius:5px; width:22px; height:22px; font-weight:900; cursor:pointer;">-</button>' +
+        '<span style="min-width:14px; text-align:center;">' + bCols + '</span>' +
+        '<button type="button" onclick="ccCadAdjustCols(\'bot\',1)" style="background:#0f766e; color:#fff; border:none; border-radius:5px; width:22px; height:22px; font-weight:900; cursor:pointer;">+</button>' +
+      '</div>' +
+      '<div style="display:flex; align-items:center; gap:3px;">' +
+        '<span style="font-size:0.65rem; font-weight:800; color:#475569;">H:</span>' +
+        [50, 65, 75].map(function(p) {
+          var act = (cc_cad_top_pct === p);
+          return '<button type="button" onclick="ccCadSetTopSplit(' + p + ')" style="background:' + (act ? '#1d4ed8' : '#eff6ff') + '; color:' + (act ? '#fff' : '#1e40af') + '; border:1px solid #93c5fd; border-radius:5px; padding:2px 5px; font-size:0.64rem; font-weight:800; cursor:pointer;">' + p + '%</button>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px;">' +
+      '<button type="button" onclick="ccCadQuickPreset(\'mid_open\')" style="background:#0284c7; color:#fff; border:none; border-radius:5px; padding:4px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Mid Open</button>' +
+      '<button type="button" onclick="ccCadQuickPreset(\'sides_open\')" style="background:#0f766e; color:#fff; border:none; border-radius:5px; padding:4px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">Sides Open</button>' +
+      '<button type="button" onclick="ccCadQuickPreset(\'all_open\')" style="background:#7c3aed; color:#fff; border:none; border-radius:5px; padding:4px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">All Open</button>' +
+      '<button type="button" onclick="ccCadQuickPreset(\'all_jali\')" style="background:#059669; color:#fff; border:none; border-radius:5px; padding:4px 2px; font-size:0.63rem; font-weight:800; cursor:pointer;">All Jali</button>' +
+    '</div>';
+}
+
+
+// ==================== DUAL HOME SWITCHER (ALUMINIUM | uPVC) v114 ====================
+function switchHomeMode(mode) {
+  const aluSec = document.getElementById('home_alu_section');
+  const upvcSec = document.getElementById('home_upvc_section');
+  const btnAlu = document.getElementById('btnHomeModeAlu');
+  const btnUpvc = document.getElementById('btnHomeModeUpvc');
+  if (!aluSec || !upvcSec) return;
+  if (mode === 'upvc') {
+    aluSec.style.display = 'none';
+    upvcSec.style.display = 'block';
+    if (btnAlu) { btnAlu.style.background = 'transparent'; btnAlu.style.color = '#334155'; btnAlu.style.boxShadow = 'none'; }
+    if (btnUpvc) { btnUpvc.style.background = 'linear-gradient(135deg,#065f46,#0d9488)'; btnUpvc.style.color = '#fff'; btnUpvc.style.boxShadow = '0 3px 10px rgba(13,148,136,0.3)'; }
+  } else {
+    aluSec.style.display = 'block';
+    upvcSec.style.display = 'none';
+    if (btnUpvc) { btnUpvc.style.background = 'transparent'; btnUpvc.style.color = '#334155'; btnUpvc.style.boxShadow = 'none'; }
+    if (btnAlu) { btnAlu.style.background = 'linear-gradient(135deg,#1e3a8a,#2563eb)'; btnAlu.style.color = '#fff'; btnAlu.style.boxShadow = '0 3px 10px rgba(37,99,235,0.3)'; }
+  }
+  try { localStorage.setItem('sw_home_mode', mode); } catch (e) {}
+}
+
+function openUpvcFixedPreset() {
+  openScreen('upvc_casement', 'uPVC FIXED / VENTILATOR');
+  if (document.getElementById('uc_top_cols')) document.getElementById('uc_top_cols').value = '1';
+  if (document.getElementById('uc_top_open')) document.getElementById('uc_top_open').value = '0';
+  if (document.getElementById('uc_french_mode')) document.getElementById('uc_french_mode').checked = false;
+}
+
+// ==================== uPVC CASEMENT & FRENCH CALCULATOR ====================
+const UPVC_CASEMENT_PRESETS = {
+  "60mm Standard (B=35)": { outerB: 35, mullionB: 35, overlap: 16, weld: 6, zGlass: 120, fixGlass: 7, giMinus: 120 },
+  "60mm Slim (B=30)":     { outerB: 30, mullionB: 30, overlap: 16, weld: 6, zGlass: 112, fixGlass: 7, giMinus: 120 },
+  "65mm Heavy (B=38)":    { outerB: 38, mullionB: 38, overlap: 16, weld: 6, zGlass: 128, fixGlass: 7, giMinus: 120 },
+  "70mm Premium (B=40)":  { outerB: 40, mullionB: 40, overlap: 16, weld: 6, zGlass: 132, fixGlass: 7, giMinus: 120 },
+  "Custom uPVC Profile":  { outerB: 35, mullionB: 35, overlap: 16, weld: 6, zGlass: 120, fixGlass: 7, giMinus: 120 }
+};
+
+var uc_win_count = 0;
+var uc_glass_dict = {};
+var uc_buckets = { "uPVC Outer Frame": [], "uPVC Z-Sash": [], "uPVC Mullion / T": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
+
+function onUpvcCasementProfileChange() {
+  const val = document.getElementById('uc_profile')?.value || "60mm Standard (B=35)";
+  let p = UPVC_CASEMENT_PRESETS[val] || UPVC_CASEMENT_PRESETS["60mm Standard (B=35)"];
+  if (val === "Custom uPVC Profile") {
+    try {
+      const saved = JSON.parse(localStorage.getItem('sw_upvc_casement_custom') || 'null');
+      if (saved) p = saved;
+    } catch (e) {}
+  }
+  if (document.getElementById('uc_outer_b')) document.getElementById('uc_outer_b').value = p.outerB;
+  if (document.getElementById('uc_mullion_b')) document.getElementById('uc_mullion_b').value = p.mullionB;
+  if (document.getElementById('uc_overlap')) document.getElementById('uc_overlap').value = p.overlap;
+  if (document.getElementById('uc_weld')) document.getElementById('uc_weld').value = p.weld;
+  if (document.getElementById('uc_z_glass')) document.getElementById('uc_z_glass').value = p.zGlass;
+  if (document.getElementById('uc_fix_glass')) document.getElementById('uc_fix_glass').value = p.fixGlass;
+  if (document.getElementById('uc_gi_minus')) document.getElementById('uc_gi_minus').value = p.giMinus;
+}
+
+function saveUpvcCasementCustom() {
+  const obj = {
+    outerB: parseFloat(document.getElementById('uc_outer_b')?.value) || 35,
+    mullionB: parseFloat(document.getElementById('uc_mullion_b')?.value) || 35,
+    overlap: parseFloat(document.getElementById('uc_overlap')?.value) || 16,
+    weld: parseFloat(document.getElementById('uc_weld')?.value) || 6,
+    zGlass: parseFloat(document.getElementById('uc_z_glass')?.value) || 120,
+    fixGlass: parseFloat(document.getElementById('uc_fix_glass')?.value) || 7,
+    giMinus: parseFloat(document.getElementById('uc_gi_minus')?.value) || 120
+  };
+  try { localStorage.setItem('sw_upvc_casement_custom', JSON.stringify(obj)); } catch (e) {}
+  alert("Saved your Custom uPVC Casement profile!");
+}
+
+function clearUpvcCasement() {
+  uc_win_count = 0;
+  uc_glass_dict = {};
+  uc_buckets = { "uPVC Outer Frame": [], "uPVC Z-Sash": [], "uPVC Mullion / T": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
+  if (document.getElementById('uc_h')) document.getElementById('uc_h').value = "";
+  if (document.getElementById('uc_w')) document.getElementById('uc_w').value = "";
+  if (document.getElementById('uc_out')) document.getElementById('uc_out').textContent = "Cleared. Enter uPVC Casement dimensions...";
+  if (document.getElementById('uc_mat_out')) document.getElementById('uc_mat_out').textContent = "";
+}
+
+function calculateUpvcCasement() {
+  const raw_h = safeEval(document.getElementById('uc_h')?.value);
+  const raw_w = safeEval(document.getElementById('uc_w')?.value);
+  if (!raw_h || !raw_w) { alert("Please enter Height and Width."); return; }
+
+  const is_mm = (document.getElementById('uc_unit')?.value || 'Millimeter').includes('Millimeter');
+  const h_mm = is_mm ? raw_h : raw_h * 25.4;
+  const w_mm = is_mm ? raw_w : raw_w * 25.4;
+  const bot_h_raw = safeEval(document.getElementById('uc_bot_h')?.value) || 0;
+  const bot_h_mm = is_mm ? bot_h_raw : bot_h_raw * 25.4;
+
+  const top_cols = Math.max(1, parseInt(document.getElementById('uc_top_cols')?.value) || 1);
+  let top_open = Math.min(top_cols, Math.max(0, parseInt(document.getElementById('uc_top_open')?.value) || 0));
+  const top_fixed = top_cols - top_open;
+
+  const bot_cols = Math.max(0, parseInt(document.getElementById('uc_bot_cols')?.value) || 0);
+  let bot_open = Math.min(bot_cols, Math.max(0, parseInt(document.getElementById('uc_bot_open')?.value) || 0));
+  const bot_fixed = bot_cols - bot_open;
+
+  const outerB = parseFloat(document.getElementById('uc_outer_b')?.value) || 35;
+  const mullionB = parseFloat(document.getElementById('uc_mullion_b')?.value) || 35;
+  const overlap = parseFloat(document.getElementById('uc_overlap')?.value);
+  const ov = isNaN(overlap) ? 16 : overlap;
+  const weld = parseFloat(document.getElementById('uc_weld')?.value);
+  const weldAdd = isNaN(weld) ? 6 : weld;
+  const zGlassMinus = parseFloat(document.getElementById('uc_z_glass')?.value) || 120;
+  const fixGlassMinus = parseFloat(document.getElementById('uc_fix_glass')?.value);
+  const fixMinus = isNaN(fixGlassMinus) ? 7 : fixGlassMinus;
+  const giMinus = parseFloat(document.getElementById('uc_gi_minus')?.value) || 120;
+  const isFrench = !!(document.getElementById('uc_french_mode')?.checked);
+  const profileName = document.getElementById('uc_profile')?.value || "uPVC 60mm";
+  const win_qty = Math.max(1, parseInt(document.getElementById('uc_qty')?.value) || 1);
+  const loc = (document.getElementById('uc_loc')?.value || "").trim();
+
+  const outer_2 = outerB * 2;
+  const rows = bot_h_mm > 0 ? 2 : 1;
+  const top_gap_h = rows === 2 ? (h_mm - outer_2 - mullionB - bot_h_mm) : (h_mm - outer_2);
+  const bot_gap_h = rows === 2 ? bot_h_mm : 0;
+
+  const topIsFrench = isFrench && top_cols === 2 && top_open === 2;
+  const botIsFrench = isFrench && rows === 2 && bot_cols === 2 && bot_open === 2;
+  const top_v_mul = topIsFrench ? 0 : (top_cols - 1);
+  const bot_v_mul = botIsFrench ? 0 : Math.max(0, bot_cols - 1);
+
+  const top_gap_w = (w_mm - outer_2 - (top_v_mul * mullionB)) / top_cols;
+  const bot_gap_w = bot_cols > 0 ? ((w_mm - outer_2 - (bot_v_mul * mullionB)) / bot_cols) : 0;
+
+  uc_win_count += 1;
+  const disp = (mmVal) => is_mm ? (Math.round(mmVal * 10) / 10) + " mm" : toFractionInch(mmVal / 25.4);
+
+  const frame_h_cut = h_mm + weldAdd;
+  const frame_w_cut = w_mm + weldAdd;
+  const gi_frame_h = Math.max(50, frame_h_cut - giMinus);
+  const gi_frame_w = Math.max(50, frame_w_cut - giMinus);
+
+  let out = `[uPVC ${profileName} Win #${uc_win_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${win_qty > 1 ? ' (Qty: ' + win_qty + ')' : ''}]\n`;
+  out += `> Settings: B=${outerB}mm, Overlap=${ov}mm, Weld=+${weldAdd}mm, FixGlass=-${fixMinus}mm, GI=-${giMinus}mm\n`;
+  out += `--- 1. OUTER FRAME (+${weldAdd}mm Welding) & GI STEEL ---\n`;
+  out += `> Outer Height: ${disp(frame_h_cut)} (${2 * win_qty} pc) | GI Steel: ${disp(gi_frame_h)} (${2 * win_qty} pc)\n`;
+  out += `> Outer Width:  ${disp(frame_w_cut)} (${2 * win_qty} pc) | GI Steel: ${disp(gi_frame_w)} (${2 * win_qty} pc)\n`;
+  for (let q = 0; q < win_qty; q++) {
+    uc_buckets["uPVC Outer Frame"].push(frame_h_cut / 25.4, frame_h_cut / 25.4, frame_w_cut / 25.4, frame_w_cut / 25.4);
+    uc_buckets["GI Steel Reinforcement"].push(gi_frame_h / 25.4, gi_frame_h / 25.4, gi_frame_w / 25.4, gi_frame_w / 25.4);
+  }
+
+  if (rows === 2) {
+    const h_mul_cut = w_mm - outer_2 + 12;
+    out += `> Horiz. Transom (T): ${disp(h_mul_cut)} (${win_qty} pc)\n`;
+    for (let q = 0; q < win_qty; q++) uc_buckets["uPVC Mullion / T"].push(h_mul_cut / 25.4);
+  }
+  if (top_v_mul > 0) {
+    const v_mul_cut = top_gap_h + 12;
+    out += `> Top Vert. Mullion (T): ${disp(v_mul_cut)} (${top_v_mul * win_qty} pc)\n`;
+    for (let i = 0; i < top_v_mul * win_qty; i++) uc_buckets["uPVC Mullion / T"].push(v_mul_cut / 25.4);
+  }
+  if (bot_v_mul > 0) {
+    const bv_mul_cut = bot_gap_h + 12;
+    out += `> Bot Vert. Mullion (T): ${disp(bv_mul_cut)} (${bot_v_mul * win_qty} pc)\n`;
+    for (let i = 0; i < bot_v_mul * win_qty; i++) uc_buckets["uPVC Mullion / T"].push(bv_mul_cut / 25.4);
+  }
+
+  out += `\n--- 2. TOP ROW (${top_cols} SECTIONS) ---\n`;
+  if (top_open > 0) {
+    const s_h_fin = top_gap_h + ov;
+    const s_w_fin = topIsFrench ? ((w_mm - outer_2 + ov - 4) / 2) : (top_gap_w + ov);
+    const s_h_cut = s_h_fin + weldAdd;
+    const s_w_cut = s_w_fin + weldAdd;
+    const g_h = s_h_fin - zGlassMinus;
+    const g_w = s_w_fin - zGlassMinus;
+    const gi_sh = Math.max(50, s_h_cut - giMinus);
+    const gi_sw = Math.max(50, s_w_cut - giMinus);
+    out += `[OPENABLE Z-SASH | Qty: ${top_open * win_qty}${topIsFrench ? ' | French 4mm Gap' : ''}]\n`;
+    out += ` > Z-Sash Cut (+${weldAdd}mm): ${disp(s_h_cut)} x ${disp(s_w_cut)} (${top_open * win_qty} Sash)\n`;
+    out += ` > GI Steel (Sash): ${disp(gi_sh)} x ${disp(gi_sw)}\n`;
+    out += ` > Sash Glass: ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
+    if (topIsFrench) {
+      out += ` > French / Flying Mullion: ${disp(s_h_fin)} (${win_qty} pc)\n`;
+      for (let q = 0; q < win_qty; q++) uc_buckets["uPVC Mullion / T"].push(s_h_fin / 25.4);
+    }
+    const gKey = `${disp(g_h)} x ${disp(g_w)} (uPVC Sash) || Clear`;
+    uc_glass_dict[gKey] = (uc_glass_dict[gKey] || 0) + (top_open * win_qty);
+    for (let i = 0; i < top_open * 2 * win_qty; i++) {
+      uc_buckets["uPVC Z-Sash"].push(s_h_cut / 25.4, s_w_cut / 25.4);
+      uc_buckets["GI Steel Reinforcement"].push(gi_sh / 25.4, gi_sw / 25.4);
+      uc_buckets["uPVC Glazing Bead"].push(g_h / 25.4, g_w / 25.4);
+    }
+  }
+  if (top_fixed > 0) {
+    const fg_h = top_gap_h - fixMinus;
+    const fg_w = top_gap_w - fixMinus;
+    out += `[FIXED GLASS | Qty: ${top_fixed * win_qty} | Clear: ${disp(top_gap_h)} x ${disp(top_gap_w)}]\n`;
+    out += ` > Fixed Glass (-${fixMinus}mm): ${disp(fg_h)} x ${disp(fg_w)} (${top_fixed * win_qty} pc)\n`;
+    const gKey = `${disp(fg_h)} x ${disp(fg_w)} (uPVC Fixed) || Clear`;
+    uc_glass_dict[gKey] = (uc_glass_dict[gKey] || 0) + (top_fixed * win_qty);
+    for (let i = 0; i < top_fixed * 2 * win_qty; i++) uc_buckets["uPVC Glazing Bead"].push(top_gap_h / 25.4, top_gap_w / 25.4);
+  }
+
+  if (rows === 2 && bot_cols > 0) {
+    out += `\n--- 3. BOTTOM ROW (${bot_cols} SECTIONS) ---\n`;
+    if (bot_open > 0) {
+      const s_h_fin = bot_gap_h + ov;
+      const s_w_fin = botIsFrench ? ((w_mm - outer_2 + ov - 4) / 2) : (bot_gap_w + ov);
+      const s_h_cut = s_h_fin + weldAdd;
+      const s_w_cut = s_w_fin + weldAdd;
+      const g_h = s_h_fin - zGlassMinus;
+      const g_w = s_w_fin - zGlassMinus;
+      out += `[BOT OPENABLE Z-SASH | Qty: ${bot_open * win_qty}]\n`;
+      out += ` > Z-Sash Cut (+${weldAdd}mm): ${disp(s_h_cut)} x ${disp(s_w_cut)}\n`;
+      out += ` > Sash Glass: ${disp(g_h)} x ${disp(g_w)} (${bot_open * win_qty} pc)\n`;
+      const gKey = `${disp(g_h)} x ${disp(g_w)} (uPVC Bot Sash) || Clear`;
+      uc_glass_dict[gKey] = (uc_glass_dict[gKey] || 0) + (bot_open * win_qty);
+      for (let i = 0; i < bot_open * 2 * win_qty; i++) uc_buckets["uPVC Z-Sash"].push(s_h_cut / 25.4, s_w_cut / 25.4);
+    }
+    if (bot_fixed > 0) {
+      const fg_h = bot_gap_h - fixMinus;
+      const fg_w = bot_gap_w - fixMinus;
+      out += `[BOT FIXED GLASS | Qty: ${bot_fixed * win_qty}]\n`;
+      out += ` > Fixed Glass (-${fixMinus}mm): ${disp(fg_h)} x ${disp(fg_w)} (${bot_fixed * win_qty} pc)\n`;
+      const gKey = `${disp(fg_h)} x ${disp(fg_w)} (uPVC Bot Fixed) || Clear`;
+      uc_glass_dict[gKey] = (uc_glass_dict[gKey] || 0) + (bot_fixed * win_qty);
+    }
+  }
+
+  const prev = document.getElementById('uc_out').textContent;
+  document.getElementById('uc_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
+  document.getElementById('uc_mat_out').textContent = generateMaterialList(uc_buckets);
+}
+
+// ==================== uPVC SLIDING (ALL TRACKS) CALCULATOR ====================
+const UPVC_SLIDING_PRESETS = {
+  "60mm Standard (2T)":    { weld: 6, shMinus: 60, fwMinus: 60, ilockAdd: 32, gMinus: 102, giMinus: 120 },
+  "80mm Standard (2.5T)":  { weld: 6, shMinus: 64, fwMinus: 64, ilockAdd: 35, gMinus: 106, giMinus: 120 },
+  "88mm Heavy (2.5T/3T)":  { weld: 6, shMinus: 68, fwMinus: 68, ilockAdd: 38, gMinus: 110, giMinus: 120 },
+  "99mm Standard (3T)":    { weld: 6, shMinus: 68, fwMinus: 68, ilockAdd: 38, gMinus: 112, giMinus: 120 },
+  "112mm Heavy (3T)":      { weld: 6, shMinus: 74, fwMinus: 74, ilockAdd: 42, gMinus: 118, giMinus: 120 },
+  "Custom uPVC Sliding":   { weld: 6, shMinus: 64, fwMinus: 64, ilockAdd: 35, gMinus: 106, giMinus: 120 }
+};
+
+var us_win_count = 0;
+var us_glass_dict = {};
+var us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "GI Steel Reinforcement": [] };
+
+function onUpvcSlidingProfileChange() {
+  const val = document.getElementById('us_profile')?.value || "80mm Standard (2.5T)";
+  let p = UPVC_SLIDING_PRESETS[val] || UPVC_SLIDING_PRESETS["80mm Standard (2.5T)"];
+  if (val === "Custom uPVC Sliding") {
+    try {
+      const saved = JSON.parse(localStorage.getItem('sw_upvc_sliding_custom') || 'null');
+      if (saved) p = saved;
+    } catch (e) {}
+  }
+  if (document.getElementById('us_weld')) document.getElementById('us_weld').value = p.weld;
+  if (document.getElementById('us_sh_minus')) document.getElementById('us_sh_minus').value = p.shMinus;
+  if (document.getElementById('us_fw_minus')) document.getElementById('us_fw_minus').value = p.fwMinus;
+  if (document.getElementById('us_ilock_add')) document.getElementById('us_ilock_add').value = p.ilockAdd;
+  if (document.getElementById('us_g_minus')) document.getElementById('us_g_minus').value = p.gMinus;
+  if (document.getElementById('us_gi_minus')) document.getElementById('us_gi_minus').value = p.giMinus;
+}
+
+function saveUpvcSlidingCustom() {
+  const obj = {
+    weld: parseFloat(document.getElementById('us_weld')?.value) || 6,
+    shMinus: parseFloat(document.getElementById('us_sh_minus')?.value) || 64,
+    fwMinus: parseFloat(document.getElementById('us_fw_minus')?.value) || 64,
+    ilockAdd: parseFloat(document.getElementById('us_ilock_add')?.value) || 35,
+    gMinus: parseFloat(document.getElementById('us_g_minus')?.value) || 106,
+    giMinus: parseFloat(document.getElementById('us_gi_minus')?.value) || 120
+  };
+  try { localStorage.setItem('sw_upvc_sliding_custom', JSON.stringify(obj)); } catch (e) {}
+  alert("Saved your Custom uPVC Sliding profile!");
+}
+
+function clearUpvcSliding() {
+  us_win_count = 0;
+  us_glass_dict = {};
+  us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "GI Steel Reinforcement": [] };
+  if (document.getElementById('us_h')) document.getElementById('us_h').value = "";
+  if (document.getElementById('us_w')) document.getElementById('us_w').value = "";
+  if (document.getElementById('us_out')) document.getElementById('us_out').textContent = "Cleared. Enter uPVC Sliding dimensions...";
+  if (document.getElementById('us_mat_out')) document.getElementById('us_mat_out').textContent = "";
+}
+
+function calculateUpvcSliding() {
+  const raw_h = safeEval(document.getElementById('us_h')?.value);
+  const raw_w = safeEval(document.getElementById('us_w')?.value);
+  if (!raw_h || !raw_w) { alert("Please enter Height and Width."); return; }
+
+  const is_mm = (document.getElementById('us_unit')?.value || 'Millimeter').includes('Millimeter');
+  const h_mm = is_mm ? raw_h : raw_h * 25.4;
+  const w_mm = is_mm ? raw_w : raw_w * 25.4;
+  const track = document.getElementById('us_track')?.value || "2T_2S";
+  const prof = document.getElementById('us_profile')?.value || "80mm Standard";
+  const qty = Math.max(1, parseInt(document.getElementById('us_qty')?.value) || 1);
+  const loc = (document.getElementById('us_loc')?.value || "").trim();
+
+  const weld = parseFloat(document.getElementById('us_weld')?.value);
+  const weldAdd = isNaN(weld) ? 6 : weld;
+  const shMinus = parseFloat(document.getElementById('us_sh_minus')?.value) || 64;
+  const fwMinus = parseFloat(document.getElementById('us_fw_minus')?.value) || 64;
+  const ilockAdd = parseFloat(document.getElementById('us_ilock_add')?.value) || 35;
+  const gMinus = parseFloat(document.getElementById('us_g_minus')?.value) || 106;
+  const giMinus = parseFloat(document.getElementById('us_gi_minus')?.value) || 120;
+
+  let div = 2, glassShutters = 2, meshShutters = 0, ilockCount = 2, trackLabel = "2-Track (2 Shutter)";
+  if (track === "2.5T_2G1M") { div = 2; glassShutters = 2; meshShutters = 1; ilockCount = 2; trackLabel = "2.5-Track (2 Glass + 1 Mesh)"; }
+  else if (track === "3T_2G1M") { div = 2; glassShutters = 2; meshShutters = 1; ilockCount = 2; trackLabel = "3-Track (2 Glass + 1 Mesh)"; }
+  else if (track === "3T_3S") { div = 3; glassShutters = 3; meshShutters = 0; ilockCount = 4; trackLabel = "3-Track (3 Shutters)"; }
+  else if (track === "3T_4S") { div = 4; glassShutters = 4; meshShutters = 0; ilockCount = 4; trackLabel = "3-Track (4 Shutters)"; }
+
+  const frame_h_cut = h_mm + weldAdd;
+  const frame_w_cut = w_mm + weldAdd;
+  const sash_h_fin = h_mm - shMinus;
+  const sash_w_fin = ((w_mm - fwMinus) + (ilockAdd * (div - 1))) / div;
+  const sash_h_cut = sash_h_fin + weldAdd;
+  const sash_w_cut = sash_w_fin + weldAdd;
+  const glass_h = sash_h_fin - gMinus;
+  const glass_w = sash_w_fin - gMinus;
+  const gi_fh = Math.max(50, frame_h_cut - giMinus);
+  const gi_fw = Math.max(50, frame_w_cut - giMinus);
+  const gi_sh = Math.max(50, sash_h_cut - giMinus);
+  const gi_sw = Math.max(50, sash_w_cut - giMinus);
+
+  us_win_count += 1;
+  const disp = (mmVal) => is_mm ? (Math.round(mmVal * 10) / 10) + " mm" : toFractionInch(mmVal / 25.4);
+
+  let out = `[uPVC ${prof} | ${trackLabel} #${us_win_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty > 1 ? ' (Qty: ' + qty + ')' : ''}]\n`;
+  out += `--- 1. OUTER TRACK FRAME (+${weldAdd}mm Weld) & GI STEEL ---\n`;
+  out += `> Outer Height: ${disp(frame_h_cut)} (${2 * qty} pc) | GI Steel: ${disp(gi_fh)} (${2 * qty} pc)\n`;
+  out += `> Outer Width:  ${disp(frame_w_cut)} (${2 * qty} pc) | GI Steel: ${disp(gi_fw)} (${2 * qty} pc)\n`;
+  out += `\n--- 2. SLIDING SASHES (+${weldAdd}mm Weld) ---\n`;
+  out += `> Glass Sash (${glassShutters * qty} Shutter): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
+  out += `> GI Steel (Glass Sash): H ${disp(gi_sh)} x W ${disp(gi_sw)}\n`;
+  if (meshShutters > 0) {
+    out += `> Mesh/Jali Sash (${meshShutters * qty} Shutter): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
+  }
+  out += `> Interlock Profile: ${disp(sash_h_fin)} (${ilockCount * qty} pc)\n`;
+  out += `\n--- 3. GLASS & MESH CUTTING ---\n`;
+  out += `> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${glassShutters * qty} pc)\n`;
+  if (meshShutters > 0) {
+    out += `> Mosquito Mesh: ${disp(glass_h)} x ${disp(glass_w)} (${meshShutters * qty} pc)\n`;
+  }
+  const totalShutters = (glassShutters + meshShutters) * qty;
+  out += `\n--- 4. uPVC HARDWARE ---\n`;
+  out += `> Heavy Rollers: ${totalShutters * 2} pc | Touch/Multi Lock: ${glassShutters * qty} pc\n`;
+  out += `> Wool Pile & EPDM Gasket: Required\n`;
+
+  const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Sliding Glass) || Clear`;
+  us_glass_dict[gKey] = (us_glass_dict[gKey] || 0) + (glassShutters * qty);
+  if (meshShutters > 0) {
+    const mKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Mesh) || SS Mesh`;
+    us_glass_dict[mKey] = (us_glass_dict[mKey] || 0) + (meshShutters * qty);
+  }
+
+  for (let q = 0; q < qty; q++) {
+    us_buckets["uPVC Sliding Outer"].push(frame_h_cut / 25.4, frame_h_cut / 25.4, frame_w_cut / 25.4, frame_w_cut / 25.4);
+    us_buckets["GI Steel Reinforcement"].push(gi_fh / 25.4, gi_fh / 25.4, gi_fw / 25.4, gi_fw / 25.4);
+    for (let s = 0; s < glassShutters * 2; s++) {
+      us_buckets["uPVC Glass Sash"].push(sash_h_cut / 25.4, sash_w_cut / 25.4);
+      us_buckets["GI Steel Reinforcement"].push(gi_sh / 25.4, gi_sw / 25.4);
+    }
+    for (let m = 0; m < meshShutters * 2; m++) {
+      us_buckets["uPVC Mesh Sash"].push(sash_h_cut / 25.4, sash_w_cut / 25.4);
+    }
+    for (let il = 0; il < ilockCount; il++) us_buckets["uPVC Interlock"].push(sash_h_fin / 25.4);
+  }
+
+  const prev = document.getElementById('us_out').textContent;
+  document.getElementById('us_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
+  document.getElementById('us_mat_out').textContent = generateMaterialList(us_buckets);
+}
+
+// Restore saved home mode on load
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const savedMode = localStorage.getItem('sw_home_mode');
+    if (savedMode === 'upvc') switchHomeMode('upvc');
+  } catch (e) {}
+});
