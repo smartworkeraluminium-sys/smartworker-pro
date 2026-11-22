@@ -10779,6 +10779,15 @@ function setupDb() {
     lbl_upvc_track: "uPVC Track & Shutter:",
     lbl_upvc_series: "uPVC Series / Brand:",
     lbl_sash_h_minus: "Sash H Minus:",
+    lbl_frame_face_f: "Frame Face F:",
+    lbl_sash_face_s: "Sash Face S:",
+    lbl_sash_h_engage: "H-Engage (+):",
+    opt_2t_2s: "2-Track (2 Glass)",
+    opt_2t_4s: "2-Track (4 Glass)",
+    opt_25t_2g1m: "2.5-Track (2 Glass + 1 Jali)",
+    opt_3t_2g1m: "3-Track (2 Glass + 1 Jali)",
+    opt_3t_3s: "3-Track (3 Glass)",
+    opt_3t_4g2m: "3-Track (4 Glass + 2 Jali)",
     lbl_frame_w_minus: "Frame W Minus:",
     lbl_ilock_add: "Interlock (+):",
     lbl_glass_minus: "Glass Minus:",
@@ -10880,6 +10889,15 @@ function setupDb() {
     lbl_upvc_track: "uPVC ট্র্যাক ও পাল্লা:",
     lbl_upvc_series: "uPVC সিরিজ / ব্র্যান্ড:",
     lbl_sash_h_minus: "পাল্লা H মাইনাস:",
+    lbl_frame_face_f: "ফ্রেম ফেস F:",
+    lbl_sash_face_s: "পাল্লা ফেস S:",
+    lbl_sash_h_engage: "H-এনগেজ (+):",
+    opt_2t_2s: "2-ট্র্যাক (2 পাল্লা গ্লাস)",
+    opt_2t_4s: "2-ট্র্যাক (4 পাল্লা গ্লাস)",
+    opt_25t_2g1m: "2.5-ট্র্যাক (2 গ্লাস + 1 জালি)",
+    opt_3t_2g1m: "3-ট্র্যাক (2 গ্লাস + 1 জালি)",
+    opt_3t_3s: "3-ট্র্যাক (3 পাল্লা গ্লাস)",
+    opt_3t_4g2m: "3-ট্র্যাক (4 গ্লাস + 2 জালি)",
     lbl_frame_w_minus: "ফ্রেম W মাইনাস:",
     lbl_ilock_add: "ইন্টারলক (+):",
     lbl_glass_minus: "গ্লাস মাইনাস:",
@@ -10981,6 +10999,15 @@ function setupDb() {
     lbl_upvc_track: "uPVC ट्रैक और पल्ला:",
     lbl_upvc_series: "uPVC सीरीज़ / ब्रांड:",
     lbl_sash_h_minus: "पल्ला H माइनस:",
+    lbl_frame_face_f: "फ्रेम फेस F:",
+    lbl_sash_face_s: "पल्ला फेस S:",
+    lbl_sash_h_engage: "H-एंगेज (+):",
+    opt_2t_2s: "2-ट्रैक (2 पल्ला ग्लास)",
+    opt_2t_4s: "2-ट्रैक (4 पल्ला ग्लास)",
+    opt_25t_2g1m: "2.5-ट्रैक (2 ग्लास + 1 जाली)",
+    opt_3t_2g1m: "3-ट्रैक (2 ग्लास + 1 जाली)",
+    opt_3t_3s: "3-ट्रैक (3 पल्ला ग्लास)",
+    opt_3t_4g2m: "3-ट्रैक (4 ग्लास + 2 जाली)",
     lbl_frame_w_minus: "फ्रेम W माइनस:",
     lbl_ilock_add: "इंटरलॉक (+):",
     lbl_glass_minus: "ग्लास माइनस:",
@@ -17563,19 +17590,25 @@ function calculateUpvcCasement() {
   document.getElementById('uc_mat_out').textContent = generateMaterialList(uc_buckets);
 }
 
-// ==================== uPVC SLIDING (ALL TRACKS) CALCULATOR ====================
+// ==================== uPVC SLIDING (ALL TRACKS — UNIVERSAL FORMULA) ====================
 const UPVC_SLIDING_PRESETS = {
-  "60mm Standard (2T)":    { weld: 6, shMinus: 60, fwMinus: 60, ilockAdd: 32, gMinus: 102, giMinus: 120 },
-  "80mm Standard (2.5T)":  { weld: 6, shMinus: 64, fwMinus: 64, ilockAdd: 35, gMinus: 106, giMinus: 120 },
-  "88mm Heavy (2.5T/3T)":  { weld: 6, shMinus: 68, fwMinus: 68, ilockAdd: 38, gMinus: 110, giMinus: 120 },
-  "99mm Standard (3T)":    { weld: 6, shMinus: 68, fwMinus: 68, ilockAdd: 38, gMinus: 112, giMinus: 120 },
-  "112mm Heavy (3T)":      { weld: 6, shMinus: 74, fwMinus: 74, ilockAdd: 42, gMinus: 118, giMinus: 120 },
-  "Custom uPVC Sliding":   { weld: 6, shMinus: 64, fwMinus: 64, ilockAdd: 35, gMinus: 106, giMinus: 120 }
+  "60mm Standard (2T)":    { frameF: 45, sashS: 66, weld: 6, hEngage: 18, gMinus: 102, giMinus: 120 },
+  "80mm Standard (2.5T)":  { frameF: 50, sashS: 66, weld: 6, hEngage: 18, gMinus: 106, giMinus: 120 },
+  "88mm Heavy (2.5T/3T)":  { frameF: 50, sashS: 86, weld: 6, hEngage: 18, gMinus: 136, giMinus: 120 },
+  "99mm Standard (3T)":    { frameF: 50, sashS: 66, weld: 6, hEngage: 18, gMinus: 106, giMinus: 120 },
+  "112mm Heavy (3T)":      { frameF: 50, sashS: 86, weld: 6, hEngage: 18, gMinus: 136, giMinus: 120 },
+  "Custom uPVC Sliding":   { frameF: 50, sashS: 66, weld: 6, hEngage: 18, gMinus: 106, giMinus: 120 }
 };
 
 var us_win_count = 0;
 var us_glass_dict = {};
 var us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "GI Steel Reinforcement": [] };
+
+function setUpvcSashPreset(frameF, sashS) {
+  if (document.getElementById('us_frame_f')) document.getElementById('us_frame_f').value = frameF;
+  if (document.getElementById('us_sash_s')) document.getElementById('us_sash_s').value = sashS;
+  if (document.getElementById('us_g_minus')) document.getElementById('us_g_minus').value = (sashS >= 80 ? 136 : (sashS >= 74 ? 120 : 106));
+}
 
 function onUpvcSlidingProfileChange() {
   const val = document.getElementById('us_profile')?.value || "80mm Standard (2.5T)";
@@ -17583,23 +17616,23 @@ function onUpvcSlidingProfileChange() {
   if (val === "Custom uPVC Sliding") {
     try {
       const saved = JSON.parse(localStorage.getItem('sw_upvc_sliding_custom') || 'null');
-      if (saved) p = saved;
+      if (saved && saved.frameF) p = saved;
     } catch (e) {}
   }
+  if (document.getElementById('us_frame_f')) document.getElementById('us_frame_f').value = p.frameF;
+  if (document.getElementById('us_sash_s')) document.getElementById('us_sash_s').value = p.sashS;
   if (document.getElementById('us_weld')) document.getElementById('us_weld').value = p.weld;
-  if (document.getElementById('us_sh_minus')) document.getElementById('us_sh_minus').value = p.shMinus;
-  if (document.getElementById('us_fw_minus')) document.getElementById('us_fw_minus').value = p.fwMinus;
-  if (document.getElementById('us_ilock_add')) document.getElementById('us_ilock_add').value = p.ilockAdd;
+  if (document.getElementById('us_h_engage')) document.getElementById('us_h_engage').value = p.hEngage;
   if (document.getElementById('us_g_minus')) document.getElementById('us_g_minus').value = p.gMinus;
   if (document.getElementById('us_gi_minus')) document.getElementById('us_gi_minus').value = p.giMinus;
 }
 
 function saveUpvcSlidingCustom() {
   const obj = {
+    frameF: parseFloat(document.getElementById('us_frame_f')?.value) || 50,
+    sashS: parseFloat(document.getElementById('us_sash_s')?.value) || 66,
     weld: parseFloat(document.getElementById('us_weld')?.value) || 6,
-    shMinus: parseFloat(document.getElementById('us_sh_minus')?.value) || 64,
-    fwMinus: parseFloat(document.getElementById('us_fw_minus')?.value) || 64,
-    ilockAdd: parseFloat(document.getElementById('us_ilock_add')?.value) || 35,
+    hEngage: parseFloat(document.getElementById('us_h_engage')?.value) || 18,
     gMinus: parseFloat(document.getElementById('us_g_minus')?.value) || 106,
     giMinus: parseFloat(document.getElementById('us_gi_minus')?.value) || 120
   };
@@ -17630,28 +17663,39 @@ function calculateUpvcSliding() {
   const qty = Math.max(1, parseInt(document.getElementById('us_qty')?.value) || 1);
   const loc = (document.getElementById('us_loc')?.value || "").trim();
 
-  const weld = parseFloat(document.getElementById('us_weld')?.value);
-  const weldAdd = isNaN(weld) ? 6 : weld;
-  const shMinus = parseFloat(document.getElementById('us_sh_minus')?.value) || 64;
-  const fwMinus = parseFloat(document.getElementById('us_fw_minus')?.value) || 64;
-  const ilockAdd = parseFloat(document.getElementById('us_ilock_add')?.value) || 35;
+  const frameF = parseFloat(document.getElementById('us_frame_f')?.value) || 50;
+  const sashS = parseFloat(document.getElementById('us_sash_s')?.value) || 66;
+  const weldVal = parseFloat(document.getElementById('us_weld')?.value);
+  const weldAdd = isNaN(weldVal) ? 6 : weldVal;
+  const hEngVal = parseFloat(document.getElementById('us_h_engage')?.value);
+  const hEngage = isNaN(hEngVal) ? 18 : hEngVal;
   const gMinus = parseFloat(document.getElementById('us_g_minus')?.value) || 106;
   const giMinus = parseFloat(document.getElementById('us_gi_minus')?.value) || 120;
 
-  let div = 2, glassShutters = 2, meshShutters = 0, ilockCount = 2, trackLabel = "2-Track (2 Shutter)";
-  if (track === "2.5T_2G1M") { div = 2; glassShutters = 2; meshShutters = 1; ilockCount = 2; trackLabel = "2.5-Track (2 Glass + 1 Mesh)"; }
-  else if (track === "3T_2G1M") { div = 2; glassShutters = 2; meshShutters = 1; ilockCount = 2; trackLabel = "3-Track (2 Glass + 1 Mesh)"; }
-  else if (track === "3T_3S") { div = 3; glassShutters = 3; meshShutters = 0; ilockCount = 4; trackLabel = "3-Track (3 Shutters)"; }
-  else if (track === "3T_4S") { div = 4; glassShutters = 4; meshShutters = 0; ilockCount = 4; trackLabel = "3-Track (4 Shutters)"; }
+  let div = 2, glassShutters = 2, meshShutters = 0, ilockCount = 2, trackLabel = "2-Track (2 Glass)";
+  if (track === "2T_4S") { div = 4; glassShutters = 4; meshShutters = 0; ilockCount = 4; trackLabel = "2-Track (4 Glass)"; }
+  else if (track === "2.5T_2G1M") { div = 2; glassShutters = 2; meshShutters = 1; ilockCount = 2; trackLabel = "2.5-Track (2 Glass + 1 Jali)"; }
+  else if (track === "3T_2G1M") { div = 2; glassShutters = 2; meshShutters = 1; ilockCount = 2; trackLabel = "3-Track (2 Glass + 1 Jali)"; }
+  else if (track === "3T_3S") { div = 3; glassShutters = 3; meshShutters = 0; ilockCount = 4; trackLabel = "3-Track (3 Glass)"; }
+  else if (track === "3T_4G2M") { div = 4; glassShutters = 4; meshShutters = 2; ilockCount = 4; trackLabel = "3-Track (4 Glass + 2 Jali)"; }
 
-  const frame_h_cut = h_mm + weldAdd;
-  const frame_w_cut = w_mm + weldAdd;
-  const sash_h_fin = h_mm - shMinus;
-  const sash_w_fin = ((w_mm - fwMinus) + (ilockAdd * (div - 1))) / div;
-  const sash_h_cut = sash_h_fin + weldAdd;
-  const sash_w_cut = sash_w_fin + weldAdd;
-  const glass_h = sash_h_fin - gMinus;
-  const glass_w = sash_w_fin - gMinus;
+  // Universal uPVC Sliding Formula (works for ANY frame F & ANY sash S: 66mm, 76mm, 86mm...)
+  // Outer Frame Cut = Finished + Weld (+6mm)
+  const frame_h_cut = Math.ceil(h_mm + weldAdd);
+  const frame_w_cut = Math.ceil(w_mm + weldAdd);
+
+  // Sash Height Cut = (H - 2*F) + hEngage(18) + weldAdd(6)  [= Frame_H_Cut - (2*F + 6) + 24]
+  const sash_h_cut = Math.ceil((h_mm - (2 * frameF)) + hEngage + weldAdd);
+  const sash_h_fin = sash_h_cut - weldAdd;
+
+  // Sash Width Cut = ((W - 2*F) / div) + 8 (frame overlap) + ((div - 1) * S / div) + weldAdd(6)
+  // Always round UP (.5 -> next whole mm) per workshop rule
+  const sash_w_cut = Math.ceil(((w_mm - (2 * frameF)) / div) + 8 + (((div - 1) * sashS) / div) + weldAdd);
+  const sash_w_fin = sash_w_cut - weldAdd;
+
+  const glass_h = Math.max(50, sash_h_fin - gMinus);
+  const glass_w = Math.max(50, sash_w_fin - gMinus);
+
   const gi_fh = Math.max(50, frame_h_cut - giMinus);
   const gi_fw = Math.max(50, frame_w_cut - giMinus);
   const gi_sh = Math.max(50, sash_h_cut - giMinus);
@@ -17661,14 +17705,15 @@ function calculateUpvcSliding() {
   const disp = (mmVal) => is_mm ? (Math.round(mmVal * 10) / 10) + " mm" : toFractionInch(mmVal / 25.4);
 
   let out = `[uPVC ${prof} | ${trackLabel} #${us_win_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty > 1 ? ' (Qty: ' + qty + ')' : ''}]\n`;
+  out += `> Profile: Frame F=${frameF}mm, Sash S=${sashS}mm, Weld=+${weldAdd}mm\n`;
   out += `--- 1. OUTER TRACK FRAME (+${weldAdd}mm Weld) & GI STEEL ---\n`;
   out += `> Outer Height: ${disp(frame_h_cut)} (${2 * qty} pc) | GI Steel: ${disp(gi_fh)} (${2 * qty} pc)\n`;
   out += `> Outer Width:  ${disp(frame_w_cut)} (${2 * qty} pc) | GI Steel: ${disp(gi_fw)} (${2 * qty} pc)\n`;
-  out += `\n--- 2. SLIDING SASHES (+${weldAdd}mm Weld) ---\n`;
-  out += `> Glass Sash (${glassShutters * qty} Shutter): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
+  out += `\n--- 2. SLIDING SASHES (+${weldAdd}mm Weld, Round-Up) ---\n`;
+  out += `> Glass Sash (${glassShutters * qty} Shutter / ${glassShutters * 2 * qty} pc each): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
   out += `> GI Steel (Glass Sash): H ${disp(gi_sh)} x W ${disp(gi_sw)}\n`;
   if (meshShutters > 0) {
-    out += `> Mesh/Jali Sash (${meshShutters * qty} Shutter): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
+    out += `> Mesh/Jali Sash (${meshShutters * qty} Shutter / ${meshShutters * 2 * qty} pc each): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
   }
   out += `> Interlock Profile: ${disp(sash_h_fin)} (${ilockCount * qty} pc)\n`;
   out += `\n--- 3. GLASS & MESH CUTTING ---\n`;
