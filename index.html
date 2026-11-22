@@ -40,11 +40,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v108') caches.delete(k);
+            if (k !== 'smart-worker-pro-v110') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=108').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=110').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -3691,11 +3691,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
        <div style="font-size:0.73rem; font-weight:800; color:#0f766e; margin-bottom:6px;">
          <i class="fa-solid fa-file-import"></i> 1-CLICK IMPORT CUT SIZES FROM CALCULATORS:
        </div>
-       <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px;">
-         <button type="button" onclick="importBucketsToBarOptimizer('dm')" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Domal</button>
-         <button type="button" onclick="importBucketsToBarOptimizer('sl')" style="background:#0f766e; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Sliding</button>
-         <button type="button" onclick="importBucketsToBarOptimizer('dr')" style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Door</button>
-         <button type="button" onclick="importBucketsToBarOptimizer('pt')" style="background:#ea580c; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.7rem; font-weight:800; cursor:pointer;">Partition</button>
+       <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:4px;">
+         <button type="button" onclick="importBucketsToBarOptimizer('dm')" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Domal</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('sl')" style="background:#0f766e; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Sliding</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('cc')" style="background:#be185d; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Casement</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('dr')" style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Door</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('pt')" style="background:#ea580c; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Partition</button>
        </div>
      </div>
 
@@ -3787,6 +3788,9 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
 
    <!-- Live Visual 1D Bar Cutting SVG Map -->
    <div id="bc_visual_layout_box" style="display:none; background:#ffffff; border:2px solid #0f766e; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(15,118,110,0.12);"></div>
+
+  <!-- Phase-Wise Material Order & Pending Balance Tracker (Starts from 10%) -->
+  <div id="bc_phase_order_box" style="display:none; background:#ffffff; border:2px solid #1d4ed8; border-radius:12px; padding:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(29,78,216,0.12);"></div>
 
    <div class="output-label" style="color:#0f766e;">12' / 16' BAR CUTTING SUMMARY & STOCK LIST:</div>
    <div class="output-area" id="bc_out"></div>
@@ -4712,12 +4716,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=108"></script>
+  <script src="app.js?v=110"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=108').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=110').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

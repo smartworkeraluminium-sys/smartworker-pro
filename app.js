@@ -12990,6 +12990,13 @@ function importBucketsToBarOptimizer(modPrefix) {
   else if (modPrefix === 'sl' && typeof sl_buckets !== 'undefined') { srcBuckets = sl_buckets; modName = 'Sliding'; }
   else if (modPrefix === 'dr' && typeof dr_buckets !== 'undefined') { srcBuckets = dr_buckets; modName = 'Door'; }
   else if (modPrefix === 'pt' && typeof pt_buckets !== 'undefined') { srcBuckets = pt_buckets; modName = 'Partition'; }
+  else if (modPrefix === 'cc') {
+    modName = 'Casement';
+    var hasCc = (typeof cc_buckets !== 'undefined' && Object.values(cc_buckets).some(function(a){ return a && a.length; }));
+    var hasCs = (typeof cs_buckets !== 'undefined' && Object.values(cs_buckets).some(function(a){ return a && a.length; }));
+    if (hasCc) srcBuckets = cc_buckets;
+    else if (hasCs) srcBuckets = cs_buckets;
+  }
 
   var imported = [];
   if (srcBuckets) {
@@ -13286,16 +13293,19 @@ function groupIdenticalBars(bars) {
   return grouped;
 }
 
+var bc_last_plan_summary = [];
 function recalculateBarCuttingPlan() {
   renderWorkshopRemnantStockUI();
   var box = document.getElementById('bc_visual_layout_box');
   var outEl = document.getElementById('bc_out');
   bc_last_plan_offcuts = [];
   bc_last_used_remnants = [];
+  bc_last_plan_summary = [];
 
   if (!bc_items_list.length) {
     if (box) { box.style.display = 'none'; box.innerHTML = ''; }
     if (outEl) outEl.textContent = '';
+    if (typeof renderPhaseMaterialBox === 'function') renderPhaseMaterialBox();
     return;
   }
 
@@ -13323,6 +13333,9 @@ function recalculateBarCuttingPlan() {
     var newBars = packed.newBars;
     grandStockReused += stockUsed.length;
     grandNewBars += newBars.length;
+    if (newBars.length > 0) {
+      bc_last_plan_summary.push({ profile: pName, totalBars: newBars.length, stockFt: String(stockFt) });
+    }
 
     var allBarsThisProfile = stockUsed.concat(newBars);
     var pUsed = 0, pStock = 0;
@@ -13449,6 +13462,307 @@ function recalculateBarCuttingPlan() {
 
   if (box) { box.style.display = 'block'; box.innerHTML = html; }
   if (outEl) outEl.textContent = textOut;
+  if (typeof renderPhaseMaterialBox === 'function') renderPhaseMaterialBox();
+}
+
+// ========================================================
+// PHASE-WISE MATERIAL ORDER & PENDING BALANCE (STARTS 10%)
+// ========================================================
+var BC_PHASE_STORAGE_KEY = 'sw_bc_phase_orders_v1';
+var bc_selected_phase_pct = 10;
+
+function getBcPhaseState() {
+  try {
+    var raw = localStorage.getItem(BC_PHASE_STORAGE_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.phases)) return parsed;
+    }
+  } catch (e) {}
+  return { projectName: '', phases: [] };
+}
+
+function saveBcPhaseState(state) {
+  try { localStorage.setItem(BC_PHASE_STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function setBcPhasePct(pct) {
+  var v = parseFloat(pct);
+  if (isNaN(v) || v < 1) v = 10;
+  if (v > 100) v = 100;
+  bc_selected_phase_pct = v;
+  var inp = document.getElementById('bc_phase_pct_inp');
+  if (inp) inp.value = v;
+  renderPhaseMaterialBox();
+}
+
+function getBcReceivedMap(phases) {
+  var map = {};
+  (phases || []).forEach(function(ph) {
+    (ph.items || []).forEach(function(it) {
+      map[it.profile] = (map[it.profile] || 0) + (parseInt(it.bars, 10) || 0);
+    });
+  });
+  return map;
+}
+
+function computeNextPhaseItems(pct) {
+  var st = getBcPhaseState();
+  var recMap = getBcReceivedMap(st.phases);
+  var out = [];
+  (bc_last_plan_summary || []).forEach(function(row) {
+    var total = row.totalBars || 0;
+    var received = recMap[row.profile] || 0;
+    var remaining = Math.max(0, total - received);
+    var orderNow = 0;
+    if (remaining > 0) {
+      if (pct >= 100) {
+        orderNow = remaining;
+      } else {
+        orderNow = Math.ceil((total * pct) / 100);
+        if (orderNow < 1) orderNow = 1;
+        if (orderNow > remaining) orderNow = remaining;
+      }
+    }
+    out.push({
+      profile: row.profile,
+      stockFt: row.stockFt,
+      totalBars: total,
+      received: received,
+      remaining: remaining,
+      orderNow: orderNow
+    });
+  });
+  return out;
+}
+
+function saveCurrentPhaseOrder() {
+  if (!bc_last_plan_summary || !bc_last_plan_summary.length) return;
+  var inp = document.getElementById('bc_phase_pct_inp');
+  var pct = inp ? parseFloat(inp.value) : bc_selected_phase_pct;
+  if (isNaN(pct) || pct < 1) pct = 10;
+  if (pct > 100) pct = 100;
+
+  var preview = computeNextPhaseItems(pct);
+  var activeItems = preview.filter(function(x) { return x.orderNow > 0; });
+  if (!activeItems.length) {
+    alert("100% material for this project has already been ordered/received!");
+    return;
+  }
+
+  var st = getBcPhaseState();
+  var projInp = document.getElementById('bc_phase_proj_name');
+  if (projInp && projInp.value.trim()) st.projectName = projInp.value.trim();
+
+  var phaseNum = st.phases.length + 1;
+  var totalNow = activeItems.reduce(function(s, x) { return s + x.orderNow; }, 0);
+  var todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  st.phases.push({
+    phaseNo: phaseNum,
+    pct: pct,
+    date: todayStr,
+    totalBars: totalNow,
+    items: activeItems.map(function(x) {
+      return { profile: x.profile, stockFt: x.stockFt, bars: x.orderNow };
+    })
+  });
+  saveBcPhaseState(st);
+  renderPhaseMaterialBox();
+}
+
+function resetBcPhaseOrders() {
+  if (!confirm("Reset all saved Phase Orders for a new building project?")) return;
+  saveBcPhaseState({ projectName: '', phases: [] });
+  bc_selected_phase_pct = 10;
+  renderPhaseMaterialBox();
+}
+
+function exportBcPhasePdf(phaseIdx) {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert("PDF engine is loading. Please wait 2 seconds and try again.");
+    return;
+  }
+  var st = getBcPhaseState();
+  var projName = (document.getElementById('bc_phase_proj_name')?.value || st.projectName || 'Building Project').trim();
+  var safeTxt = function(s) {
+    if (typeof toEnglishPdfSafe === 'function') return toEnglishPdfSafe(String(s || ''));
+    return String(s || '').replace(/[^\x20-\x7E]/g, '').trim() || 'Project';
+  };
+  var prof = (typeof getProfileData === 'function') ? getProfileData() : {};
+  var shopName = safeTxt(prof.shopName || 'SMART WORKER ALUMINIUM');
+  var shopPhone = safeTxt(prof.phone || '');
+
+  var titleLabel = '';
+  var dateLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  var rows = [];
+  var sumTotal = 0, sumOrderNow = 0, sumRecAfter = 0, sumRemAfter = 0;
+
+  if (typeof phaseIdx === 'number' && st.phases[phaseIdx]) {
+    var ph = st.phases[phaseIdx];
+    titleLabel = "PHASE " + ph.phaseNo + " MATERIAL ORDER (" + ph.pct + "%)";
+    dateLabel = ph.date || dateLabel;
+    var recUpTo = {};
+    for (var i = 0; i <= phaseIdx; i++) {
+      (st.phases[i].items || []).forEach(function(it) {
+        recUpTo[it.profile] = (recUpTo[it.profile] || 0) + (parseInt(it.bars, 10) || 0);
+      });
+    }
+    var phMap = {};
+    (ph.items || []).forEach(function(it) { phMap[it.profile] = it.bars; });
+    (bc_last_plan_summary || []).forEach(function(r, idx) {
+      var ord = phMap[r.profile] || 0;
+      var recA = recUpTo[r.profile] || 0;
+      var remA = Math.max(0, r.totalBars - recA);
+      sumTotal += r.totalBars; sumOrderNow += ord; sumRecAfter += recA; sumRemAfter += remA;
+      rows.push([idx + 1, safeTxt(r.profile), r.stockFt + " Ft", r.totalBars, ord, recA, remA]);
+    });
+  } else {
+    var pct = parseFloat(document.getElementById('bc_phase_pct_inp')?.value || bc_selected_phase_pct) || 10;
+    var nextNo = st.phases.length + 1;
+    titleLabel = "PHASE " + nextNo + " ORDER PREVIEW (" + pct + "%)";
+    var prevItems = computeNextPhaseItems(pct);
+    prevItems.forEach(function(r, idx) {
+      var recA = r.received + r.orderNow;
+      var remA = Math.max(0, r.totalBars - recA);
+      sumTotal += r.totalBars; sumOrderNow += r.orderNow; sumRecAfter += recA; sumRemAfter += remA;
+      rows.push([idx + 1, safeTxt(r.profile), r.stockFt + " Ft", r.totalBars, r.orderNow, recA, remA]);
+    });
+  }
+
+  rows.push(["", "TOTAL BARS", "", sumTotal, sumOrderNow, sumRecAfter, sumRemAfter]);
+
+  var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(15);
+  doc.setFont(undefined, 'bold');
+  doc.text(shopName.toUpperCase(), 14, 12);
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text(titleLabel + "  |  Date: " + dateLabel, 14, 19);
+  if (shopPhone) doc.text("Contact: " + shopPhone, 14, 24);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(10.5);
+  doc.setFont(undefined, 'bold');
+  doc.text("Project: " + safeTxt(projName), 14, 36);
+
+  doc.autoTable({
+    startY: 41,
+    head: [["#", "Aluminium Section", "Bar Len", "Total Needed", "Order Now", "Total Received", "Pending Left"]],
+    body: rows,
+    theme: 'grid',
+    headStyles: { fillColor: [29, 78, 216], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+    styles: { fontSize: 9, cellPadding: 3 },
+    didParseCell: function(data) {
+      if (data.row.index === rows.length - 1) {
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fillColor = [239, 246, 255];
+      }
+    }
+  });
+
+  var fname = "SmartWorker_Phase_Order_" + Date.now() + ".pdf";
+  doc.save(fname);
+}
+
+function renderPhaseMaterialBox() {
+  var box = document.getElementById('bc_phase_order_box');
+  if (!box) return;
+  if (!bc_last_plan_summary || !bc_last_plan_summary.length) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  var st = getBcPhaseState();
+  var pct = bc_selected_phase_pct || 10;
+  var preview = computeNextPhaseItems(pct);
+
+  var grandTotal = preview.reduce(function(s, x) { return s + x.totalBars; }, 0);
+  var grandRec = preview.reduce(function(s, x) { return s + x.received; }, 0);
+  var grandRem = preview.reduce(function(s, x) { return s + x.remaining; }, 0);
+  var grandNow = preview.reduce(function(s, x) { return s + x.orderNow; }, 0);
+  var donePct = grandTotal > 0 ? Math.min(100, Math.round((grandRec / grandTotal) * 100)) : 0;
+  var nextPhaseNo = st.phases.length + 1;
+
+  var chipPcts = [10, 20, 25, 30, 50, 100];
+  var chipsHtml = chipPcts.map(function(p) {
+    var active = (Math.round(pct) === p);
+    var bg = active ? '#1d4ed8' : '#eff6ff';
+    var col = active ? '#ffffff' : '#1e40af';
+    var lbl = (p === 100) ? '100% বাকি' : (p + '%');
+    return '<button type="button" onclick="setBcPhasePct(' + p + ')" style="background:' + bg + '; color:' + col + '; border:1px solid #93c5fd; border-radius:6px; padding:5px 8px; font-size:0.7rem; font-weight:800; cursor:pointer;">' + lbl + '</button>';
+  }).join('');
+
+  var rowsHtml = preview.map(function(x) {
+    var remColor = x.remaining > 0 ? '#b45309' : '#15803d';
+    return '<tr style="border-bottom:1px solid #e2e8f0;">' +
+      '<td style="padding:5px 4px; font-weight:700; color:#0f172a; font-size:0.7rem;">' + x.profile + '</td>' +
+      '<td style="padding:5px 3px; text-align:center; font-weight:700; font-size:0.72rem;">' + x.totalBars + '</td>' +
+      '<td style="padding:5px 3px; text-align:center; font-weight:800; color:#15803d; font-size:0.72rem;">' + x.received + '</td>' +
+      '<td style="padding:5px 3px; text-align:center; font-weight:800; color:#1d4ed8; background:#eff6ff; font-size:0.74rem;">+' + x.orderNow + '</td>' +
+      '<td style="padding:5px 3px; text-align:center; font-weight:800; color:' + remColor + '; font-size:0.72rem;">' + Math.max(0, x.remaining - x.orderNow) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var histHtml = '';
+  if (st.phases.length > 0) {
+    histHtml = '<div style="margin-top:9px; border-top:1px dashed #93c5fd; padding-top:7px;">' +
+      '<div style="font-size:0.7rem; font-weight:800; color:#1e3a8a; margin-bottom:5px;">সেভ করা ধাপসমূহ (SAVED PHASES):</div>' +
+      st.phases.map(function(ph, idx) {
+        return '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; margin-bottom:4px; font-size:0.7rem;">' +
+          '<span><b>ধাপ ' + ph.phaseNo + ' (' + ph.pct + '%)</b> • ' + ph.totalBars + ' বার <span style="color:#64748b;">(' + ph.date + ')</span></span>' +
+          '<button type="button" onclick="exportBcPhasePdf(' + idx + ')" style="background:#be123c; color:#fff; border:none; border-radius:5px; padding:3px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;">PDF</button>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  var safeProjVal = (st.projectName || '').replace(/"/g, '&quot;');
+
+  box.innerHTML =
+    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:6px; flex-wrap:wrap;">' +
+      '<span style="font-size:0.8rem; font-weight:800; color:#1e3a8a;"><i class="fa-solid fa-layer-group"></i> ধাপে ধাপে মাল আনা (PHASE ORDER)</span>' +
+      '<span style="font-size:0.68rem; font-weight:800; background:#dbeafe; color:#1e40af; padding:2px 7px; border-radius:99px;">' + donePct + '% এসেছে (' + grandRec + '/' + grandTotal + ' বার)</span>' +
+    '</div>' +
+    '<div style="width:100%; height:7px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin-bottom:8px;">' +
+      '<div style="width:' + donePct + '%; height:100%; background:#16a34a; transition:width 0.25s;"></div>' +
+    '</div>' +
+    '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-bottom:8px; text-align:center;">' +
+      '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:7px; padding:5px;"><div style="font-size:0.62rem; color:#475569; font-weight:700;">মোট দরকার</div><div style="font-size:0.85rem; font-weight:900; color:#0f172a;">' + grandTotal + ' বার</div></div>' +
+      '<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:7px; padding:5px;"><div style="font-size:0.62rem; color:#166534; font-weight:700;">এসেছে</div><div style="font-size:0.85rem; font-weight:900; color:#15803d;">' + grandRec + ' বার</div></div>' +
+      '<div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:7px; padding:5px;"><div style="font-size:0.62rem; color:#92400e; font-weight:700;">বাকি আছে</div><div style="font-size:0.85rem; font-weight:900; color:#b45309;">' + grandRem + ' বার</div></div>' +
+    '</div>' +
+    '<input type="text" id="bc_phase_proj_name" value="' + safeProjVal + '" placeholder="প্রজেক্টের নাম (যেমন: বড় বিল্ডিং কাজ)" style="width:100%; box-sizing:border-box; padding:7px 9px; border:1px solid #cbd5e1; border-radius:7px; font-size:0.75rem; margin-bottom:7px;">' +
+    '<div style="font-size:0.7rem; font-weight:800; color:#1e40af; margin-bottom:5px;">ধাপ ' + nextPhaseNo + '-এ কত % মাল আনবেন? (10% থেকে শুরু):</div>' +
+    '<div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-bottom:8px;">' +
+      chipsHtml +
+      '<input type="number" id="bc_phase_pct_inp" min="1" max="100" value="' + pct + '" onchange="setBcPhasePct(this.value)" style="width:54px; padding:4px 6px; border:1.5px solid #1d4ed8; border-radius:6px; font-size:0.74rem; font-weight:800; text-align:center;">' +
+      '<span style="font-size:0.72rem; font-weight:800; color:#1e40af;">%</span>' +
+    '</div>' +
+    '<div style="overflow-x:auto; margin-bottom:8px;">' +
+      '<table style="width:100%; border-collapse:collapse; font-size:0.7rem;">' +
+        '<thead><tr style="background:#1e3a8a; color:#fff;">' +
+          '<th style="padding:5px 4px; text-align:left;">সেকশন</th>' +
+          '<th style="padding:5px 3px;">মোট</th>' +
+          '<th style="padding:5px 3px;">এসেছে</th>' +
+          '<th style="padding:5px 3px; background:#2563eb;">ধাপ ' + nextPhaseNo + '</th>' +
+          '<th style="padding:5px 3px;">বাকি থাকবে</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>' +
+    '</div>' +
+    '<div style="display:grid; grid-template-columns: 1.2fr 1fr 0.7fr; gap:5px;">' +
+      '<button type="button" onclick="saveCurrentPhaseOrder()" style="background:#15803d; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.7rem; font-weight:800; cursor:pointer;">+ ধাপ ' + nextPhaseNo + ' সেভ (' + grandNow + ' বার)</button>' +
+      '<button type="button" onclick="exportBcPhasePdf()" style="background:#be123c; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.7rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-file-pdf"></i> Phase PDF</button>' +
+      '<button type="button" onclick="resetBcPhaseOrders()" style="background:#64748b; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.7rem; font-weight:800; cursor:pointer;">রিসেট</button>' +
+    '</div>' +
+    histHtml;
+
+  box.style.display = 'block';
 }
 
 function exportRemnantQrStickersPdf() {
