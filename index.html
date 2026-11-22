@@ -40,11 +40,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v117') caches.delete(k);
+            if (k !== 'smart-worker-pro-v122') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=117').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=122').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -1072,18 +1072,26 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
        <div class="pro-card-sub" data-i18n="sub_upvc_fixed">Direct Fixed Glass (-7mm) &amp; +6mm Weld Cut</div>
      </div>
 
-     <div class="pro-card" onclick="openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)')">
+     <div class="pro-card" style="border:1.5px solid #e11d48;" onclick="openScreen('upvc_door', 'uPVC DOOR (SINGLE / DOUBLE)')">
        <div class="pro-card-header">
-         <div class="pro-card-icon" style="background:#eff6ff; color:#2563eb;"><i class="fa-solid fa-table-cells"></i></div>
+         <div class="pro-card-icon" style="background:#fff1f2; color:#e11d48;"><i class="fa-solid fa-door-open"></i></div>
          <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
        </div>
-       <div class="pro-card-title" data-i18n="mod_glass_opt">Glass 4'x8' Optimizer</div>
-       <div class="pro-card-sub" data-i18n="sub_glass_opt">Min-Waste Glass Sheet Layout &amp; PDF</div>
+       <div class="pro-card-title" data-i18n="mod_upvc_door">uPVC Door (Single/Double)</div>
+       <div class="pro-card-sub" data-i18n="sub_upvc_door">With / Without Bottom • +3/+6mm Weld &amp; GI</div>
      </div>
    </div>
 
    <div class="menu-section-title" style="color:#0f766e;"><span data-i18n="sec_shared_tools">SHARED WORKSHOP &amp; BILLING</span></div>
    <div class="pro-card-grid">
+     <div class="pro-card" style="grid-column: span 2; border: 1.5px solid #0284c7; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);" onclick="openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)')">
+       <div class="pro-card-header">
+         <div class="pro-card-icon" style="background:#0284c7; color:#ffffff;"><i class="fa-solid fa-table-cells"></i></div>
+         <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
+       </div>
+       <div class="pro-card-title" style="color:#0369a1;" data-i18n="mod_glass_opt">Glass 4'x8' Optimizer</div>
+       <div class="pro-card-sub" data-i18n="sub_glass_opt">Min-Waste Glass Sheet Layout &amp; PDF</div>
+     </div>
      <div class="pro-card" onclick="openScreen('site_khata', 'SITE MEASUREMENT KHATA')">
        <div class="pro-card-header">
          <div class="pro-card-icon" style="background:#eff6ff; color:#1d4ed8;"><i class="fa-solid fa-book-bookmark"></i></div>
@@ -1092,7 +1100,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
        <div class="pro-card-title" data-i18n="mod_khata_title">Site Measurement Khata</div>
        <div class="pro-card-sub" data-i18n="mod_khata_sub">Digital Khata Book: Room Tracking, Auto Labour &amp; Billing</div>
      </div>
-     <div class="pro-card" onclick="openScreen('quotation', 'PRO QUOTATION')">
+     <div class="pro-card" onclick="openUpvcQuotation()">
        <div class="pro-card-header">
          <div class="pro-card-icon" style="background:#f5f3ff; color:#6d28d9;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
          <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
@@ -2110,8 +2118,13 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       <button class="action-btn btn-calc" style="flex:0.65; background:#0d9488;" onclick="calculateUpvcCasement()" data-i18n="btn_calc_upvc">+ CALCULATE uPVC</button>
     </div>
     <div style="display:flex; gap:8px; margin-top:8px;">
-      <button class="action-btn" style="flex:1; background:#1e3a8a; padding:9px 4px; font-size:0.74rem; font-weight:800; border-radius:8px;" onclick="exportCutPdf('uPVC_Casement_Cutting', 'uPVC Casement & French', 'uc_out', 'uc_mat_out')"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="btn_cut_pdf">CUTTING PDF</span></button>
-      <button class="action-btn" style="flex:1; background:#0284c7; padding:9px 4px; font-size:0.74rem; font-weight:800; border-radius:8px;" onclick="exportGlassPdf('uPVC_Casement_Glass', 'uPVC Casement & French', uc_glass_dict, 'uc_out')"><i class="fa-solid fa-layer-group"></i> <span data-i18n="btn_glass_pdf">GLASS PDF</span></button>
+      <button class="action-btn btn-save" style="flex:1; padding:9px 4px; font-size:0.76rem; font-weight:800; border-radius:8px;" onclick="saveMeasurementData('uPVC Casement & French', 'uc_out', 'uc_mat_out')"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_rec">SAVE RECORD</span></button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px;">
+      <button class="action-btn" style="background:#1e3a8a; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportCutPdf('uPVC_Casement_Cutting', 'uPVC Casement & French', 'uc_out', 'uc_mat_out')"><i class="fa-solid fa-scissors"></i> <span data-i18n="btn_cut_pdf">1. CUTTING PDF</span></button>
+      <button class="action-btn" style="background:#0284c7; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportGlassPdf('uPVC_Casement_Glass', 'uPVC Casement & French', uc_glass_dict, 'uc_out')"><i class="fa-solid fa-qrcode"></i> <span data-i18n="btn_glass_pdf">2. GLASS PDF + QR</span></button>
+      <button class="action-btn" style="background:#0f766e; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportUpvcPurchasePdf('uPVC_Casement_Material_Order', 'uPVC Casement & French', uc_buckets)"><i class="fa-solid fa-boxes-stacked"></i> <span data-i18n="btn_upvc_order_pdf">3. uPVC ORDER PDF</span></button>
+      <button class="action-btn" style="background:#b45309; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportHardwarePdf('uPVC_Casement_Hardware', 'uPVC Casement & French', 'uc_out')"><i class="fa-solid fa-screwdriver-wrench"></i> <span data-i18n="btn_hw_pdf">4. HARDWARE PDF</span></button>
     </div>
   </div>
   <div class="output-label" style="color:#0d9488;" data-i18n="res_upvc_casement_cut">uPVC Casement Cutting &amp; GI Steel List</div>
@@ -2197,7 +2210,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
         <div><label data-i18n="lbl_weld_add" style="font-size:0.65rem; font-weight:700; color:#075985;">Weld (+):</label><input type="number" step="1" id="us_weld" value="6" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #7dd3fc; border-radius:6px;"></div>
       </div>
       <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
-        <div><label data-i18n="lbl_sash_h_engage" style="font-size:0.65rem; font-weight:700; color:#075985;">H-Engage (+):</label><input type="number" step="1" id="us_h_engage" value="18" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #7dd3fc; border-radius:6px;"></div>
+        <div><label data-i18n="lbl_sash_h_engage" style="font-size:0.65rem; font-weight:700; color:#075985;">H-Engage (+):</label><input type="number" step="1" id="us_h_engage" value="16" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #7dd3fc; border-radius:6px;"></div>
         <div><label data-i18n="lbl_glass_minus" style="font-size:0.65rem; font-weight:700; color:#075985;">Glass Minus:</label><input type="number" step="1" id="us_g_minus" value="106" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #7dd3fc; border-radius:6px;"></div>
         <div><label data-i18n="lbl_gi_minus" style="font-size:0.65rem; font-weight:700; color:#075985;">GI Steel(-):</label><input type="number" step="5" id="us_gi_minus" value="120" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #7dd3fc; border-radius:6px;"></div>
       </div>
@@ -2208,14 +2221,109 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       <button class="action-btn btn-calc" style="flex:0.65; background:#0284c7;" onclick="calculateUpvcSliding()" data-i18n="btn_calc_sliding">+ CALCULATE SLIDING</button>
     </div>
     <div style="display:flex; gap:8px; margin-top:8px;">
-      <button class="action-btn" style="flex:1; background:#1e3a8a; padding:9px 4px; font-size:0.74rem; font-weight:800; border-radius:8px;" onclick="exportCutPdf('uPVC_Sliding_Cutting', 'uPVC Sliding Window', 'us_out', 'us_mat_out')"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="btn_cut_pdf">CUTTING PDF</span></button>
-      <button class="action-btn" style="flex:1; background:#0f766e; padding:9px 4px; font-size:0.74rem; font-weight:800; border-radius:8px;" onclick="exportGlassPdf('uPVC_Sliding_Glass', 'uPVC Sliding Window', us_glass_dict, 'us_out')"><i class="fa-solid fa-layer-group"></i> <span data-i18n="btn_glass_pdf">GLASS PDF</span></button>
+      <button class="action-btn btn-save" style="flex:1; padding:9px 4px; font-size:0.76rem; font-weight:800; border-radius:8px;" onclick="saveMeasurementData('uPVC Sliding Window', 'us_out', 'us_mat_out')"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_rec">SAVE RECORD</span></button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px;">
+      <button class="action-btn" style="background:#1e3a8a; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportCutPdf('uPVC_Sliding_Cutting', 'uPVC Sliding Window', 'us_out', 'us_mat_out')"><i class="fa-solid fa-scissors"></i> <span data-i18n="btn_cut_pdf">1. CUTTING PDF</span></button>
+      <button class="action-btn" style="background:#0284c7; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportGlassPdf('uPVC_Sliding_Glass', 'uPVC Sliding Window', us_glass_dict, 'us_out')"><i class="fa-solid fa-qrcode"></i> <span data-i18n="btn_glass_pdf">2. GLASS PDF + QR</span></button>
+      <button class="action-btn" style="background:#0f766e; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportUpvcPurchasePdf('uPVC_Sliding_Material_Order', 'uPVC Sliding Window', us_buckets)"><i class="fa-solid fa-boxes-stacked"></i> <span data-i18n="btn_upvc_order_pdf">3. uPVC ORDER PDF</span></button>
+      <button class="action-btn" style="background:#b45309; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportHardwarePdf('uPVC_Sliding_Hardware', 'uPVC Sliding Window', 'us_out')"><i class="fa-solid fa-screwdriver-wrench"></i> <span data-i18n="btn_hw_pdf">4. HARDWARE PDF</span></button>
     </div>
   </div>
   <div class="output-label" style="color:#0284c7;" data-i18n="res_upvc_sliding_cut">uPVC Sliding Cutting &amp; GI Steel List</div>
   <div class="output-area" id="us_out"></div>
   <div class="output-label" style="color:#0369a1; margin-top:10px;" data-i18n="res_upvc_mat">uPVC Profile &amp; GI Steel Summary</div>
   <div class="output-area" id="us_mat_out"></div>
+</div>
+
+
+<!-- ================= uPVC DOOR (SINGLE & DOUBLE / FRENCH) SCREEN ================= -->
+<div id="screen-upvc_door" class="screen">
+  <div class="form-box">
+    <div style="background:linear-gradient(135deg,#9f1239,#e11d48); color:#fff; padding:10px 12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:800; font-size:0.86rem;"><i class="fa-solid fa-door-open"></i> <span data-i18n="mod_upvc_door">uPVC Door (Single/Double)</span></span>
+      <span data-i18n="upvc_badge_weld_gi" style="font-size:0.7rem; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:99px; font-weight:700;">Welding + GI Steel</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label data-i18n="lbl_input_unit">Input Unit:</label>
+        <select id="ud_unit">
+          <option value="Millimeter" selected>Millimeter</option>
+          <option value="Inch">Inch</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_upvc_door_type">Door Type:</label>
+        <select id="ud_type">
+          <option value="SINGLE_NO_BOT" data-i18n="opt_ud_single_nobot" selected>Single Door (No Bottom Frame)</option>
+          <option value="SINGLE_WITH_BOT" data-i18n="opt_ud_single_bot">Single Door (With Bottom Frame)</option>
+          <option value="DOUBLE_NO_BOT" data-i18n="opt_ud_double_nobot">Double / French Door (No Bottom)</option>
+          <option value="DOUBLE_WITH_BOT" data-i18n="opt_ud_double_bot">Double / French Door (With Bottom)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_total_h">Total Height (H):</label>
+        <div class="input-wrapper">
+          <input readonly inputmode="none" onclick="openKeypad('ud_h')" style="cursor:pointer; background:#fff;" type="text" id="ud_h" placeholder="2100">
+          <button type="button" class="keypad-trigger" onclick="openKeypad('ud_h')"><i class="fa-solid fa-calculator"></i></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_total_w">Total Width (W):</label>
+        <div class="input-wrapper">
+          <input readonly inputmode="none" onclick="openKeypad('ud_w')" style="cursor:pointer; background:#fff;" type="text" id="ud_w" placeholder="920">
+          <button type="button" class="keypad-trigger" onclick="openKeypad('ud_w')"><i class="fa-solid fa-calculator"></i></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_room_loc" style="color:#2563eb;">Room / Location:</label>
+        <input type="text" id="ud_loc" placeholder="Balcony, Bath, Main">
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_qty" style="color:#16a34a;">Quantity (Pcs):</label>
+        <input type="number" id="ud_qty" value="1" min="1">
+      </div>
+    </div>
+
+    <div style="margin-top:10px; padding:10px; background:#fff1f2; border:1.5px solid #fb7185; border-radius:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:0.74rem; font-weight:800; color:#9f1239;"><i class="fa-solid fa-sliders"></i> <span data-i18n="lbl_profile_ded">PROFILE DEDUCTIONS (ANY BRAND)</span></span>
+        <button type="button" data-i18n="btn_save_profile" onclick="saveUpvcDoorCustom()" style="background:#e11d48; color:#fff; border:none; border-radius:6px; padding:3px 8px; font-size:0.66rem; font-weight:700; cursor:pointer;">Save My Profile</button>
+      </div>
+      <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:7px;">
+        <button type="button" onclick="document.getElementById('ud_frame_b').value='38'" style="background:#ffe4e6; color:#9f1239; border:1px solid #fda4af; border-radius:5px; padding:3px 7px; font-size:0.68rem; font-weight:700; cursor:pointer;">38mm Frame (Lesso)</button>
+        <button type="button" onclick="document.getElementById('ud_frame_b').value='40'" style="background:#ffe4e6; color:#9f1239; border:1px solid #fda4af; border-radius:5px; padding:3px 7px; font-size:0.68rem; font-weight:700; cursor:pointer;">40mm Frame</button>
+        <button type="button" onclick="document.getElementById('ud_frame_b').value='50'" style="background:#ffe4e6; color:#9f1239; border:1px solid #fda4af; border-radius:5px; padding:3px 7px; font-size:0.68rem; font-weight:700; cursor:pointer;">50mm Heavy Frame</button>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:6px;">
+        <div><label data-i18n="lbl_outer_b" style="font-size:0.65rem; font-weight:700; color:#881337;">Outer Box B:</label><input type="number" step="0.5" id="ud_frame_b" value="38" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #fda4af; border-radius:6px;"></div>
+        <div><label data-i18n="lbl_overlap" style="font-size:0.65rem; font-weight:700; color:#881337;">Overlap (8+8):</label><input type="number" step="0.5" id="ud_overlap" value="16" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #fda4af; border-radius:6px;"></div>
+        <div><label data-i18n="lbl_weld_add" style="font-size:0.65rem; font-weight:700; color:#881337;">Weld (+):</label><input type="number" step="1" id="ud_weld" value="6" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #fda4af; border-radius:6px;"></div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px;">
+        <div><label data-i18n="lbl_glass_minus" style="font-size:0.65rem; font-weight:700; color:#881337;">Glass/Panel Minus:</label><input type="number" step="1" id="ud_g_minus" value="165" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #fda4af; border-radius:6px;"></div>
+        <div><label data-i18n="lbl_gi_minus" style="font-size:0.65rem; font-weight:700; color:#881337;">GI Steel(-):</label><input type="number" step="5" id="ud_gi_minus" value="120" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #fda4af; border-radius:6px;"></div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearUpvcDoor()" data-i18n="btn_clear">CLEAR</button>
+      <button class="action-btn btn-calc" style="flex:0.65; background:#e11d48;" onclick="calculateUpvcDoor()" data-i18n="btn_calc_door">+ CALCULATE DOOR</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="action-btn btn-save" style="flex:1; padding:9px 4px; font-size:0.76rem; font-weight:800; border-radius:8px;" onclick="saveMeasurementData('uPVC Door', 'ud_out', 'ud_mat_out')"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_rec">SAVE RECORD</span></button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px;">
+      <button class="action-btn" style="background:#1e3a8a; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportCutPdf('uPVC_Door_Cutting', 'uPVC Door', 'ud_out', 'ud_mat_out')"><i class="fa-solid fa-scissors"></i> <span data-i18n="btn_cut_pdf">1. CUTTING PDF</span></button>
+      <button class="action-btn" style="background:#0284c7; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportGlassPdf('uPVC_Door_Glass', 'uPVC Door', ud_glass_dict, 'ud_out')"><i class="fa-solid fa-qrcode"></i> <span data-i18n="btn_glass_pdf">2. GLASS PDF + QR</span></button>
+      <button class="action-btn" style="background:#0f766e; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportUpvcPurchasePdf('uPVC_Door_Material_Order', 'uPVC Door', ud_buckets)"><i class="fa-solid fa-boxes-stacked"></i> <span data-i18n="btn_upvc_order_pdf">3. uPVC ORDER PDF</span></button>
+      <button class="action-btn" style="background:#b45309; padding:9px 4px; font-size:0.72rem; font-weight:800; border-radius:8px;" onclick="exportHardwarePdf('uPVC_Door_Hardware', 'uPVC Door', 'ud_out')"><i class="fa-solid fa-screwdriver-wrench"></i> <span data-i18n="btn_hw_pdf">4. HARDWARE PDF</span></button>
+    </div>
+  </div>
+  <div class="output-label" style="color:#e11d48;" data-i18n="res_upvc_door_cut">uPVC Door Cutting &amp; GI Steel List</div>
+  <div class="output-area" id="ud_out"></div>
+  <div class="output-label" style="color:#9f1239; margin-top:10px;" data-i18n="res_upvc_mat">uPVC Profile &amp; GI Steel Summary</div>
+  <div class="output-area" id="ud_mat_out"></div>
 </div>
 
 <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
@@ -2706,9 +2814,25 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="Sliding 25x65 (3-Track)">Sliding 25x65 (3-Track)</option>
  <option value="Sliding 25x65 (4-Track)">Sliding 25x65 (4-Track)</option>
  </optgroup>
- <optgroup label="CASEMENT WINDOWS">
+ <optgroup label="CASEMENT & EURO WINDOWS">
  <option value="Casement 34 Series">Casement 34 Series</option>
  <option value="Casement 40 Series">Casement 40 Series</option>
+ <option value="Euro 40 Casement Window">Euro 40 Casement Window</option>
+ <option value="Euro 45 Casement Window">Euro 45 Casement Window</option>
+ <option value="Euro 50 Casement Window">Euro 50 Casement Window</option>
+ </optgroup>
+ <optgroup label="uPVC WINDOWS & DOORS">
+ <option value="uPVC 2-Track Sliding (2 Glass)">uPVC 2-Track Sliding (2 Glass)</option>
+ <option value="uPVC 2-Track Sliding (4 Glass)">uPVC 2-Track Sliding (4 Glass)</option>
+ <option value="uPVC 2.5-Track Sliding (2 Glass + 1 Jali)">uPVC 2.5-Track Sliding (2 Glass + 1 Jali)</option>
+ <option value="uPVC 3-Track Sliding (2 Glass + 1 Jali)">uPVC 3-Track Sliding (2 Glass + 1 Jali)</option>
+ <option value="uPVC 3-Track Sliding (3 Glass)">uPVC 3-Track Sliding (3 Glass)</option>
+ <option value="uPVC 3-Track Sliding Door (Heavy)">uPVC 3-Track Sliding Door (Heavy)</option>
+ <option value="uPVC Casement Window">uPVC Casement Window</option>
+ <option value="uPVC French Window (Flying Mullion)">uPVC French Window (Flying Mullion)</option>
+ <option value="uPVC Fixed / Ventilator">uPVC Fixed / Ventilator</option>
+ <option value="uPVC Single Door">uPVC Single Door</option>
+ <option value="uPVC Double / French Door">uPVC Double / French Door</option>
  </optgroup>
  <optgroup label="DOORS (GLASS & ACP)">
  <option value="Standard Door (Glass + ACP)">Standard Door (Glass + ACP)</option>
@@ -2736,6 +2860,32 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="Other Work">Other Work</option>
  </optgroup>
  </select>
+ </div>
+ <div id="q_upvc_spec_box" style="display:none; grid-column:span 2; background:#f0fdfa; border:1.5px solid #14b8a6; border-radius:10px; padding:10px; margin-top:4px;">
+   <div style="font-size:0.74rem; font-weight:800; color:#0f766e; margin-bottom:6px;"><i class="fa-solid fa-window-restore"></i> <span data-i18n="q_upvc_spec_title">uPVC SPECIFICATION (GI &amp; HARDWARE)</span></div>
+   <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+     <div>
+       <label data-i18n="q_lbl_gi_steel" style="font-size:0.68rem; font-weight:700; color:#115e59;">GI Reinforcement:</label>
+       <select id="q_upvc_gi" style="width:100%; padding:5px; font-size:0.78rem; border:1px solid #5eead4; border-radius:6px; background:#fff;">
+         <option value="1.2 mm GI Steel" selected>1.2 mm GI Steel</option>
+         <option value="1.5 mm GI Steel">1.5 mm GI Steel</option>
+         <option value="2.0 mm Heavy GI">2.0 mm Heavy GI</option>
+       </select>
+     </div>
+     <div>
+       <label data-i18n="q_lbl_hardware" style="font-size:0.68rem; font-weight:700; color:#115e59;">uPVC Hardware:</label>
+       <select id="q_upvc_hw" style="width:100%; padding:5px; font-size:0.78rem; border:1px solid #5eead4; border-radius:6px; background:#fff;">
+         <option value="Sliding Rollers + Touch Lock" selected>Sliding Rollers + Touch Lock</option>
+         <option value="Heavy Rollers + Multi-Point Lock">Heavy Rollers + Multi-Point Lock</option>
+         <option value="Friction Stay + Espag Multi-Point">Friction Stay + Espag Multi-Point</option>
+         <option value="3D Hinges + Multi-Point Door Lock">3D Hinges + Multi-Point Door Lock</option>
+       </select>
+     </div>
+   </div>
+   <div>
+     <label data-i18n="q_lbl_item_note" style="font-size:0.68rem; font-weight:700; color:#115e59;">Extra Item Note (Optional):</label>
+     <input type="text" id="q_upvc_note" placeholder="e.g. White Profile, Blue One-Way, Acid Frosted" style="width:100%; padding:5px; font-size:0.78rem; border:1px solid #5eead4; border-radius:6px; background:#fff;">
+   </div>
  </div>
 
  <div class="form-group">
@@ -2893,6 +3043,40 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.85rem;">
  <span style="font-weight:bold; color:#dc2626;">Due Balance:</span>
  <span id="q_due_label" style="font-weight:bold; color:#dc2626;">Rs. 0.00</span>
+ </div>
+
+ <!-- Pro Commercial Controls (CGST/IGST, Installation/Sq.Ft, Discount, Validity/Delivery) -->
+ <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:9px; margin-bottom:10px;">
+   <div style="font-size:0.74rem; font-weight:800; color:#4a148c; margin-bottom:6px;"><i class="fa-solid fa-file-contract"></i> <span data-i18n="q_comm_title">TAX, INSTALLATION &amp; PROPOSAL TERMS</span></div>
+   <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+     <div>
+       <label data-i18n="q_lbl_gst_mode" style="font-size:0.68rem; font-weight:700; color:#334155;">GST Mode:</label>
+       <select id="q_gst_mode" onchange="updateLiveDue()" style="width:100%; padding:5px; font-size:0.76rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+         <option value="AUTO" selected>Auto (Settings)</option>
+         <option value="CGST_SGST">Same State: CGST 9% + SGST 9%</option>
+         <option value="IGST">Other State: IGST 18%</option>
+         <option value="NONE">No GST (0%)</option>
+       </select>
+     </div>
+     <div>
+       <label data-i18n="q_lbl_install_rate" style="font-size:0.68rem; font-weight:700; color:#334155;">Install Rate (Rs/Sq.Ft):</label>
+       <input type="number" id="q_install_rate" value="0" min="0" oninput="updateLiveDue()" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+     </div>
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+     <div>
+       <label data-i18n="q_lbl_disc_rs" style="font-size:0.66rem; font-weight:700; color:#334155;">Discount (Rs):</label>
+       <input type="number" id="q_manual_disc" value="0" min="0" oninput="updateLiveDue()" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+     </div>
+     <div>
+       <label data-i18n="q_lbl_validity" style="font-size:0.66rem; font-weight:700; color:#334155;">Validity (Days):</label>
+       <input type="number" id="q_validity_days" value="15" min="1" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+     </div>
+     <div>
+       <label data-i18n="q_lbl_delivery" style="font-size:0.66rem; font-weight:700; color:#334155;">Delivery (Days):</label>
+       <input type="number" id="q_delivery_days" value="15" min="1" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+     </div>
+   </div>
  </div>
 
  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
@@ -5082,12 +5266,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=117"></script>
+  <script src="app.js?v=122"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=117').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=122').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

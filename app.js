@@ -8301,6 +8301,20 @@ function saveMeasurementData(projectType, outId, matId) {
  let thick_val = 1.5;
  try { thick_val = parseFloat(thickness.replace('mm', '').trim()) || 1.5; } catch(e){}
 
+ if (w_type.includes('uPVC')) {
+   let uRate = 480;
+   if (w_type.includes('3-Track') && w_type.includes('Door')) uRate = 720;
+   else if (w_type.includes('3-Track')) uRate = 580;
+   else if (w_type.includes('2.5-Track')) uRate = 540;
+   else if (w_type.includes('Double') || w_type.includes('French')) uRate = 680;
+   else if (w_type.includes('Single Door')) uRate = 650;
+   else if (w_type.includes('Casement')) uRate = 620;
+   else if (w_type.includes('Fixed')) uRate = 420;
+   if (toughened) uRate += 55;
+   if (glass_type && glass_type.includes('DGU')) uRate += 140;
+   if (color && !color.toLowerCase().includes('white') && !color.toLowerCase().includes('silver')) uRate += 45;
+   return uRate;
+ }
  const is_domal = w_type.includes('Domal');
  let base_wt = 0.90;
 
@@ -8418,6 +8432,8 @@ function saveMeasurementData(projectType, outId, matId) {
  const g_type = document.getElementById('q_g_type').value;
  const tough = document.getElementById('q_tough').value.includes("Toughened");
 
+ const uBox = document.getElementById('q_upvc_spec_box');
+ if (uBox) uBox.style.display = w_type.includes('uPVC') ? 'block' : 'none';
  const rate = calculateSuggestedRate(w_type, thick, color, g_thick, g_type, tough);
  document.getElementById('q_rate').value = rate;
  }
@@ -8548,8 +8564,15 @@ function autofillCustomer() {
  const total_price = total_sq_ft * rate;
  const unit_str = unit === "Feet" ? "ft" : (unit === "Millimeters" ? "mm" : "in");
 
+ let finalType = w_type;
+ if (w_type.includes('uPVC')) {
+   const uGi = document.getElementById('q_upvc_gi')?.value || '1.2 mm GI Steel';
+   const uHw = document.getElementById('q_upvc_hw')?.value || '';
+   const uNote = (document.getElementById('q_upvc_note')?.value || '').trim();
+   finalType = w_type + ' [' + uGi + (uHw ? ', ' + uHw : '') + (uNote ? ' | ' + uNote : '') + ']';
+ }
  billItems.push({
- type: w_type, location: loc, color: color, thickness: thick, glass_thick: g_thick,
+ type: finalType, location: loc, color: color, thickness: thick, glass_thick: g_thick,
  glass_type: g_type, toughened: toughened, h: h, w: w, unit: unit_str, qty: qty,
  rate: rate, area: total_sq_ft, price: total_price
  });
@@ -8964,61 +8987,136 @@ function autofillCustomer() {
     doc.text(`Email: ${cleanWorkshopEmail}`, 125, 64.5);
   }
 
-  const tableData = effectiveItems.map((itm, i) => [
-    i + 1,
-    `${itm.location ? '['+itm.location+'] ' : ''}${itm.type}\nAlu Spec: ${itm.thickness} | ${itm.color}\nGlass / Panel: ${itm.glass_thick} ${itm.glass_type}${(itm.toughened && !String(itm.glass_type).includes('Toughened')) ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} @ Rs.${itm.rate}/Sq.Ft`,
-    itm.qty,
-    itm.area.toFixed(1),
-    `Rs ${itm.rate}`,
-    `Rs ${itm.price.toFixed(2)}`
-  ]);
+  // Compute totals FIRST so Executive KPI Strip & Tax Breakdown are 100% accurate
+  const total_units = effectiveItems.reduce((a, b) => a + (Number(b.qty) || 1), 0);
+  const total_sqft = effectiveItems.reduce((a, b) => a + (Number(b.area) || 0), 0);
+  const grand_total = effectiveItems.reduce((a, b) => a + (Number(b.price) || 0), 0);
 
-  const grand_total = effectiveItems.reduce((a, b) => a + b.price, 0);
-  const [discount, gst_pct] = getDiscountAndGst();
+  const [set_disc, set_gst_pct] = getDiscountAndGst();
+  const manual_disc = safeEval(document.getElementById('q_manual_disc') ? document.getElementById('q_manual_disc').value : "0");
+  const discount = manual_disc > 0 ? manual_disc : set_disc;
+
+  const install_rate = safeEval(document.getElementById('q_install_rate') ? document.getElementById('q_install_rate').value : "0");
+  const install_charge = total_sqft * install_rate;
   const extra_charge = safeEval(document.getElementById('q_extra_charge') ? document.getElementById('q_extra_charge').value : "0");
-  const net_total = Math.max(0, grand_total - discount);
-  const gst_amount = net_total * (gst_pct / 100);
-  const final_total = net_total + gst_amount + extra_charge;
+
+  const gst_mode = document.getElementById('q_gst_mode') ? document.getElementById('q_gst_mode').value : "AUTO";
+  let gst_pct = set_gst_pct;
+  if (gst_mode === "CGST_SGST" || gst_mode === "IGST") gst_pct = 18;
+  else if (gst_mode === "NONE") gst_pct = 0;
+
+  const taxable_val = Math.max(0, grand_total + install_charge + extra_charge - discount);
+  const gst_amount = taxable_val * (gst_pct / 100);
+  const final_total = taxable_val + gst_amount;
   const advance_paid = safeEval(document.getElementById('q_advance') ? document.getElementById('q_advance').value : "0");
   const due_amount = Math.max(0, final_total - advance_paid);
+  const validity_days = document.getElementById('q_validity_days') ? (document.getElementById('q_validity_days').value || "15") : "15";
+  const delivery_days = document.getElementById('q_delivery_days') ? (document.getElementById('q_delivery_days').value || "15") : "15";
 
-  doc.autoTable({
-    startY: 69,
-    head: [['SN', 'Description & Specifications', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { fillColor: [74, 20, 140], textColor: [255, 255, 255], fontStyle: 'bold' },
-    styles: { fontSize: 8.5 }
+  // Executive KPI Summary Strip (SAICON-style high-trust header bar)
+  doc.setFillColor(238, 242, 255);
+  doc.setDrawColor(129, 140, 248);
+  doc.roundedRect(14, 68, 182, 11, 2, 2, 'FD');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(30, 58, 138);
+  doc.text(`TOTAL UNITS: ${total_units} Pcs`, 18, 74.8);
+  doc.text(`TOTAL AREA: ${total_sqft.toFixed(1)} Sq.Ft`, 60, 74.8);
+  doc.text(`VALIDITY: ${validity_days} Days | DELIVERY: ${delivery_days} Days`, 104, 74.8);
+  doc.setTextColor(22, 101, 52);
+  doc.text(`NET: Rs ${Math.round(final_total).toLocaleString('en-IN')}`, 168, 74.8);
+
+  const tableData = effectiveItems.map((itm, i) => {
+    const isUpvc = String(itm.type || '').includes('uPVC');
+    const specLabel = isUpvc ? 'Profile' : 'Alu Spec';
+    const perPc = (Number(itm.qty) > 0) ? (itm.price / itm.qty) : itm.price;
+    return [
+      i + 1,
+      '', // Vector CAD Drawing rendered in didDrawCell
+      `${itm.location ? '[' + itm.location + '] ' : ''}${itm.type}\n${specLabel}: ${itm.thickness} | ${itm.color}\nGlass / Panel: ${itm.glass_thick} ${itm.glass_type}${(itm.toughened && !String(itm.glass_type).includes('Toughened')) ? ' [TOUGHENED]' : ''}\nSize: ${itm.h} x ${itm.w} ${itm.unit} | Per Pc: Rs ${Math.round(perPc)}`,
+      itm.qty,
+      itm.area.toFixed(1),
+      `Rs ${itm.rate}`,
+      `Rs ${itm.price.toFixed(2)}`
+    ];
   });
 
-  const finalY = doc.lastAutoTable.finalY + 8;
-  doc.setTextColor(15, 23, 42);
-  doc.setFontSize(9);
-  doc.text(`Sub Total: Rs ${grand_total.toFixed(2)}`, 135, finalY);
-  if (discount > 0) doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 135, finalY + 5);
-  if (gst_pct > 0) doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 135, finalY + 10);
-  if (extra_charge > 0) doc.text(`Transport/Labor: +Rs ${extra_charge.toFixed(2)}`, 135, finalY + 15);
+  doc.autoTable({
+    startY: 82,
+    head: [['SN', 'Design\n(Inside)', 'Description & Specifications', 'Qty', 'Sq.Ft', 'Rate', 'Amount']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [74, 20, 140], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.8 },
+    styles: { fontSize: 7.8, valign: 'middle', minCellHeight: 22 },
+    columnStyles: {
+      0: { cellWidth: 8, halign: 'center' },
+      1: { cellWidth: 26, halign: 'center' },
+      2: { cellWidth: 78 },
+      3: { cellWidth: 10, halign: 'center' },
+      4: { cellWidth: 15, halign: 'right' },
+      5: { cellWidth: 19, halign: 'right' },
+      6: { cellWidth: 26, halign: 'right', fontStyle: 'bold' }
+    },
+    didDrawCell: function(data) {
+      if (data.section === 'body' && data.column.index === 1) {
+        const itm = effectiveItems[data.row.index];
+        if (itm && typeof drawPdfWindowSchematic === 'function') {
+          drawPdfWindowSchematic(doc, itm, data.cell.x + 2, data.cell.y + 2, data.cell.width - 4, data.cell.height - 4);
+        }
+      }
+    }
+  });
 
-  doc.setFont("helvetica", "bold");
-  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 135, finalY + 21);
+  let finalY = doc.lastAutoTable.finalY + 7;
+  if (finalY + 62 > doc.internal.pageSize.getHeight() - 8) {
+    doc.addPage();
+    finalY = 18;
+  }
+
+  // Right-side Itemized Price & Tax Summary Box
+  let sy = finalY;
+  doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "normal");
-  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 135, finalY + 26);
+  doc.setFontSize(8.5);
+  doc.text(`Windows / Doors Sub-Total: Rs ${grand_total.toFixed(2)}`, 124, sy); sy += 4.6;
+  if (install_charge > 0) { doc.text(`Installation (Rs ${install_rate}/Sq.Ft): +Rs ${install_charge.toFixed(2)}`, 124, sy); sy += 4.6; }
+  if (extra_charge > 0) { doc.text(`Transport / Delivery: +Rs ${extra_charge.toFixed(2)}`, 124, sy); sy += 4.6; }
+  if (discount > 0) { doc.text(`Discount: -Rs ${discount.toFixed(2)}`, 124, sy); sy += 4.6; }
+  if (gst_pct > 0) {
+    if (gst_mode === "CGST_SGST") {
+      doc.text(`CGST (9%): +Rs ${(gst_amount / 2).toFixed(2)}`, 124, sy); sy += 4.4;
+      doc.text(`SGST (9%): +Rs ${(gst_amount / 2).toFixed(2)}`, 124, sy); sy += 4.6;
+    } else if (gst_mode === "IGST") {
+      doc.text(`IGST (18%): +Rs ${gst_amount.toFixed(2)}`, 124, sy); sy += 4.6;
+    } else {
+      doc.text(`GST (${gst_pct}%): +Rs ${gst_amount.toFixed(2)}`, 124, sy); sy += 4.6;
+    }
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(30, 58, 138);
+  doc.text(`GRAND TOTAL: Rs ${final_total.toFixed(2)}`, 124, sy + 1); sy += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`Advance Paid: -Rs ${advance_paid.toFixed(2)}`, 124, sy); sy += 5;
+
   const incPrev = document.getElementById('q_include_prev_due') ? document.getElementById('q_include_prev_due').checked : true;
   const pDue = incPrev ? (activeCustomerPreviousDue || 0) : 0;
   const netPayableDue = due_amount + pDue;
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(200, 0, 0);
-  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 135, finalY + 32);
+  doc.text(`CURRENT BILL DUE: Rs ${due_amount.toFixed(2)}`, 124, sy); sy += 5;
 
   if (pDue > 0) {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(180, 0, 0);
-    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 135, finalY + 37.5);
+    doc.text(`Previous Khata Due: +Rs ${pDue.toFixed(2)}`, 124, sy); sy += 5;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(200, 0, 0);
-    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 135, finalY + 43.5);
+    doc.text(`TOTAL OUTSTANDING: Rs ${netPayableDue.toFixed(2)}`, 124, sy); sy += 5;
   }
 
   // Render Proper Bank & UPI Box + Custom Payment QR Code on the Left Side of Footer (Always consistent!)
@@ -9064,9 +9162,11 @@ function autofillCustomer() {
   doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  const termsStr = (remarks_note ? "Note: " + remarks_note + " | " : "") + (pay_terms || "TERMS: 50% Advance with order. Balance on delivery.");
-  doc.text(termsStr, 14, footerY);
-  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, footerY + 8);
+  const termsStr1 = (remarks_note ? "Note: " + remarks_note + " | " : "") + (pay_terms || "TERMS: 50% Advance with order, Balance before dispatch.");
+  const termsStr2 = `Validity: ${validity_days} Days | Delivery: ${delivery_days} Days | Warranty: 12 Months Workmanship | Drawings are schematic (Inside View).`;
+  doc.text(termsStr1, 14, footerY);
+  doc.text(termsStr2, 14, footerY + 4.2);
+  doc.text(`Customer Signature: ___________________ Authorized Signature (${shop_name}): ___________________`, 14, footerY + 11);
 
 
   // Draw Smart Glass Fabricator QR Auto-Load Box on the Bill PDF so Glass Fabricator can scan the Bill directly!
@@ -10788,6 +10888,28 @@ function setupDb() {
     opt_3t_2g1m: "3-Track (2 Glass + 1 Jali)",
     opt_3t_3s: "3-Track (3 Glass)",
     opt_3t_4g2m: "3-Track (4 Glass + 2 Jali)",
+    mod_upvc_door: "uPVC Door (Single/Double)",
+    sub_upvc_door: "With / Without Bottom • +3/+6mm Weld & GI",
+    lbl_upvc_door_type: "Door Type:",
+    opt_ud_single_nobot: "Single Door (No Bottom Frame)",
+    opt_ud_single_bot: "Single Door (With Bottom Frame)",
+    opt_ud_double_nobot: "Double / French Door (No Bottom)",
+    opt_ud_double_bot: "Double / French Door (With Bottom)",
+    btn_calc_door: "+ CALCULATE DOOR",
+    res_upvc_door_cut: "uPVC Door Cutting & GI Steel List",
+    q_upvc_spec_title: "uPVC SPECIFICATION (GI & HARDWARE)",
+    q_lbl_gi_steel: "GI Reinforcement:",
+    q_lbl_hardware: "uPVC Hardware:",
+    q_lbl_item_note: "Extra Item Note (Optional):",
+    q_comm_title: "TAX, INSTALLATION & PROPOSAL TERMS",
+    q_lbl_gst_mode: "GST Mode:",
+    q_lbl_install_rate: "Install Rate (Rs/Sq.Ft):",
+    q_lbl_disc_rs: "Discount (Rs):",
+    q_lbl_validity: "Validity (Days):",
+    q_lbl_delivery: "Delivery (Days):",
+    btn_save_rec: "SAVE RECORD",
+    btn_upvc_order_pdf: "3. uPVC ORDER PDF",
+    btn_hw_pdf: "4. HARDWARE PDF",
     lbl_frame_w_minus: "Frame W Minus:",
     lbl_ilock_add: "Interlock (+):",
     lbl_glass_minus: "Glass Minus:",
@@ -10891,13 +11013,35 @@ function setupDb() {
     lbl_sash_h_minus: "পাল্লা H মাইনাস:",
     lbl_frame_face_f: "ফ্রেম ফেস F:",
     lbl_sash_face_s: "পাল্লা ফেস S:",
-    lbl_sash_h_engage: "H-এনগেজ (+):",
+    lbl_sash_h_engage: "উপর-নিচ ওভারল্যাপ (+):",
     opt_2t_2s: "2-ট্র্যাক (2 পাল্লা গ্লাস)",
     opt_2t_4s: "2-ট্র্যাক (4 পাল্লা গ্লাস)",
     opt_25t_2g1m: "2.5-ট্র্যাক (2 গ্লাস + 1 জালি)",
     opt_3t_2g1m: "3-ট্র্যাক (2 গ্লাস + 1 জালি)",
     opt_3t_3s: "3-ট্র্যাক (3 পাল্লা গ্লাস)",
     opt_3t_4g2m: "3-ট্র্যাক (4 গ্লাস + 2 জালি)",
+    mod_upvc_door: "uPVC দরজা (সিঙ্গেল / ডাবল)",
+    sub_upvc_door: "বটম ছাড়া / বটম সহ • +3/+6mm ওয়েল্ড ও GI",
+    lbl_upvc_door_type: "দরজার ধরন:",
+    opt_ud_single_nobot: "সিঙ্গেল দরজা (নিচে ফ্রেম ছাড়া)",
+    opt_ud_single_bot: "সিঙ্গেল দরজা (নিচে ফ্রেম সহ)",
+    opt_ud_double_nobot: "ডাবল / ফ্রেঞ্চ দরজা (বটম ছাড়া)",
+    opt_ud_double_bot: "ডাবল / ফ্রেঞ্চ দরজা (বটম সহ)",
+    btn_calc_door: "+ দরজার হিসাব করুন",
+    res_upvc_door_cut: "uPVC দরজা কাটিং ও GI স্টিল লিস্ট",
+    q_upvc_spec_title: "uPVC স্পেসিফিকেশন (GI ও হার্ডওয়্যার)",
+    q_lbl_gi_steel: "GI স্টিল থিকনেস:",
+    q_lbl_hardware: "uPVC হার্ডওয়্যার:",
+    q_lbl_item_note: "অতিরিক্ত নোট (অপশনাল):",
+    q_comm_title: "জিএসটি, ফিটিং ও কোটেশন শর্তাবলী",
+    q_lbl_gst_mode: "GST ধরন:",
+    q_lbl_install_rate: "ফিটিং চার্জ (টাকা/Sq.Ft):",
+    q_lbl_disc_rs: "ডিসকাউন্ট (টাকা):",
+    q_lbl_validity: "বৈধতা (দিন):",
+    q_lbl_delivery: "ডেলিভারি (দিন):",
+    btn_save_rec: "রেকর্ড সেভ করুন",
+    btn_upvc_order_pdf: "3. uPVC অর্ডার PDF",
+    btn_hw_pdf: "4. হার্ডওয়্যার PDF",
     lbl_frame_w_minus: "ফ্রেম W মাইনাস:",
     lbl_ilock_add: "ইন্টারলক (+):",
     lbl_glass_minus: "গ্লাস মাইনাস:",
@@ -11001,13 +11145,35 @@ function setupDb() {
     lbl_sash_h_minus: "पल्ला H माइनस:",
     lbl_frame_face_f: "फ्रेम फेस F:",
     lbl_sash_face_s: "पल्ला फेस S:",
-    lbl_sash_h_engage: "H-एंगेज (+):",
+    lbl_sash_h_engage: "ऊपर-नीचे ओवरलैप (+):",
     opt_2t_2s: "2-ट्रैक (2 पल्ला ग्लास)",
     opt_2t_4s: "2-ट्रैक (4 पल्ला ग्लास)",
     opt_25t_2g1m: "2.5-ट्रैक (2 ग्लास + 1 जाली)",
     opt_3t_2g1m: "3-ट्रैक (2 ग्लास + 1 जाली)",
     opt_3t_3s: "3-ट्रैक (3 पल्ला ग्लास)",
     opt_3t_4g2m: "3-ट्रैक (4 ग्लास + 2 जाली)",
+    mod_upvc_door: "uPVC दरवाज़ा (सिंगल / डबल)",
+    sub_upvc_door: "बिना बॉटम / बॉटम सहित • +3/+6mm वेल्ड और GI",
+    lbl_upvc_door_type: "दरवाज़े का प्रकार:",
+    opt_ud_single_nobot: "सिंगल डोर (बिना बॉटम फ्रेम)",
+    opt_ud_single_bot: "सिंगल डोर (बॉटम फ्रेम सहित)",
+    opt_ud_double_nobot: "डबल / फ्रेंच डोर (बिना बॉटम)",
+    opt_ud_double_bot: "डबल / फ्रेंच डोर (बॉटम सहित)",
+    btn_calc_door: "+ दरवाज़ा हिसाब करें",
+    res_upvc_door_cut: "uPVC दरवाज़ा कटिंग और GI स्टील लिस्ट",
+    q_upvc_spec_title: "uPVC स्पेसिफिकेशन (GI और हार्डवेयर)",
+    q_lbl_gi_steel: "GI स्टील थिकनेस:",
+    q_lbl_hardware: "uPVC हार्डवेयर:",
+    q_lbl_item_note: "एक्स्ट्रा आइटम नोट (ऑप्शनल):",
+    q_comm_title: "जीएसटी, इंस्टॉलेशन और शर्तें",
+    q_lbl_gst_mode: "GST प्रकार:",
+    q_lbl_install_rate: "इंस्टॉलेशन (₹/Sq.Ft):",
+    q_lbl_disc_rs: "डिस्काउंट (₹):",
+    q_lbl_validity: "वैलिडिटी (दिन):",
+    q_lbl_delivery: "डिलीवरी (दिन):",
+    btn_save_rec: "रिकॉर्ड सेव करें",
+    btn_upvc_order_pdf: "3. uPVC ऑर्डर PDF",
+    btn_hw_pdf: "4. हार्डवेयर PDF",
     lbl_frame_w_minus: "फ्रेम W माइनस:",
     lbl_ilock_add: "इंटरलॉक (+):",
     lbl_glass_minus: "ग्लास माइनस:",
@@ -17585,19 +17751,35 @@ function calculateUpvcCasement() {
     }
   }
 
+  const perimM_uc = ((h_mm + w_mm) * 2 / 1000) * win_qty;
+  const totalSashUc = (top_open + bot_open) * win_qty;
+  const gasketM_uc = Math.ceil(perimM_uc * 2.2 + totalSashUc * 3.5);
+  const giScrewsUc = Math.ceil((perimM_uc + totalSashUc * 2.5) * 4);
+  const fastenersUc = Math.max(6, Math.ceil(perimM_uc * 1.6)) * win_qty;
+  const siliconeUc = Math.max(1, Math.ceil(perimM_uc / 10));
+  out += `\n--- 4. uPVC HARDWARE & CONSUMABLES ---\n`;
+  if (totalSashUc > 0) {
+    out += `> Friction Stay / Hinges: ${totalSashUc * 2} pc\n`;
+    out += `> Casement Handle + Espag Lock: ${totalSashUc} set\n`;
+  }
+  out += `> EPDM Rubber Gasket: ${gasketM_uc} m\n`;
+  out += `> GI SDS Screws (3.9x16mm): ${giScrewsUc} pc\n`;
+  out += `> Frame Fixing Fasteners (10x75mm): ${fastenersUc} pc\n`;
+  out += `> Glazing Packers: ${(top_cols + bot_cols) * 8 * win_qty} pc | Silicone Tube: ${siliconeUc} pc\n`;
+
   const prev = document.getElementById('uc_out').textContent;
   document.getElementById('uc_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
-  document.getElementById('uc_mat_out').textContent = generateMaterialList(uc_buckets);
+  document.getElementById('uc_mat_out').textContent = generateUpvcMaterialSummary(uc_buckets);
 }
 
 // ==================== uPVC SLIDING (ALL TRACKS — UNIVERSAL FORMULA) ====================
 const UPVC_SLIDING_PRESETS = {
-  "60mm Standard (2T)":    { frameF: 45, sashS: 66, weld: 6, hEngage: 18, gMinus: 102, giMinus: 120 },
-  "80mm Standard (2.5T)":  { frameF: 50, sashS: 66, weld: 6, hEngage: 18, gMinus: 106, giMinus: 120 },
-  "88mm Heavy (2.5T/3T)":  { frameF: 50, sashS: 86, weld: 6, hEngage: 18, gMinus: 136, giMinus: 120 },
-  "99mm Standard (3T)":    { frameF: 50, sashS: 66, weld: 6, hEngage: 18, gMinus: 106, giMinus: 120 },
-  "112mm Heavy (3T)":      { frameF: 50, sashS: 86, weld: 6, hEngage: 18, gMinus: 136, giMinus: 120 },
-  "Custom uPVC Sliding":   { frameF: 50, sashS: 66, weld: 6, hEngage: 18, gMinus: 106, giMinus: 120 }
+  "60mm Standard (2T)":    { frameF: 45, sashS: 66, weld: 6, hEngage: 16, gMinus: 102, giMinus: 120 },
+  "80mm Standard (2.5T)":  { frameF: 50, sashS: 66, weld: 6, hEngage: 16, gMinus: 106, giMinus: 120 },
+  "88mm Heavy (2.5T/3T)":  { frameF: 50, sashS: 86, weld: 6, hEngage: 16, gMinus: 136, giMinus: 120 },
+  "99mm Standard (3T)":    { frameF: 50, sashS: 66, weld: 6, hEngage: 16, gMinus: 106, giMinus: 120 },
+  "112mm Heavy (3T)":      { frameF: 50, sashS: 86, weld: 6, hEngage: 16, gMinus: 136, giMinus: 120 },
+  "Custom uPVC Sliding":   { frameF: 50, sashS: 66, weld: 6, hEngage: 16, gMinus: 106, giMinus: 120 }
 };
 
 var us_win_count = 0;
@@ -17632,7 +17814,7 @@ function saveUpvcSlidingCustom() {
     frameF: parseFloat(document.getElementById('us_frame_f')?.value) || 50,
     sashS: parseFloat(document.getElementById('us_sash_s')?.value) || 66,
     weld: parseFloat(document.getElementById('us_weld')?.value) || 6,
-    hEngage: parseFloat(document.getElementById('us_h_engage')?.value) || 18,
+    hEngage: parseFloat(document.getElementById('us_h_engage')?.value) || 16,
     gMinus: parseFloat(document.getElementById('us_g_minus')?.value) || 106,
     giMinus: parseFloat(document.getElementById('us_gi_minus')?.value) || 120
   };
@@ -17668,7 +17850,7 @@ function calculateUpvcSliding() {
   const weldVal = parseFloat(document.getElementById('us_weld')?.value);
   const weldAdd = isNaN(weldVal) ? 6 : weldVal;
   const hEngVal = parseFloat(document.getElementById('us_h_engage')?.value);
-  const hEngage = isNaN(hEngVal) ? 18 : hEngVal;
+  const hEngage = isNaN(hEngVal) ? 16 : hEngVal;
   const gMinus = parseFloat(document.getElementById('us_g_minus')?.value) || 106;
   const giMinus = parseFloat(document.getElementById('us_gi_minus')?.value) || 120;
 
@@ -17722,9 +17904,20 @@ function calculateUpvcSliding() {
     out += `> Mosquito Mesh: ${disp(glass_h)} x ${disp(glass_w)} (${meshShutters * qty} pc)\n`;
   }
   const totalShutters = (glassShutters + meshShutters) * qty;
-  out += `\n--- 4. uPVC HARDWARE ---\n`;
-  out += `> Heavy Rollers: ${totalShutters * 2} pc | Touch/Multi Lock: ${glassShutters * qty} pc\n`;
-  out += `> Wool Pile & EPDM Gasket: Required\n`;
+  const perimM_us = ((h_mm + w_mm) * 2 / 1000) * qty;
+  const woolPileM = Math.ceil((sash_h_fin * 2 + sash_w_fin * 2) * totalShutters / 1000 * 1.15);
+  const gasketM_us = Math.ceil((glass_h + glass_w) * 4 * (glassShutters * qty) / 1000);
+  const giScrewsUs = Math.ceil((perimM_us + totalShutters * 3) * 4);
+  const fastenersUs = Math.max(6, Math.ceil(perimM_us * 1.6));
+  const siliconeUs = Math.max(1, Math.ceil(perimM_us / 10));
+  out += `\n--- 4. uPVC HARDWARE & CONSUMABLES ---\n`;
+  out += `> Heavy Sliding Rollers: ${totalShutters * 2} pc\n`;
+  out += `> Touch / Multi-Point Lock: ${glassShutters * qty} pc\n`;
+  out += `> Wool Pile Weather Strip: ${woolPileM} m\n`;
+  out += `> EPDM Glazing Gasket: ${gasketM_us} m\n`;
+  out += `> GI SDS Screws (3.9x16mm): ${giScrewsUs} pc\n`;
+  out += `> Frame Fixing Fasteners (10x75mm): ${fastenersUs} pc\n`;
+  out += `> Glazing Packers: ${glassShutters * 8 * qty} pc | Silicone Tube: ${siliconeUs} pc\n`;
 
   const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Sliding Glass) || Clear`;
   us_glass_dict[gKey] = (us_glass_dict[gKey] || 0) + (glassShutters * qty);
@@ -17748,7 +17941,7 @@ function calculateUpvcSliding() {
 
   const prev = document.getElementById('us_out').textContent;
   document.getElementById('us_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
-  document.getElementById('us_mat_out').textContent = generateMaterialList(us_buckets);
+  document.getElementById('us_mat_out').textContent = generateUpvcMaterialSummary(us_buckets);
 }
 
 // Restore saved home mode on load
@@ -17758,3 +17951,338 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedMode === 'upvc') switchHomeMode('upvc');
   } catch (e) {}
 });
+
+
+function generateUpvcMaterialSummary(buckets) {
+  let lines = ["=== uPVC BAR (5.95m / 19.5ft) & GI STEEL (6m) ==="];
+  let hasAny = false;
+  for (const [name, pcsIn] of Object.entries(buckets)) {
+    if (!pcsIn || pcsIn.length === 0) continue;
+    hasAny = true;
+    const totalIn = pcsIn.reduce((a, b) => a + b, 0);
+    const totalM = (totalIn * 25.4) / 1000;
+    const totalFt = totalIn / 12;
+    const isGI = name.includes("GI Steel");
+    const barLenM = isGI ? 6.0 : 5.95;
+    const barsNeeded = Math.ceil((totalM * 1.05) / barLenM);
+    lines.push(`> ${name}: ${totalM.toFixed(2)} m (${totalFt.toFixed(1)} ft) | ~${barsNeeded} Bars (${barLenM}m)`);
+  }
+  return hasAny ? lines.join("\n") : "";
+}
+
+
+// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v122 ====================
+var ud_count = 0;
+var ud_glass_dict = {};
+var ud_buckets = { "uPVC Door Frame": [], "uPVC Door Sash": [], "uPVC French Mullion": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
+
+function saveUpvcDoorCustom() {
+  const obj = {
+    frameB: parseFloat(document.getElementById('ud_frame_b')?.value) || 38,
+    overlap: parseFloat(document.getElementById('ud_overlap')?.value) || 16,
+    weld: parseFloat(document.getElementById('ud_weld')?.value) || 6,
+    gMinus: parseFloat(document.getElementById('ud_g_minus')?.value) || 165,
+    giMinus: parseFloat(document.getElementById('ud_gi_minus')?.value) || 120
+  };
+  try { localStorage.setItem('sw_upvc_door_custom', JSON.stringify(obj)); } catch (e) {}
+  alert("Saved your Custom uPVC Door profile!");
+}
+
+function clearUpvcDoor() {
+  ud_count = 0;
+  ud_glass_dict = {};
+  ud_buckets = { "uPVC Door Frame": [], "uPVC Door Sash": [], "uPVC French Mullion": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
+  if (document.getElementById('ud_h')) document.getElementById('ud_h').value = "";
+  if (document.getElementById('ud_w')) document.getElementById('ud_w').value = "";
+  if (document.getElementById('ud_out')) document.getElementById('ud_out').textContent = "";
+  if (document.getElementById('ud_mat_out')) document.getElementById('ud_mat_out').textContent = "";
+}
+
+function calculateUpvcDoor() {
+  const raw_h = safeEval(document.getElementById('ud_h')?.value);
+  const raw_w = safeEval(document.getElementById('ud_w')?.value);
+  if (!raw_h || !raw_w) { alert("Please enter Height and Width."); return; }
+
+  const is_mm = (document.getElementById('ud_unit')?.value || 'Millimeter').includes('Millimeter');
+  const h_mm = is_mm ? raw_h : raw_h * 25.4;
+  const w_mm = is_mm ? raw_w : raw_w * 25.4;
+  const dtype = document.getElementById('ud_type')?.value || "SINGLE_NO_BOT";
+  const qty = Math.max(1, parseInt(document.getElementById('ud_qty')?.value) || 1);
+  const loc = (document.getElementById('ud_loc')?.value || "").trim();
+
+  const frameB = parseFloat(document.getElementById('ud_frame_b')?.value) || 38;
+  const ovVal = parseFloat(document.getElementById('ud_overlap')?.value);
+  const overlap = isNaN(ovVal) ? 16 : ovVal;
+  const weldVal = parseFloat(document.getElementById('ud_weld')?.value);
+  const weldAdd = isNaN(weldVal) ? 6 : weldVal;
+  const halfWeld = weldAdd / 2; // +3mm for 1-side welded vertical frame (no bottom)
+  const gMinus = parseFloat(document.getElementById('ud_g_minus')?.value) || 165;
+  const giMinus = parseFloat(document.getElementById('ud_gi_minus')?.value) || 120;
+
+  const hasBottom = dtype.includes("WITH_BOT");
+  const isDouble = dtype.includes("DOUBLE");
+  const typeLabel = (isDouble ? "Double / French Door" : "Single Door") + (hasBottom ? " (With Bottom)" : " (No Bottom)");
+
+  // Outer Frame Cutting:
+  // Width: always 45-45 both ends -> W + 6mm (1 pc if no bottom, 2 pc if with bottom)
+  // Height: No Bottom -> 45 top / 90 bottom -> H + 3mm (2 pc); With Bottom -> H + 6mm (2 pc)
+  const frame_w_cut = Math.ceil(w_mm + weldAdd);
+  const frame_h_cut = Math.ceil(h_mm + (hasBottom ? weldAdd : halfWeld));
+  const frame_w_pcs = hasBottom ? 2 : 1;
+
+  // Sash Height Cutting:
+  // No Bottom: frame_h_cut - (B - 3) = (H + 3) - (B - 3) = H - B + 6  [matches 2103 - 35 = 2068 for B=38!]
+  // With Bottom: frame_h_cut - (2*B - overlap) = (H + 6) - (2*B - 16)
+  const netDed2 = (2 * frameB) - overlap;
+  const sash_h_cut = hasBottom ? Math.ceil(frame_h_cut - netDed2) : Math.ceil(frame_h_cut - (frameB - halfWeld));
+  const sash_h_fin = sash_h_cut - weldAdd;
+
+  // Sash Width Cutting:
+  // Single Door: frame_w_cut - (2*B - overlap)  [matches 926 - 60 = 866 for W=920, B=38!]
+  // Double / French Door: ((W - (2*B - overlap) - 4) / 2) + weldAdd
+  const sash_w_cut = isDouble
+    ? Math.ceil(((w_mm - netDed2 - 4) / 2) + weldAdd)
+    : Math.ceil(frame_w_cut - netDed2);
+  const sash_w_fin = sash_w_cut - weldAdd;
+
+  const sashCount = isDouble ? 2 : 1;
+  const glass_h = Math.max(50, sash_h_fin - gMinus);
+  const glass_w = Math.max(50, sash_w_fin - gMinus);
+
+  const gi_fh = Math.max(50, frame_h_cut - giMinus);
+  const gi_fw = Math.max(50, frame_w_cut - giMinus);
+  const gi_sh = Math.max(50, sash_h_cut - giMinus);
+  const gi_sw = Math.max(50, sash_w_cut - giMinus);
+
+  ud_count += 1;
+  const disp = (mmVal) => is_mm ? (Math.round(mmVal * 10) / 10) + " mm" : toFractionInch(mmVal / 25.4);
+
+  let out = `[uPVC ${typeLabel} #${ud_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty > 1 ? ' (Qty: ' + qty + ')' : ''}]\n`;
+  out += `> Frame Box B=${frameB}mm, Overlap=${overlap}mm, Weld=+${weldAdd}mm${hasBottom ? '' : ' (Vert +'+halfWeld+'mm)'}\n`;
+  out += `--- 1. DOOR OUTER FRAME & GI STEEL ---\n`;
+  out += `> Frame Height (${hasBottom ? '45/45' : '45 Top / 90 Bot'}): ${disp(frame_h_cut)} (${2 * qty} pc) | GI: ${disp(gi_fh)}\n`;
+  out += `> Frame Width (${hasBottom ? 'Top+Bot' : 'Top Only'}): ${disp(frame_w_cut)} (${frame_w_pcs * qty} pc) | GI: ${disp(gi_fw)}\n`;
+  out += `\n--- 2. DOOR SASH (+${weldAdd}mm Weld) & GI STEEL ---\n`;
+  out += `> Door Sash (${sashCount * qty} Leaf / ${sashCount * 2 * qty} pc each): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
+  out += `> GI Steel (Sash): H ${disp(gi_sh)} x W ${disp(gi_sw)}\n`;
+  if (isDouble) {
+    out += `> French / Flying Mullion: ${disp(sash_h_fin)} (${qty} pc)\n`;
+    for (let q = 0; q < qty; q++) ud_buckets["uPVC French Mullion"].push(sash_h_fin / 25.4);
+  }
+  out += `\n--- 3. GLASS / ACP PANEL & HARDWARE ---\n`;
+  out += `> Glass / Panel Size: ${disp(glass_h)} x ${disp(glass_w)} (${sashCount * qty} pc)\n`;
+  const perimM_ud = ((h_mm * 2 + w_mm * (hasBottom ? 2 : 1)) / 1000) * qty;
+  const gasketM_ud = Math.ceil((perimM_ud * 2) + (sash_h_fin + sash_w_fin) * 4 * sashCount * qty / 1000);
+  const giScrewsUd = Math.ceil((perimM_ud + sashCount * 5 * qty) * 4);
+  const fastenersUd = Math.max(8, Math.ceil(perimM_ud * 1.8));
+  const siliconeUd = Math.max(1, Math.ceil(perimM_ud / 9));
+  out += `> 3D Heavy Door Hinges: ${sashCount * 3 * qty} pc\n`;
+  out += `> Multi-Point Door Lock + Cylinder + Handle: ${qty} set\n`;
+  out += `> EPDM Rubber Gasket: ${gasketM_ud} m\n`;
+  out += `> GI SDS Screws (3.9x16mm): ${giScrewsUd} pc\n`;
+  out += `> Frame Fixing Fasteners (10x75mm): ${fastenersUd} pc\n`;
+  out += `> Silicone Sealant Tube: ${siliconeUd} pc\n`;
+
+  const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Door Panel/Glass) || Clear/ACP`;
+  ud_glass_dict[gKey] = (ud_glass_dict[gKey] || 0) + (sashCount * qty);
+
+  for (let q = 0; q < qty; q++) {
+    ud_buckets["uPVC Door Frame"].push(frame_h_cut / 25.4, frame_h_cut / 25.4);
+    ud_buckets["GI Steel Reinforcement"].push(gi_fh / 25.4, gi_fh / 25.4);
+    for (let fw = 0; fw < frame_w_pcs; fw++) {
+      ud_buckets["uPVC Door Frame"].push(frame_w_cut / 25.4);
+      ud_buckets["GI Steel Reinforcement"].push(gi_fw / 25.4);
+    }
+    for (let s = 0; s < sashCount * 2; s++) {
+      ud_buckets["uPVC Door Sash"].push(sash_h_cut / 25.4, sash_w_cut / 25.4);
+      ud_buckets["GI Steel Reinforcement"].push(gi_sh / 25.4, gi_sw / 25.4);
+      ud_buckets["uPVC Glazing Bead"].push(glass_h / 25.4, glass_w / 25.4);
+    }
+  }
+
+  const prev = document.getElementById('ud_out').textContent;
+  document.getElementById('ud_out').textContent = out + "===================================\n\n" + prev;
+  document.getElementById('ud_mat_out').textContent = generateUpvcMaterialSummary(ud_buckets);
+}
+
+
+function openUpvcQuotation() {
+  openScreen('quotation', 'uPVC & ALU PRO QUOTATION');
+  setTimeout(function() {
+    const sel = document.getElementById('q_type');
+    if (sel) {
+      sel.value = 'uPVC 2.5-Track Sliding (2 Glass + 1 Jali)';
+      if (typeof updateSuggestedRate === 'function') updateSuggestedRate();
+    }
+    const cSel = document.getElementById('q_color');
+    if (cSel) cSel.value = 'Powder Coated White';
+  }, 50);
+}
+
+
+// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v122) ====================
+function drawPdfWindowSchematic(doc, itm, x, y, w, h) {
+  try {
+    const t = String(itm.type || '').toLowerCase();
+    // Draw outer frame
+    doc.setDrawColor(30, 41, 59);
+    doc.setFillColor(241, 245, 249);
+    doc.setLineWidth(0.5);
+    doc.rect(x, y, w, h, 'FD');
+
+    const pad = 1.4;
+    const ix = x + pad, iy = y + pad, iw = w - pad * 2, ih = h - pad * 2;
+    doc.setFillColor(224, 242, 254);
+    doc.setDrawColor(51, 65, 85);
+    doc.setLineWidth(0.3);
+
+    const isSliding = t.includes('sliding') || t.includes('domal') || t.includes('track');
+    const isDoor = t.includes('door') && !t.includes('sliding');
+    const isCasement = t.includes('casement') || t.includes('french') || t.includes('euro');
+    const isFixed = t.includes('fixed') || t.includes('ventilator') || t.includes('partition') || t.includes('ceiling');
+
+    if (isSliding) {
+      let cols = 2;
+      let hasJali = t.includes('jali') || t.includes('mesh') || t.includes('2.5-track');
+      if (t.includes('4 glass') || t.includes('4-track')) cols = 4;
+      else if (t.includes('3 glass') || (t.includes('3-track') && !t.includes('2 glass'))) cols = 3;
+      const pw = iw / cols;
+      for (let c = 0; c < cols; c++) {
+        const px = ix + c * pw;
+        doc.setFillColor(224, 242, 254);
+        doc.rect(px + 0.4, iy + 0.4, pw - 0.8, ih - 0.8, 'FD');
+        // Sliding direction arrow
+        const cy = iy + ih / 2;
+        doc.setDrawColor(2, 132, 199);
+        doc.line(px + pw * 0.25, cy, px + pw * 0.75, cy);
+        doc.setDrawColor(51, 65, 85);
+      }
+      if (hasJali) {
+        // Subtle Jali/Mesh crosshatch indicator on right half
+        doc.setDrawColor(100, 116, 139);
+        doc.setLineWidth(0.15);
+        const mx = ix + iw * 0.52, mw = iw * 0.44;
+        for (let d = 1.5; d < mw; d += 2.2) doc.line(mx + d, iy + 1, mx + d, iy + ih - 1);
+      }
+    } else if (isDoor) {
+      const cols = t.includes('double') || t.includes('french') ? 2 : 1;
+      const pw = iw / cols;
+      for (let c = 0; c < cols; c++) {
+        const px = ix + c * pw;
+        doc.rect(px + 0.4, iy + 0.4, pw - 0.8, ih - 0.8, 'FD');
+        // Door opening swing triangle
+        doc.setDrawColor(225, 29, 72);
+        doc.setLineWidth(0.2);
+        const hingeX = (c === 0) ? (px + 0.6) : (px + pw - 0.6);
+        const lockX = (c === 0) ? (px + pw - 0.6) : (px + 0.6);
+        doc.line(hingeX, iy + 0.6, lockX, iy + ih / 2);
+        doc.line(hingeX, iy + ih - 0.6, lockX, iy + ih / 2);
+        // Handle bar
+        doc.setLineWidth(0.5);
+        doc.line(lockX + (c === 0 ? -1.2 : 1.2), iy + ih * 0.42, lockX + (c === 0 ? -1.2 : 1.2), iy + ih * 0.58);
+        doc.setDrawColor(51, 65, 85);
+        doc.setLineWidth(0.3);
+      }
+    } else if (isCasement) {
+      const cols = (t.includes('french') || t.includes('double')) ? 2 : 2;
+      const pw = iw / cols;
+      for (let c = 0; c < cols; c++) {
+        const px = ix + c * pw;
+        doc.rect(px + 0.4, iy + 0.4, pw - 0.8, ih - 0.8, 'FD');
+        doc.setDrawColor(15, 118, 110);
+        doc.setLineWidth(0.2);
+        const hingeX = (c === 0) ? (px + 0.6) : (px + pw - 0.6);
+        const lockX = (c === 0) ? (px + pw - 0.6) : (px + 0.6);
+        doc.line(hingeX, iy + 0.6, lockX, iy + ih / 2);
+        doc.line(hingeX, iy + ih - 0.6, lockX, iy + ih / 2);
+        doc.setDrawColor(51, 65, 85);
+        doc.setLineWidth(0.3);
+      }
+    } else {
+      // Fixed / Partition / Ceiling
+      doc.rect(ix + 0.4, iy + 0.4, iw - 0.8, ih - 0.8, 'FD');
+      doc.setDrawColor(148, 163, 184);
+      doc.setLineWidth(0.2);
+      doc.line(ix + 2, iy + ih - 2, ix + iw - 2, iy + 2);
+      doc.setFontSize(5.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text("FIX", ix + iw / 2 - 2.5, iy + ih / 2 + 1);
+    }
+
+    // Small dimension tag at bottom of schematic
+    doc.setFontSize(5);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`${itm.w}x${itm.h}`, x + 1, y + h - 0.3);
+  } catch (e) {}
+}
+
+
+// ==================== uPVC PROFILE & GI STEEL PURCHASE ORDER PDF (5.95m / 6.0m BARS) ====================
+function exportUpvcPurchasePdf(filename, title, buckets) {
+  if (!isAppActivated()) {
+    alert("PRO activation is required to generate PDF documents.");
+    openScreen('activation', 'PRO UPGRADE & PLANS');
+    return;
+  }
+  const keys = Object.keys(buckets || {}).filter(k => buckets[k] && buckets[k].length > 0);
+  if (keys.length === 0) {
+    alert("No uPVC material calculated yet! Please calculate first.");
+    return;
+  }
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { alert("PDF library is loading, please try again."); return; }
+
+  const doc = new jsPDF('l', 'mm', 'a4');
+  const today = new Date().toLocaleDateString('en-GB');
+  drawDocHeaderWithLogo(doc, "uPVC PROFILE & GI STEEL PURCHASE ORDER", `${title} | Standard Bar: 5.95m (19.5ft) uPVC & 6.0m GI Steel | Date: ${today}`, [6, 95, 70]);
+
+  const rows = [];
+  let totalUpvcBars = 0, totalGiBars = 0;
+  keys.forEach((name, idx) => {
+    const pcsIn = buckets[name];
+    const totalIn = pcsIn.reduce((a, b) => a + b, 0);
+    const totalM = (totalIn * 25.4) / 1000;
+    const totalFt = totalIn / 12;
+    const isGI = name.includes("GI Steel");
+    const barLenM = isGI ? 6.0 : 5.95;
+    const barsNeeded = Math.ceil((totalM * 1.05) / barLenM);
+    if (isGI) totalGiBars += barsNeeded;
+    else totalUpvcBars += barsNeeded;
+    rows.push([
+      idx + 1,
+      name,
+      `${pcsIn.length} pcs`,
+      `${totalM.toFixed(2)} m`,
+      `${totalFt.toFixed(1)} ft`,
+      `${barLenM} m (${isGI ? '20 ft' : '19.5 ft'})`,
+      `${barsNeeded} Bars`
+    ]);
+  });
+
+  doc.autoTable({
+    startY: 36,
+    head: [['SN', 'uPVC Profile / GI Steel Section', 'Cut Pcs', 'Total Meters', 'Total Feet', 'Standard Bar Length', 'Order Qty (incl. 5% Margin)']],
+    body: rows,
+    theme: 'grid',
+    headStyles: { fillColor: [6, 95, 70], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+    styles: { fontSize: 9, valign: 'middle' },
+    columnStyles: {
+      0: { cellWidth: 12, halign: 'center' },
+      2: { halign: 'center' },
+      3: { halign: 'right' },
+      4: { halign: 'right' },
+      6: { halign: 'center', fontStyle: 'bold', textColor: [6, 95, 70] }
+    }
+  });
+
+  const fy = doc.lastAutoTable.finalY + 10;
+  doc.setFillColor(240, 253, 250);
+  doc.setDrawColor(13, 148, 136);
+  doc.roundedRect(14, fy, 269, 14, 2, 2, 'FD');
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(6, 95, 70);
+  doc.text(`TOTAL ORDER SUMMARY:   uPVC Profiles = ${totalUpvcBars} Bars (5.95m each)   |   GI Steel Reinforcement = ${totalGiBars} Bars (6.0m each)`, 20, fy + 9);
+
+  doc.save(`${filename}_${today.replace(/\//g, '-')}.pdf`);
+}
