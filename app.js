@@ -5084,22 +5084,22 @@ function keypadEnter() {
  if (t_text.includes("Center")) track_type = "2-Track CO";
 
  const outer_key = `Domal Outer Track (${track_type})`;
- const sash_tb_key = `Domal Sash Top/Bottom (${track_type})`;
- const sash_handle_key = `Domal Sash Handle (${track_type})`;
+ // Domal Sash Top/Bottom and Handle use the same Shutter/Sash section — combine into one bucket to cut Top/Bottom from Handle offcuts & save bars
+ const sash_key = `Domal Sash (Handle + Top/Bottom) (${track_type})`;
  const interlock_key = `Domal Interlock Clip (${track_type})`;
 
- [outer_key, sash_tb_key, sash_handle_key, interlock_key].forEach(k => {
+ [outer_key, sash_key, interlock_key].forEach(k => {
  if (!dm_buckets[k]) dm_buckets[k] = [];
  });
 
  for (let q = 0; q < win_qty; q++) {
    dm_buckets[outer_key].push(w_in, w_in, h_in, h_in);
-   for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_tb_key].push(h_cut_in);
-   for (let i = 0; i < han_qty; i++) dm_buckets[sash_handle_key].push(v_cut_in);
+   for (let i = 0; i < s_c * 2; i++) dm_buckets[sash_key].push(h_cut_in);
+   for (let i = 0; i < han_qty; i++) dm_buckets[sash_key].push(v_cut_in);
    for (let i = 0; i < int_qty; i++) dm_buckets[interlock_key].push(v_cut_in);
    if (has_mesh) {
-     dm_buckets[sash_tb_key].push(mesh_w_in, mesh_w_in);
-     dm_buckets[sash_handle_key].push(v_cut_in, v_cut_in);
+     dm_buckets[sash_key].push(mesh_w_in, mesh_w_in);
+     dm_buckets[sash_key].push(v_cut_in, v_cut_in);
      dm_buckets[interlock_key].push(v_cut_in);
    }
  }
@@ -16417,41 +16417,79 @@ function sendUpiScreenshotWhatsApp() {
   window.open('https://wa.me/919239413517?text=' + encodeURIComponent(msg), '_blank');
 }
 
+function applyAutoUnlockedProLicense(plan, days, expTs, keyStr, expDateStr) {
+  var dDays = parseInt(days, 10) || (String(plan || '').includes('1Y') ? 365 : (String(plan || '').includes('6M') ? 180 : (String(plan || '').includes('3M') ? 90 : 30)));
+  var nowMs = Date.now();
+  var finalExp = Number(expTs) || (nowMs + dDays * 24 * 60 * 60 * 1000);
+  if (finalExp <= nowMs) return;
+  var licObj = {
+    key: String(keyStr || ('AUTO-PRO-' + dDays + 'D')).toUpperCase(),
+    plan: plan || (dDays >= 365 ? 'KARIGAR_1Y' : (dDays >= 180 ? 'KARIGAR_6M' : (dDays >= 90 ? 'KARIGAR_3M' : 'KARIGAR_1M'))),
+    plan_category: 'KARIGAR',
+    validity_days: dDays,
+    start_date: new Date(nowMs).toLocaleDateString('en-GB'),
+    expiry_date: expDateStr || new Date(finalExp).toLocaleDateString('en-GB'),
+    expiry_timestamp: finalExp,
+    activated_at: new Date(nowMs).toISOString(),
+    auto_unlocked: true
+  };
+  try {
+    var existing = JSON.parse(localStorage.getItem('sw_license') || '{}');
+    if (existing && Number(existing.expiry_timestamp) >= finalExp && existing.key === licObj.key) return;
+    localStorage.setItem('sw_license', JSON.stringify(licObj));
+  } catch (e) {}
+  if (typeof updateActivationScreenUI === 'function') {
+    try { updateActivationScreenUI(); } catch (e) {}
+  }
+  var statusBox = document.getElementById('easyUpiStatusMsg');
+  if (statusBox) {
+    statusBox.style.display = 'block';
+    statusBox.style.background = '#dcfce7';
+    statusBox.style.color = '#14532d';
+    statusBox.textContent = '🎉 PRO Activated Automatically (' + dDays + ' Days • Till ' + licObj.expiry_date + ')! No key needed.';
+  }
+}
+
 function startLiveProAutoUnlockListener() {
   try {
     if (!window.fbDb || typeof getDeviceId !== 'function') return;
     if (_swLiveUnlockUnsub) return;
+    _swLiveUnlockUnsub = true;
     var devId = getDeviceId();
-    _swLiveUnlockUnsub = window.fbDb.collection('recharge_requests').doc(devId).onSnapshot(function(doc) {
+
+    // 1. Listen to recharge_requests/{devId}
+    window.fbDb.collection('recharge_requests').doc(devId).onSnapshot(function(doc) {
       if (!doc || !doc.exists) return;
       var d = doc.data() || {};
       var st = String(d.status || '').toUpperCase();
       if (st === 'APPROVED' || st === 'ACTIVE') {
-        var days = parseInt(d.days, 10) || 30;
-        var expTs = d.expiry_ts || (Date.now() + days * 24 * 60 * 60 * 1000);
-        try {
-          var lic = {
-            activated: true,
-            plan: d.plan || 'KARIGAR_1M',
-            days: days,
-            start_ts: Date.now(),
-            expiry_ts: expTs,
-            device_id: devId,
-            auto_unlocked: true
-          };
-          localStorage.setItem('sw_pro_license', JSON.stringify(lic));
-          localStorage.setItem('sw_pro_expiry', String(expTs));
-        } catch (e) {}
-        if (typeof updateActivationScreenUI === 'function') updateActivationScreenUI();
-        var statusBox = document.getElementById('easyUpiStatusMsg');
-        if (statusBox) {
-          statusBox.style.display = 'block';
-          statusBox.style.background = '#dcfce7';
-          statusBox.style.color = '#14532d';
-          statusBox.textContent = '🎉 PRO Activated Automatically for ' + days + ' Days! Enjoy full Smart Worker Pro.';
-        }
+        applyAutoUnlockedProLicense(d.plan, d.days, d.expiry_ts || d.expiry_timestamp, d.generated_key || d.key, d.expiry_date);
       }
     }, function() {});
+
+    // 2. Listen to subscribers/{devId}
+    window.fbDb.collection('subscribers').doc(devId).onSnapshot(function(doc) {
+      if (!doc || !doc.exists) return;
+      var d = doc.data() || {};
+      var st = String(d.status || '').toUpperCase();
+      if (st === 'ACTIVE' || st === 'APPROVED') {
+        applyAutoUnlockedProLicense(d.plan, d.validity_days || d.days, d.expiry_timestamp || d.expiry_ts, d.key, d.expiry_date);
+      }
+    }, function() {});
+
+    // 3. Also listen to users/{phone} & subscribers/{phone} so Admin Direct Activate by Phone works with zero key!
+    var prof = {};
+    try { prof = JSON.parse(localStorage.getItem('sw_profile') || '{}'); } catch (e) {}
+    var rawPhone = String(prof.phone || localStorage.getItem('sw_cloud_user') || '').replace(/\D/g, '').slice(-10);
+    if (rawPhone.length === 10) {
+      window.fbDb.collection('users').doc(rawPhone).onSnapshot(function(doc) {
+        if (!doc || !doc.exists) return;
+        var d = doc.data() || {};
+        if (d.pro_active && d.pro_expiry_ts && Number(d.pro_expiry_ts) > Date.now()) {
+          applyAutoUnlockedProLicense(d.pro_plan, null, d.pro_expiry_ts, d.pro_key, d.pro_expiry_date);
+        }
+      }, function() {});
+    }
   } catch (e) {}
 }
 
