@@ -3,9 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="canonical" href="https://smartworkerpro.in/">
-  <meta property="og:url" content="https://smartworkerpro.in/">
-  <title>Smart Worker Pro - Fabrication Management System</title>
+  <link rel="canonical" href="https://smartworkeraluminium-sys.github.io/smartworker-pro/">
+  <title>Smart Worker Pro - Aluminium, uPVC &amp; Glass Fabrication App</title>
+  <meta name="application-name" content="Smart Worker Pro">
+  <meta name="description" content="Smart Worker Pro by Smart Worker Aluminium: 1-minute aluminium, uPVC &amp; glass cutting calculator, glass sheet optimization, thermal stickers, and English PDF quotation &amp; billing app.">
+  <meta property="og:site_name" content="Smart Worker Pro">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://smartworkeraluminium-sys.github.io/smartworker-pro/">
+  <meta property="og:title" content="Smart Worker Pro - Aluminium, uPVC &amp; Glass Fabrication App">
+  <meta property="og:description" content="1-minute aluminium, uPVC &amp; glass cutting calculator, glass sheet optimization, and instant PDF billing for fabricators.">
+  <meta property="og:image" content="https://smartworkeraluminium-sys.github.io/smartworker-pro/logo.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Smart Worker Pro",
+    "alternateName": ["Smart Worker Aluminium", "Smart Worker Pro Aluminium"],
+    "url": "https://smartworkeraluminium-sys.github.io/"
+  }
+  </script>
   
   <!-- PWA Manifest & App Configuration -->
   <link rel="manifest" href="manifest.json">
@@ -24,11 +40,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v69') caches.delete(k);
+            if (k !== 'smart-worker-pro-v108') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=106').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=108').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -66,7 +82,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   
   <!-- App Modular Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=106">
+  <link rel="stylesheet" href="style.css?v=107">
   <!-- Embedded Core & Visual Stylesheet for Instant 100% Offline Mobile & Desktop Rendering -->
   <!-- Stylesheet linked in head: style.css -->
   <style id="androidCalcInlineStyles">
@@ -4696,12 +4712,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=106"></script>
+  <script src="app.js?v=108"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=106').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=108').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

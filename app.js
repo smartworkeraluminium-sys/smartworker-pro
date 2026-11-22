@@ -13027,6 +13027,9 @@ function groupBarItemsByProfile(items) {
   var groups = {};
   (items || []).forEach(function(it) {
     var p = it.profile || 'Aluminium Bar';
+    if (/^Domal Sash (Top\/Bottom|Handle)\s*\(([^)]+)\)$/i.test(p)) {
+      p = p.replace(/^Domal Sash (Top\/Bottom|Handle)\s*\(([^)]+)\)$/i, 'Domal Sash (Handle + Top/Bottom) ($2)');
+    }
     if (!groups[p]) groups[p] = [];
     groups[p].push(it);
   });
