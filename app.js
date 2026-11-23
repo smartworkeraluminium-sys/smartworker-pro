@@ -10910,6 +10910,9 @@ function setupDb() {
     btn_save_rec: "SAVE RECORD",
     btn_upvc_order_pdf: "3. uPVC ORDER PDF",
     btn_hw_pdf: "4. HARDWARE PDF",
+    badge_upvc_bar_opt: "5.95m / 19.5' uPVC OPTIMIZER",
+    mod_upvc_bar_opt: "uPVC Profile Cutting (5.95m / 19.5')",
+    sub_upvc_bar_opt: "Min-Waste 5.95m uPVC & 6m GI Bar Cutting Drawing, Kerf Loss & PDF",
     lbl_frame_w_minus: "Frame W Minus:",
     lbl_ilock_add: "Interlock (+):",
     lbl_glass_minus: "Glass Minus:",
@@ -11042,6 +11045,9 @@ function setupDb() {
     btn_save_rec: "রেকর্ড সেভ করুন",
     btn_upvc_order_pdf: "3. uPVC অর্ডার PDF",
     btn_hw_pdf: "4. হার্ডওয়্যার PDF",
+    badge_upvc_bar_opt: "5.95m / 19.5' uPVC অপ্টিমাইজার",
+    mod_upvc_bar_opt: "uPVC প্রোফাইল কাটিং (5.95m / 19.5')",
+    sub_upvc_bar_opt: "কম ওয়েস্টেজ 5.95m uPVC ও 6m GI বার কাটিং ড্রয়িং, কার্ফ লস ও PDF",
     lbl_frame_w_minus: "ফ্রেম W মাইনাস:",
     lbl_ilock_add: "ইন্টারলক (+):",
     lbl_glass_minus: "গ্লাস মাইনাস:",
@@ -11174,6 +11180,9 @@ function setupDb() {
     btn_save_rec: "रिकॉर्ड सेव करें",
     btn_upvc_order_pdf: "3. uPVC ऑर्डर PDF",
     btn_hw_pdf: "4. हार्डवेयर PDF",
+    badge_upvc_bar_opt: "5.95m / 19.5' uPVC ऑप्टिमाइज़र",
+    mod_upvc_bar_opt: "uPVC प्रोफाइल कटिंग (5.95m / 19.5')",
+    sub_upvc_bar_opt: "कम वेस्टेज 5.95m uPVC और 6m GI बार कटिंग ड्राइंग, कर्फ लॉस और PDF",
     lbl_frame_w_minus: "फ्रेम W माइनस:",
     lbl_ilock_add: "इंटरलॉक (+):",
     lbl_glass_minus: "ग्लास माइनस:",
@@ -13523,6 +13532,16 @@ function importBucketsToBarOptimizer(modPrefix) {
     var hasCs = (typeof cs_buckets !== 'undefined' && Object.values(cs_buckets).some(function(a){ return a && a.length; }));
     if (hasCc) srcBuckets = cc_buckets;
     else if (hasCs) srcBuckets = cs_buckets;
+  }
+  else if (modPrefix === 'uc' && typeof uc_buckets !== 'undefined') { srcBuckets = uc_buckets; modName = 'uPVC Casement'; }
+  else if (modPrefix === 'us' && typeof us_buckets !== 'undefined') { srcBuckets = us_buckets; modName = 'uPVC Sliding'; }
+  else if (modPrefix === 'ud' && typeof ud_buckets !== 'undefined') { srcBuckets = ud_buckets; modName = 'uPVC Door'; }
+
+  if (modPrefix === 'uc' || modPrefix === 'us' || modPrefix === 'ud') {
+    var lenSel = document.getElementById('bc_stock_len');
+    var unitSel = document.getElementById('bc_unit');
+    if (lenSel) lenSel.value = '234.25';
+    if (unitSel) unitSel.value = 'Millimeter';
   }
 
   var imported = [];
@@ -17971,7 +17990,7 @@ function generateUpvcMaterialSummary(buckets) {
 }
 
 
-// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v122 ====================
+// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v123 ====================
 var ud_count = 0;
 var ud_glass_dict = {};
 var ud_buckets = { "uPVC Door Frame": [], "uPVC Door Sash": [], "uPVC French Mullion": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
@@ -18120,7 +18139,7 @@ function openUpvcQuotation() {
 }
 
 
-// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v122) ====================
+// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v123) ====================
 function drawPdfWindowSchematic(doc, itm, x, y, w, h) {
   try {
     const t = String(itm.type || '').toLowerCase();
@@ -18285,4 +18304,18 @@ function exportUpvcPurchasePdf(filename, title, buckets) {
   doc.text(`TOTAL ORDER SUMMARY:   uPVC Profiles = ${totalUpvcBars} Bars (5.95m each)   |   GI Steel Reinforcement = ${totalGiBars} Bars (6.0m each)`, 20, fy + 9);
 
   doc.save(`${filename}_${today.replace(/\//g, '-')}.pdf`);
+}
+
+
+function openUpvcBarOptimizer() {
+  openScreen('bar_cutting', 'uPVC PROFILE CUTTING (5.95m)');
+  setTimeout(function() {
+    var lenSel = document.getElementById('bc_stock_len');
+    var unitSel = document.getElementById('bc_unit');
+    var profInp = document.getElementById('bc_profile');
+    if (lenSel) lenSel.value = '234.25';
+    if (unitSel) unitSel.value = 'Millimeter';
+    if (profInp) profInp.value = 'uPVC Outer / Sash';
+    if (typeof recalculateBarCuttingPlan === 'function') recalculateBarCuttingPlan();
+  }, 60);
 }

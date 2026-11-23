@@ -40,11 +40,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v122') caches.delete(k);
+            if (k !== 'smart-worker-pro-v123') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=122').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=123').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -1079,6 +1079,18 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
        </div>
        <div class="pro-card-title" data-i18n="mod_upvc_door">uPVC Door (Single/Double)</div>
        <div class="pro-card-sub" data-i18n="sub_upvc_door">With / Without Bottom • +3/+6mm Weld &amp; GI</div>
+     </div>
+
+     <!-- 5. uPVC Profile Bar 1D Cutting Optimizer (5.95m / 19.5ft & 6.0m GI) -->
+     <div class="pro-card" style="grid-column: span 2; border: 1.5px solid #0d9488; background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%);" onclick="openUpvcBarOptimizer()">
+       <div class="pro-card-header">
+         <div class="pro-card-icon" style="background:#0d9488; color:#ffffff;">
+           <i class="fa-solid fa-ruler-horizontal"></i>
+         </div>
+         <span data-i18n="badge_upvc_bar_opt" style="font-size:0.7rem; font-weight:800; background:#ccfbf1; color:#0f766e; padding:3px 8px; border-radius:12px;">5.95m / 19.5' uPVC OPTIMIZER</span>
+       </div>
+       <div class="pro-card-title" style="color:#0f766e; font-size:0.98rem;" data-i18n="mod_upvc_bar_opt">uPVC Profile Cutting (5.95m / 19.5')</div>
+       <div class="pro-card-sub" style="color:#334155;" data-i18n="sub_upvc_bar_opt">Min-Waste 5.95m uPVC &amp; 6m GI Bar Cutting Drawing, Kerf Loss &amp; PDF</div>
      </div>
    </div>
 
@@ -4247,6 +4259,11 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
          <button type="button" onclick="importBucketsToBarOptimizer('dr')" style="background:#7c3aed; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Door</button>
          <button type="button" onclick="importBucketsToBarOptimizer('pt')" style="background:#ea580c; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.65rem; font-weight:800; cursor:pointer;">Partition</button>
        </div>
+       <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-top:5px;">
+         <button type="button" onclick="importBucketsToBarOptimizer('uc')" style="background:#065f46; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.66rem; font-weight:800; cursor:pointer;">uPVC Casement</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('us')" style="background:#0d9488; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.66rem; font-weight:800; cursor:pointer;">uPVC Sliding</button>
+         <button type="button" onclick="importBucketsToBarOptimizer('ud')" style="background:#9f1239; color:#fff; border:none; border-radius:6px; padding:7px 2px; font-size:0.66rem; font-weight:800; cursor:pointer;">uPVC Door</button>
+       </div>
      </div>
 
      <div class="form-grid">
@@ -4259,6 +4276,9 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
            <option value="180">15 Ft Bar (180" / 4572 mm)</option>
            <option value="216">18 Ft Bar (216" / 5486 mm)</option>
            <option value="240">20 Ft Bar (240" / 6096 mm)</option>
+           <option value="234.25">★ uPVC 5.95m Standard Bar (19.5 Ft / 5950 mm)</option>
+           <option value="228.35">uPVC 5.80m Bar (19.0 Ft / 5800 mm)</option>
+           <option value="236.22">GI Steel / uPVC 6.00m Bar (19.7 Ft / 6000 mm)</option>
          </select>
        </div>
        <div class="form-group">
@@ -5266,12 +5286,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=122"></script>
+  <script src="app.js?v=123"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=122').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=123').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
