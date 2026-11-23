@@ -4952,7 +4952,8 @@ function closeKeypadModal() {
     try { renderPartitionWallVisualOnly(); } catch(e){}
   }
   if (keypadTarget && keypadTarget.id) {
-    if (keypadTarget.id.startsWith('uc_')) { try { renderUpvcCad('uc'); } catch(e){} }
+    if (keypadTarget.id.startsWith('uc_')) { try { renderICad('uc'); } catch(e){} }
+    else if (keypadTarget.id.startsWith('cc_')) { try { renderICad('cc'); } catch(e){} }
     else if (keypadTarget.id.startsWith('us_')) { try { renderUpvcCad('us'); } catch(e){} }
     else if (keypadTarget.id.startsWith('ud_')) { try { renderUpvcCad('ud'); } catch(e){} }
   }
@@ -5343,6 +5344,7 @@ function onCasementSeriesChange() {
 }
 
 function calculateCasement() {
+ if (typeof iCadIsActive === 'function' && iCadIsActive('cc')) { calculateFromICad('cc'); return; }
  const raw_h = safeEval(document.getElementById('cc_h').value);
  const raw_w = safeEval(document.getElementById('cc_w').value);
  if (raw_h === 0 || raw_w === 0) { alert("Please enter Height and Width."); return; }
@@ -7533,7 +7535,7 @@ async function scanGlassQrFromImageFile(event) {
   const today = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
 
   let modPrefix = 'sl';
-  if (/domal/i.test(title)) modPrefix = 'dm';
+  if (/domal|euro series/i.test(title)) modPrefix = 'dm';
   else if (/casement/i.test(title)) modPrefix = 'cc';
   else if (/door/i.test(title) && !/partition/i.test(title)) modPrefix = 'dr';
   else if (/partition/i.test(title)) modPrefix = 'pt';
@@ -9730,9 +9732,9 @@ function autofillCustomer() {
   } else if (screenName === 'door') {
     setTimeout(function() { try { renderDoorRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'casement') {
-    setTimeout(function() { try { renderCasementSectionDesigner(); } catch(e){} }, 20);
+    setTimeout(function() { try { renderCasementSectionDesigner(); } catch(e){} try { renderICad('cc'); } catch(e){} }, 20);
   } else if (screenName === 'upvc_casement') {
-    setTimeout(function() { try { renderUpvcCad('uc'); } catch(e){} }, 30);
+    setTimeout(function() { try { renderICad('uc'); } catch(e){} }, 30);
   } else if (screenName === 'upvc_sliding') {
     setTimeout(function() { try { renderUpvcCad('us'); } catch(e){} }, 30);
   } else if (screenName === 'upvc_door') {
@@ -10823,7 +10825,7 @@ function setupDb() {
     sec_business_billing: "Business & Billing",
     mod_khata_title: "Site Measurement Khata",
     mod_khata_sub: "Digital Khata Book: Room Tracking, Auto Labour & Billing",
-    mod_domal: "Domal Window",
+    mod_domal: "Euro Series",
     mod_sliding: "Sliding Window",
     mod_casement: "Custom Casement",
     mod_partition: "Partition & Door",
@@ -10834,7 +10836,7 @@ function setupDb() {
     mod_calculator: "Smart Calculator",
     btn_open: "OPEN",
     btn_edit: "Edit",
-    sub_domal: "27x65 / 45mm Section Cuts",
+    sub_domal: "27x65 / 35x75 / 45mm Euro Cuts",
     sub_sliding: "2, 3, 4 Track & Interlock Cuts",
     sub_casement: "Z-Section & Openable Window",
     sub_partition: "Office Partition & Sheet Cutting",
@@ -10929,6 +10931,13 @@ function setupDb() {
     lbl_glass_spec: "Glass Thick & Type:",
     lbl_live_upvc_cad: "LIVE uPVC CAD PREVIEW (INSIDE VIEW)",
     btn_zoom_cad: "Zoom",
+    cad_ready_designs: "INTERACTIVE CAD DESIGNER",
+    cad_btn_merge: "Merge",
+    cad_btn_undo: "Undo",
+    cad_btn_reset: "Reset",
+    cad_btn_split_lr: "Split Left/Right",
+    cad_btn_split_tb: "Split Top/Bot",
+    cad_btn_exact: "Exact Size",
     lbl_frame_w_minus: "Frame W Minus:",
     lbl_ilock_add: "Interlock (+):",
     lbl_glass_minus: "Glass Minus:",
@@ -10963,7 +10972,7 @@ function setupDb() {
     sec_business_billing: "ব্যবসা ও বিলিং",
     mod_khata_title: "সাইট মেজারমেন্ট খাতা",
     mod_khata_sub: "ডিজিটাল খাতা: রুম মাপ, অটো লেবার ও বিলিং",
-    mod_domal: "ডোমাল জানালা",
+    mod_domal: "ইউরো সিরিজ",
     mod_sliding: "স্লাইডিং জানালা",
     mod_casement: "কাস্টম কেসমেন্ট",
     mod_partition: "পার্টিশন ও দরজা",
@@ -10974,7 +10983,7 @@ function setupDb() {
     mod_calculator: "স্মার্ট ক্যালকুলেটর",
     btn_open: "খুলুন",
     btn_edit: "এডিট",
-    sub_domal: "27x65 / 45mm সেকশন কাটিং",
+    sub_domal: "27x65 / 35x75 / 45mm ইউরো সেকশন",
     sub_sliding: "2, 3, 4 ট্র্যাক ও ইন্টারলক কাটিং",
     sub_casement: "জেড-সেকশন ও ওপেনেবল জানালা",
     sub_partition: "অফিস পার্টিশন ও শিট কাটিং",
@@ -11069,6 +11078,13 @@ function setupDb() {
     lbl_glass_spec: "গ্লাস থিকনেস ও ধরন:",
     lbl_live_upvc_cad: "লাইভ uPVC CAD ডিজাইন (ভেতর থেকে)",
     btn_zoom_cad: "বড় করে দেখুন",
+    cad_ready_designs: "ইন্টারেক্টিভ CAD ডিজাইনার",
+    cad_btn_merge: "একসাথে জুড়ুন",
+    cad_btn_undo: "আগের ধাপ",
+    cad_btn_reset: "রিসেট",
+    cad_btn_split_lr: "ডান/বাম ভাগ",
+    cad_btn_split_tb: "উপর/নিচ ভাগ",
+    cad_btn_exact: "সঠিক মাপ দিন",
     lbl_frame_w_minus: "ফ্রেম W মাইনাস:",
     lbl_ilock_add: "ইন্টারলক (+):",
     lbl_glass_minus: "গ্লাস মাইনাস:",
@@ -11103,7 +11119,7 @@ function setupDb() {
     sec_business_billing: "बिज़नेस और बिलिंग",
     mod_khata_title: "साइट मेज़रमेंट खाता",
     mod_khata_sub: "डिजिटल खाता: रूम ट्रैकिंग, ऑटो लेबर और बिलिंग",
-    mod_domal: "डोमल विंडो",
+    mod_domal: "यूरो सीरीज़",
     mod_sliding: "स्लाइडिंग विंडो",
     mod_casement: "कस्टम केसमेंट",
     mod_partition: "पार्टीशन और डोर",
@@ -11114,7 +11130,7 @@ function setupDb() {
     mod_calculator: "स्मार्ट कैलकुलेटर",
     btn_open: "खोलें",
     btn_edit: "एडिट",
-    sub_domal: "27x65 / 45mm सेक्शन कटिंग",
+    sub_domal: "27x65 / 35x75 / 45mm यूरो सेक्शन",
     sub_sliding: "2, 3, 4 ट्रैक और इंटरलॉक कटिंग",
     sub_casement: "Z-सेक्शन और ओपनेबल विंडो",
     sub_partition: "ऑफिस पार्टीशन और शीट कटिंग",
@@ -11209,6 +11225,13 @@ function setupDb() {
     lbl_glass_spec: "ग्लास थिकनेस और टाइप:",
     lbl_live_upvc_cad: "लाइव uPVC CAD डिज़ाइन (अंदर से)",
     btn_zoom_cad: "ज़ूम देखें",
+    cad_ready_designs: "इंटरैक्टिव CAD डिज़ाइनर",
+    cad_btn_merge: "मर्ज करें",
+    cad_btn_undo: "पीछे जाएं",
+    cad_btn_reset: "रीसेट",
+    cad_btn_split_lr: "दाएं/बाएं भाग",
+    cad_btn_split_tb: "ऊपर/नीचे भाग",
+    cad_btn_exact: "सही माप डालें",
     lbl_frame_w_minus: "फ्रेम W माइनस:",
     lbl_ilock_add: "इंटरलॉक (+):",
     lbl_glass_minus: "ग्लास माइनस:",
@@ -17654,6 +17677,7 @@ function clearUpvcCasement() {
 }
 
 function calculateUpvcCasement() {
+ if (typeof iCadIsActive === 'function' && iCadIsActive('uc')) { calculateFromICad('uc'); return; }
   const raw_h = safeEval(document.getElementById('uc_h')?.value);
   const raw_w = safeEval(document.getElementById('uc_w')?.value);
   if (!raw_h || !raw_w) { alert("Please enter Height and Width."); return; }
@@ -17817,7 +17841,7 @@ function calculateUpvcCasement() {
   const prev = document.getElementById('uc_out').textContent;
   document.getElementById('uc_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
   document.getElementById('uc_mat_out').textContent = generateUpvcMaterialSummary(uc_buckets);
-  try { renderUpvcCad('uc'); } catch(e){}
+  try { renderICad('uc'); } catch(e){}
 }
 
 // ==================== uPVC SLIDING (ALL TRACKS — UNIVERSAL FORMULA) ====================
@@ -18022,7 +18046,7 @@ function generateUpvcMaterialSummary(buckets) {
 }
 
 
-// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v125 ====================
+// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v127 ====================
 var ud_count = 0;
 var ud_glass_dict = {};
 var ud_buckets = { "uPVC Door Frame": [], "uPVC Door Sash": [], "uPVC French Mullion": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
@@ -18174,7 +18198,7 @@ function openUpvcQuotation() {
 }
 
 
-// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v125) ====================
+// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v127) ====================
 function drawPdfWindowSchematic(doc, itm, x, y, w, h) {
   try {
     const t = String(itm.type || '').toLowerCase();
@@ -18366,7 +18390,7 @@ function getUpvcColorGlassSpec(pfx) {
 }
 
 
-// ==================== LIVE uPVC PROPORTIONAL CAD SVG RENDERER (v125) ====================
+// ==================== LIVE uPVC PROPORTIONAL CAD SVG RENDERER (v127) ====================
 function getUpvcFrameHex(colorName) {
   const c = String(colorName || '').toLowerCase();
   if (c.includes('golden oak')) return { fill: '#9C6B3F', stroke: '#5C3A1E' };
@@ -18560,4 +18584,417 @@ function openUpvcCadFullscreen(pfx) {
   }
   document.getElementById('upvcCadZoomBody').innerHTML = buildUpvcCadSvg(pfx, 380, 320);
   modal.style.display = 'flex';
+}
+
+
+// ==================== INTERACTIVE PARTITION-STYLE CASEMENT CAD ENGINE (v127) ====================
+var _icadUid = 100;
+function _icadNextId() { return 'p_' + (++_icadUid); }
+
+var ICAD_STATE = {
+  cc: { tree: { id: 'p_1', type: 'OPEN' }, selected: 'p_1', history: [], dirty: false },
+  uc: { tree: { id: 'p_2', split: 'V', ratio: 0.5, a: { id: 'p_3', type: 'OPEN' }, b: { id: 'p_4', type: 'OPEN' } }, selected: 'p_3', history: [], dirty: false }
+};
+
+function iCadIsActive(pfx) {
+  return !!(ICAD_STATE[pfx] && ICAD_STATE[pfx].dirty);
+}
+
+function _icadClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function _icadPushUndo(pfx) {
+  const st = ICAD_STATE[pfx];
+  st.history.push(_icadClone(st.tree));
+  if (st.history.length > 20) st.history.shift();
+  st.dirty = true;
+}
+
+function _icadFindNode(node, id, parent = null, side = null) {
+  if (!node) return null;
+  if (node.id === id) return { node, parent, side };
+  if (node.split) {
+    return _icadFindNode(node.a, id, node, 'a') || _icadFindNode(node.b, id, node, 'b');
+  }
+  return null;
+}
+
+function _icadFirstLeaf(node) {
+  if (!node) return null;
+  return node.split ? _icadFirstLeaf(node.a) : node;
+}
+
+function iCadSelect(pfx, id) {
+  ICAD_STATE[pfx].selected = id;
+  renderICad(pfx);
+}
+
+function iCadSplit(pfx, dir) {
+  const st = ICAD_STATE[pfx];
+  const found = _icadFindNode(st.tree, st.selected);
+  if (!found || found.node.split) return;
+  _icadPushUndo(pfx);
+  const oldType = found.node.type || 'FIX';
+  const aNode = { id: _icadNextId(), type: oldType };
+  const bNode = { id: _icadNextId(), type: 'FIX' };
+  const splitNode = { id: found.node.id, split: dir, ratio: 0.5, a: aNode, b: bNode };
+  if (!found.parent) st.tree = splitNode;
+  else found.parent[found.side] = splitNode;
+  st.selected = aNode.id;
+  renderICad(pfx);
+}
+
+function iCadSetType(pfx, newType) {
+  const st = ICAD_STATE[pfx];
+  const found = _icadFindNode(st.tree, st.selected);
+  if (!found || found.node.split) return;
+  _icadPushUndo(pfx);
+  found.node.type = newType;
+  renderICad(pfx);
+}
+
+function iCadMerge(pfx) {
+  const st = ICAD_STATE[pfx];
+  const found = _icadFindNode(st.tree, st.selected);
+  if (!found || !found.parent) { alert("Root panel cannot be merged further."); return; }
+  _icadPushUndo(pfx);
+  const grand = _icadFindNode(st.tree, found.parent.id);
+  const merged = { id: _icadNextId(), type: found.node.type || 'FIX' };
+  if (!grand || !grand.parent) st.tree = merged;
+  else grand.parent[grand.side] = merged;
+  st.selected = merged.id;
+  renderICad(pfx);
+}
+
+function iCadUndo(pfx) {
+  const st = ICAD_STATE[pfx];
+  if (!st.history.length) return;
+  st.tree = st.history.pop();
+  const leaf = _icadFirstLeaf(st.tree);
+  st.selected = leaf ? leaf.id : null;
+  renderICad(pfx);
+}
+
+function iCadReset(pfx) {
+  const st = ICAD_STATE[pfx];
+  _icadPushUndo(pfx);
+  const root = { id: _icadNextId(), type: 'FIX' };
+  st.tree = root;
+  st.selected = root.id;
+  renderICad(pfx);
+}
+
+function applyICadPreset(pfx, preset) {
+  const st = ICAD_STATE[pfx];
+  _icadPushUndo(pfx);
+  if (preset === 'blank') {
+    st.tree = { id: _icadNextId(), type: 'FIX' };
+  } else if (preset === 'single_open') {
+    st.tree = { id: _icadNextId(), type: 'OPEN' };
+  } else if (preset === 'french_2') {
+    st.tree = { id: _icadNextId(), type: 'FRENCH' };
+  } else if (preset === 'top_fix_2open') {
+    st.tree = {
+      id: _icadNextId(), split: 'H', ratio: 0.3,
+      a: { id: _icadNextId(), type: 'FIX' },
+      b: { id: _icadNextId(), split: 'V', ratio: 0.5, a: { id: _icadNextId(), type: 'OPEN' }, b: { id: _icadNextId(), type: 'OPEN' } }
+    };
+  } else if (preset === 'sides_fix_mid_open') {
+    st.tree = {
+      id: _icadNextId(), split: 'V', ratio: 0.3,
+      a: { id: _icadNextId(), type: 'FIX' },
+      b: { id: _icadNextId(), split: 'V', ratio: 0.57, a: { id: _icadNextId(), type: 'OPEN' }, b: { id: _icadNextId(), type: 'FIX' } }
+    };
+  }
+  const lf = _icadFirstLeaf(st.tree);
+  st.selected = lf ? lf.id : null;
+  renderICad(pfx);
+}
+
+function _icadGetParams(pfx) {
+  const isMm = (document.getElementById(pfx + '_unit')?.value || 'Millimeter').includes('Millimeter');
+  let rawH = safeEval(document.getElementById(pfx + '_h')?.value) || (isMm ? 1200 : 48);
+  let rawW = safeEval(document.getElementById(pfx + '_w')?.value) || (isMm ? 1500 : 60);
+  if (rawH <= 0) rawH = isMm ? 1200 : 48;
+  if (rawW <= 0) rawW = isMm ? 1500 : 60;
+  const h_mm = isMm ? rawH : rawH * 25.4;
+  const w_mm = isMm ? rawW : rawW * 25.4;
+
+  let outerB = 24.8, mullionB = 24.8, overlap = 16, weldAdd = 0, zGlass = 115, fixGlass = 7, giMinus = 120;
+  if (pfx === 'uc') {
+    outerB = parseFloat(document.getElementById('uc_outer_b')?.value) || 35;
+    mullionB = parseFloat(document.getElementById('uc_mullion_b')?.value) || 35;
+    overlap = parseFloat(document.getElementById('uc_overlap')?.value); if (isNaN(overlap)) overlap = 16;
+    weldAdd = parseFloat(document.getElementById('uc_weld')?.value); if (isNaN(weldAdd)) weldAdd = 6;
+    zGlass = parseFloat(document.getElementById('uc_z_glass')?.value) || 120;
+    fixGlass = parseFloat(document.getElementById('uc_fix_glass')?.value); if (isNaN(fixGlass)) fixGlass = 7;
+    giMinus = parseFloat(document.getElementById('uc_gi_minus')?.value) || 120;
+  } else {
+    const ser = document.getElementById('cc_series')?.value || '40 Series';
+    if (ser.includes('Euro')) {
+      const p = (typeof EURO_CASEMENT_PRESETS !== 'undefined' && EURO_CASEMENT_PRESETS[ser]) ? EURO_CASEMENT_PRESETS[ser] : { outerB: 24.8, mullionB: 24.8, overlap: 16, zGlass: 115, fixGlass: 7 };
+      outerB = parseFloat(document.getElementById('cc_euro_outer_b')?.value) || p.outerB;
+      mullionB = parseFloat(document.getElementById('cc_euro_mullion_b')?.value) || p.mullionB;
+      overlap = parseFloat(document.getElementById('cc_euro_overlap')?.value); if (isNaN(overlap)) overlap = p.overlap;
+      zGlass = parseFloat(document.getElementById('cc_euro_z_glass')?.value) || p.zGlass;
+      fixGlass = parseFloat(document.getElementById('cc_euro_fix_glass')?.value); if (isNaN(fixGlass)) fixGlass = 7;
+    } else {
+      outerB = ser.includes('34') ? 28 : 23;
+      mullionB = ser.includes('34') ? 25 : 27;
+      overlap = 11; zGlass = 65; fixGlass = 7;
+    }
+  }
+  return { isMm, rawH, rawW, h_mm, w_mm, outerB, mullionB, overlap, weldAdd, zGlass, fixGlass, giMinus };
+}
+
+function _icadComputeLayout(node, x, y, w, h, mullionB, leaves, mullions) {
+  if (!node.split) {
+    leaves.push({ node, x, y, w, h });
+    return;
+  }
+  if (node.split === 'V') {
+    const avail = Math.max(20, w - mullionB);
+    const wA = avail * node.ratio;
+    const wB = avail - wA;
+    mullions.push({ dir: 'V', len: h, x: x + wA, y: y, w: mullionB, h: h });
+    _icadComputeLayout(node.a, x, y, wA, h, mullionB, leaves, mullions);
+    _icadComputeLayout(node.b, x + wA + mullionB, y, wB, h, mullionB, leaves, mullions);
+  } else {
+    const avail = Math.max(20, h - mullionB);
+    const hA = avail * node.ratio;
+    const hB = avail - hA;
+    mullions.push({ dir: 'H', len: w, x: x, y: y + hA, w: w, h: mullionB });
+    _icadComputeLayout(node.a, x, y, w, hA, mullionB, leaves, mullions);
+    _icadComputeLayout(node.b, x, y + hA + mullionB, w, hB, mullionB, leaves, mullions);
+  }
+}
+
+function iCadExactSize(pfx) {
+  const st = ICAD_STATE[pfx];
+  const found = _icadFindNode(st.tree, st.selected);
+  if (!found || !found.parent) { alert("First split the window (Left/Right or Top/Bot), then set exact size for a panel."); return; }
+  const pm = _icadGetParams(pfx);
+  const leaves = [], mullions = [];
+  _icadComputeLayout(st.tree, pm.outerB, pm.outerB, pm.w_mm - pm.outerB * 2, pm.h_mm - pm.outerB * 2, pm.mullionB, leaves, mullions);
+  const lf = leaves.find(l => l.node.id === st.selected);
+  if (!lf) return;
+  const isV = found.parent.split === 'V';
+  const currMm = isV ? lf.w : lf.h;
+  const currDisp = pm.isMm ? Math.round(currMm) : +(currMm / 25.4).toFixed(2);
+  const unitLabel = pm.isMm ? 'mm' : 'Inch';
+  const valStr = prompt(`Enter Exact Clear ${isV ? 'Width' : 'Height'} for selected panel (${unitLabel}):`, String(currDisp));
+  if (!valStr) return;
+  const newVal = parseFloat(valStr);
+  if (isNaN(newVal) || newVal <= 0) return;
+  const newMm = pm.isMm ? newVal : newVal * 25.4;
+
+  // Compute parent's total span along split axis
+  const sib = found.side === 'a' ? found.parent.b : found.parent.a;
+  const sibLeaves = [], dummyM = [];
+  // Estimate parent available span from current ratio
+  const parentAvail = currMm / (found.side === 'a' ? found.parent.ratio : (1 - found.parent.ratio));
+  let newRatio = newMm / parentAvail;
+  if (found.side === 'b') newRatio = 1 - newRatio;
+  newRatio = Math.max(0.15, Math.min(0.85, newRatio));
+  _icadPushUndo(pfx);
+  found.parent.ratio = newRatio;
+  renderICad(pfx);
+}
+
+function buildICadSvgString(pfx, maxW, maxH) {
+  const st = ICAD_STATE[pfx];
+  const pm = _icadGetParams(pfx);
+  const colName = pfx === 'uc' ? (document.getElementById('uc_color')?.value || 'uPVC Classic White') : (document.getElementById('cc_alu_color')?.value || 'Powder Coated Black');
+  const frameCol = (typeof getUpvcFrameHex === 'function') ? getUpvcFrameHex(colName) : { fill: '#334155', stroke: '#0f172a' };
+  const gType = document.getElementById(pfx + '_g_type')?.value || 'Clear';
+  const glassFill = (typeof getUpvcGlassHex === 'function') ? getUpvcGlassHex(gType) : '#BAE6FD';
+
+  const padL = 34, padT = 22, padR = 12, padB = 22;
+  const availW = maxW - padL - padR, availH = maxH - padT - padB;
+  const scale = Math.min(availW / pm.w_mm, availH / pm.h_mm);
+  const dw = pm.w_mm * scale, dh = pm.h_mm * scale;
+  const ox = padL + (availW - dw) / 2, oy = padT + (availH - dh) / 2;
+
+  const leaves = [], mullions = [];
+  _icadComputeLayout(st.tree, pm.outerB, pm.outerB, pm.w_mm - pm.outerB * 2, pm.h_mm - pm.outerB * 2, pm.mullionB, leaves, mullions);
+
+  const fmt = (mm) => pm.isMm ? Math.round(mm) + 'mm' : (mm / 25.4).toFixed(1) + '"';
+  let svg = `<svg viewBox="0 0 ${maxW} ${maxH}" style="width:100%; max-width:${maxW}px; height:auto; font-family:sans-serif; user-select:none;">`;
+  svg += `<defs><pattern id="icadMesh_${pfx}" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M 5 0 L 0 0 0 5" fill="none" stroke="#334155" stroke-width="0.6" opacity="0.6"/></pattern></defs>`;
+
+  // Outer Frame
+  svg += `<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="1.6" rx="2"/>`;
+
+  // Mullions / Transoms
+  mullions.forEach(m => {
+    svg += `<rect x="${ox + m.x * scale}" y="${oy + m.y * scale}" width="${Math.max(3, m.w * scale)}" height="${Math.max(3, m.h * scale)}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="0.8"/>`;
+  });
+
+  // Panels (Clickable!)
+  leaves.forEach(lf => {
+    const px = ox + lf.x * scale, py = oy + lf.y * scale, pw = Math.max(10, lf.w * scale), ph = Math.max(10, lf.h * scale);
+    const t = lf.node.type || 'FIX';
+    const isSel = (lf.node.id === st.selected);
+    const fill = (t === 'ACP') ? '#FED7AA' : (t === 'JALI' ? `url(#icadMesh_${pfx})` : glassFill);
+    svg += `<g onclick="iCadSelect('${pfx}','${lf.node.id}')" style="cursor:pointer;">`;
+    svg += `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="${fill}" stroke="${frameCol.stroke}" stroke-width="0.9"/>`;
+    if (t === 'OPEN' || t === 'JALI') {
+      svg += `<rect x="${px + 3}" y="${py + 3}" width="${Math.max(4, pw - 6)}" height="${Math.max(4, ph - 6)}" fill="none" stroke="${frameCol.stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${px + 3}" y1="${py + 3}" x2="${px + pw - 3}" y2="${py + ph / 2}" stroke="#0f766e" stroke-width="1.1" stroke-dasharray="3,2"/>`;
+      svg += `<line x1="${px + 3}" y1="${py + ph - 3}" x2="${px + pw - 3}" y2="${py + ph / 2}" stroke="#0f766e" stroke-width="1.1" stroke-dasharray="3,2"/>`;
+    } else if (t === 'FRENCH') {
+      const hw = pw / 2;
+      svg += `<line x1="${px + hw}" y1="${py}" x2="${px + hw}" y2="${py + ph}" stroke="${frameCol.stroke}" stroke-width="1.4"/>`;
+      svg += `<line x1="${px + 2}" y1="${py + 2}" x2="${px + hw - 2}" y2="${py + ph / 2}" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,2"/>`;
+      svg += `<line x1="${px + 2}" y1="${py + ph - 2}" x2="${px + hw - 2}" y2="${py + ph / 2}" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,2"/>`;
+      svg += `<line x1="${px + pw - 2}" y1="${py + 2}" x2="${px + hw + 2}" y2="${py + ph / 2}" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,2"/>`;
+      svg += `<line x1="${px + pw - 2}" y1="${py + ph - 2}" x2="${px + hw + 2}" y2="${py + ph / 2}" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,2"/>`;
+    } else if (t === 'TOP_HUNG') {
+      svg += `<line x1="${px + 2}" y1="${py + 2}" x2="${px + pw / 2}" y2="${py + ph - 2}" stroke="#b45309" stroke-width="1.1" stroke-dasharray="3,2"/>`;
+      svg += `<line x1="${px + pw - 2}" y1="${py + 2}" x2="${px + pw / 2}" y2="${py + ph - 2}" stroke="#b45309" stroke-width="1.1" stroke-dasharray="3,2"/>`;
+    } else if (t === 'FIX') {
+      svg += `<line x1="${px + 6}" y1="${py + ph - 6}" x2="${px + pw - 6}" y2="${py + 6}" stroke="#ffffff" stroke-width="1.3" opacity="0.75"/>`;
+    }
+    if (isSel) {
+      svg += `<rect x="${px + 1}" y="${py + 1}" width="${Math.max(4, pw - 2)}" height="${Math.max(4, ph - 2)}" fill="none" stroke="#7c3aed" stroke-width="2.2" stroke-dasharray="4,2"/>`;
+    }
+    svg += `<text x="${px + pw / 2}" y="${py + ph / 2 - 2}" font-size="8" font-weight="800" fill="#0f172a" text-anchor="middle">${t}</text>`;
+    svg += `<text x="${px + pw / 2}" y="${py + ph / 2 + 9}" font-size="7" font-weight="700" fill="#334155" text-anchor="middle">${fmt(lf.w)}×${fmt(lf.h)}</text>`;
+    svg += `</g>`;
+  });
+
+  // Outer Total Dimensions
+  svg += `<text x="${ox + dw / 2}" y="${oy - 6}" font-size="9" font-weight="800" fill="#0369a1" text-anchor="middle">Total W: ${fmt(pm.w_mm)}</text>`;
+  svg += `<text x="${ox - 10}" y="${oy + dh / 2}" font-size="9" font-weight="800" fill="#0369a1" text-anchor="middle" transform="rotate(-90 ${ox - 10} ${oy + dh / 2})">H: ${fmt(pm.h_mm)}</text>`;
+  svg += `</svg>`;
+  return { svg, leaves, mullions, pm };
+}
+
+function renderICad(pfx) {
+  const box = document.getElementById(pfx + '_icad_svg');
+  if (!box) return;
+  const res = buildICadSvgString(pfx, 320, 220);
+  box.innerHTML = res.svg;
+  const info = document.getElementById(pfx + '_icad_info');
+  if (info) {
+    const sel = res.leaves.find(l => l.node.id === ICAD_STATE[pfx].selected) || res.leaves[0];
+    if (sel) {
+      const fmt = (mm) => res.pm.isMm ? (Math.round(mm * 10) / 10) + ' mm' : (mm / 25.4).toFixed(2) + '"';
+      info.innerHTML = `Selected: <span style="color:#7c3aed;">${sel.node.type}</span> • Clear Inner: <span style="color:#0284c7;">${fmt(sel.w)} W × ${fmt(sel.h)} H</span>`;
+    }
+  }
+}
+
+function openInteractiveCasementZoom(pfx) {
+  let modal = document.getElementById('upvcCadZoomModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'upvcCadZoomModal';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+    modal.innerHTML = `<div style="background:#fff; border-radius:16px; width:100%; max-width:440px; padding:14px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-weight:800; color:#0f172a; font-size:0.9rem;">FULL-SCREEN INTERACTIVE CAD</span>
+        <button type="button" onclick="document.getElementById('upvcCadZoomModal').style.display='none'" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:5px 12px; font-weight:800; cursor:pointer;">✕</button>
+      </div>
+      <div id="upvcCadZoomBody"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('upvcCadZoomBody').innerHTML = buildICadSvgString(pfx, 380, 320).svg;
+  modal.style.display = 'flex';
+}
+
+function calculateFromICad(pfx) {
+  const pm = _icadGetParams(pfx);
+  const raw_h = safeEval(document.getElementById(pfx + '_h')?.value);
+  const raw_w = safeEval(document.getElementById(pfx + '_w')?.value);
+  if (!raw_h || !raw_w) { alert("Please enter Height and Width."); return; }
+
+  const isUpvc = (pfx === 'uc');
+  const qty = Math.max(1, parseInt(document.getElementById(pfx + '_qty')?.value) || 1);
+  const loc = (document.getElementById(pfx + '_loc')?.value || '').trim();
+  const disp = (mm) => pm.isMm ? (Math.round(mm * 10) / 10) + ' mm' : toFractionInch(mm / 25.4);
+  const leaves = [], mullions = [];
+  _icadComputeLayout(ICAD_STATE[pfx].tree, pm.outerB, pm.outerB, pm.w_mm - pm.outerB * 2, pm.h_mm - pm.outerB * 2, pm.mullionB, leaves, mullions);
+
+  const buckets = isUpvc ? uc_buckets : cc_buckets;
+  const gDict = isUpvc ? uc_glass_dict : cc_glass_dict;
+  const gSpec = isUpvc ? getUpvcColorGlassSpec('uc') : { color: getModuleAluLabel('cc'), glassLabel: getModuleGlassLabel('cc') };
+  const seriesName = isUpvc ? (document.getElementById('uc_profile')?.value || 'uPVC') : (document.getElementById('cc_series')?.value || 'Euro Casement');
+  if (isUpvc) uc_win_count += 1; else cc_window_count += 1;
+  const winNo = isUpvc ? uc_win_count : cc_window_count;
+
+  const fH = pm.h_mm + pm.weldAdd, fW = pm.w_mm + pm.weldAdd;
+  let out = `[${isUpvc ? 'uPVC ' : ''}${seriesName} CAD Win #${winNo}${loc ? ' [' + loc + ']' : ''} | ${disp(pm.h_mm)} x ${disp(pm.w_mm)}${qty > 1 ? ' (Qty: ' + qty + ')' : ''}]\n`;
+  out += `> Spec: ${gSpec.color} | Glass: ${gSpec.glassLabel}\n`;
+  out += `--- 1. OUTER FRAME${pm.weldAdd ? ' (+' + pm.weldAdd + 'mm Weld)' : ''} & MULLIONS ---\n`;
+  out += `> Outer Height: ${disp(fH)} (${2 * qty} pc)${isUpvc ? ' | GI: ' + disp(Math.max(50, fH - pm.giMinus)) : ''}\n`;
+  out += `> Outer Width:  ${disp(fW)} (${2 * qty} pc)${isUpvc ? ' | GI: ' + disp(Math.max(50, fW - pm.giMinus)) : ''}\n`;
+
+  const outerKey = isUpvc ? "uPVC Outer Frame" : "Casement Outer";
+  const mulKey = isUpvc ? "uPVC Mullion / T" : "Casement Mullion";
+  const sashKey = isUpvc ? "uPVC Z-Sash" : "Casement Z Handle";
+  const beadKey = isUpvc ? "uPVC Glazing Bead" : "Square Clip (Beading)";
+
+  for (let q = 0; q < qty; q++) {
+    buckets[outerKey].push(fH / 25.4, fH / 25.4, fW / 25.4, fW / 25.4);
+    if (isUpvc) buckets["GI Steel Reinforcement"].push(Math.max(50, fH - pm.giMinus) / 25.4, Math.max(50, fH - pm.giMinus) / 25.4, Math.max(50, fW - pm.giMinus) / 25.4, Math.max(50, fW - pm.giMinus) / 25.4);
+  }
+
+  mullions.forEach((m, idx) => {
+    const mCut = m.len + (isUpvc ? 12 : 0);
+    out += `> ${m.dir === 'V' ? 'Vert. Mullion' : 'Horiz. Transom'} #${idx + 1}: ${disp(mCut)} (${qty} pc)\n`;
+    for (let q = 0; q < qty; q++) buckets[mulKey].push(mCut / 25.4);
+  });
+
+  out += `\n--- 2. INTERACTIVE CAD PANELS (${leaves.length} BAYS) ---\n`;
+  let totalSashes = 0;
+  leaves.forEach((lf, idx) => {
+    const t = lf.node.type || 'FIX';
+    if (t === 'FIX' || t === 'ACP') {
+      const gh = lf.h - pm.fixGlass, gw = lf.w - pm.fixGlass;
+      const lbl = t === 'ACP' ? 'ACP / Panel' : `Fixed Glass (${gSpec.glassLabel})`;
+      out += `[Panel #${idx + 1} ${t}] Clear: ${disp(lf.h)} x ${disp(lf.w)} -> ${lbl}: ${disp(gh)} x ${disp(gw)} (${qty} pc)\n`;
+      const gk = `${disp(gh)} x ${disp(gw)} (${t}) || ${gSpec.glassLabel}`;
+      gDict[gk] = (gDict[gk] || 0) + qty;
+      for (let q = 0; q < qty; q++) buckets[beadKey].push((lf.h + lf.w) * 2 / 25.4);
+    } else if (t === 'FRENCH') {
+      totalSashes += 2 * qty;
+      const shFin = lf.h + pm.overlap, swFin = (lf.w + pm.overlap - 4) / 2;
+      const shCut = shFin + pm.weldAdd, swCut = swFin + pm.weldAdd;
+      const gh = shFin - pm.zGlass, gw = swFin - pm.zGlass;
+      out += `[Panel #${idx + 1} FRENCH 2-SASH] Clear: ${disp(lf.h)} x ${disp(lf.w)} (4mm Center Gap)\n`;
+      out += ` > Z-Sash (${2 * qty} Leaf): ${disp(shCut)} x ${disp(swCut)} | French Mullion: ${disp(shFin)} (${qty} pc)\n`;
+      out += ` > Sash Glass (${gSpec.glassLabel}): ${disp(gh)} x ${disp(gw)} (${2 * qty} pc)\n`;
+      const gk = `${disp(gh)} x ${disp(gw)} (French Sash) || ${gSpec.glassLabel}`;
+      gDict[gk] = (gDict[gk] || 0) + (2 * qty);
+      for (let i = 0; i < 4 * qty; i++) buckets[sashKey].push(shCut / 25.4, swCut / 25.4);
+      for (let q = 0; q < qty; q++) buckets[mulKey].push(shFin / 25.4);
+    } else {
+      totalSashes += qty;
+      const shFin = lf.h + pm.overlap, swFin = lf.w + pm.overlap;
+      const shCut = shFin + pm.weldAdd, swCut = swFin + pm.weldAdd;
+      const gh = shFin - pm.zGlass, gw = swFin - pm.zGlass;
+      const fillLbl = t === 'JALI' ? 'SS Mosquito Jali' : gSpec.glassLabel;
+      out += `[Panel #${idx + 1} ${t}] Clear: ${disp(lf.h)} x ${disp(lf.w)}\n`;
+      out += ` > Z-Sash (${qty} Leaf): ${disp(shCut)} x ${disp(swCut)} | ${fillLbl}: ${disp(gh)} x ${disp(gw)} (${qty} pc)\n`;
+      const gk = `${disp(gh)} x ${disp(gw)} (${t} Sash) || ${fillLbl}`;
+      gDict[gk] = (gDict[gk] || 0) + qty;
+      for (let i = 0; i < 2 * qty; i++) buckets[sashKey].push(shCut / 25.4, swCut / 25.4);
+    }
+  });
+
+  const perimM = ((pm.h_mm + pm.w_mm) * 2 / 1000) * qty;
+  out += `\n--- 3. HARDWARE & CONSUMABLES ---\n`;
+  if (totalSashes > 0) {
+    out += `> Friction Stay / Hinges: ${totalSashes * 2} pc\n> Handle + Espag Lock: ${totalSashes} set\n`;
+  }
+  out += `> EPDM Rubber Gasket: ${Math.ceil(perimM * 2.2 + totalSashes * 3.5)} m\n`;
+  out += `> Frame Fasteners (10x75mm): ${Math.max(6, Math.ceil(perimM * 1.6))} pc | Silicone: ${Math.max(1, Math.ceil(perimM / 10))} pc\n`;
+
+  const outEl = document.getElementById(pfx + '_out');
+  const prev = outEl ? outEl.textContent : '';
+  if (outEl) outEl.textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
+  const matEl = document.getElementById(pfx + '_mat_out');
+  if (matEl) matEl.textContent = isUpvc ? generateUpvcMaterialSummary(buckets) : generateMaterialList(buckets);
+  renderICad(pfx);
 }
