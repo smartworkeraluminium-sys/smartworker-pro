@@ -4951,6 +4951,11 @@ function closeKeypadModal() {
   if (keypadTarget && (keypadTarget.id === 'pt_h' || keypadTarget.id === 'pt_w')) {
     try { renderPartitionWallVisualOnly(); } catch(e){}
   }
+  if (keypadTarget && keypadTarget.id) {
+    if (keypadTarget.id.startsWith('uc_')) { try { renderUpvcCad('uc'); } catch(e){} }
+    else if (keypadTarget.id.startsWith('us_')) { try { renderUpvcCad('us'); } catch(e){} }
+    else if (keypadTarget.id.startsWith('ud_')) { try { renderUpvcCad('ud'); } catch(e){} }
+  }
   var modal = document.getElementById("keypadModal");
   if (modal) {
     modal.classList.remove("active");
@@ -9726,6 +9731,12 @@ function autofillCustomer() {
     setTimeout(function() { try { renderDoorRowBuilder(); } catch(e){} }, 20);
   } else if (screenName === 'casement') {
     setTimeout(function() { try { renderCasementSectionDesigner(); } catch(e){} }, 20);
+  } else if (screenName === 'upvc_casement') {
+    setTimeout(function() { try { renderUpvcCad('uc'); } catch(e){} }, 30);
+  } else if (screenName === 'upvc_sliding') {
+    setTimeout(function() { try { renderUpvcCad('us'); } catch(e){} }, 30);
+  } else if (screenName === 'upvc_door') {
+    setTimeout(function() { try { renderUpvcCad('ud'); } catch(e){} }, 30);
   } else if (screenName === 'cad_studio') {
     setTimeout(function() { try { renderCadStudio(); } catch(e){} }, 20);
   } else if (screenName === 'wastage_qr') {
@@ -10913,6 +10924,11 @@ function setupDb() {
     badge_upvc_bar_opt: "5.95m / 19.5' uPVC OPTIMIZER",
     mod_upvc_bar_opt: "uPVC Profile Cutting (5.95m / 19.5')",
     sub_upvc_bar_opt: "Min-Waste 5.95m uPVC & 6m GI Bar Cutting Drawing, Kerf Loss & PDF",
+    lbl_upvc_color: "uPVC Profile Color:",
+    lbl_glass_grade: "Glass Grade (Tough/Norm):",
+    lbl_glass_spec: "Glass Thick & Type:",
+    lbl_live_upvc_cad: "LIVE uPVC CAD PREVIEW (INSIDE VIEW)",
+    btn_zoom_cad: "Zoom",
     lbl_frame_w_minus: "Frame W Minus:",
     lbl_ilock_add: "Interlock (+):",
     lbl_glass_minus: "Glass Minus:",
@@ -11048,6 +11064,11 @@ function setupDb() {
     badge_upvc_bar_opt: "5.95m / 19.5' uPVC অপ্টিমাইজার",
     mod_upvc_bar_opt: "uPVC প্রোফাইল কাটিং (5.95m / 19.5')",
     sub_upvc_bar_opt: "কম ওয়েস্টেজ 5.95m uPVC ও 6m GI বার কাটিং ড্রয়িং, কার্ফ লস ও PDF",
+    lbl_upvc_color: "uPVC প্রোফাইল রঙ:",
+    lbl_glass_grade: "গ্লাস গ্রেড (টাফেনড / নরমাল):",
+    lbl_glass_spec: "গ্লাস থিকনেস ও ধরন:",
+    lbl_live_upvc_cad: "লাইভ uPVC CAD ডিজাইন (ভেতর থেকে)",
+    btn_zoom_cad: "বড় করে দেখুন",
     lbl_frame_w_minus: "ফ্রেম W মাইনাস:",
     lbl_ilock_add: "ইন্টারলক (+):",
     lbl_glass_minus: "গ্লাস মাইনাস:",
@@ -11183,6 +11204,11 @@ function setupDb() {
     badge_upvc_bar_opt: "5.95m / 19.5' uPVC ऑप्टिमाइज़र",
     mod_upvc_bar_opt: "uPVC प्रोफाइल कटिंग (5.95m / 19.5')",
     sub_upvc_bar_opt: "कम वेस्टेज 5.95m uPVC और 6m GI बार कटिंग ड्राइंग, कर्फ लॉस और PDF",
+    lbl_upvc_color: "uPVC प्रोफाइल कलर:",
+    lbl_glass_grade: "ग्लास ग्रेड (टफन्ड / नॉर्मल):",
+    lbl_glass_spec: "ग्लास थिकनेस और टाइप:",
+    lbl_live_upvc_cad: "लाइव uPVC CAD डिज़ाइन (अंदर से)",
+    btn_zoom_cad: "ज़ूम देखें",
     lbl_frame_w_minus: "फ्रेम W माइनस:",
     lbl_ilock_add: "इंटरलॉक (+):",
     lbl_glass_minus: "ग्लास माइनस:",
@@ -17682,7 +17708,9 @@ function calculateUpvcCasement() {
   const gi_frame_h = Math.max(50, frame_h_cut - giMinus);
   const gi_frame_w = Math.max(50, frame_w_cut - giMinus);
 
+  const ucSpec = getUpvcColorGlassSpec('uc');
   let out = `[uPVC ${profileName} Win #${uc_win_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${win_qty > 1 ? ' (Qty: ' + win_qty + ')' : ''}]\n`;
+  out += `> uPVC Color: ${ucSpec.color} | Glass: ${ucSpec.glassLabel}\n`;
   out += `> Settings: B=${outerB}mm, Overlap=${ov}mm, Weld=+${weldAdd}mm, FixGlass=-${fixMinus}mm, GI=-${giMinus}mm\n`;
   out += `--- 1. OUTER FRAME (+${weldAdd}mm Welding) & GI STEEL ---\n`;
   out += `> Outer Height: ${disp(frame_h_cut)} (${2 * win_qty} pc) | GI Steel: ${disp(gi_frame_h)} (${2 * win_qty} pc)\n`;
@@ -17721,12 +17749,12 @@ function calculateUpvcCasement() {
     out += `[OPENABLE Z-SASH | Qty: ${top_open * win_qty}${topIsFrench ? ' | French 4mm Gap' : ''}]\n`;
     out += ` > Z-Sash Cut (+${weldAdd}mm): ${disp(s_h_cut)} x ${disp(s_w_cut)} (${top_open * win_qty} Sash)\n`;
     out += ` > GI Steel (Sash): ${disp(gi_sh)} x ${disp(gi_sw)}\n`;
-    out += ` > Sash Glass: ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
+    out += ` > Sash Glass (${ucSpec.glassLabel}): ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
     if (topIsFrench) {
       out += ` > French / Flying Mullion: ${disp(s_h_fin)} (${win_qty} pc)\n`;
       for (let q = 0; q < win_qty; q++) uc_buckets["uPVC Mullion / T"].push(s_h_fin / 25.4);
     }
-    const gKey = `${disp(g_h)} x ${disp(g_w)} (uPVC Sash) || Clear`;
+    const gKey = `${disp(g_h)} x ${disp(g_w)} (uPVC Sash) || ${ucSpec.glassLabel}`;
     uc_glass_dict[gKey] = (uc_glass_dict[gKey] || 0) + (top_open * win_qty);
     for (let i = 0; i < top_open * 2 * win_qty; i++) {
       uc_buckets["uPVC Z-Sash"].push(s_h_cut / 25.4, s_w_cut / 25.4);
@@ -17738,8 +17766,8 @@ function calculateUpvcCasement() {
     const fg_h = top_gap_h - fixMinus;
     const fg_w = top_gap_w - fixMinus;
     out += `[FIXED GLASS | Qty: ${top_fixed * win_qty} | Clear: ${disp(top_gap_h)} x ${disp(top_gap_w)}]\n`;
-    out += ` > Fixed Glass (-${fixMinus}mm): ${disp(fg_h)} x ${disp(fg_w)} (${top_fixed * win_qty} pc)\n`;
-    const gKey = `${disp(fg_h)} x ${disp(fg_w)} (uPVC Fixed) || Clear`;
+    out += ` > Fixed Glass (${ucSpec.glassLabel}): ${disp(fg_h)} x ${disp(fg_w)} (${top_fixed * win_qty} pc)\n`;
+    const gKey = `${disp(fg_h)} x ${disp(fg_w)} (uPVC Fixed) || ${ucSpec.glassLabel}`;
     uc_glass_dict[gKey] = (uc_glass_dict[gKey] || 0) + (top_fixed * win_qty);
     for (let i = 0; i < top_fixed * 2 * win_qty; i++) uc_buckets["uPVC Glazing Bead"].push(top_gap_h / 25.4, top_gap_w / 25.4);
   }
@@ -17789,6 +17817,7 @@ function calculateUpvcCasement() {
   const prev = document.getElementById('uc_out').textContent;
   document.getElementById('uc_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
   document.getElementById('uc_mat_out').textContent = generateUpvcMaterialSummary(uc_buckets);
+  try { renderUpvcCad('uc'); } catch(e){}
 }
 
 // ==================== uPVC SLIDING (ALL TRACKS — UNIVERSAL FORMULA) ====================
@@ -17905,7 +17934,9 @@ function calculateUpvcSliding() {
   us_win_count += 1;
   const disp = (mmVal) => is_mm ? (Math.round(mmVal * 10) / 10) + " mm" : toFractionInch(mmVal / 25.4);
 
+  const usSpec = getUpvcColorGlassSpec('us');
   let out = `[uPVC ${prof} | ${trackLabel} #${us_win_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty > 1 ? ' (Qty: ' + qty + ')' : ''}]\n`;
+  out += `> uPVC Color: ${usSpec.color} | Glass: ${usSpec.glassLabel}\n`;
   out += `> Profile: Frame F=${frameF}mm, Sash S=${sashS}mm, Weld=+${weldAdd}mm\n`;
   out += `--- 1. OUTER TRACK FRAME (+${weldAdd}mm Weld) & GI STEEL ---\n`;
   out += `> Outer Height: ${disp(frame_h_cut)} (${2 * qty} pc) | GI Steel: ${disp(gi_fh)} (${2 * qty} pc)\n`;
@@ -17918,7 +17949,7 @@ function calculateUpvcSliding() {
   }
   out += `> Interlock Profile: ${disp(sash_h_fin)} (${ilockCount * qty} pc)\n`;
   out += `\n--- 3. GLASS & MESH CUTTING ---\n`;
-  out += `> Glass Size: ${disp(glass_h)} x ${disp(glass_w)} (${glassShutters * qty} pc)\n`;
+  out += `> Glass Size (${usSpec.glassLabel}): ${disp(glass_h)} x ${disp(glass_w)} (${glassShutters * qty} pc)\n`;
   if (meshShutters > 0) {
     out += `> Mosquito Mesh: ${disp(glass_h)} x ${disp(glass_w)} (${meshShutters * qty} pc)\n`;
   }
@@ -17938,7 +17969,7 @@ function calculateUpvcSliding() {
   out += `> Frame Fixing Fasteners (10x75mm): ${fastenersUs} pc\n`;
   out += `> Glazing Packers: ${glassShutters * 8 * qty} pc | Silicone Tube: ${siliconeUs} pc\n`;
 
-  const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Sliding Glass) || Clear`;
+  const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Sliding Glass) || ${usSpec.glassLabel}`;
   us_glass_dict[gKey] = (us_glass_dict[gKey] || 0) + (glassShutters * qty);
   if (meshShutters > 0) {
     const mKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Mesh) || SS Mesh`;
@@ -17961,6 +17992,7 @@ function calculateUpvcSliding() {
   const prev = document.getElementById('us_out').textContent;
   document.getElementById('us_out').textContent = out + "===================================\n\n" + (prev.includes("Enter uPVC") ? "" : prev);
   document.getElementById('us_mat_out').textContent = generateUpvcMaterialSummary(us_buckets);
+  try { renderUpvcCad('us'); } catch(e){}
 }
 
 // Restore saved home mode on load
@@ -17990,7 +18022,7 @@ function generateUpvcMaterialSummary(buckets) {
 }
 
 
-// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v123 ====================
+// ==================== uPVC DOOR (SINGLE & DOUBLE / FRENCH) CALCULATOR v125 ====================
 var ud_count = 0;
 var ud_glass_dict = {};
 var ud_buckets = { "uPVC Door Frame": [], "uPVC Door Sash": [], "uPVC French Mullion": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
@@ -18076,7 +18108,9 @@ function calculateUpvcDoor() {
   ud_count += 1;
   const disp = (mmVal) => is_mm ? (Math.round(mmVal * 10) / 10) + " mm" : toFractionInch(mmVal / 25.4);
 
+  const udSpec = getUpvcColorGlassSpec('ud');
   let out = `[uPVC ${typeLabel} #${ud_count}${loc ? ' [' + loc + ']' : ''} | Size: ${disp(h_mm)} x ${disp(w_mm)}${qty > 1 ? ' (Qty: ' + qty + ')' : ''}]\n`;
+  out += `> uPVC Color: ${udSpec.color} | Glass/Panel: ${udSpec.glassLabel}\n`;
   out += `> Frame Box B=${frameB}mm, Overlap=${overlap}mm, Weld=+${weldAdd}mm${hasBottom ? '' : ' (Vert +'+halfWeld+'mm)'}\n`;
   out += `--- 1. DOOR OUTER FRAME & GI STEEL ---\n`;
   out += `> Frame Height (${hasBottom ? '45/45' : '45 Top / 90 Bot'}): ${disp(frame_h_cut)} (${2 * qty} pc) | GI: ${disp(gi_fh)}\n`;
@@ -18089,7 +18123,7 @@ function calculateUpvcDoor() {
     for (let q = 0; q < qty; q++) ud_buckets["uPVC French Mullion"].push(sash_h_fin / 25.4);
   }
   out += `\n--- 3. GLASS / ACP PANEL & HARDWARE ---\n`;
-  out += `> Glass / Panel Size: ${disp(glass_h)} x ${disp(glass_w)} (${sashCount * qty} pc)\n`;
+  out += `> Glass / Panel (${udSpec.glassLabel}): ${disp(glass_h)} x ${disp(glass_w)} (${sashCount * qty} pc)\n`;
   const perimM_ud = ((h_mm * 2 + w_mm * (hasBottom ? 2 : 1)) / 1000) * qty;
   const gasketM_ud = Math.ceil((perimM_ud * 2) + (sash_h_fin + sash_w_fin) * 4 * sashCount * qty / 1000);
   const giScrewsUd = Math.ceil((perimM_ud + sashCount * 5 * qty) * 4);
@@ -18102,7 +18136,7 @@ function calculateUpvcDoor() {
   out += `> Frame Fixing Fasteners (10x75mm): ${fastenersUd} pc\n`;
   out += `> Silicone Sealant Tube: ${siliconeUd} pc\n`;
 
-  const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Door Panel/Glass) || Clear/ACP`;
+  const gKey = `${disp(glass_h)} x ${disp(glass_w)} (uPVC Door) || ${udSpec.glassLabel}`;
   ud_glass_dict[gKey] = (ud_glass_dict[gKey] || 0) + (sashCount * qty);
 
   for (let q = 0; q < qty; q++) {
@@ -18122,6 +18156,7 @@ function calculateUpvcDoor() {
   const prev = document.getElementById('ud_out').textContent;
   document.getElementById('ud_out').textContent = out + "===================================\n\n" + prev;
   document.getElementById('ud_mat_out').textContent = generateUpvcMaterialSummary(ud_buckets);
+  try { renderUpvcCad('ud'); } catch(e){}
 }
 
 
@@ -18134,12 +18169,12 @@ function openUpvcQuotation() {
       if (typeof updateSuggestedRate === 'function') updateSuggestedRate();
     }
     const cSel = document.getElementById('q_color');
-    if (cSel) cSel.value = 'Powder Coated White';
+    if (cSel) cSel.value = 'uPVC Classic White';
   }, 50);
 }
 
 
-// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v123) ====================
+// ==================== VECTOR CAD SCHEMATIC RENDERER FOR QUOTATION PDF (v125) ====================
 function drawPdfWindowSchematic(doc, itm, x, y, w, h) {
   try {
     const t = String(itm.type || '').toLowerCase();
@@ -18318,4 +18353,211 @@ function openUpvcBarOptimizer() {
     if (profInp) profInp.value = 'uPVC Outer / Sash';
     if (typeof recalculateBarCuttingPlan === 'function') recalculateBarCuttingPlan();
   }, 60);
+}
+
+
+function getUpvcColorGlassSpec(pfx) {
+  const color = document.getElementById(pfx + '_color')?.value || 'uPVC Classic White';
+  const gThick = document.getElementById(pfx + '_g_thick')?.value || '5 mm';
+  const gType = document.getElementById(pfx + '_g_type')?.value || 'Clear';
+  const gGrade = document.getElementById(pfx + '_g_grade')?.value || 'NORMAL / ANNEALED';
+  const badge = gGrade.includes('TOUGHENED') ? `[★ ${gGrade}]` : `[${gGrade}]`;
+  return { color, glassLabel: `${gThick} ${gType} ${badge}` };
+}
+
+
+// ==================== LIVE uPVC PROPORTIONAL CAD SVG RENDERER (v125) ====================
+function getUpvcFrameHex(colorName) {
+  const c = String(colorName || '').toLowerCase();
+  if (c.includes('golden oak')) return { fill: '#9C6B3F', stroke: '#5C3A1E' };
+  if (c.includes('walnut')) return { fill: '#6B4423', stroke: '#3B2310' };
+  if (c.includes('dark oak')) return { fill: '#4A2E1B', stroke: '#26160C' };
+  if (c.includes('mahogany')) return { fill: '#6E2C23', stroke: '#3D1510' };
+  if (c.includes('rustic oak')) return { fill: '#8B5A2B', stroke: '#4E3014' };
+  if (c.includes('anthracite')) return { fill: '#383E42', stroke: '#1E2326' };
+  if (c.includes('smooth grey') || c.includes('grey')) return { fill: '#64748B', stroke: '#334155' };
+  if (c.includes('black')) return { fill: '#1E293B', stroke: '#0F172A' };
+  if (c.includes('ivory') || c.includes('cream')) return { fill: '#F5F0E1', stroke: '#B8AC8E' };
+  return { fill: '#F8FAFC', stroke: '#64748B' }; // Classic White
+}
+
+function getUpvcGlassHex(glassType) {
+  const g = String(glassType || '').toLowerCase();
+  if (g.includes('black')) return '#475569';
+  if (g.includes('blue') || g.includes('one-way')) return '#7DD3FC';
+  if (g.includes('brown')) return '#A1887F';
+  if (g.includes('grey')) return '#94A3B8';
+  if (g.includes('frosted') || g.includes('pinhead')) return '#E2E8F0';
+  if (g.includes('acp') || g.includes('panel')) return '#CBD5E1';
+  return '#BAE6FD'; // Clear Sky Glass
+}
+
+function buildUpvcCadSvg(pfx, maxW, maxH) {
+  const spec = getUpvcColorGlassSpec(pfx);
+  const frameCol = getUpvcFrameHex(spec.color);
+  const glassFill = getUpvcGlassHex(document.getElementById(pfx + '_g_type')?.value || 'Clear');
+  const isTough = (document.getElementById(pfx + '_g_grade')?.value || '').includes('TOUGHENED');
+  const isMm = (document.getElementById(pfx + '_unit')?.value || 'Millimeter').includes('Millimeter');
+  const unitTag = isMm ? 'mm' : '"';
+
+  let rawH = safeEval(document.getElementById(pfx + '_h')?.value) || (pfx === 'ud' ? 2100 : 1200);
+  let rawW = safeEval(document.getElementById(pfx + '_w')?.value) || (pfx === 'ud' ? 920 : 1500);
+  if (rawH <= 0) rawH = (pfx === 'ud' ? 2100 : 1200);
+  if (rawW <= 0) rawW = (pfx === 'ud' ? 920 : 1500);
+
+  const padL = 36, padT = 22, padR = 14, padB = 26;
+  const availW = maxW - padL - padR;
+  const availH = maxH - padT - padB;
+  const aspect = rawW / rawH;
+  let dw = availW, dh = availW / aspect;
+  if (dh > availH) { dh = availH; dw = availH * aspect; }
+  dw = Math.max(95, dw);
+  dh = Math.max(85, dh);
+  const ox = padL + (availW - dw) / 2;
+  const oy = padT + (availH - dh) / 2;
+  const fT = 9; // Outer frame thickness in px
+
+  let svg = `<svg viewBox="0 0 ${maxW} ${maxH}" style="width:100%; max-width:${maxW}px; height:auto; font-family:sans-serif;">`;
+  svg += `<defs>
+    <pattern id="upvcMesh_${pfx}" width="6" height="6" patternUnits="userSpaceOnUse">
+      <path d="M 6 0 L 0 0 0 6" fill="none" stroke="#475569" stroke-width="0.6" opacity="0.55"/>
+    </pattern>
+  </defs>`;
+
+  // Outer Frame
+  const isDoorNoBot = (pfx === 'ud') && !(document.getElementById('ud_type')?.value || '').includes('WITH_BOT');
+  svg += `<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="1.8" rx="2"/>`;
+  const ix = ox + fT, iy = oy + fT, iw = dw - fT * 2, ih = isDoorNoBot ? (dh - fT) : (dh - fT * 2);
+
+  if (pfx === 'uc') {
+    const topCols = Math.max(1, Math.min(6, parseInt(document.getElementById('uc_top_cols')?.value) || 2));
+    const topOpen = Math.min(topCols, Math.max(0, parseInt(document.getElementById('uc_top_open')?.value) || 0));
+    const botH = safeEval(document.getElementById('uc_bot_h')?.value) || 0;
+    const botCols = botH > 0 ? Math.max(1, Math.min(6, parseInt(document.getElementById('uc_bot_cols')?.value) || topCols)) : 0;
+    const botOpen = botH > 0 ? Math.min(botCols, Math.max(0, parseInt(document.getElementById('uc_bot_open')?.value) || 0)) : 0;
+    const isFrench = !!(document.getElementById('uc_french_mode')?.checked) && topCols === 2 && topOpen === 2;
+
+    const rows = botH > 0 ? 2 : 1;
+    const botFrac = rows === 2 ? Math.max(0.2, Math.min(0.6, botH / rawH)) : 0;
+    const topHpx = rows === 2 ? ih * (1 - botFrac) - 3 : ih;
+    const botHpx = rows === 2 ? ih * botFrac - 3 : 0;
+
+    function drawCasementRow(ry, rh, cols, openCnt, frenchFlag) {
+      const pw = iw / cols;
+      for (let c = 0; c < cols; c++) {
+        const px = ix + c * pw;
+        const isOpen = c < openCnt;
+        // Sash frame if openable
+        if (isOpen) {
+          svg += `<rect x="${px + 1.5}" y="${ry + 1.5}" width="${pw - 3}" height="${rh - 3}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="1.2"/>`;
+          svg += `<rect x="${px + 6}" y="${ry + 6}" width="${pw - 12}" height="${rh - 12}" fill="${glassFill}" stroke="${frameCol.stroke}" stroke-width="0.9"/>`;
+          const hingeLeft = (c % 2 === 0);
+          const hx = hingeLeft ? (px + 6) : (px + pw - 6);
+          const lx = hingeLeft ? (px + pw - 6) : (px + 6);
+          svg += `<line x1="${hx}" y1="${ry + 6}" x2="${lx}" y2="${ry + rh / 2}" stroke="#0f766e" stroke-width="1.2" stroke-dasharray="3,2"/>`;
+          svg += `<line x1="${hx}" y1="${ry + rh - 6}" x2="${lx}" y2="${ry + rh / 2}" stroke="#0f766e" stroke-width="1.2" stroke-dasharray="3,2"/>`;
+          // Handle
+          const hndX = hingeLeft ? (px + pw - 4.5) : (px + 2.5);
+          svg += `<rect x="${hndX}" y="${ry + rh/2 - 7}" width="2.5" height="14" rx="1" fill="#0f172a"/>`;
+          svg += `<text x="${px + pw/2}" y="${ry + rh - 10}" font-size="8" font-weight="800" fill="#0f766e" text-anchor="middle">${frenchFlag ? 'FRENCH' : 'OPEN'}</text>`;
+        } else {
+          svg += `<rect x="${px + 2}" y="${ry + 2}" width="${pw - 4}" height="${rh - 4}" fill="${glassFill}" stroke="${frameCol.stroke}" stroke-width="1"/>`;
+          svg += `<line x1="${px + 8}" y1="${ry + rh - 8}" x2="${px + pw - 8}" y2="${ry + 8}" stroke="#ffffff" stroke-width="1.4" opacity="0.7"/>`;
+          svg += `<text x="${px + pw/2}" y="${ry + rh/2 + 3}" font-size="8.5" font-weight="800" fill="#334155" text-anchor="middle">FIX</text>`;
+        }
+        // Center mullion bar between sections (skip if French flying mullion)
+        if (c > 0 && !frenchFlag) {
+          svg += `<rect x="${px - 2.5}" y="${ry}" width="5" height="${rh}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="0.8"/>`;
+        }
+      }
+    }
+    drawCasementRow(iy, topHpx, topCols, topOpen, isFrench);
+    if (rows === 2) {
+      svg += `<rect x="${ix}" y="${iy + topHpx}" width="${iw}" height="6" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="1"/>`;
+      drawCasementRow(iy + topHpx + 6, botHpx, botCols, botOpen, false);
+    }
+  } else if (pfx === 'us') {
+    const trk = document.getElementById('us_track')?.value || '2T_2S';
+    let cols = 2, hasJali = false;
+    if (trk === '2T_4S') cols = 4;
+    else if (trk === '3T_3S') cols = 3;
+    else if (trk === '2.5T_2G1M' || trk === '3T_2G1M') { cols = 2; hasJali = true; }
+    else if (trk === '3T_4G2M') { cols = 4; hasJali = true; }
+    const pw = iw / cols;
+    for (let c = 0; c < cols; c++) {
+      const px = ix + c * pw;
+      svg += `<rect x="${px + 1.5}" y="${iy + 2}" width="${pw - 3}" height="${ih - 4}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="1.2"/>`;
+      svg += `<rect x="${px + 6}" y="${iy + 7}" width="${pw - 12}" height="${ih - 14}" fill="${glassFill}" stroke="${frameCol.stroke}" stroke-width="0.9"/>`;
+      // Sliding arrow
+      const cy = iy + ih / 2;
+      const dirRight = (c % 2 === 0);
+      svg += `<line x1="${px + pw*0.28}" y1="${cy}" x2="${px + pw*0.72}" y2="${cy}" stroke="#0369a1" stroke-width="1.5"/>`;
+      const ax = dirRight ? (px + pw*0.72) : (px + pw*0.28);
+      const dx = dirRight ? -5 : 5;
+      svg += `<polyline points="${ax+dx},${cy-4} ${ax},${cy} ${ax+dx},${cy+4}" fill="none" stroke="#0369a1" stroke-width="1.5"/>`;
+      svg += `<text x="${px + pw/2}" y="${iy + ih - 11}" font-size="7.5" font-weight="800" fill="#0369a1" text-anchor="middle">SLIDE</text>`;
+    }
+    if (hasJali) {
+      const jw = cols === 4 ? (iw * 0.5) : (iw * 0.48);
+      const jx = ix + iw - jw - 2;
+      svg += `<rect x="${jx}" y="${iy + 6}" width="${jw}" height="${ih - 12}" fill="url(#upvcMesh_${pfx})" stroke="#334155" stroke-width="1" stroke-dasharray="2,2"/>`;
+      svg += `<text x="${jx + jw/2}" y="${iy + 18}" font-size="7.5" font-weight="800" fill="#0f172a" text-anchor="middle" style="background:#fff;">+ JALI MESH</text>`;
+    }
+  } else if (pfx === 'ud') {
+    const dt = document.getElementById('ud_type')?.value || 'SINGLE_NO_BOT';
+    const isDouble = dt.includes('DOUBLE');
+    const cols = isDouble ? 2 : 1;
+    const pw = iw / cols;
+    for (let c = 0; c < cols; c++) {
+      const px = ix + c * pw;
+      svg += `<rect x="${px + 1.5}" y="${iy + 1.5}" width="${pw - 3}" height="${ih - 3}" fill="${frameCol.fill}" stroke="${frameCol.stroke}" stroke-width="1.4"/>`;
+      svg += `<rect x="${px + 7}" y="${iy + 7}" width="${pw - 14}" height="${ih - 14}" fill="${glassFill}" stroke="${frameCol.stroke}" stroke-width="1"/>`;
+      const hingeLeft = (c === 0);
+      const hx = hingeLeft ? (px + 7) : (px + pw - 7);
+      const lx = hingeLeft ? (px + pw - 7) : (px + 7);
+      svg += `<line x1="${hx}" y1="${iy + 7}" x2="${lx}" y2="${iy + ih / 2}" stroke="#e11d48" stroke-width="1.2" stroke-dasharray="3,2"/>`;
+      svg += `<line x1="${hx}" y1="${iy + ih - 7}" x2="${lx}" y2="${iy + ih / 2}" stroke="#e11d48" stroke-width="1.2" stroke-dasharray="3,2"/>`;
+      // Lever door handle
+      const hndX = hingeLeft ? (px + pw - 5.5) : (px + 3);
+      svg += `<rect x="${hndX}" y="${iy + ih*0.46}" width="3" height="18" rx="1" fill="#0f172a"/>`;
+      svg += `<text x="${px + pw/2}" y="${iy + ih - 12}" font-size="8" font-weight="800" fill="#9f1239" text-anchor="middle">${isDouble ? 'FRENCH DOOR' : 'DOOR'}</text>`;
+    }
+  }
+
+  // Live Dimension Lines (Width on bottom, Height on left)
+  svg += `<line x1="${ox}" y1="${oy + dh + 11}" x2="${ox + dw}" y2="${oy + dh + 11}" stroke="#0f172a" stroke-width="1"/>`;
+  svg += `<text x="${ox + dw/2}" y="${oy + dh + 22}" font-size="9.5" font-weight="800" fill="#0f172a" text-anchor="middle">W: ${rawW} ${unitTag}</text>`;
+  svg += `<line x1="${ox - 10}" y1="${oy}" x2="${ox - 10}" y2="${oy + dh}" stroke="#0f172a" stroke-width="1"/>`;
+  svg += `<text x="${ox - 14}" y="${oy + dh/2}" font-size="9.5" font-weight="800" fill="#0f172a" text-anchor="middle" transform="rotate(-90 ${ox - 14} ${oy + dh/2})">H: ${rawH} ${unitTag}</text>`;
+
+  // Top Spec Badge (Color + Toughened/Normal)
+  const badgeText = `${spec.color.replace('uPVC ', '')} • ${isTough ? '★ TOUGHENED' : 'Normal Glass'}`;
+  svg += `<text x="${maxW/2}" y="13" font-size="8.5" font-weight="800" fill="#1e3a8a" text-anchor="middle">${badgeText}</text>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderUpvcCad(pfx) {
+  const box = document.getElementById(pfx + '_cad_box');
+  if (!box) return;
+  box.innerHTML = buildUpvcCadSvg(pfx, 310, 220);
+}
+
+function openUpvcCadFullscreen(pfx) {
+  let modal = document.getElementById('upvcCadZoomModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'upvcCadZoomModal';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+    modal.innerHTML = `<div style="background:#fff; border-radius:16px; width:100%; max-width:440px; padding:14px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-weight:800; color:#0f172a; font-size:0.9rem;">FULL-SCREEN uPVC CAD (INSIDE VIEW)</span>
+        <button type="button" onclick="document.getElementById('upvcCadZoomModal').style.display='none'" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:5px 12px; font-weight:800; cursor:pointer;">✕</button>
+      </div>
+      <div id="upvcCadZoomBody"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('upvcCadZoomBody').innerHTML = buildUpvcCadSvg(pfx, 380, 320);
+  modal.style.display = 'flex';
 }

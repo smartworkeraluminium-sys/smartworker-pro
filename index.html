@@ -40,11 +40,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v123') caches.delete(k);
+            if (k !== 'smart-worker-pro-v125') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=123').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=125').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -2073,11 +2073,11 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       </div>
       <div class="form-group">
         <label data-i18n="lbl_top_cols">Top Total Sections:</label>
-        <input type="number" id="uc_top_cols" value="2" min="1" max="8">
+        <input type="number" id="uc_top_cols" value="2" min="1" max="8" oninput="renderUpvcCad('uc')">
       </div>
       <div class="form-group">
         <label data-i18n="lbl_top_open">Top Openable (Sash):</label>
-        <input type="number" id="uc_top_open" value="2" min="0" max="8">
+        <input type="number" id="uc_top_open" value="2" min="0" max="8" oninput="renderUpvcCad('uc')">
       </div>
       <div class="form-group">
         <label data-i18n="lbl_bot_h">Bottom Height (0=None):</label>
@@ -2089,8 +2089,8 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       <div class="form-group">
         <label data-i18n="lbl_bot_cols_open">Bottom Sections / Open:</label>
         <div style="display:flex; gap:5px;">
-          <input type="number" id="uc_bot_cols" value="0" min="0" max="8" placeholder="Cols" style="width:50%;">
-          <input type="number" id="uc_bot_open" value="0" min="0" max="8" placeholder="Open" style="width:50%;">
+          <input type="number" id="uc_bot_cols" value="0" min="0" max="8" placeholder="Cols" style="width:50%;" oninput="renderUpvcCad('uc')">
+          <input type="number" id="uc_bot_open" value="0" min="0" max="8" placeholder="Open" style="width:50%;" oninput="renderUpvcCad('uc')">
         </div>
       </div>
       <div class="form-group">
@@ -2100,6 +2100,56 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       <div class="form-group">
         <label data-i18n="lbl_qty" style="color:#16a34a;">Quantity (Pcs):</label>
         <input type="number" id="uc_qty" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_upvc_color" style="color:#0f766e; font-weight:700;">uPVC Profile Color:</label>
+        <select id="uc_color" onchange="renderUpvcCad('uc')">
+          <option value="uPVC Classic White" selected>uPVC Classic White</option>
+          <option value="uPVC Ivory / Cream">uPVC Ivory / Cream</option>
+          <option value="uPVC Golden Oak (Wood)">uPVC Golden Oak (Wood)</option>
+          <option value="uPVC Walnut (Wood)">uPVC Walnut (Wood)</option>
+          <option value="uPVC Dark Oak (Wood)">uPVC Dark Oak (Wood)</option>
+          <option value="uPVC Mahogany (Wood)">uPVC Mahogany (Wood)</option>
+          <option value="uPVC Rustic Oak (Wood)">uPVC Rustic Oak (Wood)</option>
+          <option value="uPVC Anthracite Grey">uPVC Anthracite Grey</option>
+          <option value="uPVC Smooth Grey">uPVC Smooth Grey</option>
+          <option value="uPVC Matt Black">uPVC Matt Black</option>
+          <option value="uPVC Dual-Tone (Oak Out / White In)">Dual-Tone (Oak Out / White In)</option>
+          <option value="uPVC Dual-Tone (Grey Out / White In)">Dual-Tone (Grey Out / White In)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_glass_grade" style="color:#b45309; font-weight:700;">Glass Grade (Tough/Norm):</label>
+        <select id="uc_g_grade" onchange="renderUpvcCad('uc')">
+          <option value="NORMAL / ANNEALED" selected>Normal / Annealed (Raw)</option>
+          <option value="TOUGHENED">★ TOUGHENED GLASS</option>
+          <option value="DGU TOUGHENED">★ DGU TOUGHENED (24mm)</option>
+          <option value="LAMINATED SAFETY">LAMINATED SAFETY</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_glass_spec" style="color:#0284c7; font-weight:700;">Glass Thick &amp; Type:</label>
+        <div style="display:flex; gap:4px;">
+          <select id="uc_g_thick" style="width:42%;">
+            <option value="5 mm" selected>5 mm</option>
+            <option value="6 mm">6 mm</option>
+            <option value="8 mm">8 mm</option>
+            <option value="10 mm">10 mm</option>
+            <option value="12 mm">12 mm</option>
+            <option value="24 mm DGU">24 mm</option>
+          </select>
+          <select id="uc_g_type" style="width:58%;" onchange="renderUpvcCad('uc')">
+            <option value="Clear" selected>Clear</option>
+            <option value="Tinted Black">Tinted Black</option>
+            <option value="Tinted Blue">Tinted Blue</option>
+            <option value="Tinted Brown">Tinted Brown</option>
+            <option value="Tinted Grey">Tinted Grey</option>
+            <option value="One-Way Reflective">One-Way</option>
+            <option value="Frosted">Frosted</option>
+            <option value="Pinhead">Pinhead</option>
+            <option value="ACP / uPVC Panel">ACP / Panel</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -2120,11 +2170,18 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
         <div><label data-i18n="lbl_gi_minus" style="font-size:0.64rem; font-weight:700; color:#0f766e;">GI Steel(-):</label><input type="number" step="5" id="uc_gi_minus" value="120" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #5eead4; border-radius:6px;"></div>
       </div>
       <label style="display:flex; align-items:center; gap:6px; font-size:0.76rem; font-weight:800; color:#0f172a; cursor:pointer;">
-        <input type="checkbox" id="uc_french_mode" checked style="width:16px; height:16px; accent-color:#0d9488;">
+        <input type="checkbox" id="uc_french_mode" checked onchange="renderUpvcCad('uc')" style="width:16px; height:16px; accent-color:#0d9488;">
         <span data-i18n="lbl_french_mode">French Window (Flying Mullion, 4mm Gap)</span>
       </label>
     </div>
 
+    <div id="uc_cad_wrap" style="margin-top:10px; background:#ffffff; border:1.5px solid #14b8a6; border-radius:12px; padding:10px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:0.74rem; font-weight:800; color:#0f766e;"><i class="fa-solid fa-drafting-compass"></i> <span data-i18n="lbl_live_upvc_cad">LIVE uPVC CAD PREVIEW (INSIDE VIEW)</span></span>
+        <button type="button" onclick="openUpvcCadFullscreen('uc')" style="background:#0f766e; color:#fff; border:none; border-radius:6px; padding:3px 8px; font-size:0.66rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-expand"></i> <span data-i18n="btn_zoom_cad">Zoom</span></button>
+      </div>
+      <div id="uc_cad_box" style="width:100%; display:flex; justify-content:center; align-items:center; min-height:200px;"></div>
+    </div>
     <div style="display:flex; gap:8px; margin-top:12px;">
       <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearUpvcCasement()" data-i18n="btn_clear">CLEAR</button>
       <button class="action-btn btn-calc" style="flex:0.65; background:#0d9488;" onclick="calculateUpvcCasement()" data-i18n="btn_calc_upvc">+ CALCULATE uPVC</button>
@@ -2162,7 +2219,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       </div>
       <div class="form-group">
         <label data-i18n="lbl_upvc_track">uPVC Track &amp; Shutter:</label>
-        <select id="us_track">
+        <select id="us_track" onchange="renderUpvcCad('us')">
           <option value="2T_2S" data-i18n="opt_2t_2s" selected>2-Track (2 Glass)</option>
           <option value="2T_4S" data-i18n="opt_2t_4s">2-Track (4 Glass)</option>
           <option value="2.5T_2G1M" data-i18n="opt_25t_2g1m">2.5-Track (2 Glass + 1 Jali)</option>
@@ -2204,6 +2261,56 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
         <label data-i18n="lbl_room_loc" style="color:#2563eb;">Room / Location:</label>
         <input type="text" id="us_loc" placeholder="Master Bed, Balcony">
       </div>
+      <div class="form-group">
+        <label data-i18n="lbl_upvc_color" style="color:#0f766e; font-weight:700;">uPVC Profile Color:</label>
+        <select id="us_color" onchange="renderUpvcCad('us')">
+          <option value="uPVC Classic White" selected>uPVC Classic White</option>
+          <option value="uPVC Ivory / Cream">uPVC Ivory / Cream</option>
+          <option value="uPVC Golden Oak (Wood)">uPVC Golden Oak (Wood)</option>
+          <option value="uPVC Walnut (Wood)">uPVC Walnut (Wood)</option>
+          <option value="uPVC Dark Oak (Wood)">uPVC Dark Oak (Wood)</option>
+          <option value="uPVC Mahogany (Wood)">uPVC Mahogany (Wood)</option>
+          <option value="uPVC Rustic Oak (Wood)">uPVC Rustic Oak (Wood)</option>
+          <option value="uPVC Anthracite Grey">uPVC Anthracite Grey</option>
+          <option value="uPVC Smooth Grey">uPVC Smooth Grey</option>
+          <option value="uPVC Matt Black">uPVC Matt Black</option>
+          <option value="uPVC Dual-Tone (Oak Out / White In)">Dual-Tone (Oak Out / White In)</option>
+          <option value="uPVC Dual-Tone (Grey Out / White In)">Dual-Tone (Grey Out / White In)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_glass_grade" style="color:#b45309; font-weight:700;">Glass Grade (Tough/Norm):</label>
+        <select id="us_g_grade" onchange="renderUpvcCad('us')">
+          <option value="NORMAL / ANNEALED" selected>Normal / Annealed (Raw)</option>
+          <option value="TOUGHENED">★ TOUGHENED GLASS</option>
+          <option value="DGU TOUGHENED">★ DGU TOUGHENED (24mm)</option>
+          <option value="LAMINATED SAFETY">LAMINATED SAFETY</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_glass_spec" style="color:#0284c7; font-weight:700;">Glass Thick &amp; Type:</label>
+        <div style="display:flex; gap:4px;">
+          <select id="us_g_thick" style="width:42%;">
+            <option value="5 mm" selected>5 mm</option>
+            <option value="6 mm">6 mm</option>
+            <option value="8 mm">8 mm</option>
+            <option value="10 mm">10 mm</option>
+            <option value="12 mm">12 mm</option>
+            <option value="24 mm DGU">24 mm</option>
+          </select>
+          <select id="us_g_type" style="width:58%;" onchange="renderUpvcCad('us')">
+            <option value="Clear" selected>Clear</option>
+            <option value="Tinted Black">Tinted Black</option>
+            <option value="Tinted Blue">Tinted Blue</option>
+            <option value="Tinted Brown">Tinted Brown</option>
+            <option value="Tinted Grey">Tinted Grey</option>
+            <option value="One-Way Reflective">One-Way</option>
+            <option value="Frosted">Frosted</option>
+            <option value="Pinhead">Pinhead</option>
+            <option value="ACP / uPVC Panel">ACP / Panel</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div style="margin-top:10px; padding:10px; background:#f0f9ff; border:1.5px solid #38bdf8; border-radius:10px;">
@@ -2228,6 +2335,13 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       </div>
     </div>
 
+    <div id="us_cad_wrap" style="margin-top:10px; background:#ffffff; border:1.5px solid #38bdf8; border-radius:12px; padding:10px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:0.74rem; font-weight:800; color:#0369a1;"><i class="fa-solid fa-drafting-compass"></i> <span data-i18n="lbl_live_upvc_cad">LIVE uPVC CAD PREVIEW (INSIDE VIEW)</span></span>
+        <button type="button" onclick="openUpvcCadFullscreen('us')" style="background:#0369a1; color:#fff; border:none; border-radius:6px; padding:3px 8px; font-size:0.66rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-expand"></i> <span data-i18n="btn_zoom_cad">Zoom</span></button>
+      </div>
+      <div id="us_cad_box" style="width:100%; display:flex; justify-content:center; align-items:center; min-height:200px;"></div>
+    </div>
     <div style="display:flex; gap:8px; margin-top:12px;">
       <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearUpvcSliding()" data-i18n="btn_clear">CLEAR</button>
       <button class="action-btn btn-calc" style="flex:0.65; background:#0284c7;" onclick="calculateUpvcSliding()" data-i18n="btn_calc_sliding">+ CALCULATE SLIDING</button>
@@ -2266,7 +2380,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       </div>
       <div class="form-group">
         <label data-i18n="lbl_upvc_door_type">Door Type:</label>
-        <select id="ud_type">
+        <select id="ud_type" onchange="renderUpvcCad('ud')">
           <option value="SINGLE_NO_BOT" data-i18n="opt_ud_single_nobot" selected>Single Door (No Bottom Frame)</option>
           <option value="SINGLE_WITH_BOT" data-i18n="opt_ud_single_bot">Single Door (With Bottom Frame)</option>
           <option value="DOUBLE_NO_BOT" data-i18n="opt_ud_double_nobot">Double / French Door (No Bottom)</option>
@@ -2295,6 +2409,56 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
         <label data-i18n="lbl_qty" style="color:#16a34a;">Quantity (Pcs):</label>
         <input type="number" id="ud_qty" value="1" min="1">
       </div>
+      <div class="form-group">
+        <label data-i18n="lbl_upvc_color" style="color:#0f766e; font-weight:700;">uPVC Profile Color:</label>
+        <select id="ud_color" onchange="renderUpvcCad('ud')">
+          <option value="uPVC Classic White" selected>uPVC Classic White</option>
+          <option value="uPVC Ivory / Cream">uPVC Ivory / Cream</option>
+          <option value="uPVC Golden Oak (Wood)">uPVC Golden Oak (Wood)</option>
+          <option value="uPVC Walnut (Wood)">uPVC Walnut (Wood)</option>
+          <option value="uPVC Dark Oak (Wood)">uPVC Dark Oak (Wood)</option>
+          <option value="uPVC Mahogany (Wood)">uPVC Mahogany (Wood)</option>
+          <option value="uPVC Rustic Oak (Wood)">uPVC Rustic Oak (Wood)</option>
+          <option value="uPVC Anthracite Grey">uPVC Anthracite Grey</option>
+          <option value="uPVC Smooth Grey">uPVC Smooth Grey</option>
+          <option value="uPVC Matt Black">uPVC Matt Black</option>
+          <option value="uPVC Dual-Tone (Oak Out / White In)">Dual-Tone (Oak Out / White In)</option>
+          <option value="uPVC Dual-Tone (Grey Out / White In)">Dual-Tone (Grey Out / White In)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_glass_grade" style="color:#b45309; font-weight:700;">Glass Grade (Tough/Norm):</label>
+        <select id="ud_g_grade" onchange="renderUpvcCad('ud')">
+          <option value="NORMAL / ANNEALED" selected>Normal / Annealed (Raw)</option>
+          <option value="TOUGHENED">★ TOUGHENED GLASS</option>
+          <option value="DGU TOUGHENED">★ DGU TOUGHENED (24mm)</option>
+          <option value="LAMINATED SAFETY">LAMINATED SAFETY</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_glass_spec" style="color:#0284c7; font-weight:700;">Glass Thick &amp; Type:</label>
+        <div style="display:flex; gap:4px;">
+          <select id="ud_g_thick" style="width:42%;">
+            <option value="5 mm" selected>5 mm</option>
+            <option value="6 mm">6 mm</option>
+            <option value="8 mm">8 mm</option>
+            <option value="10 mm">10 mm</option>
+            <option value="12 mm">12 mm</option>
+            <option value="24 mm DGU">24 mm</option>
+          </select>
+          <select id="ud_g_type" style="width:58%;" onchange="renderUpvcCad('ud')">
+            <option value="Clear" selected>Clear</option>
+            <option value="Tinted Black">Tinted Black</option>
+            <option value="Tinted Blue">Tinted Blue</option>
+            <option value="Tinted Brown">Tinted Brown</option>
+            <option value="Tinted Grey">Tinted Grey</option>
+            <option value="One-Way Reflective">One-Way</option>
+            <option value="Frosted">Frosted</option>
+            <option value="Pinhead">Pinhead</option>
+            <option value="ACP / uPVC Panel">ACP / Panel</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div style="margin-top:10px; padding:10px; background:#fff1f2; border:1.5px solid #fb7185; border-radius:10px;">
@@ -2318,6 +2482,13 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
       </div>
     </div>
 
+    <div id="ud_cad_wrap" style="margin-top:10px; background:#ffffff; border:1.5px solid #fb7185; border-radius:12px; padding:10px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:0.74rem; font-weight:800; color:#9f1239;"><i class="fa-solid fa-drafting-compass"></i> <span data-i18n="lbl_live_upvc_cad">LIVE uPVC CAD PREVIEW (INSIDE VIEW)</span></span>
+        <button type="button" onclick="openUpvcCadFullscreen('ud')" style="background:#9f1239; color:#fff; border:none; border-radius:6px; padding:3px 8px; font-size:0.66rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-expand"></i> <span data-i18n="btn_zoom_cad">Zoom</span></button>
+      </div>
+      <div id="ud_cad_box" style="width:100%; display:flex; justify-content:center; align-items:center; min-height:200px;"></div>
+    </div>
     <div style="display:flex; gap:8px; margin-top:12px;">
       <button class="action-btn btn-clear" style="flex:0.35;" onclick="clearUpvcDoor()" data-i18n="btn_clear">CLEAR</button>
       <button class="action-btn btn-calc" style="flex:0.65; background:#e11d48;" onclick="calculateUpvcDoor()" data-i18n="btn_calc_door">+ CALCULATE DOOR</button>
@@ -2927,6 +3098,20 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <div class="form-group">
  <label style="color:#0f766e; font-weight:700;">Alu Color:</label>
  <select id="q_color" onchange="toggleCustomAluColor('q'); updateSuggestedRate();">
+ <optgroup label="uPVC COLORS &amp; WOOD LAMINATES">
+ <option value="uPVC Classic White">uPVC Classic White</option>
+ <option value="uPVC Ivory / Cream">uPVC Ivory / Cream</option>
+ <option value="uPVC Golden Oak (Wood)">uPVC Golden Oak (Wood)</option>
+ <option value="uPVC Walnut (Wood)">uPVC Walnut (Wood)</option>
+ <option value="uPVC Dark Oak (Wood)">uPVC Dark Oak (Wood)</option>
+ <option value="uPVC Mahogany (Wood)">uPVC Mahogany (Wood)</option>
+ <option value="uPVC Rustic Oak (Wood)">uPVC Rustic Oak (Wood)</option>
+ <option value="uPVC Anthracite Grey">uPVC Anthracite Grey</option>
+ <option value="uPVC Smooth Grey">uPVC Smooth Grey</option>
+ <option value="uPVC Matt Black">uPVC Matt Black</option>
+ <option value="uPVC Dual-Tone (Oak Out / White In)">uPVC Dual-Tone (Oak Out / White In)</option>
+ <option value="uPVC Dual-Tone (Grey Out / White In)">uPVC Dual-Tone (Grey Out / White In)</option>
+ </optgroup>
  <option value="Silver (Natural)">Silver (Natural)</option>
  <option value="Anodized Silver Glossy">Anodized Silver Glossy</option>
  <option value="Anodized Silver Matte">Anodized Silver Matte</option>
@@ -5286,12 +5471,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=123"></script>
+  <script src="app.js?v=125"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=123').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=125').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
