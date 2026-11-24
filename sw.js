@@ -1,9 +1,10 @@
-const CACHE_NAME = 'smart-worker-pro-v127';
+const CACHE_NAME = 'smart-worker-pro-v128';
 const CORE_ASSETS = [
   './',
   './index.html',
+  './index.html?source=pwa',
   './style.css?v=107',
-  './app.js?v=127',
+  './app.js?v=128',
   './manifest.json',
   './logo.png?v=34',
   './icon-192.png'
@@ -38,7 +39,7 @@ self.addEventListener('fetch', function(event) {
   if (reqUrl.includes('firestore.googleapis.com') || reqUrl.includes('firebaseio.com') || reqUrl.includes('script.google.com')) {
     return;
   }
-  // Network-First for HTML/JS/CSS so updates appear immediately, falling back to cache when offline
+  // Network-First for HTML/JS/CSS; ignoreSearch ensures ?source=pwa matches cached index.html when offline
   event.respondWith(
     fetch(event.request).then(function(netResp) {
       if (netResp && netResp.status === 200) {
@@ -49,7 +50,13 @@ self.addEventListener('fetch', function(event) {
       }
       return netResp;
     }).catch(function() {
-      return caches.match(event.request);
+      return caches.match(event.request, { ignoreSearch: true }).then(function(cached) {
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html', { ignoreSearch: true }) || caches.match('./');
+        }
+        return Response.error();
+      });
     })
   );
 });

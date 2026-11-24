@@ -10892,6 +10892,9 @@ function setupDb() {
     lbl_upvc_track: "uPVC Track & Shutter:",
     lbl_upvc_series: "uPVC Series / Brand:",
     lbl_sash_h_minus: "Sash H Minus:",
+    lbl_sash_face_mm: "Sash Face (mm):",
+    lbl_bead_h: "Bead Height (mm):",
+    lbl_g_clear: "Clearance (-):",
     lbl_frame_face_f: "Frame Face F:",
     lbl_sash_face_s: "Sash Face S:",
     lbl_sash_h_engage: "H-Engage (+):",
@@ -11039,6 +11042,9 @@ function setupDb() {
     lbl_upvc_track: "uPVC ট্র্যাক ও পাল্লা:",
     lbl_upvc_series: "uPVC সিরিজ / ব্র্যান্ড:",
     lbl_sash_h_minus: "পাল্লা H মাইনাস:",
+    lbl_sash_face_mm: "সাশ ফেস (mm):",
+    lbl_bead_h: "বিট হাইট (mm):",
+    lbl_g_clear: "ক্লিয়ারেন্স (-):",
     lbl_frame_face_f: "ফ্রেম ফেস F:",
     lbl_sash_face_s: "পাল্লা ফেস S:",
     lbl_sash_h_engage: "উপর-নিচ ওভারল্যাপ (+):",
@@ -11186,6 +11192,9 @@ function setupDb() {
     lbl_upvc_track: "uPVC ट्रैक और पल्ला:",
     lbl_upvc_series: "uPVC सीरीज़ / ब्रांड:",
     lbl_sash_h_minus: "पल्ला H माइनस:",
+    lbl_sash_face_mm: "सैश फेस (mm):",
+    lbl_bead_h: "बीड हाइट (mm):",
+    lbl_g_clear: "क्लियरेंस (-):",
     lbl_frame_face_f: "फ्रेम फेस F:",
     lbl_sash_face_s: "पल्ला फेस S:",
     lbl_sash_h_engage: "ऊपर-नीचे ओवरलैप (+):",
@@ -17623,12 +17632,37 @@ function openUpvcFixedPreset() {
 
 // ==================== uPVC CASEMENT & FRENCH CALCULATOR ====================
 const UPVC_CASEMENT_PRESETS = {
-  "60mm Standard (B=35)": { outerB: 35, mullionB: 35, overlap: 16, weld: 6, zGlass: 120, fixGlass: 7, giMinus: 120 },
-  "60mm Slim (B=30)":     { outerB: 30, mullionB: 30, overlap: 16, weld: 6, zGlass: 112, fixGlass: 7, giMinus: 120 },
-  "65mm Heavy (B=38)":    { outerB: 38, mullionB: 38, overlap: 16, weld: 6, zGlass: 128, fixGlass: 7, giMinus: 120 },
-  "70mm Premium (B=40)":  { outerB: 40, mullionB: 40, overlap: 16, weld: 6, zGlass: 132, fixGlass: 7, giMinus: 120 },
-  "Custom uPVC Profile":  { outerB: 35, mullionB: 35, overlap: 16, weld: 6, zGlass: 120, fixGlass: 7, giMinus: 120 }
+  "60mm Standard (B=35)":  { outerB: 35, mullionB: 35, sashFace: 78, beadH: 18, gClear: 7, overlap: 16, weld: 6, zGlass: 127, fixGlass: 7, giMinus: 120 },
+  "60mm Slim (B=30)":      { outerB: 30, mullionB: 30, sashFace: 70, beadH: 16, gClear: 7, overlap: 16, weld: 6, zGlass: 115, fixGlass: 7, giMinus: 120 },
+  "65mm Heavy (B=38)":     { outerB: 38, mullionB: 38, sashFace: 78, beadH: 18, gClear: 7, overlap: 16, weld: 6, zGlass: 127, fixGlass: 7, giMinus: 120 },
+  "70mm Premium (B=40)":   { outerB: 40, mullionB: 40, sashFace: 88, beadH: 20, gClear: 7, overlap: 16, weld: 6, zGlass: 143, fixGlass: 7, giMinus: 120 },
+  "Custom uPVC Profile":   { outerB: 35, mullionB: 35, sashFace: 78, beadH: 18, gClear: 7, overlap: 16, weld: 6, zGlass: 127, fixGlass: 7, giMinus: 120 }
 };
+
+function syncUpvcBeadGlass(pfx) {
+  if (pfx === 'uc') {
+    const sf = parseFloat(document.getElementById('uc_sash_face')?.value);
+    const bh = parseFloat(document.getElementById('uc_bead_h')?.value);
+    const cl = parseFloat(document.getElementById('uc_g_clear')?.value);
+    if (!isNaN(sf) && !isNaN(bh) && !isNaN(cl) && document.getElementById('uc_z_glass')) {
+      document.getElementById('uc_z_glass').value = Math.max(0, Math.round((2 * (sf - bh) + cl) * 10) / 10);
+    }
+  } else if (pfx === 'us') {
+    const sf = parseFloat(document.getElementById('us_sash_s')?.value);
+    const bh = parseFloat(document.getElementById('us_bead_h')?.value);
+    const cl = parseFloat(document.getElementById('us_g_clear')?.value);
+    if (!isNaN(sf) && !isNaN(bh) && !isNaN(cl) && document.getElementById('us_g_minus')) {
+      document.getElementById('us_g_minus').value = Math.max(0, Math.round((2 * (sf - bh) + cl) * 10) / 10);
+    }
+  } else if (pfx === 'ud') {
+    const sf = parseFloat(document.getElementById('ud_sash_s')?.value);
+    const bh = parseFloat(document.getElementById('ud_bead_h')?.value);
+    const cl = parseFloat(document.getElementById('ud_g_clear')?.value);
+    if (!isNaN(sf) && !isNaN(bh) && !isNaN(cl) && document.getElementById('ud_g_minus')) {
+      document.getElementById('ud_g_minus').value = Math.max(0, Math.round((2 * (sf - bh) + cl) * 10) / 10);
+    }
+  }
+}
 
 var uc_win_count = 0;
 var uc_glass_dict = {};
@@ -17644,6 +17678,9 @@ function onUpvcCasementProfileChange() {
     } catch (e) {}
   }
   if (document.getElementById('uc_outer_b')) document.getElementById('uc_outer_b').value = p.outerB;
+  if (document.getElementById('uc_sash_face')) document.getElementById('uc_sash_face').value = p.sashFace || 78;
+  if (document.getElementById('uc_bead_h')) document.getElementById('uc_bead_h').value = p.beadH || 18;
+  if (document.getElementById('uc_g_clear')) document.getElementById('uc_g_clear').value = p.gClear ?? 7;
   if (document.getElementById('uc_mullion_b')) document.getElementById('uc_mullion_b').value = p.mullionB;
   if (document.getElementById('uc_overlap')) document.getElementById('uc_overlap').value = p.overlap;
   if (document.getElementById('uc_weld')) document.getElementById('uc_weld').value = p.weld;
@@ -17655,6 +17692,9 @@ function onUpvcCasementProfileChange() {
 function saveUpvcCasementCustom() {
   const obj = {
     outerB: parseFloat(document.getElementById('uc_outer_b')?.value) || 35,
+    sashFace: parseFloat(document.getElementById('uc_sash_face')?.value) || 78,
+    beadH: parseFloat(document.getElementById('uc_bead_h')?.value) || 18,
+    gClear: parseFloat(document.getElementById('uc_g_clear')?.value) ?? 7,
     mullionB: parseFloat(document.getElementById('uc_mullion_b')?.value) || 35,
     overlap: parseFloat(document.getElementById('uc_overlap')?.value) || 16,
     weld: parseFloat(document.getElementById('uc_weld')?.value) || 6,
@@ -17773,6 +17813,12 @@ function calculateUpvcCasement() {
     out += `[OPENABLE Z-SASH | Qty: ${top_open * win_qty}${topIsFrench ? ' | French 4mm Gap' : ''}]\n`;
     out += ` > Z-Sash Cut (+${weldAdd}mm): ${disp(s_h_cut)} x ${disp(s_w_cut)} (${top_open * win_qty} Sash)\n`;
     out += ` > GI Steel (Sash): ${disp(gi_sh)} x ${disp(gi_sw)}\n`;
+    const ucSashFace = parseFloat(document.getElementById('uc_sash_face')?.value) || 78;
+    const ucBeadH = parseFloat(document.getElementById('uc_bead_h')?.value) || 18;
+    const ucBeadMinus = Math.max(0, 2 * (ucSashFace - ucBeadH));
+    const b_h = Math.max(50, s_h_fin - ucBeadMinus);
+    const b_w = Math.max(50, s_w_fin - ucBeadMinus);
+    out += ` > 45° Glazing Bead (BH=${ucBeadH}mm): ${disp(b_h)} x ${disp(b_w)} (${top_open * 2 * win_qty} pc each)\n`;
     out += ` > Sash Glass (${ucSpec.glassLabel}): ${disp(g_h)} x ${disp(g_w)} (${top_open * win_qty} pc)\n`;
     if (topIsFrench) {
       out += ` > French / Flying Mullion: ${disp(s_h_fin)} (${win_qty} pc)\n`;
@@ -17783,7 +17829,7 @@ function calculateUpvcCasement() {
     for (let i = 0; i < top_open * 2 * win_qty; i++) {
       uc_buckets["uPVC Z-Sash"].push(s_h_cut / 25.4, s_w_cut / 25.4);
       uc_buckets["GI Steel Reinforcement"].push(gi_sh / 25.4, gi_sw / 25.4);
-      uc_buckets["uPVC Glazing Bead"].push(g_h / 25.4, g_w / 25.4);
+      uc_buckets["uPVC Glazing Bead"].push(b_h / 25.4, b_w / 25.4);
     }
   }
   if (top_fixed > 0) {
@@ -17846,22 +17892,23 @@ function calculateUpvcCasement() {
 
 // ==================== uPVC SLIDING (ALL TRACKS — UNIVERSAL FORMULA) ====================
 const UPVC_SLIDING_PRESETS = {
-  "60mm Standard (2T)":    { frameF: 45, sashS: 66, weld: 6, hEngage: 16, gMinus: 102, giMinus: 120 },
-  "80mm Standard (2.5T)":  { frameF: 50, sashS: 66, weld: 6, hEngage: 16, gMinus: 106, giMinus: 120 },
-  "88mm Heavy (2.5T/3T)":  { frameF: 50, sashS: 86, weld: 6, hEngage: 16, gMinus: 136, giMinus: 120 },
-  "99mm Standard (3T)":    { frameF: 50, sashS: 66, weld: 6, hEngage: 16, gMinus: 106, giMinus: 120 },
-  "112mm Heavy (3T)":      { frameF: 50, sashS: 86, weld: 6, hEngage: 16, gMinus: 136, giMinus: 120 },
-  "Custom uPVC Sliding":   { frameF: 50, sashS: 66, weld: 6, hEngage: 16, gMinus: 106, giMinus: 120 }
+  "60mm Standard (2T)":    { frameF: 45, sashS: 54, beadH: 16, gClear: 7, weld: 6, hEngage: 16, gMinus: 83, giMinus: 120 },
+  "80mm Standard (2.5T)":  { frameF: 50, sashS: 66, beadH: 16, gClear: 7, weld: 6, hEngage: 16, gMinus: 107, giMinus: 120 },
+  "88mm Heavy (2.5T/3T)":  { frameF: 52, sashS: 66, beadH: 16, gClear: 7, weld: 6, hEngage: 16, gMinus: 107, giMinus: 120 },
+  "99mm Standard (3T)":    { frameF: 50, sashS: 66, beadH: 16, gClear: 7, weld: 6, hEngage: 16, gMinus: 107, giMinus: 120 },
+  "112mm Heavy (3T)":      { frameF: 52, sashS: 86, beadH: 19, gClear: 7, weld: 6, hEngage: 16, gMinus: 141, giMinus: 120 },
+  "Custom uPVC Sliding":   { frameF: 50, sashS: 66, beadH: 16, gClear: 7, weld: 6, hEngage: 16, gMinus: 107, giMinus: 120 }
 };
 
 var us_win_count = 0;
 var us_glass_dict = {};
-var us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "GI Steel Reinforcement": [] };
+var us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
 
-function setUpvcSashPreset(frameF, sashS) {
+function setUpvcSashPreset(frameF, sashS, beadH) {
   if (document.getElementById('us_frame_f')) document.getElementById('us_frame_f').value = frameF;
   if (document.getElementById('us_sash_s')) document.getElementById('us_sash_s').value = sashS;
-  if (document.getElementById('us_g_minus')) document.getElementById('us_g_minus').value = (sashS >= 80 ? 136 : (sashS >= 74 ? 120 : 106));
+  if (beadH && document.getElementById('us_bead_h')) document.getElementById('us_bead_h').value = beadH;
+  syncUpvcBeadGlass('us');
 }
 
 function onUpvcSlidingProfileChange() {
@@ -17875,6 +17922,8 @@ function onUpvcSlidingProfileChange() {
   }
   if (document.getElementById('us_frame_f')) document.getElementById('us_frame_f').value = p.frameF;
   if (document.getElementById('us_sash_s')) document.getElementById('us_sash_s').value = p.sashS;
+  if (document.getElementById('us_bead_h')) document.getElementById('us_bead_h').value = p.beadH || 16;
+  if (document.getElementById('us_g_clear')) document.getElementById('us_g_clear').value = p.gClear ?? 7;
   if (document.getElementById('us_weld')) document.getElementById('us_weld').value = p.weld;
   if (document.getElementById('us_h_engage')) document.getElementById('us_h_engage').value = p.hEngage;
   if (document.getElementById('us_g_minus')) document.getElementById('us_g_minus').value = p.gMinus;
@@ -17885,6 +17934,8 @@ function saveUpvcSlidingCustom() {
   const obj = {
     frameF: parseFloat(document.getElementById('us_frame_f')?.value) || 50,
     sashS: parseFloat(document.getElementById('us_sash_s')?.value) || 66,
+    beadH: parseFloat(document.getElementById('us_bead_h')?.value) || 16,
+    gClear: parseFloat(document.getElementById('us_g_clear')?.value) ?? 7,
     weld: parseFloat(document.getElementById('us_weld')?.value) || 6,
     hEngage: parseFloat(document.getElementById('us_h_engage')?.value) || 16,
     gMinus: parseFloat(document.getElementById('us_g_minus')?.value) || 106,
@@ -17897,7 +17948,7 @@ function saveUpvcSlidingCustom() {
 function clearUpvcSliding() {
   us_win_count = 0;
   us_glass_dict = {};
-  us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "GI Steel Reinforcement": [] };
+  us_buckets = { "uPVC Sliding Outer": [], "uPVC Glass Sash": [], "uPVC Mesh Sash": [], "uPVC Interlock": [], "uPVC Glazing Bead": [], "GI Steel Reinforcement": [] };
   if (document.getElementById('us_h')) document.getElementById('us_h').value = "";
   if (document.getElementById('us_w')) document.getElementById('us_w').value = "";
   if (document.getElementById('us_out')) document.getElementById('us_out').textContent = "Cleared. Enter uPVC Sliding dimensions...";
@@ -17947,6 +17998,10 @@ function calculateUpvcSliding() {
   const sash_w_cut = Math.ceil(((w_mm - (2 * frameF)) / div) + 8 + (((div - 1) * sashS) / div) + weldAdd);
   const sash_w_fin = sash_w_cut - weldAdd;
 
+  const usBeadH = parseFloat(document.getElementById('us_bead_h')?.value) || 16;
+  const usBeadMinus = Math.max(0, 2 * (sashS - usBeadH));
+  const bead_h_cut = Math.max(50, Math.ceil(sash_h_fin - usBeadMinus));
+  const bead_w_cut = Math.max(50, Math.ceil(sash_w_fin - usBeadMinus));
   const glass_h = Math.max(50, sash_h_fin - gMinus);
   const glass_w = Math.max(50, sash_w_fin - gMinus);
 
@@ -17972,6 +18027,7 @@ function calculateUpvcSliding() {
     out += `> Mesh/Jali Sash (${meshShutters * qty} Shutter / ${meshShutters * 2 * qty} pc each): H ${disp(sash_h_cut)} x W ${disp(sash_w_cut)}\n`;
   }
   out += `> Interlock Profile: ${disp(sash_h_fin)} (${ilockCount * qty} pc)\n`;
+  out += `> 45° Glazing Bead (BH=${usBeadH}mm): H ${disp(bead_h_cut)} x W ${disp(bead_w_cut)} (${glassShutters * 2 * qty} pc each)\n`;
   out += `\n--- 3. GLASS & MESH CUTTING ---\n`;
   out += `> Glass Size (${usSpec.glassLabel}): ${disp(glass_h)} x ${disp(glass_w)} (${glassShutters * qty} pc)\n`;
   if (meshShutters > 0) {
@@ -18005,6 +18061,7 @@ function calculateUpvcSliding() {
     us_buckets["GI Steel Reinforcement"].push(gi_fh / 25.4, gi_fh / 25.4, gi_fw / 25.4, gi_fw / 25.4);
     for (let s = 0; s < glassShutters * 2; s++) {
       us_buckets["uPVC Glass Sash"].push(sash_h_cut / 25.4, sash_w_cut / 25.4);
+      us_buckets["uPVC Glazing Bead"].push(bead_h_cut / 25.4, bead_w_cut / 25.4);
       us_buckets["GI Steel Reinforcement"].push(gi_sh / 25.4, gi_sw / 25.4);
     }
     for (let m = 0; m < meshShutters * 2; m++) {
@@ -18121,6 +18178,11 @@ function calculateUpvcDoor() {
   const sash_w_fin = sash_w_cut - weldAdd;
 
   const sashCount = isDouble ? 2 : 1;
+  const udSashS = parseFloat(document.getElementById('ud_sash_s')?.value) || 98;
+  const udBeadH = parseFloat(document.getElementById('ud_bead_h')?.value) || 19;
+  const udBeadMinus = Math.max(0, 2 * (udSashS - udBeadH));
+  const bead_h_cut = Math.max(50, Math.ceil(sash_h_fin - udBeadMinus));
+  const bead_w_cut = Math.max(50, Math.ceil(sash_w_fin - udBeadMinus));
   const glass_h = Math.max(50, sash_h_fin - gMinus);
   const glass_w = Math.max(50, sash_w_fin - gMinus);
 
@@ -18147,6 +18209,7 @@ function calculateUpvcDoor() {
     for (let q = 0; q < qty; q++) ud_buckets["uPVC French Mullion"].push(sash_h_fin / 25.4);
   }
   out += `\n--- 3. GLASS / ACP PANEL & HARDWARE ---\n`;
+  out += `> 45° Glazing Bead (BH=${udBeadH}mm): H ${disp(bead_h_cut)} x W ${disp(bead_w_cut)} (${sashCount * 2 * qty} pc each)\n`;
   out += `> Glass / Panel (${udSpec.glassLabel}): ${disp(glass_h)} x ${disp(glass_w)} (${sashCount * qty} pc)\n`;
   const perimM_ud = ((h_mm * 2 + w_mm * (hasBottom ? 2 : 1)) / 1000) * qty;
   const gasketM_ud = Math.ceil((perimM_ud * 2) + (sash_h_fin + sash_w_fin) * 4 * sashCount * qty / 1000);
@@ -18173,7 +18236,7 @@ function calculateUpvcDoor() {
     for (let s = 0; s < sashCount * 2; s++) {
       ud_buckets["uPVC Door Sash"].push(sash_h_cut / 25.4, sash_w_cut / 25.4);
       ud_buckets["GI Steel Reinforcement"].push(gi_sh / 25.4, gi_sw / 25.4);
-      ud_buckets["uPVC Glazing Bead"].push(glass_h / 25.4, glass_w / 25.4);
+      ud_buckets["uPVC Glazing Bead"].push(bead_h_cut / 25.4, bead_w_cut / 25.4);
     }
   }
 
@@ -18964,6 +19027,12 @@ function calculateFromICad(pfx) {
       const gh = shFin - pm.zGlass, gw = swFin - pm.zGlass;
       out += `[Panel #${idx + 1} FRENCH 2-SASH] Clear: ${disp(lf.h)} x ${disp(lf.w)} (4mm Center Gap)\n`;
       out += ` > Z-Sash (${2 * qty} Leaf): ${disp(shCut)} x ${disp(swCut)} | French Mullion: ${disp(shFin)} (${qty} pc)\n`;
+      if (isUpvc) {
+        const bh = parseFloat(document.getElementById('uc_bead_h')?.value) || 18;
+        const sf = parseFloat(document.getElementById('uc_sash_face')?.value) || 78;
+        const bm = Math.max(0, 2 * (sf - bh));
+        out += ` > 45° Glazing Bead: ${disp(Math.max(50, shFin - bm))} x ${disp(Math.max(50, swFin - bm))} (${4 * qty} pc each)\n`;
+      }
       out += ` > Sash Glass (${gSpec.glassLabel}): ${disp(gh)} x ${disp(gw)} (${2 * qty} pc)\n`;
       const gk = `${disp(gh)} x ${disp(gw)} (French Sash) || ${gSpec.glassLabel}`;
       gDict[gk] = (gDict[gk] || 0) + (2 * qty);
