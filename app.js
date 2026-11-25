@@ -9739,6 +9739,18 @@ function autofillCustomer() {
     setTimeout(function() { try { renderUpvcCad('us'); } catch(e){} }, 30);
   } else if (screenName === 'upvc_door') {
     setTimeout(function() { try { renderUpvcCad('ud'); } catch(e){} }, 30);
+  } else if (screenId === 'kitchen3d') {
+    setTimeout(function() { try { initKitchen3D(); } catch(e){} }, 30);
+  } else if (screenId === 'domal') {
+    setTimeout(function() { try { renderLiveColorGlassPreview('dm'); } catch(e){} }, 30);
+  } else if (screenId === 'sliding') {
+    setTimeout(function() { try { renderLiveColorGlassPreview('sl'); } catch(e){} }, 30);
+  } else if (screenId === 'door') {
+    setTimeout(function() { try { renderLiveColorGlassPreview('dr'); } catch(e){} }, 30);
+  } else if (screenId === 'partition') {
+    setTimeout(function() { try { renderPtCadDesigner(); } catch(e){} }, 30);
+  } else if (screenId === 'free_cad') {
+    setTimeout(function() { try { renderFreeCadDesigner(); } catch(e){} }, 30);
   } else if (screenName === 'cad_studio') {
     setTimeout(function() { try { renderCadStudio(); } catch(e){} }, 20);
   } else if (screenName === 'wastage_qr') {
@@ -10895,6 +10907,8 @@ function setupDb() {
     lbl_sash_face_mm: "Sash Face (mm):",
     lbl_bead_h: "Bead Height (mm):",
     lbl_g_clear: "Clearance (-):",
+    mod_kitchen_3d: "3D Kitchen & Wardrobe",
+    mod_kitchen_3d_sub: "L-Shape Kitchen, Oven Tower & 3D Wardrobe",
     lbl_frame_face_f: "Frame Face F:",
     lbl_sash_face_s: "Sash Face S:",
     lbl_sash_h_engage: "H-Engage (+):",
@@ -11045,6 +11059,8 @@ function setupDb() {
     lbl_sash_face_mm: "সাশ ফেস (mm):",
     lbl_bead_h: "বিট হাইট (mm):",
     lbl_g_clear: "ক্লিয়ারেন্স (-):",
+    mod_kitchen_3d: "3D কিচেন ও ওয়ার্ডরোব",
+    mod_kitchen_3d_sub: "L-Shape কিচেন, ওভেন টাওয়ার ও 3D ওয়ার্ডরোব",
     lbl_frame_face_f: "ফ্রেম ফেস F:",
     lbl_sash_face_s: "পাল্লা ফেস S:",
     lbl_sash_h_engage: "উপর-নিচ ওভারল্যাপ (+):",
@@ -11195,6 +11211,8 @@ function setupDb() {
     lbl_sash_face_mm: "सैश फेस (mm):",
     lbl_bead_h: "बीड हाइट (mm):",
     lbl_g_clear: "क्लियरेंस (-):",
+    mod_kitchen_3d: "3D किचन और वॉर्डरोब",
+    mod_kitchen_3d_sub: "L-Shape किचन, ओवन टावर और 3D वॉर्डरोब",
     lbl_frame_face_f: "फ्रेम फेस F:",
     lbl_sash_face_s: "पल्ला फेस S:",
     lbl_sash_h_engage: "ऊपर-नीचे ओवरलैप (+):",
@@ -19066,4 +19084,547 @@ function calculateFromICad(pfx) {
   const matEl = document.getElementById(pfx + '_mat_out');
   if (matEl) matEl.textContent = isUpvc ? generateUpvcMaterialSummary(buckets) : generateMaterialList(buckets);
   renderICad(pfx);
+}
+
+
+// ==================== UNIFIED 3D WEBGL SHOWROOM ENGINE (v129) ====================
+var SW3D = {
+  renderer: null,
+  scene: null,
+  camera: null,
+  root: null,
+  hostEl: null,
+  theta: 0.25,
+  phi: Math.PI / 2 - 0.08,
+  radius: 4.1,
+  openAmount: 0.35,
+  targetOpen: null,
+  isDay: true,
+  animId: null,
+  movables: [],
+  bays3D: [],
+  onSelectBay: null,
+  lastSpec: null,
+
+  ensure: function() {
+    if (typeof THREE === 'undefined') return false;
+    if (this.renderer) return true;
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(42, 1.5, 0.1, 100);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+    const sun = new THREE.DirectionalLight(0xfffbeb, 1.15);
+    sun.position.set(4, 5, 6);
+    sun.castShadow = true;
+    this.scene.add(sun);
+    const fill = new THREE.DirectionalLight(0xbae6fd, 0.45);
+    fill.position.set(-4, 3, 4);
+    this.scene.add(fill);
+    this.root = new THREE.Group();
+    this.scene.add(this.root);
+
+    const dom = this.renderer.domElement;
+    dom.style.width = '100%';
+    dom.style.height = '100%';
+    dom.style.display = 'block';
+    dom.style.touchAction = 'none';
+    dom.style.borderRadius = '8px';
+
+    let dragging = false, moved = false, px = 0, py = 0, pinchDist = null;
+    const self = this;
+    dom.addEventListener('pointerdown', function(e) { dragging = true; moved = false; px = e.clientX; py = e.clientY; });
+    window.addEventListener('pointerup', function(e) {
+      if (dragging && !moved && self.onSelectBay && self.bays3D.length) {
+        const rect = dom.getBoundingClientRect();
+        const mouse = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(mouse, self.camera);
+        const hits = ray.intersectObjects(self.bays3D.map(b => b.mesh), false);
+        if (hits.length > 0 && hits[0].object.userData.bayId) {
+          self.onSelectBay(hits[0].object.userData.bayId);
+        }
+      }
+      dragging = false;
+    });
+    window.addEventListener('pointermove', function(e) {
+      if (!dragging) return;
+      const dx = e.clientX - px, dy = e.clientY - py;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      px = e.clientX; py = e.clientY;
+      self.theta -= dx * 0.008;
+      self.phi = Math.max(0.35, Math.min(Math.PI / 2 + 0.25, self.phi - dy * 0.008));
+      self.updateCam();
+    });
+    dom.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      self.radius = Math.max(2.2, Math.min(7.5, self.radius + e.deltaY * 0.003));
+      self.updateCam();
+    }, { passive: false });
+    dom.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2) {
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        if (pinchDist !== null) { self.radius = Math.max(2.2, Math.min(7.5, self.radius - (d - pinchDist) * 0.01)); self.updateCam(); }
+        pinchDist = d;
+      }
+    }, { passive: true });
+    dom.addEventListener('touchend', function() { pinchDist = null; });
+
+    this.updateCam();
+    this.startLoop();
+    return true;
+  },
+
+  updateCam: function() {
+    if (!this.camera) return;
+    this.camera.position.x = this.radius * Math.sin(this.phi) * Math.sin(this.theta);
+    this.camera.position.y = this.radius * Math.cos(this.phi);
+    this.camera.position.z = this.radius * Math.sin(this.phi) * Math.cos(this.theta);
+    this.camera.lookAt(0, 0, 0);
+  },
+
+  startLoop: function() {
+    if (this.animId) cancelAnimationFrame(this.animId);
+    const self = this;
+    function tick() {
+      self.animId = requestAnimationFrame(tick);
+      if (self.targetOpen !== null) {
+        const diff = self.targetOpen - self.openAmount;
+        if (Math.abs(diff) < 0.015) { self.openAmount = self.targetOpen; self.targetOpen = null; }
+        else self.openAmount += diff * 0.14;
+        self.applyOpen();
+      }
+      if (self.hostEl && self.hostEl.offsetParent !== null && self.renderer && self.scene && self.camera) {
+        const w = self.hostEl.clientWidth || 320, h = self.hostEl.clientHeight || 220;
+        if (self.renderer.domElement.width !== Math.floor(w * (window.devicePixelRatio || 1))) {
+          self.camera.aspect = w / h;
+          self.camera.updateProjectionMatrix();
+          self.renderer.setSize(w, h);
+        }
+        self.renderer.render(self.scene, self.camera);
+      }
+    }
+    tick();
+  },
+
+  applyOpen: function() {
+    for (let i = 0; i < this.movables.length; i++) {
+      const m = this.movables[i];
+      if (m.kind === 'slide') {
+        m.mesh.position.x = m.closedX + (m.openX - m.closedX) * this.openAmount;
+      } else if (m.kind === 'swing') {
+        m.mesh.rotation.y = m.dir * m.maxAngle * this.openAmount;
+      } else if (m.kind === 'tophung') {
+        m.mesh.rotation.x = -m.maxAngle * this.openAmount;
+      }
+    }
+  },
+
+  colorHex: function(name) {
+    const s = String(name || '').toLowerCase();
+    if (s.includes('black') || s.includes('matt black')) return 0x1b1e23;
+    if (s.includes('anthracite') || s.includes('charcoal') || s.includes('dark grey')) return 0x334155;
+    if (s.includes('grey') || s.includes('gray')) return 0x64748b;
+    if (s.includes('golden oak') || s.includes('teak')) return 0xa16228;
+    if (s.includes('walnut') || s.includes('dark oak') || s.includes('mahogany') || s.includes('brown') || s.includes('rustic')) return 0x5c3419;
+    if (s.includes('champagne')) return 0xc6a675;
+    if (s.includes('gold')) return 0xd4af37;
+    if (s.includes('ivory') || s.includes('cream')) return 0xfef3c7;
+    if (s.includes('white')) return 0xf8fafc;
+    if (s.includes('red')) return 0x991b1b;
+    if (s.includes('blue')) return 0x1e3a8a;
+    if (s.includes('green')) return 0x14532d;
+    return 0xcbd5e1;
+  },
+
+  glassSpec: function(name) {
+    const s = String(name || '').toLowerCase();
+    if (s.includes('acp') || s.includes('panel')) return { color: 0xd97706, opacity: 0.96, isPanel: true };
+    if (s.includes('jali') || s.includes('mesh')) return { color: 0x334155, opacity: 0.52, isMesh: true };
+    if (s.includes('frosted') || s.includes('pinhead')) return { color: 0xe2e8f0, opacity: 0.78 };
+    if (s.includes('black') || s.includes('tinted black')) return { color: 0x1e293b, opacity: 0.55 };
+    if (s.includes('brown') || s.includes('bronze')) return { color: 0x78350f, opacity: 0.45 };
+    if (s.includes('green')) return { color: 0x10b981, opacity: 0.36 };
+    if (s.includes('blue')) return { color: 0x0284c7, opacity: 0.42 };
+    if (s.includes('clear')) return { color: 0xe0f2fe, opacity: 0.24 };
+    return { color: 0x38bdf8, opacity: 0.35 };
+  },
+
+  mount: function(containerEl, spec) {
+    if (!containerEl || !this.ensure()) return;
+    this.lastSpec = spec;
+    this.onSelectBay = spec.onSelectBay || null;
+
+    // Build wrapper with 3D stage + compact interactive 3D toolbar
+    let stage = containerEl.querySelector('.sw3d-stage');
+    if (!stage) {
+      containerEl.innerHTML =
+        '<div style="width:100%; background:#0f172a; border-radius:10px; padding:6px; border:1.5px solid #334155;">' +
+        '  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; flex-wrap:wrap; gap:4px;">' +
+        '    <span class="sw3d-title" style="font-size:0.7rem; font-weight:800; color:#38bdf8;"><i class="fa-solid fa-cube"></i> 3D LIVE VIEW (Drag to Rotate)</span>' +
+        '    <div style="display:flex; gap:4px;">' +
+        '      <button type="button" onclick="SW3D.toggleOpen()" style="background:#10b981; color:#0f172a; border:none; border-radius:5px; padding:3px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;">Open/Close</button>' +
+        '      <button type="button" onclick="SW3D.toggleDay()" style="background:#fbbf24; color:#0f172a; border:none; border-radius:5px; padding:3px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;">Day/Night</button>' +
+        '      <button type="button" onclick="SW3D.resetCam()" style="background:#334155; color:#fff; border:none; border-radius:5px; padding:3px 7px; font-size:0.65rem; font-weight:700; cursor:pointer;">Reset</button>' +
+        '    </div>' +
+        '  </div>' +
+        '  <div class="sw3d-stage" style="width:100%; height:225px; border-radius:8px; overflow:hidden; background:#020617;"></div>' +
+        '</div>';
+      stage = containerEl.querySelector('.sw3d-stage');
+    }
+    const titleEl = containerEl.querySelector('.sw3d-title');
+    if (titleEl && spec.title) titleEl.innerHTML = '<i class="fa-solid fa-cube"></i> ' + spec.title;
+
+    this.hostEl = stage;
+    if (this.renderer.domElement.parentElement !== stage) {
+      stage.innerHTML = '';
+      stage.appendChild(this.renderer.domElement);
+    }
+
+    const w = stage.clientWidth || 320, h = stage.clientHeight || 225;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+    this.buildScene(spec);
+  },
+
+  toggleOpen: function() { this.targetOpen = this.openAmount > 0.5 ? 0.0 : 1.0; },
+  toggleDay: function() { this.isDay = !this.isDay; if (this.lastSpec) this.buildScene(this.lastSpec); },
+  resetCam: function() { this.theta = 0.25; this.phi = Math.PI / 2 - 0.08; this.radius = 4.1; this.updateCam(); },
+
+  buildScene: function(spec) {
+    while (this.root.children.length > 0) this.root.remove(this.root.children[0]);
+    this.movables = [];
+    this.bays3D = [];
+
+    this.scene.background = new THREE.Color(this.isDay ? 0x0f172a : 0x050814);
+    const ratio = Math.max(0.4, Math.min(2.6, (spec.w || 1500) / Math.max(300, spec.h || 1200)));
+    const H = 2.0, W = H * ratio;
+    const fCol = this.colorHex(spec.frameColor);
+    const frameMat = new THREE.MeshStandardMaterial({ color: fCol, metalness: 0.45, roughness: 0.35 });
+    const gs = this.glassSpec(spec.glassType);
+    const glassMat = new THREE.MeshPhysicalMaterial({ color: gs.color, transparent: true, opacity: gs.opacity, roughness: 0.08, metalness: 0.15, side: THREE.DoubleSide });
+    const meshMat = new THREE.MeshStandardMaterial({ color: 0x334155, transparent: true, opacity: 0.55, wireframe: false, side: THREE.DoubleSide });
+    const acpMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4, metalness: 0.2 });
+
+    // Subtle Wall Backdrop & Sill
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(W + 1.4, H + 0.9, 0.08), new THREE.MeshStandardMaterial({ color: this.isDay ? 0x334155 : 0x1e293b, roughness: 0.9 }));
+    wall.position.set(0, 0, -0.22);
+    this.root.add(wall);
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(W + 0.22, 0.06, 0.32), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.25 }));
+    sill.position.set(0, -H / 2 - 0.03, 0);
+    this.root.add(sill);
+
+    const ft = 0.08, fd = 0.16;
+    // Outer Frame (4 sides, omit bottom if noBottom)
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(W, ft, fd), frameMat); topBar.position.set(0, H / 2 - ft / 2, 0); this.root.add(topBar);
+    if (!spec.noBottom) {
+      const botBar = new THREE.Mesh(new THREE.BoxGeometry(W, ft, fd), frameMat); botBar.position.set(0, -H / 2 + ft / 2, 0); this.root.add(botBar);
+    }
+    const leftBar = new THREE.Mesh(new THREE.BoxGeometry(ft, H, fd), frameMat); leftBar.position.set(-W / 2 + ft / 2, 0, 0); this.root.add(leftBar);
+    const rightBar = new THREE.Mesh(new THREE.BoxGeometry(ft, H, fd), frameMat); rightBar.position.set(W / 2 - ft / 2, 0, 0); this.root.add(rightBar);
+
+    const innerW = W - ft * 2;
+    const innerH = H - (spec.noBottom ? ft : ft * 2);
+    const innerY0 = spec.noBottom ? -H / 2 : -H / 2 + ft;
+
+    const makeLeaf = (lw, lh, paneMat, hasHandle) => {
+      const g = new THREE.Group();
+      const sb = 0.05, sd = 0.04;
+      const t = new THREE.Mesh(new THREE.BoxGeometry(lw, sb, sd), frameMat); t.position.y = lh / 2 - sb / 2; g.add(t);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(lw, sb, sd), frameMat); b.position.y = -lh / 2 + sb / 2; g.add(b);
+      const l = new THREE.Mesh(new THREE.BoxGeometry(sb, lh - sb * 2, sd), frameMat); l.position.x = -lw / 2 + sb / 2; g.add(l);
+      const r = new THREE.Mesh(new THREE.BoxGeometry(sb, lh - sb * 2, sd), frameMat); r.position.x = lw / 2 - sb / 2; g.add(r);
+      const pane = new THREE.Mesh(new THREE.PlaneGeometry(lw - sb * 1.8, lh - sb * 1.8), paneMat); g.add(pane);
+      if (hasHandle) {
+        const hMesh = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.03), new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.9 }));
+        hMesh.position.set(lw / 2 - sb * 0.7, 0, sd / 2 + 0.015);
+        g.add(hMesh);
+      }
+      return g;
+    };
+
+    if (spec.kind === 'sliding') {
+      const div = spec.div || 2;
+      const sw = innerW / div + 0.03;
+      const zStep = 0.045;
+      for (let i = 0; i < div; i++) {
+        const cx = -innerW / 2 + sw / 2 + i * ((innerW - sw) / Math.max(1, div - 1));
+        const z = (i % 2 === 0 ? -zStep : zStep);
+        const sMesh = makeLeaf(sw, innerH - 0.01, glassMat, true);
+        sMesh.position.set(cx, innerY0 + innerH / 2, z);
+        this.root.add(sMesh);
+        if (i > 0) {
+          this.movables.push({ kind: 'slide', mesh: sMesh, closedX: cx, openX: -innerW / 2 + sw / 2 });
+        }
+      }
+      if (spec.hasMesh) {
+        const mw = innerW / (div === 4 ? 2 : div) + 0.03;
+        const mMesh = makeLeaf(mw, innerH - 0.01, meshMat, true);
+        mMesh.position.set(-innerW / 2 + mw / 2, innerY0 + innerH / 2, zStep * 1.9);
+        this.root.add(mMesh);
+        this.movables.push({ kind: 'slide', mesh: mMesh, closedX: -innerW / 2 + mw / 2, openX: innerW / 2 - mw / 2 });
+      }
+    } else if (spec.kind === 'door') {
+      const cnt = spec.isDouble ? 2 : 1;
+      const dw = innerW / cnt;
+      for (let i = 0; i < cnt; i++) {
+        const pivot = new THREE.Group();
+        const isLeft = (i === 0);
+        const leaf = makeLeaf(dw - 0.01, innerH - 0.01, glassMat, true);
+        leaf.position.x = isLeft ? dw / 2 : -dw / 2;
+        pivot.add(leaf);
+        pivot.position.set(isLeft ? -innerW / 2 : innerW / 2, innerY0 + innerH / 2, 0.02);
+        this.root.add(pivot);
+        this.movables.push({ kind: 'swing', mesh: pivot, dir: isLeft ? -1 : 1, maxAngle: Math.PI * 0.45 });
+      }
+    } else if (spec.kind === 'bays' && Array.isArray(spec.bays)) {
+      const totalW = spec.w || 1500, totalH = spec.h || 1200;
+      const sx = W / totalW, sy = H / totalH;
+      spec.bays.forEach(b => {
+        const bw = b.w * sx, bh = b.h * sy;
+        const bx = -W / 2 + (b.x + b.w / 2) * sx;
+        const by = H / 2 - (b.y + b.h / 2) * sy;
+        const t = String(b.type || 'FIX').toUpperCase();
+        const pMat = t.includes('ACP') ? acpMat : (t.includes('JALI') ? meshMat : glassMat);
+        const isSel = spec.selectedId && b.id === spec.selectedId;
+
+        // Selection highlight border + hit plane
+        const hit = new THREE.Mesh(new THREE.PlaneGeometry(bw * 0.92, bh * 0.92), new THREE.MeshBasicMaterial({ visible: false }));
+        hit.position.set(bx, by, 0.04);
+        hit.userData.bayId = b.id;
+        this.root.add(hit);
+        this.bays3D.push({ mesh: hit });
+
+        if (isSel) {
+          const selRim = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 0.07), new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true }));
+          selRim.position.set(bx, by, 0.02);
+          this.root.add(selRim);
+        }
+
+        if (t === 'OPEN' || t === 'SINGLE_DOOR') {
+          const piv = new THREE.Group();
+          const lf = makeLeaf(bw - 0.01, bh - 0.01, pMat, true);
+          lf.position.x = bw / 2;
+          piv.add(lf);
+          piv.position.set(bx - bw / 2, by, 0.02);
+          this.root.add(piv);
+          this.movables.push({ kind: 'swing', mesh: piv, dir: -1, maxAngle: Math.PI * 0.42 });
+        } else if (t === 'FRENCH' || t === 'DOUBLE_DOOR') {
+          for (let side = 0; side < 2; side++) {
+            const piv = new THREE.Group();
+            const lw = (bw - 0.02) / 2;
+            const lf = makeLeaf(lw, bh - 0.01, pMat, true);
+            lf.position.x = side === 0 ? lw / 2 : -lw / 2;
+            piv.add(lf);
+            piv.position.set(side === 0 ? bx - bw / 2 : bx + bw / 2, by, 0.02);
+            this.root.add(piv);
+            this.movables.push({ kind: 'swing', mesh: piv, dir: side === 0 ? -1 : 1, maxAngle: Math.PI * 0.42 });
+          }
+        } else if (t === 'TOP_HUNG') {
+          const piv = new THREE.Group();
+          const lf = makeLeaf(bw - 0.01, bh - 0.01, pMat, true);
+          lf.position.y = -bh / 2;
+          piv.add(lf);
+          piv.position.set(bx, by + bh / 2, 0.02);
+          this.root.add(piv);
+          this.movables.push({ kind: 'tophung', mesh: piv, maxAngle: Math.PI * 0.25 });
+        } else {
+          const lf = makeLeaf(bw - 0.01, bh - 0.01, pMat, false);
+          lf.position.set(bx, by, 0);
+          this.root.add(lf);
+        }
+      });
+    }
+    this.applyOpen();
+  }
+};
+
+// Override 2D Preview Functions to Render Live 3D!
+const _origRenderLiveColorGlassPreview = typeof renderLiveColorGlassPreview === 'function' ? renderLiveColorGlassPreview : null;
+function renderLiveColorGlassPreview(prefix) {
+  if (prefix === 'pt' && typeof renderPtCadDesigner === 'function') { renderPtCadDesigner(); }
+  if (prefix === 'cc') {
+    const ccBox = document.getElementById('cc_color_preview_box');
+    if (ccBox) ccBox.style.display = 'none';
+    return;
+  }
+  const box = document.getElementById(prefix + '_color_preview_box');
+  if (!box) return;
+  const aluCol = (document.getElementById(prefix + '_color')?.value || 'Silver');
+  const gType = (document.getElementById(prefix + '_g_type')?.value || 'Clear');
+  const w = parseFloat(document.getElementById(prefix + '_w')?.value) || 60;
+  const h = parseFloat(document.getElementById(prefix + '_h')?.value) || 48;
+  const trk = (document.getElementById(prefix + '_track')?.value || '2-Track');
+  const div = trk.includes('4') ? 4 : (trk.includes('3') ? 3 : 2);
+  const hasMesh = trk.toLowerCase().includes('jali') || trk.toLowerCase().includes('mesh');
+  const isDoor = (prefix === 'dr');
+  const isDouble = isDoor && (document.getElementById('dr_opt')?.value || '').toLowerCase().includes('double');
+  SW3D.mount(box, {
+    title: isDoor ? '3D DOOR SHOWROOM' : '3D WINDOW SHOWROOM',
+    kind: isDoor ? 'door' : 'sliding',
+    w: w, h: h, div: div, hasMesh: hasMesh, isDouble: isDouble,
+    frameColor: aluCol, glassType: gType
+  });
+}
+
+function renderUpvcCad(pfx) {
+  const box = document.getElementById(pfx + '_cad_box');
+  if (!box) return;
+  const w = safeEval(document.getElementById(pfx + '_w')?.value) || 1200;
+  const h = safeEval(document.getElementById(pfx + '_h')?.value) || 1200;
+  const col = document.getElementById(pfx + '_color')?.value || 'uPVC Classic White';
+  const gType = document.getElementById(pfx + '_g_type')?.value || 'Clear';
+  if (pfx === 'us') {
+    const trk = document.getElementById('us_track')?.value || '2T_2S';
+    const div = trk.includes('4') ? 4 : (trk.includes('3T_3S') ? 3 : 2);
+    const hasMesh = trk.includes('M');
+    SW3D.mount(box, { title: '3D uPVC SLIDING', kind: 'sliding', w: w, h: h, div: div, hasMesh: hasMesh, frameColor: col, glassType: gType });
+  } else {
+    const dt = document.getElementById('ud_type')?.value || 'SINGLE_NO_BOT';
+    SW3D.mount(box, { title: '3D uPVC DOOR', kind: 'door', w: w, h: h, isDouble: dt.includes('DOUBLE'), noBottom: dt.includes('NO_BOT'), frameColor: col, glassType: gType });
+  }
+}
+
+const _origRenderICad = typeof renderICad === 'function' ? renderICad : null;
+function renderICad(pfx) {
+  if (_origRenderICad) _origRenderICad(pfx);
+  const box = document.getElementById(pfx + '_icad_svg');
+  if (!box || !ICAD_STATE[pfx]) return;
+  const pm = _icadGetParams(pfx);
+  const leaves = [], mullions = [];
+  _icadComputeLayout(ICAD_STATE[pfx].tree, pm.outerB, pm.outerB, pm.w_mm - pm.outerB * 2, pm.h_mm - pm.outerB * 2, pm.mullionB, leaves, mullions);
+  const bays = leaves.map(lf => ({ id: lf.node.id, x: lf.x, y: lf.y, w: lf.w, h: lf.h, type: lf.node.type || 'FIX' }));
+  const col = pfx === 'uc' ? (document.getElementById('uc_color')?.value || 'White') : (document.getElementById('cc_color')?.value || 'Silver');
+  const gType = document.getElementById(pfx + '_g_type')?.value || 'Clear';
+  SW3D.mount(box, {
+    title: pfx === 'uc' ? '3D uPVC CASEMENT (Tap Bay to Edit)' : '3D EURO CASEMENT (Tap Bay to Edit)',
+    kind: 'bays', w: pm.w_mm, h: pm.h_mm, bays: bays, selectedId: ICAD_STATE[pfx].selectedId,
+    frameColor: col, glassType: gType,
+    onSelectBay: function(id) { ICAD_STATE[pfx].selectedId = id; renderICad(pfx); }
+  });
+}
+
+// ==================== 3D KITCHEN & WARDROBE SCREEN CONTROLLER (v129) ====================
+var K3D = { scene: null, cam: null, ren: null, root: null, doors: [], drawers: [], mode: 'lkitchen', open: 0, targetOpen: null, tour: false, led: true, topCol: '#5e7861', botCol: '#5e7861', theta: 0.52, phi: Math.PI/2 - 0.14, rad: 5.4 };
+function initKitchen3D() {
+  const st = document.getElementById('k3d_stage');
+  if (!st || typeof THREE === 'undefined') return;
+  if (!K3D.ren) {
+    K3D.scene = new THREE.Scene(); K3D.scene.background = new THREE.Color(0x0f172a);
+    K3D.cam = new THREE.PerspectiveCamera(42, (st.clientWidth||320)/(st.clientHeight||340), 0.1, 100);
+    K3D.ren = new THREE.WebGLRenderer({ antialias: true });
+    K3D.ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    K3D.scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+    const dl = new THREE.DirectionalLight(0xfffbeb, 1.1); dl.position.set(5,7,6); K3D.scene.add(dl);
+    K3D.root = new THREE.Group(); K3D.scene.add(K3D.root);
+    const dom = K3D.ren.domElement; dom.style.width = '100%'; dom.style.height = '100%';
+    let drag = false, px = 0, py = 0;
+    dom.addEventListener('pointerdown', e => { drag = true; px = e.clientX; py = e.clientY; });
+    window.addEventListener('pointerup', () => drag = false);
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      K3D.theta -= (e.clientX - px) * 0.008; K3D.phi = Math.max(0.35, Math.min(Math.PI/2+0.12, K3D.phi - (e.clientY - py)*0.008));
+      px = e.clientX; py = e.clientY; k3dUpdateCam();
+    });
+    function loop() {
+      requestAnimationFrame(loop);
+      if (st.offsetParent === null) return;
+      if (K3D.tour) { K3D.theta += 0.008; k3dUpdateCam(); }
+      if (K3D.targetOpen !== null) {
+        const d = K3D.targetOpen - K3D.open;
+        K3D.open = Math.abs(d) < 0.02 ? (K3D.targetOpen = null, K3D.open = (d>0?1:0)) : K3D.open + d*0.12;
+        K3D.doors.forEach(o => o.p.rotation.y = o.b + o.dir * o.ang * K3D.open);
+        K3D.drawers.forEach(o => o.g.position.z = o.bz + 0.30 * K3D.open);
+      }
+      K3D.ren.render(K3D.scene, K3D.cam);
+    }
+    loop();
+  }
+  if (K3D.ren.domElement.parentElement !== st) { st.innerHTML = ''; st.appendChild(K3D.ren.domElement); }
+  K3D.ren.setSize(st.clientWidth || 320, st.clientHeight || 340);
+  k3dUpdateCam(); k3dRebuild();
+}
+function k3dUpdateCam() {
+  if (!K3D.cam) return;
+  K3D.cam.position.set(K3D.rad*Math.sin(K3D.phi)*Math.sin(K3D.theta), K3D.rad*Math.cos(K3D.phi), K3D.rad*Math.sin(K3D.phi)*Math.cos(K3D.theta));
+  K3D.cam.lookAt(0,0,0);
+}
+function k3dSetMode(m) { K3D.mode = m; K3D.theta = m==='lkitchen'?0.52:0.22; k3dUpdateCam(); k3dRebuild(); }
+function k3dToggleOpen(v) { K3D.targetOpen = v ? 1 : 0; }
+function k3dToggleTour() { K3D.tour = !K3D.tour; }
+function k3dToggleLed() { K3D.led = !K3D.led; k3dRebuild(); }
+function k3dSetFinish(t, b) { K3D.topCol = t; K3D.botCol = b; k3dRebuild(); }
+function k3dRebuild() {
+  if (!K3D.root) return;
+  while (K3D.root.children.length) K3D.root.remove(K3D.root.children[0]);
+  K3D.doors = []; K3D.drawers = [];
+  const W = (parseFloat(document.getElementById('k3d_w')?.value)||10)*0.26;
+  const S = (parseFloat(document.getElementById('k3d_s')?.value)||8)*0.26;
+  const H = (parseFloat(document.getElementById('k3d_h')?.value)||7.5)*0.26;
+  const fY = -H/2;
+  const topM = new THREE.MeshStandardMaterial({ color: K3D.topCol, roughness: 0.35 });
+  const botM = new THREE.MeshStandardMaterial({ color: K3D.botCol, roughness: 0.38 });
+  const profM = new THREE.MeshStandardMaterial({ color: 0xc9a86a, metalness: 0.78, roughness: 0.25 });
+  const marbM = new THREE.MeshStandardMaterial({ color: 0xf5f2eb, roughness: 0.22 });
+  const glassM = new THREE.MeshPhysicalMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+
+  if (K3D.mode === 'wardrobe') {
+    const wD = 0.56, fZ = 0.22;
+    K3D.root.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(W, H, wD), botM), { position: new THREE.Vector3(0,0,fZ-wD/2) }));
+    const dw = (W-0.04)/3;
+    for (let i=0;i<3;i++) {
+      const piv = new THREE.Group();
+      const d = new THREE.Mesh(new THREE.BoxGeometry(dw-0.01, H-0.06, 0.025), i===1?topM:botM);
+      d.position.x = i<2?dw/2:-dw/2; piv.add(d);
+      piv.position.set(i===0?-W/2+0.02:(i===1?-dw/2:W/2-0.02), 0, fZ+0.01);
+      K3D.root.add(piv);
+      K3D.doors.push({ p: piv, b: 0, dir: i<2?-1:1, ang: Math.PI*0.45 });
+    }
+  } else {
+    const backZ = K3D.mode==='lkitchen' ? -S/2+0.2 : -0.35;
+    const leftX = -W/2+0.2;
+    const baseH = H*0.41, baseD = 0.50, wallH = H*0.31, wallD = 0.32, gapH = H*0.28;
+    const tw = 0.52, runW = K3D.mode==='lkitchen' ? W-tw : W;
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(runW, 0.04, baseD+0.04), marbM);
+    counter.position.set(leftX+runW/2, fY+baseH+0.02, backZ+baseD/2); K3D.root.add(counter);
+    const colW = runW/4;
+    for (let c=0;c<4;c++) {
+      const cx = leftX + colW*(c+0.5);
+      if (c===2) {
+        for (let d=0;d<3;d++) {
+          const dg = new THREE.Group();
+          dg.add(new THREE.Mesh(new THREE.BoxGeometry(colW-0.02, baseH/3-0.02, 0.025), botM));
+          dg.position.set(cx, fY+0.04+(baseH/3)*(d+0.5), backZ+baseD);
+          K3D.root.add(dg); K3D.drawers.push({ g: dg, bz: backZ+baseD });
+        }
+      } else {
+        const piv = new THREE.Group();
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(colW-0.02, baseH-0.04, 0.025), botM);
+        leaf.position.x = colW/2; piv.add(leaf);
+        piv.position.set(cx-colW/2+0.01, fY+baseH/2, backZ+baseD);
+        K3D.root.add(piv); K3D.doors.push({ p: piv, b: 0, dir: -1, ang: Math.PI*0.42 });
+      }
+      if (c===2) {
+        const chim = new THREE.Mesh(new THREE.BoxGeometry(colW*0.9, 0.1, wallD+0.06), new THREE.MeshStandardMaterial({color:0x18181b,metalness:0.7}));
+        chim.position.set(cx, fY+baseH+gapH+0.05, backZ+wallD/2+0.02); K3D.root.add(chim);
+      } else {
+        const piv = new THREE.Group();
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(colW-0.02, wallH-0.02, 0.024), c===1?glassM:topM);
+        leaf.position.x = colW/2; piv.add(leaf);
+        piv.position.set(cx-colW/2+0.01, fY+baseH+gapH+wallH/2, backZ+wallD);
+        K3D.root.add(piv); K3D.doors.push({ p: piv, b: 0, dir: -1, ang: Math.PI*0.42 });
+      }
+    }
+    if (K3D.mode==='lkitchen') {
+      const tow = new THREE.Mesh(new THREE.BoxGeometry(tw, H, baseD), botM);
+      tow.position.set(leftX+runW+tw/2, 0, backZ+baseD/2); K3D.root.add(tow);
+      const sLen = S-baseD;
+      const sc = new THREE.Mesh(new THREE.BoxGeometry(baseD+0.04, 0.04, sLen), marbM);
+      sc.position.set(leftX+baseD/2, fY+baseH+0.02, backZ+baseD+sLen/2); K3D.root.add(sc);
+      const sb = new THREE.Mesh(new THREE.BoxGeometry(baseD, baseH, sLen), botM);
+      sb.position.set(leftX+baseD/2, fY+baseH/2, backZ+baseD+sLen/2); K3D.root.add(sb);
+    }
+  }
 }
