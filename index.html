@@ -44,7 +44,7 @@
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=130').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=133').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -606,8 +606,27 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
   min-width: 0 !important;
   box-sizing: border-box !important;
 }
+
+/* v133 Premium UI Polish & Even Pro-Card Alignment */
+.pro-card-grid { gap: 11px !important; }
+.pro-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.048) !important;
+  padding: 13px !important;
+  transition: transform 0.14s ease, box-shadow 0.14s ease !important;
+}
+.pro-card:active { transform: scale(0.98); }
+.pro-card-header { margin-bottom: 10px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; }
+.pro-card-icon { width: 38px !important; height: 38px !important; border-radius: 11px !important; }
+.pro-card-title { font-size: 0.9rem !important; font-weight: 800 !important; color: #0f172a !important; line-height: 1.25 !important; margin-bottom: 3px !important; }
+.pro-card-sub { font-size: 0.71rem !important; color: #64748b !important; line-height: 1.3 !important; }
+
 </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
@@ -835,16 +854,16 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <div id="home_alu_section">
  <!-- Smart Site Measurement Khata Card (Hero Feature) -->
  <div style="padding: 14px 16px 4px 16px;">
- <div class="menu-card" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); padding: 18px 14px; border: 1.5px solid #38bdf8; box-shadow: 0 6px 16px rgba(2, 132, 199, 0.25);" onclick="openScreen('site_khata', 'SITE MEASUREMENT KHATA')">
- <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+ <div class="menu-card" style="background: linear-gradient(135deg, #0284c7, #4f46e5); padding: 15px 14px; border: none; border-radius: 18px; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.24);" onclick="openScreen('site_khata', 'SITE MEASUREMENT KHATA')">
+ <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:10px;">
  <div style="display:flex; align-items:center; gap:12px; text-align:left;">
- <div style="font-size: 2.2rem; color: #fef08a;"><i class="fa-solid fa-book-bookmark"></i></div>
+ <div style="width:44px; height:44px; border-radius:13px; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size: 1.35rem; color: #fef08a; flex-shrink:0;"><i class="fa-solid fa-book-bookmark"></i></div>
  <div>
- <div data-i18n="mod_khata_title" style="font-size: 1.05rem; font-weight: 800; color: #fff;">Site Measurement Khata</div>
- <div data-i18n="mod_khata_sub" style="font-size: 0.76rem; color: #bae6fd; margin-top:2px;">Digital Khata Book: Room Tracking, Auto Labour & Billing</div>
+ <div data-i18n="mod_khata_title" style="font-size: 0.98rem; font-weight: 800; color: #fff;">Site Measurement Khata</div>
+ <div data-i18n="mod_khata_sub" style="font-size: 0.72rem; color: #e0f2fe; margin-top:2px;">Digital Khata Book: Room Tracking, Auto Labour &amp; Billing</div>
  </div>
  </div>
- <div style="background:#fbbf24; color:#0f172a; font-weight:800; font-size:0.75rem; padding:4px 8px; border-radius:6px; white-space:nowrap;">
+ <div style="background:rgba(255,255,255,0.22); color:#fff; font-weight:800; font-size:0.72rem; padding:6px 10px; border-radius:99px; white-space:nowrap;">
  <span data-i18n="btn_open">OPEN</span> &rarr;
  </div>
  </div>
@@ -927,14 +946,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
 
  <!-- 7. Glass Cutting & 4'x8' Sheet Optimizer -->
- <div class="pro-card" style="grid-column: span 2; border: 1.5px solid #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);" onclick="openScreen('kitchen3d', '3D KITCHEN &amp; WARDROBE')">
-  <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: #fff;"><i class="fa-solid fa-cube"></i></div>
-  <div class="card-text">
-    <h3 data-i18n="mod_kitchen_3d" style="color: #92400e;">3D Kitchen &amp; Wardrobe</h3>
-    <p data-i18n="mod_kitchen_3d_sub">L-Shape Kitchen, Oven Tower &amp; 3D Wardrobe</p>
-  </div>
-</div>
-<div class="pro-card" style="grid-column: span 2; border: 1.5px solid #0284c7; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);" onclick="openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)')">
+ <div class="pro-card" style="grid-column: span 2; border: 1.5px solid #0284c7; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);" onclick="openScreen('glass_cutting', 'GLASS CUTTING (4x8 SHEET)')">
  <div class="pro-card-header">
  <div class="pro-card-icon" style="background:#0284c7; color:#ffffff;">
  <i class="fa-solid fa-border-all"></i>
@@ -2601,43 +2613,6 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
   <div class="output-area" id="ud_out"></div>
   <div class="output-label" style="color:#9f1239; margin-top:10px;" data-i18n="res_upvc_mat">uPVC Profile &amp; GI Steel Summary</div>
   <div class="output-area" id="ud_mat_out"></div>
-</div>
-
-<!-- ================= 3D KITCHEN & WARDROBE SHOWROOM SCREEN (v130) ================= -->
-<div id="screen-kitchen3d" class="screen">
-  <div class="form-box" style="background:#0f172a; color:#f8fafc; border:1px solid #334155;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-      <div>
-        <div style="font-size:0.9rem; font-weight:800; color:#fbbf24;"><i class="fa-solid fa-cube"></i> <span data-i18n="mod_kitchen_3d">3D Kitchen &amp; Wardrobe</span></div>
-        <div style="font-size:0.7rem; color:#94a3b8;" data-i18n="mod_kitchen_3d_sub">L-Shape Kitchen, Oven Tower &amp; 3D Wardrobe</div>
-      </div>
-      <div style="display:flex; gap:5px;">
-        <button type="button" onclick="k3dSetMode('lkitchen')" id="k3d_btn_lk" style="background:#fbbf24; color:#0f172a; border:none; border-radius:7px; padding:5px 9px; font-size:0.72rem; font-weight:800; cursor:pointer;">L-Kitchen</button>
-        <button type="button" onclick="k3dSetMode('kitchen')" id="k3d_btn_sk" style="background:#1e293b; color:#e2e8f0; border:1px solid #475569; border-radius:7px; padding:5px 9px; font-size:0.72rem; font-weight:800; cursor:pointer;">Straight</button>
-        <button type="button" onclick="k3dSetMode('wardrobe')" id="k3d_btn_wd" style="background:#1e293b; color:#e2e8f0; border:1px solid #475569; border-radius:7px; padding:5px 9px; font-size:0.72rem; font-weight:800; cursor:pointer;">Wardrobe</button>
-      </div>
-    </div>
-    <div id="k3d_stage" style="width:100%; height:340px; border-radius:12px; overflow:hidden; background:#020617; border:1.5px solid #334155; touch-action:none;"></div>
-    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; justify-content:center;">
-      <button type="button" onclick="k3dToggleOpen(true)" style="background:#10b981; color:#0f172a; border:none; border-radius:8px; padding:7px 12px; font-size:0.74rem; font-weight:800; cursor:pointer;">Open Doors &amp; Drawers</button>
-      <button type="button" onclick="k3dToggleOpen(false)" style="background:#f43f5e; color:#fff; border:none; border-radius:8px; padding:7px 12px; font-size:0.74rem; font-weight:800; cursor:pointer;">Close All</button>
-      <button type="button" onclick="k3dToggleTour()" id="k3d_tour_btn" style="background:#38bdf8; color:#0f172a; border:none; border-radius:8px; padding:7px 12px; font-size:0.74rem; font-weight:800; cursor:pointer;">360° Tour</button>
-      <button type="button" onclick="k3dToggleLed()" id="k3d_led_btn" style="background:#f59e0b; color:#0f172a; border:none; border-radius:8px; padding:7px 12px; font-size:0.74rem; font-weight:800; cursor:pointer;">LED: ON</button>
-    </div>
-    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:10px;">
-      <div><label style="font-size:0.68rem; color:#cbd5e1; font-weight:700;">Main Wall (Ft):</label><input type="number" id="k3d_w" value="10" min="6" max="14" step="0.5" onchange="k3dRebuild()" style="width:100%; padding:6px; border-radius:7px; border:1px solid #475569; background:#1e293b; color:#fff; font-weight:700;"></div>
-      <div><label style="font-size:0.68rem; color:#cbd5e1; font-weight:700;">L-Side (Ft):</label><input type="number" id="k3d_s" value="8" min="5" max="12" step="0.5" onchange="k3dRebuild()" style="width:100%; padding:6px; border-radius:7px; border:1px solid #475569; background:#1e293b; color:#fff; font-weight:700;"></div>
-      <div><label style="font-size:0.68rem; color:#cbd5e1; font-weight:700;">Height (Ft):</label><input type="number" id="k3d_h" value="7.5" min="6" max="9" step="0.5" onchange="k3dRebuild()" style="width:100%; padding:6px; border-radius:7px; border:1px solid #475569; background:#1e293b; color:#fff; font-weight:700;"></div>
-    </div>
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px;">
-      <span style="font-size:0.72rem; color:#94a3b8; font-weight:700;">Finish:</span>
-      <button type="button" onclick="k3dSetFinish('#5e7861','#5e7861')" style="width:26px; height:26px; border-radius:50%; border:2px solid #fff; background:#5e7861; cursor:pointer;" title="Sage Green"></button>
-      <button type="button" onclick="k3dSetFinish('#f8fafc','#b88450')" style="width:26px; height:26px; border-radius:50%; border:2px solid #fff; background:linear-gradient(180deg,#f8fafc 50%,#b88450 50%); cursor:pointer;" title="White &amp; Wood"></button>
-      <button type="button" onclick="k3dSetFinish('#7c9cb5','#7c9cb5')" style="width:26px; height:26px; border-radius:50%; border:2px solid #fff; background:#7c9cb5; cursor:pointer;" title="Pastel Blue"></button>
-      <button type="button" onclick="k3dSetFinish('#d6cfc2','#c45141')" style="width:26px; height:26px; border-radius:50%; border:2px solid #fff; background:linear-gradient(180deg,#d6cfc2 50%,#c45141 50%); cursor:pointer;" title="Terracotta"></button>
-      <button type="button" onclick="k3dSetFinish('#334155','#1e293b')" style="width:26px; height:26px; border-radius:50%; border:2px solid #fff; background:#334155; cursor:pointer;" title="Anthracite"></button>
-    </div>
-  </div>
 </div>
 
 <!-- ================= 6. PARTITION MASTER SCREEN ================= -->
@@ -5602,12 +5577,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=130"></script>
+  <script src="app.js?v=133"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=130').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=133').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);

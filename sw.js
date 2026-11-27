@@ -1,14 +1,13 @@
-const CACHE_NAME = 'smart-worker-pro-v130';
+const CACHE_NAME = 'smart-worker-pro-v133';
 const CORE_ASSETS = [
   './',
   './index.html',
   './index.html?source=pwa',
   './style.css?v=107',
-  './app.js?v=130',
+  './app.js?v=133',
   './manifest.json',
   './logo.png?v=34',
-  './icon-192.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+  './icon-192.png'
 ];
 
 self.addEventListener('install', function(event) {
@@ -40,6 +39,7 @@ self.addEventListener('fetch', function(event) {
   if (reqUrl.includes('firestore.googleapis.com') || reqUrl.includes('firebaseio.com') || reqUrl.includes('script.google.com')) {
     return;
   }
+  // Network-First for HTML/JS/CSS; ignoreSearch ensures ?source=pwa matches cached index.html when offline
   event.respondWith(
     fetch(event.request).then(function(netResp) {
       if (netResp && netResp.status === 200) {
