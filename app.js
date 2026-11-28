@@ -11393,7 +11393,7 @@ const SW_UI_PHRASES = {
 
   // Glass Cutting, Stock Management & Stickers
   "4'x8' GLASS SHEET CUTTING MASTER": { bn: "4'x8' গ্লাস শিট কাটিং মাস্টার", hi: "4'x8' ग्लास शीट कटिंग मास्टर" },
-  "4-DIGIT ORDER CODE & WHATSAPP SHARE (NO QR)": { bn: "4-সংখ্যার অর্ডার কোড ও হোয়াটসঅ্যাপ শেয়ার", hi: "4-अंकीय ऑर्डर कोड और व्हाट्सएप शेयर" },
+  "4-DIGIT ORDER CODE & WHATSAPP SHARE": { bn: "4-সংখ্যার অর্ডার কোড ও হোয়াটসঅ্যাপ শেয়ার", hi: "4-अंकीय ऑर्डर कोड और व्हाट्सएप शेयर" },
   "ENTER 4-DIGIT CODE": { bn: "4-সংখ্যার কোড দিন", hi: "4-अंकीय कोड डालें" },
   "SEND TO CUTTER": { bn: "কাটারকে পাঠান", hi: "कटर को भेजें" },
   "Stock Sheet Size:": { bn: "স্টক শিটের মাপ:", hi: "स्टॉक शीट साइज:" },
@@ -11402,7 +11402,7 @@ const SW_UI_PHRASES = {
   "3. PRINT CUT GLASS STICKERS PDF (1 STICKER PER GLASS PIECE)": { bn: "3. কাট গ্লাস স্টিকার PDF (প্রতি পিসে 1 স্টিকার)", hi: "3. कट ग्लास स्टिकर PDF (हर पीस पर 1 स्टिकर)" },
   "4. 58MM THERMAL / BLUETOOTH STICKERS (1-CLICK)": { bn: "4. 58মিমি থার্মাল / ব্লুটুথ স্টিকার (1-ক্লিক)", hi: "4. 58mm थर्मल / ब्लूटूथ स्टिकर (1-क्लिक)" },
   "GLASS CUTTING & 4'x8' SHEET SUMMARY:": { bn: "গ্লাস কাটিং ও 4'x8' শিটের হিসাব:", hi: "ग्लास कटिंग और 4'x8' शीट सारांश:" },
-  "GLASS STOCK MANAGEMENT (NO QR)": { bn: "গ্লাস স্টক ম্যানেজমেন্ট", hi: "ग्लास स्टॉक मैनेजमेंट" },
+  "GLASS STOCK MANAGEMENT": { bn: "গ্লাস স্টক ম্যানেজমেন্ট", hi: "ग्लास स्टॉक मैनेजमेंट" },
   "Stock Bill PDF": { bn: "স্টক বিল PDF", hi: "स्टॉक बिल PDF" },
   "+ Add New Stock (IN)": { bn: "+ নতুন স্টক যোগ করুন", hi: "+ नया स्टॉक जोड़ें (IN)" },
   "Confirm Cut (Auto-Minus)": { bn: "কাটিং কনফার্ম (অটো-মাইনাস)", hi: "कट कन्फर्म (ऑटो-माइनस)" },
@@ -13470,7 +13470,7 @@ function acceptAndClosePrivacyLegalModal() {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k.indexOf('v104') === -1) caches.delete(k);
+                if (k !== 'smart-worker-pro-v137') caches.delete(k);
     try { renderDoorRowBuilder(); renderPtCadDesigner(); renderCasementSectionDesigner(); } catch(e){}
             });
         }).catch(() => {});
@@ -14061,7 +14061,7 @@ function recalculateBarCuttingPlan() {
   var mixSummaryStr = Object.keys(mixCounts).sort(function(a,b){return a-b;}).map(function(f){ return mixCounts[f] + " × " + f + " Ft"; }).join("  +  ") || "0 Bars";
   textOut += "• BUY BREAKDOWN: " + mixSummaryStr + "  (Total: " + grandNewBars + " New Bars)\n";
   if (grandStockReused > 0) textOut += "• REUSED FROM WORKSHOP STOCK: " + grandStockReused + " Remnant Piece(s)\n";
-  textOut += "• USABLE OFFCUTS (≥12\" — QR Eligible): " + grandUsableOffcuts + " pc(s)  |  SCRAP (<12\" — No QR): " + grandScrapCount + " pc(s)\n";
+  textOut += "• USABLE OFFCUTS (≥12\" — Stock Tagged): " + grandUsableOffcuts + " pc(s)  |  SCRAP (<12\"): " + grandScrapCount + " pc(s)\n";
   textOut += "• OVERALL UTILIZATION: " + totalUtil + "%  |  WASTAGE: " + totalWaste + "%\n";
 
   if (box) { box.style.display = 'block'; box.innerHTML = html; }
@@ -14251,7 +14251,8 @@ function exportBcPhasePdf(phaseIdx) {
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(10.5);
   doc.setFont(undefined, 'bold');
-  doc.text("Project: " + safeTxt(projName), 14, 36);
+  var pCode = (st && st.orderCode) ? st.orderCode : "PO-101";
+  doc.text("Order Code: " + pCode + "   |   Project: " + safeTxt(projName), 14, 36);
 
   doc.autoTable({
     startY: 41,
@@ -14391,7 +14392,7 @@ function exportRemnantQrStickersPdf() {
   var disp = function(v) { return isMm ? toMmStr(v) : toFractionInch(v); };
 
   var doc = new jsPDF('p', 'mm', 'a4');
-  drawDocHeaderWithLogo(doc, "WORKSHOP PIPE NUMBER TAG STICKERS (≥12\" ONLY)", "Slim Pipe Labels — Print, Cut & Stick on Leftover Pipes (No QR Needed)", [15, 118, 110]);
+  drawDocHeaderWithLogo(doc, "WORKSHOP PIPE NUMBER TAG STICKERS (≥12\" ONLY)", "Slim Pipe Labels — Print, Cut & Stick on Leftover Pipes", [15, 118, 110]);
 
   // 3 cols x 10 rows = 30 slim pipe stickers per A4 page (60mm x 22mm each!)
   var cols = 3, cardW = 59, cardH = 22, gapX = 3.5, gapY = 3;
@@ -16107,7 +16108,7 @@ function exportGlassStockBillPdf() {
 
   var doc = new jsPDF('p', 'mm', 'a4');
   var today = new Date().toLocaleDateString('en-GB');
-  drawDocHeaderWithLogo(doc, "GLASS STOCK & PURCHASE INVENTORY BILL", "Date: " + today + " • Full Sheets + Usable Offcuts (No QR)", [3, 105, 161]);
+  drawDocHeaderWithLogo(doc, "GLASS STOCK & PURCHASE INVENTORY BILL", "Date: " + today + " • Full Sheets + Usable Offcuts Inventory", [3, 105, 161]);
 
   var y = 35;
   if (keys.length) {
@@ -16240,7 +16241,7 @@ function exportGlassNumberStickersPdf() {
   if (!jsPDF) return;
 
   var doc = new jsPDF('p', 'mm', 'a4');
-  drawDocHeaderWithLogo(doc, "GLASS OFFCUT NUMBER TAG STICKERS (≥12\" ONLY)", "Bold Custom / Auto Number Tags — No QR Code Needed", [2, 132, 199]);
+  drawDocHeaderWithLogo(doc, "GLASS OFFCUT NUMBER TAG STICKERS (≥12\" ONLY)", "Bold Custom / Auto Number Tags for Glass Offcuts", [2, 132, 199]);
   var cols = 3, cardW = 59, cardH = 22, gapX = 3.5, gapY = 3, startX = 14, startY = 34, col = 0, row = 0;
 
   list.forEach(function(item) {
@@ -19281,4 +19282,1294 @@ var SW_PHOTO_2D = {
     svg += '</svg>';
     return svg;
   };
+})();
+
+
+// ==================== v134: PHASE ORDER UNIQUE CODE + AUTO REMAINING % + 3-LANGUAGE UI + uPVC MODE ====================
+function openUpvcCasementMode(mode) {
+  openScreen('upvc_casement', mode === 'fixed' ? 'uPVC FIXED / VENTILATOR' : 'uPVC CASEMENT & FRENCH');
+  setTimeout(function() {
+    var bTitle = document.getElementById('uc_banner_title');
+    if (mode === 'fixed') {
+      if (document.getElementById('uc_top_cols')) document.getElementById('uc_top_cols').value = 1;
+      if (document.getElementById('uc_top_open')) document.getElementById('uc_top_open').value = 0;
+      if (bTitle) bTitle.textContent = 'uPVC Fixed / Ventilator';
+      if (typeof applyICadPreset === 'function') applyICadPreset('uc', 'blank');
+    } else {
+      if (document.getElementById('uc_top_cols')) document.getElementById('uc_top_cols').value = 2;
+      if (document.getElementById('uc_top_open')) document.getElementById('uc_top_open').value = 2;
+      if (bTitle) bTitle.textContent = 'uPVC Casement & French';
+      if (typeof applyICadPreset === 'function') applyICadPreset('uc', 'french_2');
+    }
+  }, 40);
+}
+
+var SW_PHASE_I18N = {
+  en: {
+    title: 'PHASE MATERIAL ORDER',
+    received_badge: 'Received',
+    bars: 'Bars',
+    total_need: 'Total Needed',
+    received: 'Received',
+    remaining: 'Remaining',
+    code_lbl: 'Order Code:',
+    code_ph: 'Enter Code (e.g. PO-101)',
+    btn_load: 'Load Code',
+    proj_ph: 'Project Name (e.g. Main Building)',
+    ask_pct: 'Phase {n} — How much % to order now? (Remaining: {rem}%)',
+    rem_100: '100% Left',
+    th_sec: 'Section',
+    th_tot: 'Total',
+    th_rec: 'Recvd',
+    th_ph: 'Phase {n}',
+    th_left: 'Left After',
+    btn_save: '+ Save Phase {n} ({bars} Bars)',
+    btn_pdf: 'Phase PDF',
+    btn_reset: 'Reset',
+    saved_hdr: 'SAVED PHASES (CODE: {code}):',
+    phase_lbl: 'Phase',
+    code_not_found: 'Order Code not found! Please check saved codes.',
+    code_loaded: 'Loaded {code}! Remaining {rem}% auto-selected.',
+    all_done: '100% material already received for this code!'
+  },
+  bn: {
+    title: 'ধাপে ধাপে মাল আনা (PHASE ORDER)',
+    received_badge: 'এসেছে',
+    bars: 'বার',
+    total_need: 'মোট দরকার',
+    received: 'এসেছে',
+    remaining: 'বাকি আছে',
+    code_lbl: 'অর্ডার কোড:',
+    code_ph: 'কোড লিখুন (যেমন: PO-101)',
+    btn_load: 'কোড লোড',
+    proj_ph: 'প্রজেক্টের নাম (যেমন: বড় বিল্ডিং কাজ)',
+    ask_pct: 'ধাপ {n}-এ কত % মাল আনবেন? (বাকি আছে: {rem}%)',
+    rem_100: '100% বাকি',
+    th_sec: 'সেকশন',
+    th_tot: 'মোট',
+    th_rec: 'এসেছে',
+    th_ph: 'ধাপ {n}',
+    th_left: 'বাকি থাকবে',
+    btn_save: '+ ধাপ {n} সেভ ({bars} বার)',
+    btn_pdf: 'Phase PDF',
+    btn_reset: 'রিসেট',
+    saved_hdr: 'সেভ করা ধাপসমূহ (কোড: {code}):',
+    phase_lbl: 'ধাপ',
+    code_not_found: 'এই অর্ডার কোডটি পাওয়া যায়নি! সঠিক কোড দিন।',
+    code_loaded: '{code} লোড হয়েছে! বাকি {rem}% অটো সিলেক্ট করা হয়েছে।',
+    all_done: 'এই কোডের 100% মাল আগেই চলে এসেছে!'
+  },
+  hi: {
+    title: 'चरणबद्ध माल ऑर्डर (PHASE ORDER)',
+    received_badge: 'आया',
+    bars: 'बार',
+    total_need: 'कुल ज़रूरत',
+    received: 'आ चुका',
+    remaining: 'बाकी है',
+    code_lbl: 'ऑर्डर कोड:',
+    code_ph: 'कोड डालें (जैसे: PO-101)',
+    btn_load: 'कोड लोड',
+    proj_ph: 'प्रोजेक्ट का नाम (जैसे: बिल्डिंग वर्क)',
+    ask_pct: 'चरण {n} में कितना % माल मंगाएं? (बाकी: {rem}%)',
+    rem_100: '100% बाकी',
+    th_sec: 'सेक्शन',
+    th_tot: 'कुल',
+    th_rec: 'आया',
+    th_ph: 'चरण {n}',
+    th_left: 'शेष रहेगा',
+    btn_save: '+ चरण {n} सेव ({bars} बार)',
+    btn_pdf: 'Phase PDF',
+    btn_reset: 'रीसेट',
+    saved_hdr: 'सेव किए गए चरण (कोड: {code}):',
+    phase_lbl: 'चरण',
+    code_not_found: 'यह ऑर्डर कोड नहीं मिला! सही कोड डालें।',
+    code_loaded: '{code} लोड हो गया! बाकी {rem}% ऑटो सेलेक्ट हो गया।',
+    all_done: 'इस कोड का 100% माल पहले ही आ चुका है!'
+  }
+};
+
+function _phT(key) {
+  var lang = (typeof currentAppLang !== 'undefined' && SW_PHASE_I18N[currentAppLang]) ? currentAppLang : 'en';
+  return SW_PHASE_I18N[lang][key] || SW_PHASE_I18N.en[key] || key;
+}
+
+function getPhaseCodeRegistry() {
+  try { return JSON.parse(localStorage.getItem('sw_phase_code_registry') || '{}'); } catch (e) { return {}; }
+}
+function savePhaseCodeRegistry(reg) {
+  try { localStorage.setItem('sw_phase_code_registry', JSON.stringify(reg)); } catch (e) {}
+}
+function generateNextPhaseCode() {
+  var reg = getPhaseCodeRegistry();
+  var maxNo = 100;
+  Object.keys(reg).forEach(function(k) {
+    var m = k.match(/^PO-(\d+)$/i);
+    if (m) maxNo = Math.max(maxNo, parseInt(m[1], 10));
+  });
+  return 'PO-' + (maxNo + 1);
+}
+
+function syncCurrentPhaseToRegistry(st) {
+  if (!st) st = getBcPhaseState();
+  if (!st.orderCode) {
+    st.orderCode = generateNextPhaseCode();
+    saveBcPhaseState(st);
+  }
+  var reg = getPhaseCodeRegistry();
+  reg[st.orderCode] = {
+    orderCode: st.orderCode,
+    projectName: st.projectName || '',
+    phases: st.phases || [],
+    summary: bc_last_plan_summary || [],
+    updatedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  };
+  savePhaseCodeRegistry(reg);
+  return st.orderCode;
+}
+
+function loadPhaseByOrderCode(codeInput) {
+  var raw = (codeInput || (document.getElementById('bc_phase_code_inp') ? document.getElementById('bc_phase_code_inp').value : '') || '').trim().toUpperCase();
+  if (!raw) return;
+  if (/^\d+$/.test(raw)) raw = 'PO-' + raw;
+  var reg = getPhaseCodeRegistry();
+  var rec = reg[raw];
+  if (!rec) { alert(_phT('code_not_found')); return; }
+
+  if (rec.summary && rec.summary.length) {
+    bc_last_plan_summary = rec.summary;
+  }
+  saveBcPhaseState({ orderCode: rec.orderCode, projectName: rec.projectName || '', phases: rec.phases || [] });
+
+  // Auto-calculate remaining % and auto-select it!
+  var previewCheck = computeNextPhaseItems(100);
+  var grandTotal = previewCheck.reduce(function(s, x) { return s + x.totalBars; }, 0);
+  var grandRec = previewCheck.reduce(function(s, x) { return s + x.received; }, 0);
+  var remPct = grandTotal > 0 ? Math.max(0, 100 - Math.round((grandRec / grandTotal) * 100)) : 100;
+
+  if (remPct <= 0) {
+    bc_selected_phase_pct = 0;
+    renderPhaseMaterialBox();
+    alert(_phT('all_done'));
+  } else {
+    // Auto-select remaining percentage (if remaining is 100% of remaining bars, set to 100 so all remaining bars are selected, or exact remaining % of total)
+    bc_selected_phase_pct = remPct;
+    renderPhaseMaterialBox();
+    alert(_phT('code_loaded').replace('{code}', rec.orderCode).replace('{rem}', remPct));
+  }
+}
+
+(function() {
+  var origSavePhase = window.saveCurrentPhaseOrder;
+  window.saveCurrentPhaseOrder = function() {
+    var st = getBcPhaseState();
+    if (!st.orderCode) { st.orderCode = generateNextPhaseCode(); saveBcPhaseState(st); }
+    if (origSavePhase) origSavePhase();
+    var after = getBcPhaseState();
+    after.orderCode = after.orderCode || st.orderCode;
+    saveBcPhaseState(after);
+    syncCurrentPhaseToRegistry(after);
+    renderPhaseMaterialBox();
+  };
+
+  var origResetPhase = window.resetBcPhaseOrders;
+  window.resetBcPhaseOrders = function() {
+    if (origResetPhase) origResetPhase();
+    var st = getBcPhaseState();
+    st.orderCode = generateNextPhaseCode();
+    saveBcPhaseState(st);
+    renderPhaseMaterialBox();
+  };
+
+  var origApplyLang = window.applyLanguageTranslations;
+  window.applyLanguageTranslations = function(lang) {
+    if (origApplyLang) origApplyLang(lang);
+    try { if (typeof renderPhaseMaterialBox === 'function') renderPhaseMaterialBox(); } catch (e) {}
+  };
+
+  // Override renderPhaseMaterialBox with 100% 3-Language UI + Unique Order Code + Auto-Remaining-% Lookup
+  window.renderPhaseMaterialBox = function() {
+    var box = document.getElementById('bc_phase_order_box');
+    if (!box) return;
+    if (!bc_last_plan_summary || !bc_last_plan_summary.length) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+
+    var st = getBcPhaseState();
+    var activeCode = syncCurrentPhaseToRegistry(st);
+    var pct = (typeof bc_selected_phase_pct === 'number' && !isNaN(bc_selected_phase_pct)) ? bc_selected_phase_pct : 50;
+    var preview = computeNextPhaseItems(pct > 0 ? pct : 100);
+
+    var grandTotal = preview.reduce(function(s, x) { return s + x.totalBars; }, 0);
+    var grandRec = preview.reduce(function(s, x) { return s + x.received; }, 0);
+    var grandRem = preview.reduce(function(s, x) { return s + x.remaining; }, 0);
+    var grandNow = pct > 0 ? preview.reduce(function(s, x) { return s + x.orderNow; }, 0) : 0;
+    var donePct = grandTotal > 0 ? Math.min(100, Math.round((grandRec / grandTotal) * 100)) : 0;
+    var remPct = Math.max(0, 100 - donePct);
+    var nextPhaseNo = (st.phases || []).length + 1;
+
+    var chipPcts = [10, 20, 25, 30, 50, 100];
+    var chipsHtml = chipPcts.map(function(p) {
+      var active = (Math.round(pct) === p);
+      var bg = active ? '#1d4ed8' : '#eff6ff';
+      var col = active ? '#ffffff' : '#1e40af';
+      var lbl = (p === 100) ? _phT('rem_100') : (p + '%');
+      return '<button type="button" onclick="setBcPhasePct(' + p + ')" style="background:' + bg + '; color:' + col + '; border:1px solid #93c5fd; border-radius:6px; padding:5px 8px; font-size:0.7rem; font-weight:800; cursor:pointer;">' + lbl + '</button>';
+    }).join('');
+
+    var rowsHtml = preview.map(function(x) {
+      var ordNow = pct > 0 ? x.orderNow : 0;
+      var remColor = x.remaining > 0 ? '#b45309' : '#15803d';
+      return '<tr style="border-bottom:1px solid #e2e8f0;">' +
+        '<td style="padding:5px 4px; font-weight:700; color:#0f172a; font-size:0.7rem;">' + x.profile + '</td>' +
+        '<td style="padding:5px 3px; text-align:center; font-weight:700; font-size:0.72rem;">' + x.totalBars + '</td>' +
+        '<td style="padding:5px 3px; text-align:center; font-weight:800; color:#15803d; font-size:0.72rem;">' + x.received + '</td>' +
+        '<td style="padding:5px 3px; text-align:center; font-weight:800; color:#1d4ed8; background:#eff6ff; font-size:0.74rem;">+' + ordNow + '</td>' +
+        '<td style="padding:5px 3px; text-align:center; font-weight:800; color:' + remColor + '; font-size:0.72rem;">' + Math.max(0, x.remaining - ordNow) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    var reg = getPhaseCodeRegistry();
+    var savedCodesHtml = Object.keys(reg).slice(-6).reverse().map(function(k) {
+      var isAct = (k === activeCode);
+      return '<button type="button" onclick="loadPhaseByOrderCode(\'' + k + '\')" style="background:' + (isAct ? '#0f172a' : '#f1f5f9') + '; color:' + (isAct ? '#fbbf24' : '#334155') + '; border:1px solid #cbd5e1; border-radius:6px; padding:3px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;">' + k + '</button>';
+    }).join('');
+
+    var histHtml = '';
+    if (st.phases && st.phases.length > 0) {
+      histHtml = '<div style="margin-top:9px; border-top:1px dashed #93c5fd; padding-top:7px;">' +
+        '<div style="font-size:0.7rem; font-weight:800; color:#1e3a8a; margin-bottom:5px;">' + _phT('saved_hdr').replace('{code}', activeCode) + '</div>' +
+        st.phases.map(function(ph, idx) {
+          return '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; margin-bottom:4px; font-size:0.7rem;">' +
+            '<span><b>' + _phT('phase_lbl') + ' ' + ph.phaseNo + ' (' + ph.pct + '%)</b> • ' + ph.totalBars + ' ' + _phT('bars') + ' <span style="color:#64748b;">(' + ph.date + ')</span></span>' +
+            '<button type="button" onclick="exportBcPhasePdf(' + idx + ')" style="background:#be123c; color:#fff; border:none; border-radius:5px; padding:3px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;">PDF</button>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    var safeProjVal = (st.projectName || '').replace(/"/g, '&quot;');
+    box.innerHTML =
+      '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:6px; flex-wrap:wrap;">' +
+        '<span style="font-size:0.8rem; font-weight:800; color:#1e3a8a;"><i class="fa-solid fa-layer-group"></i> ' + _phT('title') + '</span>' +
+        '<span style="font-size:0.68rem; font-weight:900; background:#0f172a; color:#fbbf24; padding:3px 8px; border-radius:99px;">' + _phT('code_lbl') + ' ' + activeCode + '</span>' +
+      '</div>' +
+      '<div style="display:flex; gap:5px; margin-bottom:6px;">' +
+        '<input type="text" id="bc_phase_code_inp" placeholder="' + _phT('code_ph') + '" style="flex:1; padding:6px 8px; border:1.5px solid #93c5fd; border-radius:7px; font-size:0.74rem; font-weight:800; text-transform:uppercase;">' +
+        '<button type="button" onclick="loadPhaseByOrderCode()" style="background:#0f172a; color:#fbbf24; border:none; border-radius:7px; padding:6px 10px; font-size:0.7rem; font-weight:800; cursor:pointer; white-space:nowrap;">' + _phT('btn_load') + '</button>' +
+      '</div>' +
+      (savedCodesHtml ? '<div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;">' + savedCodesHtml + '</div>' : '') +
+      '<div style="width:100%; height:7px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin-bottom:6px;">' +
+        '<div style="width:' + donePct + '%; height:100%; background:#16a34a; transition:width 0.25s;"></div>' +
+      '</div>' +
+      '<div style="font-size:0.68rem; font-weight:800; color:#1e40af; text-align:right; margin-bottom:6px;">' + donePct + '% ' + _phT('received_badge') + ' (' + grandRec + '/' + grandTotal + ' ' + _phT('bars') + ')</div>' +
+      '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-bottom:8px; text-align:center;">' +
+        '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:7px; padding:5px;"><div style="font-size:0.62rem; color:#475569; font-weight:700;">' + _phT('total_need') + '</div><div style="font-size:0.85rem; font-weight:900; color:#0f172a;">' + grandTotal + ' ' + _phT('bars') + '</div></div>' +
+        '<div style="background:#f0fdf4; border:1px solid #86efac; border-radius:7px; padding:5px;"><div style="font-size:0.62rem; color:#166534; font-weight:700;">' + _phT('received') + '</div><div style="font-size:0.85rem; font-weight:900; color:#15803d;">' + grandRec + ' ' + _phT('bars') + '</div></div>' +
+        '<div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:7px; padding:5px;"><div style="font-size:0.62rem; color:#92400e; font-weight:700;">' + _phT('remaining') + '</div><div style="font-size:0.85rem; font-weight:900; color:#b45309;">' + grandRem + ' ' + _phT('bars') + '</div></div>' +
+      '</div>' +
+      '<input type="text" id="bc_phase_proj_name" value="' + safeProjVal + '" placeholder="' + _phT('proj_ph') + '" style="width:100%; box-sizing:border-box; padding:7px 9px; border:1px solid #cbd5e1; border-radius:7px; font-size:0.75rem; margin-bottom:7px;">' +
+      '<div style="font-size:0.7rem; font-weight:800; color:#1e40af; margin-bottom:5px;">' + _phT('ask_pct').replace('{n}', nextPhaseNo).replace('{rem}', remPct) + '</div>' +
+      '<div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-bottom:8px;">' +
+        chipsHtml +
+        '<input type="number" id="bc_phase_pct_inp" min="1" max="100" value="' + pct + '" onchange="setBcPhasePct(this.value)" style="width:54px; padding:4px 6px; border:1.5px solid #1d4ed8; border-radius:6px; font-size:0.74rem; font-weight:800; text-align:center;">' +
+        '<span style="font-size:0.72rem; font-weight:800; color:#1e40af;">%</span>' +
+      '</div>' +
+      '<div style="overflow-x:auto; margin-bottom:8px;">' +
+        '<table style="width:100%; border-collapse:collapse; font-size:0.7rem;">' +
+          '<thead><tr style="background:#1e3a8a; color:#fff;">' +
+            '<th style="padding:5px 4px; text-align:left;">' + _phT('th_sec') + '</th>' +
+            '<th style="padding:5px 3px;">' + _phT('th_tot') + '</th>' +
+            '<th style="padding:5px 3px;">' + _phT('th_rec') + '</th>' +
+            '<th style="padding:5px 3px; background:#2563eb;">' + _phT('th_ph').replace('{n}', nextPhaseNo) + '</th>' +
+            '<th style="padding:5px 3px;">' + _phT('th_left') + '</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+      '</div>' +
+      '<div style="display:grid; grid-template-columns: 1.2fr 1fr 0.7fr; gap:5px;">' +
+        '<button type="button" onclick="saveCurrentPhaseOrder()" style="background:#15803d; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.7rem; font-weight:800; cursor:pointer;">' + _phT('btn_save').replace('{n}', nextPhaseNo).replace('{bars}', grandNow) + '</button>' +
+        '<button type="button" onclick="exportBcPhasePdf()" style="background:#be123c; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.7rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-file-pdf"></i> ' + _phT('btn_pdf') + '</button>' +
+        '<button type="button" onclick="resetBcPhaseOrders()" style="background:#64748b; color:#fff; border:none; border-radius:7px; padding:8px 5px; font-size:0.7rem; font-weight:800; cursor:pointer;">' + _phT('btn_reset') + '</button>' +
+      '</div>' +
+      histHtml;
+
+    box.style.display = 'block';
+  };
+})();
+
+
+// ==================== v136: ACCOUNT / WORKSHOP ID-LOCKED WASTAGE QR SECURITY ====================
+function _swHashStr(str) {
+  var h = 2166136261;
+  var s = String(str || '');
+  for (var i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36).toUpperCase().padStart(7, '0').slice(0, 7);
+}
+
+function getWastageOwnerKey() {
+  var rawId = '';
+  try {
+    if (window.firebase && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) {
+      rawId = 'UID:' + firebase.auth().currentUser.uid;
+    }
+  } catch (e) {}
+  if (!rawId) {
+    try {
+      var p = (typeof getProfileData === 'function') ? getProfileData() : JSON.parse(localStorage.getItem('sw_workshop_profile') || '{}');
+      var phone = String(p.phone || localStorage.getItem('sw_auth_phone') || localStorage.getItem('sw_logged_in_phone') || '').replace(/\D/g, '');
+      var email = String(p.email || localStorage.getItem('sw_auth_email') || '').trim().toLowerCase();
+      if (phone) rawId = 'PH:' + phone;
+      else if (email) rawId = 'EM:' + email;
+    } catch (e) {}
+  }
+  if (!rawId) {
+    var devId = localStorage.getItem('sw_private_device_owner_id');
+    if (!devId) {
+      devId = 'DEV-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
+      try { localStorage.setItem('sw_private_device_owner_id', devId); } catch (e) {}
+    }
+    rawId = devId;
+  }
+  return 'ID-' + _swHashStr('SWP_OWNER_SALT_2026|' + rawId);
+}
+
+function signWastageQrPayload(ownerKey, code, sizeStr) {
+  return _swHashStr('SWP_SIG_KEY_99|' + ownerKey + '|' + code + '|' + sizeStr);
+}
+
+(function() {
+  // Isolate Wastage QR stock per logged-in Workshop ID (migrate legacy stock once to current owner if empty)
+  window.getWastageQrStock = function() {
+    var oKey = getWastageOwnerKey();
+    var storeKey = 'sw_wastage_qr_stock_' + oKey;
+    try {
+      var raw = localStorage.getItem(storeKey);
+      if (raw !== null) return JSON.parse(raw || '[]');
+      var legacy = localStorage.getItem('sw_wastage_qr_stock');
+      if (legacy) {
+        var parsed = JSON.parse(legacy || '[]');
+        parsed.forEach(function(it) { it.ownerKey = oKey; });
+        localStorage.setItem(storeKey, JSON.stringify(parsed));
+        return parsed;
+      }
+      return [];
+    } catch (e) { return []; }
+  };
+
+  window.saveWastageQrStock = function(list) {
+    var oKey = getWastageOwnerKey();
+    var tagged = (list || []).map(function(it) {
+      it.ownerKey = oKey;
+      return it;
+    });
+    try { localStorage.setItem('sw_wastage_qr_stock_' + oKey, JSON.stringify(tagged)); } catch (e) {}
+  };
+
+  // Build tamper-proof Account/ID-locked QR Payload: SWQR2|<OWNER_KEY>|<CODE>|<MAT>|<SIZE>|<SPEC>|<SIG>
+  window.buildQrPayloadForItem = function(item) {
+    var oKey = item.ownerKey || getWastageOwnerKey();
+    var sig = signWastageQrPayload(oKey, item.code, item.sizeStr || '');
+    return 'SWQR2|' + oKey + '|' + item.code + '|' + item.mat + '|' + item.sizeStr + '|' + item.spec + '|' + sig;
+  };
+
+  var origRenderWq = window.renderWastageQrStockList;
+  window.renderWastageQrStockList = function() {
+    var badge = document.getElementById('wq_owner_lock_badge');
+    if (badge) badge.innerHTML = '<i class="fa-solid fa-lock"></i> ' + getWastageOwnerKey();
+    if (origRenderWq) origRenderWq();
+  };
+
+  // STRICT ID-LOCKED DECODER: Only works on the EXACT Workshop ID that created the QR code!
+  window.handleDecodedWastageQr = function(rawText) {
+    var clean = String(rawText || '').trim();
+    var myKey = getWastageOwnerKey();
+    var resCard = document.getElementById('wq_scanned_result_card');
+
+    function showBlockedCard(reason) {
+      if (resCard) {
+        resCard.style.display = 'block';
+        resCard.style.background = '#fef2f2';
+        resCard.style.borderColor = '#dc2626';
+        resCard.innerHTML =
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+          '<span style="font-size:0.9rem; font-weight:900; color:#dc2626;"><i class="fa-solid fa-shield-halved"></i> ACCESS DENIED (LOCKED QR)</span>' +
+          '<button type="button" onclick="this.parentElement.parentElement.style.display=\'none\'" style="background:none; border:none; font-weight:800; cursor:pointer; color:#991b1b;">✕</button>' +
+          '</div>' +
+          '<div style="font-size:0.78rem; font-weight:700; color:#7f1d1d;">' + reason + '</div>' +
+          '<div style="font-size:0.7rem; color:#991b1b; margin-top:4px;">Active ID: <b>' + myKey + '</b></div>';
+      } else {
+        alert(reason);
+      }
+    }
+
+    if (clean.indexOf('SWQR2|') === 0) {
+      var parts = clean.split('|');
+      var qrOwner = parts[1] || '';
+      var qrCode = (parts[2] || '').toUpperCase();
+      var qrMat = parts[3] || '';
+      var qrSize = parts[4] || '';
+      var qrSpec = parts[5] || '';
+      var qrSig = parts[6] || '';
+      var expectedSig = signWastageQrPayload(qrOwner, qrCode, qrSize);
+
+      // Verify Owner ID & Cryptographic Signature
+      if (qrOwner !== myKey || qrSig !== expectedSig) {
+        showBlockedCard('This QR Code is locked to another Workshop ID (' + (qrOwner || 'Unknown') + '). Only the owner account can scan and use this code.');
+        return;
+      }
+
+      var stock = getWastageQrStock();
+      var found = stock.find(function(item) { return item.code.toUpperCase() === qrCode; });
+      if (resCard) {
+        resCard.style.display = 'block';
+        resCard.style.background = '#f0fdf4';
+        resCard.style.borderColor = '#16a34a';
+        var cutTxt = found ? getPossibleCutsFromOffcut(found.h_in, found.w_in, 0, 0).suggestionsTxt : 'Verified Owner Stock Piece';
+        resCard.innerHTML =
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+          '<span style="font-size:0.9rem; font-weight:800; color:#166534;"><i class="fa-solid fa-lock-open"></i> VERIFIED (' + myKey + '): #' + qrCode + ' (' + qrMat + ')</span>' +
+          '<button type="button" onclick="this.parentElement.parentElement.style.display=\'none\'" style="background:none; border:none; font-weight:800; cursor:pointer;">✕</button>' +
+          '</div>' +
+          '<div style="font-size:0.98rem; font-weight:800; color:#be123c; margin-bottom:4px;">Size: ' + qrSize + (found ? ' (' + found.sqft + ' Sq.Ft)' : '') + '</div>' +
+          '<div style="font-size:0.78rem; font-weight:700; color:#0f172a; margin-bottom:4px;">Spec: ' + qrSpec + '</div>' +
+          '<div style="font-size:0.74rem; font-weight:800; color:#0369a1; background:#ffffff; padding:6px 8px; border-radius:6px; border:1px solid #bbf7d0;">Possible Cuts: ' + cutTxt + '</div>';
+      }
+      if (found && document.getElementById('wq_search_id')) {
+        document.getElementById('wq_search_id').value = found.code;
+        renderWastageQrStockList();
+      }
+      return;
+    }
+
+    // Legacy SWQR or manual W-101 lookup: ONLY allowed if it exists in THIS logged-in account's own private stock!
+    var m = clean.match(/W-\d+/i);
+    var lookupCode = m ? m[0].toUpperCase() : clean.toUpperCase();
+    var myStock = getWastageQrStock();
+    var myItem = myStock.find(function(item) { return item.code.toUpperCase() === lookupCode; });
+    if (myItem) {
+      var cInfo = getPossibleCutsFromOffcut(myItem.h_in, myItem.w_in, 0, 0);
+      if (resCard) {
+        resCard.style.display = 'block';
+        resCard.style.background = '#f0fdf4';
+        resCard.style.borderColor = '#16a34a';
+        resCard.innerHTML =
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+          '<span style="font-size:0.9rem; font-weight:800; color:#166534;"><i class="fa-solid fa-circle-check"></i> VERIFIED: #' + myItem.code + ' (' + myItem.mat + ')</span>' +
+          '<button type="button" onclick="this.parentElement.parentElement.style.display=\'none\'" style="background:none; border:none; font-weight:800; cursor:pointer;">✕</button>' +
+          '</div>' +
+          '<div style="font-size:0.98rem; font-weight:800; color:#be123c; margin-bottom:4px;">Available Size: ' + myItem.sizeStr + ' (' + myItem.sqft + ' Sq.Ft)</div>' +
+          '<div style="font-size:0.78rem; font-weight:700; color:#0f172a; margin-bottom:4px;">Spec: ' + myItem.spec + '</div>' +
+          '<div style="font-size:0.74rem; font-weight:800; color:#0369a1; background:#ffffff; padding:6px 8px; border-radius:6px; border:1px solid #bbf7d0;">Possible Cuts: ' + cInfo.suggestionsTxt + '</div>';
+      }
+      if (document.getElementById('wq_search_id')) {
+        document.getElementById('wq_search_id').value = myItem.code;
+        renderWastageQrStockList();
+      }
+    } else {
+      showBlockedCard('Code "' + lookupCode + '" does not belong to your Workshop ID (' + myKey + '). Unauthorized codes cannot be used.');
+    }
+  };
+})();
+
+
+
+// ==================== v137: GLASS FABRICATOR ONLY CODE + PDF + MODERN GLASSES + 3-LANG UI ====================
+(function () {
+  var GLASS_TYPE_CODES = [
+    ['CL', 'Clear'],
+    ['XC', 'Extra Clear'],
+    ['BB', 'Blue Box / Decorative'],
+    ['FL', 'Fluted / Reeded'],
+    ['DP', 'Digital / UV Printed'],
+    ['CS', 'Clear + Sticker / Film'],
+    ['AE', 'Acid Etched'],
+    ['BP', 'Back-Painted / Lacquered'],
+    ['TB', 'Tinted Blue'],
+    ['TK', 'Tinted Black'],
+    ['TN', 'Tinted Brown'],
+    ['TG', 'Tinted Grey'],
+    ['TR', 'Tinted Green'],
+    ['OB', 'One Way Blue'],
+    ['OS', 'One Way Silver'],
+    ['ON', 'One Way Brown'],
+    ['OG', 'One Way Gold'],
+    ['FR', 'Frosted'],
+    ['PH', 'Pinhead / Bajri'],
+    ['TC', 'Toughened Clear'],
+    ['TT', 'Toughened Tinted'],
+    ['LM', 'Laminated'],
+    ['CU', 'Custom']
+  ];
+
+  var GLASS_THICK_CODES = [
+    ['35', '3.5mm'], ['4', '4mm'], ['5', '5mm'], ['6', '6mm'],
+    ['8', '8mm'], ['10', '10mm'], ['12', '12mm'], ['18D', '18mm DGU'], ['24D', '24mm DGU']
+  ];
+
+  var WQ_I18N = {
+    en: {
+      card_title: 'Glass & Offcut Code',
+      card_sub: 'Fabricator Cut Code & PDF',
+      hdr_title: 'GLASS CUTTING CODE & OFFCUT STOCK',
+      hdr_sub: 'Offline Glass Fabricator Code (PDF) & Private Workshop Stock',
+      badge_glass_only: 'Glass Only Code',
+      reader_title: 'GLASS FABRICATOR CODE READER',
+      reader_badge: 'GLASS CUTTING ONLY',
+      reader_desc: 'Enter the GLC code from the Glass PDF to view exact glass sheet, print/sticker finish & cut size offline. Basic/non-glass codes are strictly blocked.',
+      btn_verify_cut: 'VERIFY & SHOW GLASS CUT',
+      btn_clear: 'Clear',
+      add_title: 'CREATE GLASS CUT CODE / SAVE OFFCUT STOCK',
+      lbl_mat: 'Material Type:',
+      lbl_thick: 'Glass Thickness:',
+      lbl_gtype: 'Glass Type / Design:',
+      lbl_finish: 'Print / Sticker / Finish Note:',
+      lbl_custom_glass: 'Custom Glass Name:',
+      lbl_spec: 'Color / Spec:',
+      lbl_sheet_h: 'Sheet / Stock Height (In):',
+      lbl_sheet_w: 'Sheet / Stock Width (In):',
+      cut_opt_title: 'Required Cut Size from Sheet (Optional) & Fabricator PIN:',
+      cut_opt_hint: 'Leave Cut H/W blank to cut full size. Set a 4-digit PIN if only your assigned Glass Fabricator should unlock the PDF code.',
+      btn_save_code: 'GENERATE CODE & SAVE TO STOCK',
+      filter_title: 'Check Required Cut Size in Your Stock (Inches):',
+      btn_reset: 'Reset',
+      list_title: 'SAVED STOCK & GLASS CUTTING CODES:',
+      btn_clear_used: 'Clear Used Items',
+      ph_code: 'Enter GLC-... code from PDF',
+      ph_pin: 'PIN (Opt)',
+      ph_search: 'Search stock code (W-101 / GLC-...) or glass type...',
+      denied_title: 'ACCESS DENIED — GLASS FABRICATORS ONLY',
+      denied_non_glass: 'Basic or non-glass codes cannot be used here. Only verified Glass Cutting Codes (GLC-...) generated for glass fabricators are allowed.',
+      denied_pin_req: 'This Glass Cutting Code is PIN-protected. Enter the 4-digit Fabricator PIN from the workshop to unlock.',
+      denied_pin_bad: 'Invalid 4-digit Fabricator PIN. Access denied.',
+      denied_sig: 'Invalid or tampered Glass Cutting Code. Please check the code on the PDF.',
+      verified_glass: 'VERIFIED GLASS CUTTING CODE',
+      btn_pdf: 'Glass Cut PDF',
+      btn_wa: 'WhatsApp',
+      btn_copy: 'Copy Code',
+      private_only_tag: 'PRIVATE ID-LOCKED (NO FABRICATOR CODE)',
+      glass_code_tag: 'GLASS FABRICATOR CODE',
+      empty_stock: 'No stock items saved yet. Add a Glass Piece above to generate a Glass Fabricator Cut Code & PDF.'
+    },
+    bn: {
+      card_title: 'গ্লাস ও অফকাট কোড',
+      card_sub: 'ফ্যাব্রিকেটর কাটিং কোড ও PDF',
+      hdr_title: 'গ্লাস কাটিং কোড ও অফকাট স্টক',
+      hdr_sub: 'অফলাইন গ্লাস ফ্যাব্রিকেটর কোড (PDF) ও প্রাইভেট ওয়ার্কশপ স্টক',
+      badge_glass_only: 'শুধু গ্লাস কোড',
+      reader_title: 'গ্লাস ফ্যাব্রিকেটর কোড রিডার',
+      reader_badge: 'শুধু গ্লাস কাটিং',
+      reader_desc: 'গ্লাস PDF-এর GLC কোডটি বসালেই অফলাইনে গ্লাস শিট, প্রিন্ট/স্টিকার ও কাটিং সাইজ দেখাবে। সাধারণ বা নন-গ্লাস কোড এখানে কাজ করবে না।',
+      btn_verify_cut: 'কোড যাচাই ও গ্লাস কাট দেখুন',
+      btn_clear: 'মুছুন',
+      add_title: 'গ্লাস কাটিং কোড বানান / অফকাট সেভ করুন',
+      lbl_mat: 'ম্যাটেরিয়াল টাইপ:',
+      lbl_thick: 'গ্লাস থিকনেস:',
+      lbl_gtype: 'গ্লাসের ধরন / ডিজাইন:',
+      lbl_finish: 'প্রিন্ট / স্টিকার / ফিনিশ নোট:',
+      lbl_custom_glass: 'নতুন গ্লাসের নাম লিখুন:',
+      lbl_spec: 'কালার / বিবরণ:',
+      lbl_sheet_h: 'শিট / স্টক উচ্চতা (ইঞ্চি):',
+      lbl_sheet_w: 'শিট / স্টক চওড়া (ইঞ্চি):',
+      cut_opt_title: 'কতটুকু গ্লাস কাটতে হবে (অপশনাল) ও ফ্যাব্রিকেটর PIN:',
+      cut_opt_hint: 'পুরো শিট কাটতে চাইলে Cut H/W খালি রাখুন। শুধু নির্দিষ্ট ফ্যাব্রিকেটর যাতে খুলতে পারেন তার জন্য 4-ডিজিট PIN দিন।',
+      btn_save_code: 'কোড তৈরি ও স্টকে সেভ করুন',
+      filter_title: 'স্টকে দরকারের কাটিং সাইজ খুঁজুন (ইঞ্চি):',
+      btn_reset: 'রিসেট',
+      list_title: 'সেভ করা স্টক ও গ্লাস কাটিং কোড:',
+      btn_clear_used: 'ব্যবহৃত মুছুন',
+      ph_code: 'PDF-এর GLC-... কোড লিখুন',
+      ph_pin: 'PIN (যদি থাকে)',
+      ph_search: 'কোড (W-101 / GLC-...) বা গ্লাস খুঁজুন...',
+      denied_title: 'অনুমতি নেই — শুধুমাত্র গ্লাস ফ্যাব্রিকেটরদের জন্য',
+      denied_non_glass: 'সাধারণ বা নন-গ্লাস কোড এখানে ব্যবহার করা যাবে না। শুধুমাত্র গ্লাস কাটিংয়ের ভেরিফায়েড GLC কোডই কাজ করবে।',
+      denied_pin_req: 'এই গ্লাস কোডটি PIN দিয়ে লক করা আছে। খোলার জন্য 4-ডিজিটের ফ্যাব্রিকেটর PIN দিন।',
+      denied_pin_bad: 'ভুল 4-ডিজিট ফ্যাব্রিকেটর PIN। কোড খোলা যায়নি।',
+      denied_sig: 'ভুল বা পরিবর্তিত গ্লাস কোড। PDF দেখে সঠিক GLC কোডটি লিখুন।',
+      verified_glass: 'ভেরিফায়েড গ্লাস কাটিং কোড',
+      btn_pdf: 'গ্লাস কাট PDF',
+      btn_wa: 'হোয়াটসঅ্যাপ',
+      btn_copy: 'কোড কপি',
+      private_only_tag: 'প্রাইভেট আইডি-লকড (ফ্যাব্রিকেটর কোড নয়)',
+      glass_code_tag: 'গ্লাস ফ্যাব্রিকেটর কোড',
+      empty_stock: 'এখনো কোনো স্টক সেভ করা হয়নি। উপরে Glass Piece যোগ করে ফ্যাব্রিকেটর কাটিং কোড ও PDF বানান।'
+    },
+    hi: {
+      card_title: 'ग्लास और ऑफकट कोड',
+      card_sub: 'फैब्रिकेटर कट कोड व PDF',
+      hdr_title: 'ग्लास कटिंग कोड और ऑफकट स्टॉक',
+      hdr_sub: 'ऑफलाइन ग्लास फैब्रिकेटर कोड (PDF) और प्राइवेट वर्कशॉप स्टॉक',
+      badge_glass_only: 'केवल ग्लास कोड',
+      reader_title: 'ग्लास फैब्रिकेटर कोड रीडर',
+      reader_badge: 'केवल ग्लास कटिंग',
+      reader_desc: 'ग्लास PDF से GLC कोड डालें और ऑफलाइन ग्लास शीट, प्रिंट/स्टिकर और कटिंग साइज देखें। सामान्य या नॉन-ग्लास कोड ब्लॉक रहेंगे।',
+      btn_verify_cut: 'कोड जाँचें और ग्लास कट देखें',
+      btn_clear: 'साफ करें',
+      add_title: 'ग्लास कट कोड बनाएँ / ऑफकट सेव करें',
+      lbl_mat: 'मटेरियल टाइप:',
+      lbl_thick: 'ग्लास थिकनेस:',
+      lbl_gtype: 'ग्लास टाइप / डिजाइन:',
+      lbl_finish: 'प्रिंट / स्टिकर / फिनिश नोट:',
+      lbl_custom_glass: 'नए ग्लास का नाम:',
+      lbl_spec: 'कलर / विवरण:',
+      lbl_sheet_h: 'शीट / स्टॉक ऊँचाई (इंच):',
+      lbl_sheet_w: 'शीट / स्टॉक चौड़ाई (इंच):',
+      cut_opt_title: 'शीट से कितना काटना है (वैकल्पिक) और फैब्रिकेटर PIN:',
+      cut_opt_hint: 'पूरी शीट काटने के लिए Cut H/W खाली छोड़ें। केवल अपने फैब्रिकेटर को एक्सेस देने के लिए 4-अंकों का PIN सेट करें।',
+      btn_save_code: 'कोड बनाएँ और स्टॉक में सेव करें',
+      filter_title: 'अपने स्टॉक में जरूरी कट साइज खोजें (इंच):',
+      btn_reset: 'रीसेट',
+      list_title: 'सेव स्टॉक और ग्लास कटिंग कोड:',
+      btn_clear_used: 'उपयोग किए हटाएँ',
+      ph_code: 'PDF का GLC-... कोड लिखें',
+      ph_pin: 'PIN (वैकल्पिक)',
+      ph_search: 'कोड (W-101 / GLC-...) या ग्लास खोजें...',
+      denied_title: 'अनुमति नहीं — केवल ग्लास फैब्रिकेटर के लिए',
+      denied_non_glass: 'बेसिक या नॉन-ग्लास कोड यहाँ काम नहीं करेंगे। केवल ग्लास कटिंग का वेरिफाइड GLC कोड ही मान्य है।',
+      denied_pin_req: 'यह ग्लास कटिंग कोड PIN से लॉक है। खोलने के लिए 4-अंकों का फैब्रिकेटर PIN डालें।',
+      denied_pin_bad: 'गलत 4-अंकों का फैब्रिकेटर PIN। एक्सेस ब्लॉक है।',
+      denied_sig: 'अमान्य या गलत ग्लास कटिंग कोड। कृपया PDF से सही GLC कोड जाँचें।',
+      verified_glass: 'वेरिफाइड ग्लास कटिंग कोड',
+      btn_pdf: 'ग्लास कट PDF',
+      btn_wa: 'व्हाट्सएप',
+      btn_copy: 'कोड कॉपी',
+      private_only_tag: 'प्राइवेट आईडी-लॉक्ड (फैब्रिकेटर कोड नहीं)',
+      glass_code_tag: 'ग्लास फैब्रिकेटर कोड',
+      empty_stock: 'अभी कोई स्टॉक सेव नहीं है। ऊपर Glass Piece जोड़कर फैब्रिकेटर कट कोड और PDF बनाएँ।'
+    }
+  };
+
+  function getLang() {
+    try {
+      var l = localStorage.getItem('sw_lang');
+      return (l === 'bn' || l === 'hi' || l === 'en') ? l : 'en';
+    } catch (e) { return 'en'; }
+  }
+
+  function tWq(key) {
+    var l = getLang();
+    return (WQ_I18N[l] && WQ_I18N[l][key]) || WQ_I18N.en[key] || key;
+  }
+
+  function hash36(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return ((h >>> 0).toString(36).toUpperCase() + '000000').slice(0, 6);
+  }
+
+  function toB64Url(str) {
+    try {
+      var bytes = unescape(encodeURIComponent(str));
+      return btoa(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (e) { return ''; }
+  }
+
+  function fromB64Url(b64) {
+    try {
+      var s = b64.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      return decodeURIComponent(escape(atob(s)));
+    } catch (e) { return ''; }
+  }
+
+  function cleanNumStr(n) {
+    var v = parseFloat(n);
+    if (isNaN(v) || v <= 0) return '0';
+    return String(Math.round(v * 100) / 100);
+  }
+
+  function getGlassTypeShort(name) {
+    for (var i = 0; i < GLASS_TYPE_CODES.length; i++) {
+      if (GLASS_TYPE_CODES[i][1].toLowerCase() === String(name || '').toLowerCase()) return GLASS_TYPE_CODES[i][0];
+    }
+    return 'CU';
+  }
+
+  function getGlassTypeFull(shortCode) {
+    for (var i = 0; i < GLASS_TYPE_CODES.length; i++) {
+      if (GLASS_TYPE_CODES[i][0] === shortCode) return GLASS_TYPE_CODES[i][1];
+    }
+    return 'Custom Glass';
+  }
+
+  function getThickShort(th) {
+    for (var i = 0; i < GLASS_THICK_CODES.length; i++) {
+      if (GLASS_THICK_CODES[i][1] === th) return GLASS_THICK_CODES[i][0];
+    }
+    return '5';
+  }
+
+  function getThickFull(sc) {
+    for (var i = 0; i < GLASS_THICK_CODES.length; i++) {
+      if (GLASS_THICK_CODES[i][0] === sc) return GLASS_THICK_CODES[i][1];
+    }
+    return sc + 'mm';
+  }
+
+  function getWorkshopName() {
+    try {
+      var p = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      return (p.companyName || p.shopName || p.name || 'Smart Worker Workshop').trim();
+    } catch (e) { return 'Smart Worker Workshop'; }
+  }
+
+  function getWorkshopPhone() {
+    try {
+      var p = JSON.parse(localStorage.getItem('sw_profile') || '{}');
+      return (p.phone || p.mobile || '').trim();
+    } catch (e) { return ''; }
+  }
+
+  // Generate Offline Self-Decoding Glass-Fabricator-Only Code
+  // Format: GLC-<THICK><GTYPE>-<SH>X<SW>-<CH>X<CW>-<PINFLAG>-<META_B64>-<SIG>
+  // Strictly tagged with role = GLASS_FAB_ONLY inside signature!
+  window.buildGlassFabricatorCode = function (item) {
+    var thShort = getThickShort(item.thick || '5mm');
+    var gtShort = getGlassTypeShort(item.glassType || 'Clear');
+    var sh = cleanNumStr(item.h_in);
+    var sw = cleanNumStr(item.w_in);
+    var ch = cleanNumStr(item.cut_h_in || item.h_in);
+    var cw = cleanNumStr(item.cut_w_in || item.w_in);
+    var pin = String(item.pin || '').replace(/\D/g, '').slice(0, 4);
+    var pinFlag = pin.length === 4 ? 'P1' : 'P0';
+    var pinHash = pin.length === 4 ? hash36('SWGLPIN|' + pin + '|' + sh + '|' + sw) : '0';
+    var metaObj = {
+      g: gtShort === 'CU' ? (item.customGlass || item.glassType || 'Custom') : '',
+      f: (item.finishNote || '').slice(0, 40),
+      w: getWorkshopName().slice(0, 28),
+      c: item.code || 'G-101',
+      p: pinHash
+    };
+    var metaB64 = toB64Url(JSON.stringify(metaObj));
+    var core = 'GLC-' + thShort + gtShort + '-' + sh + 'X' + sw + '-' + ch + 'X' + cw + '-' + pinFlag + '-' + metaB64;
+    var sig = hash36('SW_GLASS_FAB_ONLY_V137|' + core);
+    return core + '-' + sig;
+  };
+
+  window.verifyAndDecodeGlassCode = function (rawCode, enteredPin) {
+    var clean = String(rawCode || '').trim().replace(/\s+/g, '');
+    if (!clean) return { ok: false, reason: 'non_glass' };
+
+    // Strictly reject ANY code that is not a GLC- Glass Fabricator code!
+    if (!/^GLC-/i.test(clean)) {
+      return { ok: false, reason: 'non_glass' };
+    }
+    var parts = clean.split('-');
+    if (parts.length < 7) {
+      return { ok: false, reason: 'sig' };
+    }
+    var sig = parts.pop().toUpperCase();
+    var core = parts.join('-');
+    // Re-normalize prefix and uppercase tokens except base64url meta
+    var pPrefix = parts[0].toUpperCase();
+    var pSpec = parts[1].toUpperCase();
+    var pSheet = parts[2].toUpperCase();
+    var pCut = parts[3].toUpperCase();
+    var pPinFlag = parts[4].toUpperCase();
+    var pMeta = parts.slice(5).join('-');
+    var normCore = [pPrefix, pSpec, pSheet, pCut, pPinFlag, pMeta].join('-');
+
+    var expectedSig = hash36('SW_GLASS_FAB_ONLY_V137|' + normCore);
+    if (sig !== expectedSig) {
+      return { ok: false, reason: 'sig' };
+    }
+
+    var metaStr = fromB64Url(pMeta);
+    var meta = {};
+    try { meta = JSON.parse(metaStr || '{}'); } catch (e) { return { ok: false, reason: 'sig' }; }
+
+    var sheetParts = pSheet.split('X');
+    var cutParts = pCut.split('X');
+    var sh = parseFloat(sheetParts[0]) || 0;
+    var sw = parseFloat(sheetParts[1]) || 0;
+    var ch = parseFloat(cutParts[0]) || sh;
+    var cw = parseFloat(cutParts[1]) || sw;
+
+    if (pPinFlag === 'P1') {
+      var cleanPin = String(enteredPin || '').replace(/\D/g, '').slice(0, 4);
+      if (cleanPin.length !== 4) return { ok: false, reason: 'pin_req' };
+      var checkPinHash = hash36('SWGLPIN|' + cleanPin + '|' + cleanNumStr(sh) + '|' + cleanNumStr(sw));
+      if (checkPinHash !== meta.p) return { ok: false, reason: 'pin_bad' };
+    }
+
+    // Parse thick + gtype from pSpec (last 2 chars = gtype)
+    var gtShort = pSpec.slice(-2);
+    var thShort = pSpec.slice(0, -2);
+    var glassType = (gtShort === 'CU' && meta.g) ? meta.g : getGlassTypeFull(gtShort);
+    var thick = getThickFull(thShort);
+
+    return {
+      ok: true,
+      code: normCore + '-' + sig,
+      stockRef: meta.c || 'G-101',
+      workshop: meta.w || 'Smart Worker Workshop',
+      thick: thick,
+      glassType: glassType,
+      finishNote: meta.f || '',
+      sheetH: sh,
+      sheetW: sw,
+      cutH: ch,
+      cutW: cw,
+      pinLocked: pPinFlag === 'P1'
+    };
+  };
+
+  window.applyWastageV137I18n = function () {
+    document.querySelectorAll('[data-wq-i18n]').forEach(function (el) {
+      var k = el.getAttribute('data-wq-i18n');
+      if (k) el.textContent = tWq(k);
+    });
+    var codeIn = document.getElementById('wq_fab_code_input');
+    if (codeIn) codeIn.placeholder = tWq('ph_code');
+    var pinIn = document.getElementById('wq_fab_pin_input');
+    if (pinIn) pinIn.placeholder = tWq('ph_pin');
+    var srch = document.getElementById('wq_search_id');
+    if (srch) srch.placeholder = tWq('ph_search');
+  };
+
+  window.toggleWastageGlassFields = function () {
+    var mat = document.getElementById('wq_mat_type') ? document.getElementById('wq_mat_type').value : 'Glass Piece';
+    var isGlass = mat === 'Glass Piece';
+    var idsShow = ['wq_glass_thick_wrap', 'wq_glass_extra_box', 'wq_glass_cut_box'];
+    idsShow.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = isGlass ? '' : 'none';
+    });
+    var nonGlass = document.getElementById('wq_non_glass_spec_wrap');
+    if (nonGlass) nonGlass.style.display = isGlass ? 'none' : '';
+  };
+
+  window.toggleWastageCustomGlass = function () {
+    var gt = document.getElementById('wq_glass_type') ? document.getElementById('wq_glass_type').value : '';
+    var wrap = document.getElementById('wq_custom_glass_wrap');
+    if (wrap) wrap.style.display = (gt === 'Custom') ? '' : 'none';
+  };
+
+  window.clearGlassFabricatorReader = function () {
+    var a = document.getElementById('wq_fab_code_input');
+    var b = document.getElementById('wq_fab_pin_input');
+    var c = document.getElementById('wq_scanned_result_card');
+    if (a) a.value = '';
+    if (b) b.value = '';
+    if (c) c.style.display = 'none';
+  };
+
+  window.decodeGlassFabricatorCode = function () {
+    var raw = document.getElementById('wq_fab_code_input') ? document.getElementById('wq_fab_code_input').value : '';
+    var pin = document.getElementById('wq_fab_pin_input') ? document.getElementById('wq_fab_pin_input').value : '';
+    var resCard = document.getElementById('wq_scanned_result_card');
+    if (!resCard) return;
+
+    var dec = window.verifyAndDecodeGlassCode(raw, pin);
+    if (!dec.ok) {
+      var msgKey = dec.reason === 'pin_req' ? 'denied_pin_req'
+        : dec.reason === 'pin_bad' ? 'denied_pin_bad'
+        : dec.reason === 'sig' ? 'denied_sig'
+        : 'denied_non_glass';
+      resCard.style.display = 'block';
+      resCard.style.background = '#fef2f2';
+      resCard.style.borderColor = '#dc2626';
+      resCard.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">' +
+        '<span style="font-size:0.84rem; font-weight:800; color:#b91c1c;"><i class="fa-solid fa-ban"></i> ' + tWq('denied_title') + '</span>' +
+        '<button type="button" onclick="this.parentElement.parentElement.style.display=\'none\'" style="background:none; border:none; font-weight:800; color:#b91c1c; cursor:pointer;">✕</button>' +
+        '</div>' +
+        '<div style="font-size:0.76rem; font-weight:700; color:#7f1d1d;">' + tWq(msgKey) + '</div>';
+      return;
+    }
+
+    var sheetSqft = ((dec.sheetH * dec.sheetW) / 144).toFixed(2);
+    var cutSqft = ((dec.cutH * dec.cutW) / 144).toFixed(2);
+    var shMm = Math.round(dec.sheetH * 25.4);
+    var swMm = Math.round(dec.sheetW * 25.4);
+    var chMm = Math.round(dec.cutH * 25.4);
+    var cwMm = Math.round(dec.cutW * 25.4);
+    var remH = Math.max(0, Math.round((dec.sheetH - dec.cutH) * 100) / 100);
+    var remW = Math.max(0, Math.round((dec.sheetW - dec.cutW) * 100) / 100);
+    var fits = (dec.cutH <= dec.sheetH && dec.cutW <= dec.sheetW) || (dec.cutH <= dec.sheetW && dec.cutW <= dec.sheetH);
+    var pcs = fits ? Math.max(1, Math.floor(dec.sheetH / dec.cutH) * Math.floor(dec.sheetW / dec.cutW)) : 0;
+
+    // Simple proportional SVG cutting diagram
+    var pctH = dec.sheetH > 0 ? Math.min(100, Math.round((dec.cutH / dec.sheetH) * 100)) : 100;
+    var pctW = dec.sheetW > 0 ? Math.min(100, Math.round((dec.cutW / dec.sheetW) * 100)) : 100;
+
+    resCard.style.display = 'block';
+    resCard.style.background = '#f0fdf4';
+    resCard.style.borderColor = '#16a34a';
+    resCard.innerHTML =
+      '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px;">' +
+      '<span style="font-size:0.84rem; font-weight:800; color:#166534;"><i class="fa-solid fa-circle-check"></i> ' + tWq('verified_glass') + ' (' + dec.stockRef + ')</span>' +
+      '<button type="button" onclick="this.parentElement.parentElement.style.display=\'none\'" style="background:none; border:none; font-weight:800; cursor:pointer;">✕</button>' +
+      '</div>' +
+      '<div style="font-size:0.72rem; font-weight:700; color:#475569; margin-bottom:6px;">Workshop: <b>' + dec.workshop + '</b>' + (dec.pinLocked ? ' • <span style="color:#0369a1;"><i class="fa-solid fa-key"></i> PIN Verified</span>' : '') + '</div>' +
+      '<div style="background:#fff; border:1px solid #bbf7d0; border-radius:9px; padding:9px; margin-bottom:8px;">' +
+      '<div style="font-size:0.9rem; font-weight:800; color:#0f172a; margin-bottom:3px;">' + dec.thick + ' • ' + dec.glassType + '</div>' +
+      (dec.finishNote ? '<div style="font-size:0.78rem; font-weight:800; color:#7c3aed; margin-bottom:4px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Finish / Print / Sticker: ' + dec.finishNote + '</div>' : '') +
+      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">' +
+      '<div style="background:#f8fafc; padding:6px 8px; border-radius:7px; border:1px solid #e2e8f0;">' +
+      '<div style="font-size:0.64rem; color:#64748b; font-weight:700;">GLASS SHEET SIZE</div>' +
+      '<div style="font-size:0.84rem; font-weight:800; color:#0f172a;">' + dec.sheetH + '" × ' + dec.sheetW + '"</div>' +
+      '<div style="font-size:0.66rem; color:#475569;">' + shMm + ' × ' + swMm + ' mm (' + sheetSqft + ' Sq.Ft)</div>' +
+      '</div>' +
+      '<div style="background:#eff6ff; padding:6px 8px; border-radius:7px; border:1px solid #93c5fd;">' +
+      '<div style="font-size:0.64rem; color:#1d4ed8; font-weight:800;">CUT SIZE REQUIRED</div>' +
+      '<div style="font-size:0.84rem; font-weight:800; color:#be123c;">' + dec.cutH + '" × ' + dec.cutW + '"</div>' +
+      '<div style="font-size:0.66rem; color:#1e40af;">' + chMm + ' × ' + cwMm + ' mm (' + cutSqft + ' Sq.Ft)</div>' +
+      '</div></div></div>' +
+      '<div style="background:#fff; border:1px dashed #0284c7; border-radius:9px; padding:8px; margin-bottom:6px;">' +
+      '<div style="font-size:0.68rem; font-weight:800; color:#0369a1; margin-bottom:5px;">GLASS CUTTING PREVIEW (' + (fits ? (pcs + ' Pc(s) Fit') : 'Check Sheet Size') + '):</div>' +
+      '<div style="position:relative; width:100%; height:64px; background:#e2e8f0; border:1.5px solid #64748b; border-radius:6px; overflow:hidden;">' +
+      '<div style="position:absolute; top:0; left:0; width:' + pctW + '%; height:' + pctH + '%; background:#38bdf8; border-right:2px dashed #0369a1; border-bottom:2px dashed #0369a1; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; font-weight:800;">CUT: ' + dec.cutH + '"×' + dec.cutW + '"</div>' +
+      '</div>' +
+      '<div style="font-size:0.68rem; font-weight:700; color:#334155; margin-top:5px;">Offcut Leftover: <b>' + (remH > 0 || remW > 0 ? ('H-Rem ' + remH + '" / W-Rem ' + remW + '"') : 'Full Sheet Cut (0" Leftover)') + '</b></div>' +
+      '</div>';
+  };
+
+  // Override addManualWastagePiece to support modern glass fields + Glass-Only Fabricator Code
+  window.addManualWastagePiece = function () {
+    var mat = document.getElementById('wq_mat_type') ? document.getElementById('wq_mat_type').value : 'Glass Piece';
+    var hRaw = document.getElementById('wq_h') ? document.getElementById('wq_h').value.trim() : '';
+    var wRaw = document.getElementById('wq_w') ? document.getElementById('wq_w').value.trim() : '';
+    var hIn = typeof parseInputToInches === 'function' ? parseInputToInches(hRaw, 'in') : (parseFloat(hRaw) || 0);
+    var wIn = typeof parseInputToInches === 'function' ? parseInputToInches(wRaw, 'in') : (parseFloat(wRaw) || 0);
+
+    if (!hIn || hIn <= 0 || !wIn || wIn <= 0) {
+      alert('Please enter valid Height and Width in Inches!');
+      return;
+    }
+
+    var stock = typeof getWastageQrStock === 'function' ? getWastageQrStock() : [];
+    var isGlass = (mat === 'Glass Piece');
+    var nextNum = 101 + stock.length;
+    var code = (isGlass ? 'G-' : 'W-') + nextNum;
+    while (stock.some(function (x) { return x.code === code; })) {
+      nextNum++;
+      code = (isGlass ? 'G-' : 'W-') + nextNum;
+    }
+
+    var item = {
+      id: 'SW_' + Date.now(),
+      code: code,
+      mat: mat,
+      h_in: hIn,
+      w_in: wIn,
+      sizeStr: cleanNumStr(hIn) + '" × ' + cleanNumStr(wIn) + '"',
+      sqft: ((hIn * wIn) / 144).toFixed(2),
+      used: false,
+      date: new Date().toLocaleDateString('en-GB'),
+      ownerKey: typeof getWastageOwnerKey === 'function' ? getWastageOwnerKey() : 'ID-LOCAL'
+    };
+
+    if (isGlass) {
+      var thick = document.getElementById('wq_glass_thick') ? document.getElementById('wq_glass_thick').value : '5mm';
+      var gType = document.getElementById('wq_glass_type') ? document.getElementById('wq_glass_type').value : 'Clear';
+      var customName = document.getElementById('wq_custom_glass_name') ? document.getElementById('wq_custom_glass_name').value.trim() : '';
+      var finishNote = document.getElementById('wq_glass_finish') ? document.getElementById('wq_glass_finish').value.trim() : '';
+      var reqCutH = parseFloat(document.getElementById('wq_req_cut_h') ? document.getElementById('wq_req_cut_h').value : '') || hIn;
+      var reqCutW = parseFloat(document.getElementById('wq_req_cut_w') ? document.getElementById('wq_req_cut_w').value : '') || wIn;
+      var setPin = (document.getElementById('wq_set_pin') ? document.getElementById('wq_set_pin').value : '').replace(/\D/g, '').slice(0, 4);
+
+      var displayGlass = (gType === 'Custom' && customName) ? customName : gType;
+      item.thick = thick;
+      item.glassType = gType;
+      item.customGlass = customName;
+      item.finishNote = finishNote;
+      item.cut_h_in = reqCutH;
+      item.cut_w_in = reqCutW;
+      item.pin = setPin;
+      item.spec = thick + ' ' + displayGlass + (finishNote ? ' (' + finishNote + ')' : '');
+      item.fabCode = window.buildGlassFabricatorCode(item);
+    } else {
+      var spec = document.getElementById('wq_spec') ? document.getElementById('wq_spec').value.trim() : '';
+      item.spec = spec || mat;
+      item.fabCode = ''; // Strictly NO Fabricator Code for non-glass materials!
+    }
+
+    stock.unshift(item);
+    if (typeof saveWastageQrStock === 'function') saveWastageQrStock(stock);
+
+    ['wq_h', 'wq_w', 'wq_req_cut_h', 'wq_req_cut_w', 'wq_glass_finish', 'wq_spec', 'wq_custom_glass_name'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    window.renderWastageQrStockList();
+  };
+
+  // Generate Professional English-Only Glass Cutting PDF for Glass Fabricator
+  window.downloadGlassFabricatorPdf = function (itemId) {
+    var stock = typeof getWastageQrStock === 'function' ? getWastageQrStock() : [];
+    var item = stock.find(function (x) { return x.id === itemId; });
+    if (!item || item.mat !== 'Glass Piece') {
+      alert('Glass Cutting PDF is only available for Glass items.');
+      return;
+    }
+    if (!item.fabCode) {
+      item.fabCode = window.buildGlassFabricatorCode(item);
+    }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      alert('PDF engine not ready. Please refresh once.');
+      return;
+    }
+
+    var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var shop = getWorkshopName();
+    var phone = getWorkshopPhone();
+    var sh = parseFloat(item.h_in) || 0;
+    var sw = parseFloat(item.w_in) || 0;
+    var ch = parseFloat(item.cut_h_in) || sh;
+    var cw = parseFloat(item.cut_w_in) || sw;
+    var shMm = Math.round(sh * 25.4), swMm = Math.round(sw * 25.4);
+    var chMm = Math.round(ch * 25.4), cwMm = Math.round(cw * 25.4);
+    var remH = Math.max(0, Math.round((sh - ch) * 100) / 100);
+    var remW = Math.max(0, Math.round((sw - cw) * 100) / 100);
+
+    // Header Banner
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 32, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text(shop.toUpperCase(), 14, 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('GLASS FABRICATOR CUTTING SLIP  |  SMART WORKER PRO', 14, 21);
+    if (phone) doc.text('Contact: ' + phone + '   |   Date: ' + (item.date || ''), 14, 27);
+    else doc.text('Date: ' + (item.date || ''), 14, 27);
+
+    // Glass Fabricator Only Code Box
+    doc.setFillColor(240, 249, 255);
+    doc.setDrawColor(2, 132, 199);
+    doc.setLineWidth(0.7);
+    doc.roundedRect(14, 40, 182, 34, 3, 3, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(3, 105, 161);
+    doc.text('GLASS FABRICATOR CUTTING CODE (FOR GLASS FABRICATORS ONLY):', 20, 48);
+
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(15, 23, 42);
+    var codeLines = doc.splitTextToSize(item.fabCode, 170);
+    doc.text(codeLines, 20, 56);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.2);
+    doc.setTextColor(71, 85, 105);
+    doc.text('Open Smart Worker Pro -> Glass & Offcut Code -> Enter this GLC code to auto-load cutting plan offline.' + (item.pin ? ' (PIN Protected)' : ''), 20, 69);
+
+    // Glass Specification Table
+    var y = 84;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(14, y, 182, 9, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    doc.text('GLASS SPECIFICATION & CUTTING DETAILS', 18, y + 6.2);
+    y += 14;
+
+    var rows = [
+      ['Stock Ref No.', item.code],
+      ['Glass Thickness', item.thick || '5mm'],
+      ['Glass Type / Design', (item.glassType === 'Custom' && item.customGlass) ? item.customGlass : (item.glassType || item.spec)],
+      ['Print / Sticker / Finish', item.finishNote || 'Standard (No Extra Print/Sticker)'],
+      ['Available Sheet Size', cleanNumStr(sh) + '" x ' + cleanNumStr(sw) + '"  (' + shMm + ' x ' + swMm + ' mm)  |  ' + ((sh * sw) / 144).toFixed(2) + ' Sq.Ft'],
+      ['Required Cut Size', cleanNumStr(ch) + '" x ' + cleanNumStr(cw) + '"  (' + chMm + ' x ' + cwMm + ' mm)  |  ' + ((ch * cw) / 144).toFixed(2) + ' Sq.Ft'],
+      ['Remaining Offcut', (remH > 0 || remW > 0) ? ('H-Rem ' + remH + '" / W-Rem ' + remW + '"') : 'Full Sheet Cut (0" Offcut)'],
+      ['Access Mode', item.pin ? 'Glass Fabricator Only (4-Digit PIN Locked)' : 'Glass Fabricator Only (GLC Verified)']
+    ];
+
+    doc.setFontSize(9.5);
+    rows.forEach(function (r, idx) {
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, y - 4.5, 182, 8.5, 'F');
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text(r[0], 18, y + 1);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 23, 42);
+      doc.text(String(r[1]), 72, y + 1);
+      y += 9;
+    });
+
+    // Visual Cutting Diagram on PDF
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(3, 105, 161);
+    doc.text('SHEET CUTTING DIAGRAM (PROPORTIONAL):', 14, y);
+    y += 5;
+
+    var boxW = 120, boxH = 55;
+    doc.setFillColor(226, 232, 240);
+    doc.setDrawColor(100, 116, 139);
+    doc.rect(14, y, boxW, boxH, 'FD');
+
+    var cutDrawW = sw > 0 ? Math.min(boxW, Math.max(24, (cw / sw) * boxW)) : boxW;
+    var cutDrawH = sh > 0 ? Math.min(boxH, Math.max(18, (ch / sh) * boxH)) : boxH;
+    doc.setFillColor(186, 230, 253);
+    doc.setDrawColor(2, 132, 199);
+    doc.rect(14, y, cutDrawW, cutDrawH, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text('CUT: ' + cleanNumStr(ch) + '" x ' + cleanNumStr(cw) + '"', 18, y + Math.min(cutDrawH - 4, 12));
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text('FULL SHEET: ' + cleanNumStr(sh) + '" x ' + cleanNumStr(sw) + '"', 14, y + boxH + 6);
+
+    doc.save('Glass_Cut_' + item.code + '.pdf');
+  };
+
+  window.copyGlassFabCode = function (codeStr) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(codeStr).then(function () {
+        alert('Glass Fabricator Code Copied!');
+      }).catch(function () { prompt('Copy Glass Fabricator Code:', codeStr); });
+    } else {
+      prompt('Copy Glass Fabricator Code:', codeStr);
+    }
+  };
+
+  window.shareGlassFabWhatsApp = function (itemId) {
+    var stock = typeof getWastageQrStock === 'function' ? getWastageQrStock() : [];
+    var item = stock.find(function (x) { return x.id === itemId; });
+    if (!item || item.mat !== 'Glass Piece') return;
+    if (!item.fabCode) item.fabCode = window.buildGlassFabricatorCode(item);
+    var msg = '*GLASS CUTTING CODE (Glass Fabricators Only)*\n' +
+      'Workshop: ' + getWorkshopName() + '\n' +
+      'Glass: ' + item.spec + '\n' +
+      'Sheet: ' + item.sizeStr + '\n' +
+      'Cut Required: ' + cleanNumStr(item.cut_h_in || item.h_in) + '" x ' + cleanNumStr(item.cut_w_in || item.w_in) + '"\n' +
+      'Code: ' + item.fabCode + '\n' +
+      (item.pin ? '(PIN Protected - Ask workshop for 4-digit PIN)\n' : '') +
+      'Enter this code in Smart Worker Pro -> Glass & Offcut Code.';
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  };
+
+  // Override renderWastageQrStockList with Clean No-QR Code Cards + PDF & WhatsApp actions
+  window.renderWastageQrStockList = function () {
+    var container = document.getElementById('wq_stock_list_container');
+    if (!container) return;
+    if (typeof updateWastageOwnerBadge === 'function') updateWastageOwnerBadge();
+    window.applyWastageV137I18n();
+
+    var stock = typeof getWastageQrStock === 'function' ? getWastageQrStock() : [];
+    var searchQ = (document.getElementById('wq_search_id') ? document.getElementById('wq_search_id').value : '').trim().toLowerCase();
+    var reqH = parseFloat(document.getElementById('wq_check_h') ? document.getElementById('wq_check_h').value : '') || 0;
+    var reqW = parseFloat(document.getElementById('wq_check_w') ? document.getElementById('wq_check_w').value : '') || 0;
+
+    var filtered = stock.filter(function (item) {
+      if (searchQ) {
+        var hay = ((item.code || '') + ' ' + (item.fabCode || '') + ' ' + (item.mat || '') + ' ' + (item.spec || '')).toLowerCase();
+        if (hay.indexOf(searchQ) === -1) return false;
+      }
+      if (reqH > 0 && reqW > 0) {
+        var fit1 = (item.h_in >= reqH && item.w_in >= reqW);
+        var fit2 = (item.h_in >= reqW && item.w_in >= reqH);
+        if (!fit1 && !fit2) return false;
+      }
+      return true;
+    });
+
+    if (!filtered.length) {
+      container.innerHTML = '<div style="text-align:center; padding:18px 12px; color:#64748b; font-size:0.78rem; background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:10px;">' + tWq('empty_stock') + '</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(function (item) {
+      var isGlass = (item.mat === 'Glass Piece');
+      if (isGlass && !item.fabCode) {
+        item.fabCode = window.buildGlassFabricatorCode(item);
+      }
+      var borderCol = item.used ? '#cbd5e1' : (isGlass ? '#0284c7' : '#64748b');
+      var bgCol = item.used ? '#f8fafc' : '#ffffff';
+      var badgeHtml = isGlass
+        ? '<span style="font-size:0.62rem; font-weight:800; background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:99px;">' + tWq('glass_code_tag') + (item.pin ? ' • PIN' : '') + '</span>'
+        : '<span style="font-size:0.62rem; font-weight:800; background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:99px;"><i class="fa-solid fa-lock"></i> ' + tWq('private_only_tag') + '</span>';
+
+      var fabBox = isGlass
+        ? '<div style="background:#f0f9ff; border:1px dashed #0284c7; border-radius:8px; padding:7px 8px; margin:7px 0;">' +
+          '<div style="font-size:0.66rem; font-weight:800; color:#0369a1; margin-bottom:2px;">GLASS CUT CODE:</div>' +
+          '<div style="font-family:monospace; font-size:0.72rem; font-weight:800; color:#0f172a; word-break:break-all;">' + item.fabCode + '</div>' +
+          '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:7px;">' +
+          '<button type="button" onclick="downloadGlassFabricatorPdf(\'' + item.id + '\')" style="flex:1; min-width:95px; background:#dc2626; color:#fff; border:none; padding:7px 8px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-file-pdf"></i> ' + tWq('btn_pdf') + '</button>' +
+          '<button type="button" onclick="shareGlassFabWhatsApp(\'' + item.id + '\')" style="flex:1; min-width:85px; background:#16a34a; color:#fff; border:none; padding:7px 8px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-brands fa-whatsapp"></i> ' + tWq('btn_wa') + '</button>' +
+          '<button type="button" onclick="copyGlassFabCode(\'' + item.fabCode.replace(/'/g, '') + '\')" style="background:#0f172a; color:#fff; border:none; padding:7px 9px; border-radius:7px; font-size:0.72rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-copy"></i> ' + tWq('btn_copy') + '</button>' +
+          '</div></div>'
+        : '';
+
+      return '<div style="background:' + bgCol + '; border:1.5px solid ' + borderCol + '; border-radius:11px; padding:10px; opacity:' + (item.used ? '0.65' : '1') + ';">' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">' +
+        '<span style="font-size:0.86rem; font-weight:800; color:#0f172a;">#' + item.code + ' • ' + item.mat + '</span>' +
+        badgeHtml +
+        '</div>' +
+        '<div style="font-size:0.82rem; font-weight:800; color:#be123c;">Sheet: ' + item.sizeStr + ' (' + item.sqft + ' Sq.Ft)' +
+        (isGlass && (item.cut_h_in || item.cut_w_in) ? ' &nbsp;|&nbsp; <span style="color:#0369a1;">Cut: ' + cleanNumStr(item.cut_h_in) + '" × ' + cleanNumStr(item.cut_w_in) + '"</span>' : '') +
+        '</div>' +
+        '<div style="font-size:0.74rem; font-weight:700; color:#334155; margin-top:2px;">' + (item.spec || '') + ' <span style="color:#94a3b8; font-weight:600;">(' + (item.date || '') + ')</span></div>' +
+        fabBox +
+        '<div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">' +
+        '<button type="button" onclick="toggleWastageItemUsed(\'' + item.id + '\')" style="background:' + (item.used ? '#64748b' : '#f1f5f9') + '; color:' + (item.used ? '#fff' : '#334155') + '; border:1px solid #cbd5e1; padding:5px 10px; border-radius:7px; font-size:0.7rem; font-weight:800; cursor:pointer;">' + (item.used ? '✓ Used' : 'Mark Used') + '</button>' +
+        '<button type="button" onclick="deleteWastageItem(\'' + item.id + '\')" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:5px 10px; border-radius:7px; font-size:0.7rem; font-weight:800; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>' +
+        '</div></div>';
+    }).join('');
+  };
+
+  window.toggleWastageItemUsed = function (itemId) {
+    var stock = typeof getWastageQrStock === 'function' ? getWastageQrStock() : [];
+    stock.forEach(function (x) { if (x.id === itemId) x.used = !x.used; });
+    if (typeof saveWastageQrStock === 'function') saveWastageQrStock(stock);
+    window.renderWastageQrStockList();
+  };
+
+  window.deleteWastageItem = function (itemId) {
+    var stock = typeof getWastageQrStock === 'function' ? getWastageQrStock() : [];
+    stock = stock.filter(function (x) { return x.id !== itemId; });
+    if (typeof saveWastageQrStock === 'function') saveWastageQrStock(stock);
+    window.renderWastageQrStockList();
+  };
+
+  // Hook into language changes & screen open cleanly via IIFE wrapper
+  var _origApplyLang = window.applyLanguageTranslations;
+  if (typeof _origApplyLang === 'function') {
+    window.applyLanguageTranslations = function (lang) {
+      var res = _origApplyLang.apply(this, arguments);
+      try { window.applyWastageV137I18n(); } catch (e) {}
+      return res;
+    };
+  }
+
+  var _origOpenScreen = window.openScreen;
+  if (typeof _origOpenScreen === 'function') {
+    window.openScreen = function (screenName, title) {
+      var res = _origOpenScreen.apply(this, arguments);
+      if (screenName === 'wastage_qr') {
+        try {
+          window.toggleWastageGlassFields();
+          window.applyWastageV137I18n();
+          window.renderWastageQrStockList();
+        } catch (e) {}
+      }
+      return res;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      window.toggleWastageGlassFields();
+      window.applyWastageV137I18n();
+    } catch (e) {}
+  });
 })();

@@ -18,8 +18,20 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Smart Worker Pro",
-    "alternateName": ["Smart Worker Aluminium", "Smart Worker Pro Aluminium"],
-    "url": "https://smartworkeraluminium-sys.github.io/"
+    "alternateName": ["Smart Worker Aluminium", "Smart Worker Pro Aluminium", "smartworker pro Aluminum"],
+    "url": "https://smartworkeraluminium-sys.github.io/smartworker-pro/"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Smart Worker Pro",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Android, Web",
+    "url": "https://smartworkeraluminium-sys.github.io/smartworker-pro/",
+    "image": "https://smartworkeraluminium-sys.github.io/smartworker-pro/icon-192.png",
+    "description": "Aluminium, uPVC and Glass fabrication measurement, cutting list, bar & sheet optimizer, and PDF quotation app."
   }
   </script>
   
@@ -40,11 +52,11 @@
       if (window.caches) {
         caches.keys().then(function(keys) {
           keys.forEach(function(k) {
-            if (k !== 'smart-worker-pro-v127') caches.delete(k);
+            if (k !== 'smart-worker-pro-v137') caches.delete(k);
           });
         });
       }
-      navigator.serviceWorker.register('./sw.js?v=133').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=136').then(function(reg) {
         if (reg && reg.update) reg.update();
       }).catch(function(){});
     }
@@ -56,11 +68,11 @@
   <meta name="theme-color" content="#0b132b">
   
   <!-- App Icons for Home Screen & Favicon -->
-  <link rel="icon" type="image/png" href="logo.png?v=34">
-  <link rel="shortcut icon" type="image/png" href="logo.png?v=34">
-  <link rel="apple-touch-icon" href="logo.png?v=34">
-  <link rel="apple-touch-icon" sizes="192x192" href="logo.png?v=34">
-  <link rel="apple-touch-icon" sizes="512x512" href="logo.png?v=34">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://smartworkeraluminium-sys.github.io/smartworker-pro/icon-192.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="icon-192.png">
+  <link rel="shortcut icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-192.png">
   
   <!-- Icons & Typography (Non-Blocking Fast Load) -->
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -1024,15 +1036,15 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
 
  <!-- 4. Wastage QR Stock & Scanner -->
- <div class="pro-card" onclick="openScreen('wastage_qr', 'WASTAGE QR STOCK')">
+ <div class="pro-card" onclick="openScreen('wastage_qr', 'GLASS &amp; OFFCUT CODE')">
  <div class="pro-card-header">
- <div class="pro-card-icon" style="background:#fef3c7; color:#d97706;">
- <i class="fa-solid fa-qrcode"></i>
+ <div class="pro-card-icon" style="background:#e0f2fe; color:#0284c7;">
+ <i class="fa-solid fa-hashtag"></i>
  </div>
  <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
  </div>
- <div class="pro-card-title">Wastage QR Stock</div>
- <div class="pro-card-sub">Offcut QR Sticker & Scan</div>
+ <div class="pro-card-title" data-wq-i18n="card_title">Glass &amp; Offcut Code</div>
+ <div class="pro-card-sub" data-wq-i18n="card_sub">Fabricator Cut Code &amp; PDF</div>
  </div>
 
  <!-- 5. Work Order & Delivery Tracker -->
@@ -1065,7 +1077,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
 
    <div class="menu-section-title" style="margin-top:14px; color:#0f766e;"><span data-i18n="sec_upvc_systems">uPVC WINDOW &amp; DOOR CUTTING</span></div>
    <div class="pro-card-grid">
-     <div class="pro-card" style="border:1.5px solid #0d9488;" onclick="openScreen('upvc_casement', 'uPVC CASEMENT & FRENCH')">
+     <div class="pro-card" style="border:1.5px solid #0d9488;" onclick="openUpvcCasementMode('casement')">
        <div class="pro-card-header">
          <div class="pro-card-icon" style="background:#f0fdfa; color:#0f766e;"><i class="fa-solid fa-window-maximize"></i></div>
          <i class="fa-solid fa-arrow-right pro-card-arrow"></i>
@@ -1302,6 +1314,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -1484,6 +1502,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -1689,6 +1713,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -2016,6 +2046,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -2096,7 +2132,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
 <div id="screen-upvc_casement" class="screen">
   <div class="form-box">
     <div style="background:linear-gradient(135deg,#065f46,#0d9488); color:#fff; padding:10px 12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-weight:800; font-size:0.86rem;"><i class="fa-solid fa-window-maximize"></i> <span data-i18n="mod_upvc_casement">uPVC Casement &amp; French</span></span>
+      <span style="font-weight:800; font-size:0.86rem;"><i class="fa-solid fa-window-maximize"></i> <span id="uc_banner_title" data-i18n="mod_upvc_casement">uPVC Casement &amp; French</span></span>
       <span data-i18n="upvc_badge_weld_gi" style="font-size:0.7rem; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:99px; font-weight:700;">Welding + GI Steel</span>
     </div>
     <div class="form-grid">
@@ -2206,6 +2242,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
             <option value="Tinted Grey">Tinted Grey</option>
             <option value="One-Way Reflective">One-Way</option>
             <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
             <option value="Pinhead">Pinhead</option>
             <option value="ACP / uPVC Panel">ACP / Panel</option>
           </select>
@@ -2228,7 +2270,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
         <div><label data-i18n="lbl_bead_h" style="font-size:0.65rem; font-weight:700; color:#115e59;">Bead Height:</label><input type="number" step="0.5" id="uc_bead_h" value="18" oninput="syncUpvcBeadGlass('uc')" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #5eead4; border-radius:6px;"></div>
         <div><label data-i18n="lbl_g_clear" style="font-size:0.65rem; font-weight:700; color:#115e59;">Clearance(-):</label><input type="number" step="0.5" id="uc_g_clear" value="7" oninput="syncUpvcBeadGlass('uc')" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #5eead4; border-radius:6px;"></div>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; margin-bottom:8px;">
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; margin-bottom:8px; align-items:end;">
         <div><label data-i18n="lbl_weld_add" style="font-size:0.64rem; font-weight:700; color:#0f766e;">Weld (+):</label><input type="number" step="1" id="uc_weld" value="6" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #5eead4; border-radius:6px;"></div>
         <div><label data-i18n="lbl_z_glass" style="font-size:0.64rem; font-weight:700; color:#0f766e;">Z-Glass (-):</label><input type="number" step="1" id="uc_z_glass" value="127" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #5eead4; border-radius:6px;"></div>
         <div><label data-i18n="lbl_fix_glass" style="font-size:0.64rem; font-weight:700; color:#0f766e;">Fix Glass(-):</label><input type="number" step="0.5" id="uc_fix_glass" value="7" style="width:100%; padding:5px; font-size:0.78rem; font-weight:700; border:1px solid #5eead4; border-radius:6px;"></div>
@@ -2404,6 +2446,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
             <option value="Tinted Grey">Tinted Grey</option>
             <option value="One-Way Reflective">One-Way</option>
             <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
             <option value="Pinhead">Pinhead</option>
             <option value="ACP / uPVC Panel">ACP / Panel</option>
           </select>
@@ -2555,6 +2603,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
             <option value="Tinted Grey">Tinted Grey</option>
             <option value="One-Way Reflective">One-Way</option>
             <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
             <option value="Pinhead">Pinhead</option>
             <option value="ACP / uPVC Panel">ACP / Panel</option>
           </select>
@@ -2716,6 +2770,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -3278,6 +3338,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -4134,6 +4200,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  <option value="One Way Green">One Way Green</option>
  <option value="One Way Gold">One Way Gold</option>
  <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
  <option value="Pinhead / Bajri">Pinhead / Bajri</option>
  <option value="Solar Control">Solar Control</option>
  <option value="Toughened Clear">Toughened Clear</option>
@@ -4341,7 +4413,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
      <!-- FABRICATOR ↔ GLASS SHOP 4-DIGIT CODE BRIDGE (NO QR NEEDED) -->
      <div id="gc_qr_bridge_box" style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:1.5px solid #0284c7; border-radius:11px; padding:9px 10px; margin-bottom:12px;">
        <div style="font-size:0.74rem; font-weight:800; color:#0369a1; margin-bottom:6px;">
-         <i class="fa-solid fa-hashtag" style="color:#059669;"></i> 4-DIGIT ORDER CODE &amp; WHATSAPP SHARE (NO QR)
+         <i class="fa-solid fa-hashtag" style="color:#059669;"></i> 4-DIGIT ORDER CODE &amp; WHATSAPP SHARE
        </div>
        <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
          <button type="button" class="action-btn" style="background:#4f46e5; color:#fff; padding:9px 6px; font-size:0.74rem; font-weight:800; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0;" onclick="promptImportGlassOrderCode()">
@@ -4413,6 +4485,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
            <option value="One Way Green">One Way Green</option>
            <option value="One Way Gold">One Way Gold</option>
            <option value="Frosted">Frosted</option>
+ <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+ <option value="Fluted / Reeded">Fluted / Reeded</option>
+ <option value="Digital / UV Printed">Digital / UV Printed</option>
+ <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+ <option value="Acid Etched">Acid Etched</option>
+ <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
            <option value="Pinhead / Bajri">Pinhead / Bajri</option>
            <option value="Solar Control">Solar Control</option>
            <option value="Toughened Clear">Toughened Clear</option>
@@ -4484,7 +4562,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
    <!-- ================================================================== -->
    <div style="margin-top:12px; background:#f0f9ff; border:2px solid #0284c7; border-radius:12px; padding:11px;">
      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
-       <span style="font-size:0.8rem; font-weight:900; color:#0369a1;"><i class="fa-solid fa-warehouse"></i> GLASS STOCK MANAGEMENT (NO QR)</span>
+       <span style="font-size:0.8rem; font-weight:900; color:#0369a1;"><i class="fa-solid fa-warehouse"></i> GLASS STOCK MANAGEMENT</span>
        <button type="button" onclick="exportGlassStockBillPdf()" style="background:#0369a1; color:#fff; border:none; border-radius:6px; padding:4px 9px; font-size:0.68rem; font-weight:800; cursor:pointer;">
          <i class="fa-solid fa-file-invoice"></i> Stock Bill PDF
        </button>
@@ -4641,7 +4719,7 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
          </button>
        </div>
        <div style="font-size:0.62rem; color:#475569; margin-top:4px;">
-         * Pieces under <b>12" (1 Ft)</b> = <b>SCRAP</b> (Not Saved). Bold Number Tags (<b>#101, #102</b>) — No QR needed! Next project auto-uses Stock first.
+         * Pieces under <b>12" (1 Ft)</b> = <b>SCRAP</b> (Not Saved). Bold Number Tags (<b>#101, #102</b>) for instant stock reuse in your next project.
        </div>
      </div>
    </div>
@@ -4730,101 +4808,191 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
 
  <!-- ================= 14B. WASTAGE / OFFCUT QR STOCK & SCANNER SCREEN ================= -->
  <div id="screen-wastage_qr" class="screen">
-   <div class="form-box" style="border-top: 4px solid #d97706;">
-     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+   <div class="form-box" style="border-top: 4px solid #0284c7; border-radius: 16px;">
+     <!-- Header -->
+     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
        <div>
-         <div style="font-size:1.02rem; font-weight:800; color:#0f172a;"><i class="fa-solid fa-qrcode" style="color:#d97706;"></i> WASTAGE & THERMAL QR PRINTER</div>
-         <div style="font-size:0.73rem; color:#64748b;">1-Click Thermal Sticker Print (58mm/80mm Bluetooth & USB)</div>
+         <div style="font-size:0.96rem; font-weight:800; color:#0f172a;">
+           <i class="fa-solid fa-hashtag" style="color:#0284c7;"></i>
+           <span data-wq-i18n="hdr_title">GLASS CUTTING CODE &amp; OFFCUT STOCK</span>
+         </div>
+         <div style="font-size:0.71rem; color:#64748b; margin-top:2px;" data-wq-i18n="hdr_sub">
+           Offline Glass Fabricator Code (PDF) &amp; Private Workshop Stock
+         </div>
        </div>
-       <span id="thermalPrinterStatusBadge" style="font-size:0.7rem; font-weight:800; background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:8px; border:1px solid #cbd5e1;">
-         <i class="fa-brands fa-bluetooth-b"></i> Thermal Ready (58mm)
-       </span>
+       <div style="display:flex; gap:5px; flex-wrap:wrap;">
+         <span id="wq_owner_lock_badge" style="font-size:0.66rem; font-weight:800; background:#0f172a; color:#fbbf24; padding:4px 8px; border-radius:99px;">
+           <i class="fa-solid fa-lock"></i> ID-Locked
+         </span>
+         <span style="font-size:0.66rem; font-weight:800; background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:99px; border:1px solid #7dd3fc;">
+           <i class="fa-solid fa-shield-halved"></i> <span data-wq-i18n="badge_glass_only">Glass Only Code</span>
+         </span>
+       </div>
      </div>
 
-     <!-- Bluetooth Thermal Printer Quick Bar -->
-     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:7px; margin-bottom:10px;">
-       <button type="button" class="action-btn" style="background:#0f172a; padding:9px 6px; font-size:0.75rem; font-weight:800; border-radius:8px;" onclick="connectBluetoothThermalPrinter()">
-         <i class="fa-brands fa-bluetooth"></i> CONNECT BT PRINTER
-       </button>
-       <button type="button" class="action-btn" style="background:#16a34a; padding:9px 6px; font-size:0.75rem; font-weight:800; border-radius:8px;" onclick="oneClickThermalPrintStock()">
-         <i class="fa-solid fa-print"></i> 1-CLICK THERMAL PRINT
-       </button>
-     </div>
-
-     <!-- 1. Camera QR Scanner & Instant Search / Cut-Size Checker Box -->
-     <div style="background:#fffbeb; border:1.5px solid #fcd34d; border-radius:10px; padding:10px; margin-bottom:12px;">
-       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
-         <button type="button" class="action-btn" style="background:#0284c7; padding:10px 6px; font-size:0.8rem; font-weight:800;" onclick="startWastageQrCameraScanner()">
-           <i class="fa-solid fa-camera"></i> SCAN QR WITH CAMERA
+     <!-- 1. GLASS FABRICATOR CODE READER (GLASS CUTTING ONLY) -->
+     <div style="background:#f0f9ff; border:1.5px solid #0284c7; border-radius:12px; padding:11px; margin-bottom:12px;">
+       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px; flex-wrap:wrap;">
+         <div style="font-size:0.76rem; font-weight:800; color:#0369a1;">
+           <i class="fa-solid fa-scissors"></i> <span data-wq-i18n="reader_title">GLASS FABRICATOR CODE READER</span>
+         </div>
+         <span style="font-size:0.64rem; font-weight:800; background:#0369a1; color:#fff; padding:2px 7px; border-radius:99px;" data-wq-i18n="reader_badge">GLASS CUTTING ONLY</span>
+       </div>
+       <div style="font-size:0.69rem; color:#475569; margin-bottom:8px;" data-wq-i18n="reader_desc">
+         Enter the GLC code from the Glass PDF to view exact glass sheet, print/sticker finish &amp; cut size offline. Basic/non-glass codes are strictly blocked.
+       </div>
+       <div style="display:grid; grid-template-columns: 1fr 92px; gap:6px; margin-bottom:8px;">
+         <input type="text" id="wq_fab_code_input" placeholder="GLC-..." style="width:100%; box-sizing:border-box; padding:9px 10px; border:1.5px solid #7dd3fc; border-radius:9px; font-size:0.8rem; font-weight:800; background:#fff; text-transform:uppercase;">
+         <input type="password" inputmode="numeric" maxlength="4" id="wq_fab_pin_input" placeholder="PIN (Opt)" style="width:100%; box-sizing:border-box; padding:9px 8px; border:1.5px solid #cbd5e1; border-radius:9px; font-size:0.8rem; font-weight:800; background:#fff; text-align:center;">
+       </div>
+       <div style="display:grid; grid-template-columns: 1fr auto; gap:6px;">
+         <button type="button" class="action-btn" style="background:#0284c7; padding:10px; font-size:0.78rem; font-weight:800; border-radius:9px;" onclick="decodeGlassFabricatorCode()">
+           <i class="fa-solid fa-magnifying-glass"></i> <span data-wq-i18n="btn_verify_cut">VERIFY &amp; SHOW GLASS CUT</span>
          </button>
-         <div style="display:flex; gap:4px;">
-           <input type="text" id="wq_search_id" placeholder="Search ID (e.g. W-101)..." oninput="renderWastageQrStockList()" style="width:100%; padding:8px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.82rem; font-weight:700; background:#fff;">
-         </div>
-       </div>
-
-       <!-- Live Camera Video Box (Hidden until Scan QR is tapped) -->
-       <div id="wq_camera_box" style="display:none; background:#0f172a; border-radius:10px; padding:10px; margin-bottom:10px; text-align:center; color:#fff;">
-         <div style="font-size:0.78rem; font-weight:700; color:#38bdf8; margin-bottom:6px;">Point Camera at Offcut QR Sticker</div>
-         <video id="wq_video" playsinline style="width:100%; max-width:320px; border-radius:8px; border:2px solid #38bdf8;"></video>
-         <div style="margin-top:8px;">
-           <button type="button" onclick="stopWastageQrCameraScanner()" style="background:#ef4444; color:#fff; border:none; padding:6px 16px; border-radius:6px; font-size:0.78rem; font-weight:800; cursor:pointer;">Close Camera</button>
-         </div>
-       </div>
-
-       <!-- Check What Size Can Be Cut From Stock ("এখান থেকে কোন কি মাপ বেরোচ্ছে") -->
-       <div style="background:#ffffff; border:1px solid #fde68a; border-radius:8px; padding:8px;">
-         <div style="font-size:0.75rem; font-weight:800; color:#92400e; margin-bottom:6px;">
-           <i class="fa-solid fa-scissors"></i> CHECK IF REQUIRED CUT SIZE FITS IN LEFTOVER STOCK:
-         </div>
-         <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:6px; align-items:center;">
-           <input type="number" id="wq_check_h" placeholder="Need Height (In)" oninput="renderWastageQrStockList()" style="padding:7px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem; font-weight:700;">
-           <input type="number" id="wq_check_w" placeholder="Need Width (In)" oninput="renderWastageQrStockList()" style="padding:7px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem; font-weight:700;">
-           <button type="button" onclick="document.getElementById('wq_check_h').value=''; document.getElementById('wq_check_w').value=''; renderWastageQrStockList();" style="background:#e2e8f0; color:#334155; border:none; padding:7px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; cursor:pointer;">Reset</button>
-         </div>
+         <button type="button" onclick="clearGlassFabricatorReader()" style="background:#e2e8f0; color:#334155; border:none; padding:10px 12px; border-radius:9px; font-size:0.74rem; font-weight:800; cursor:pointer;" data-wq-i18n="btn_clear">Clear</button>
        </div>
      </div>
 
-     <!-- Scanned / Selected QR Item Highlight Card -->
-     <div id="wq_scanned_result_card" style="display:none; background:#f0fdf4; border:2px solid #16a34a; border-radius:10px; padding:12px; margin-bottom:12px;"></div>
+     <!-- Decoded Glass Cut / Security Alert Result Card -->
+     <div id="wq_scanned_result_card" style="display:none; background:#f0fdf4; border:2px solid #16a34a; border-radius:12px; padding:12px; margin-bottom:12px;"></div>
 
-     <!-- 2. Add New Leftover / Wastage Material Manually -->
-     <div style="font-size:0.8rem; font-weight:800; color:#0f766e; margin-bottom:6px;">+ ADD LEFTOVER PIECE TO QR STOCK:</div>
-     <div class="form-grid" style="margin-bottom:10px;">
-       <div class="form-group">
-         <label>Material Type:</label>
-         <select id="wq_mat_type">
-           <option value="ACP Board" selected>ACP Board</option>
-           <option value="Glass Piece">Glass Piece</option>
-           <option value="Aluminium Pipe">Aluminium Pipe / Section</option>
-         </select>
+     <!-- 2. ADD NEW GLASS / LEFTOVER PIECE & GENERATE CODE -->
+     <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:12px; padding:11px; margin-bottom:12px;">
+       <div style="font-size:0.78rem; font-weight:800; color:#0f766e; margin-bottom:8px;">
+         <i class="fa-solid fa-plus-circle"></i> <span data-wq-i18n="add_title">CREATE GLASS CUT CODE / SAVE OFFCUT STOCK</span>
        </div>
-       <div class="form-group">
-         <label>Color / Spec:</label>
-         <input type="text" id="wq_spec" placeholder="e.g. Silver, 5mm Clear, Black">
-       </div>
-       <div class="form-group">
-         <label>Height / Length (In):</label>
-         <div class="input-wrapper">
-           <input readonly inputmode="none" onclick="openKeypad('wq_h')" style="cursor:pointer; background:#fff;" type="text" id="wq_h" placeholder="Height (In)">
-           <button type="button" class="keypad-trigger" onclick="openKeypad('wq_h')"><i class="fa-solid fa-calculator"></i></button>
+
+       <div class="form-grid" style="margin-bottom:8px;">
+         <div class="form-group">
+           <label data-wq-i18n="lbl_mat">Material Type:</label>
+           <select id="wq_mat_type" onchange="toggleWastageGlassFields()">
+             <option value="Glass Piece" selected>Glass Piece (Fabricator Code)</option>
+             <option value="ACP Board">ACP Board (Private Only)</option>
+             <option value="Aluminium Pipe">Aluminium Pipe (Private Only)</option>
+             <option value="uPVC Profile">uPVC Profile (Private Only)</option>
+           </select>
+         </div>
+         <div class="form-group" id="wq_glass_thick_wrap">
+           <label data-wq-i18n="lbl_thick">Glass Thickness:</label>
+           <select id="wq_glass_thick">
+             <option value="3.5mm">3.5 mm</option>
+             <option value="4mm">4 mm</option>
+             <option value="5mm" selected>5 mm</option>
+             <option value="6mm">6 mm</option>
+             <option value="8mm">8 mm</option>
+             <option value="10mm">10 mm</option>
+             <option value="12mm">12 mm</option>
+             <option value="18mm DGU">18 mm DGU</option>
+             <option value="24mm DGU">24 mm DGU</option>
+           </select>
          </div>
        </div>
-       <div class="form-group">
-         <label>Width (In):</label>
-         <div class="input-wrapper">
-           <input readonly inputmode="none" onclick="openKeypad('wq_w')" style="cursor:pointer; background:#fff;" type="text" id="wq_w" placeholder="Width (In)">
-           <button type="button" class="keypad-trigger" onclick="openKeypad('wq_w')"><i class="fa-solid fa-calculator"></i></button>
+
+       <!-- Glass-Only Modern Options -->
+       <div id="wq_glass_extra_box" style="margin-bottom:8px;">
+         <div class="form-grid" style="margin-bottom:8px;">
+           <div class="form-group">
+             <label data-wq-i18n="lbl_gtype">Glass Type / Design:</label>
+             <select id="wq_glass_type" onchange="toggleWastageCustomGlass()">
+               <option value="Clear">Clear</option>
+               <option value="Extra Clear">Extra Clear</option>
+               <option value="Blue Box / Decorative">Blue Box / Decorative</option>
+               <option value="Fluted / Reeded">Fluted / Reeded</option>
+               <option value="Digital / UV Printed">Digital / UV Printed</option>
+               <option value="Clear + Sticker / Film">Clear + Sticker / Film</option>
+               <option value="Acid Etched">Acid Etched / Sandblasted</option>
+               <option value="Back-Painted / Lacquered">Back-Painted / Lacquered</option>
+               <option value="Tinted Blue">Tinted Blue</option>
+               <option value="Tinted Black">Tinted Black</option>
+               <option value="Tinted Brown">Tinted Brown</option>
+               <option value="Tinted Grey">Tinted Grey</option>
+               <option value="Tinted Green">Tinted Green</option>
+               <option value="One Way Blue">One Way Blue</option>
+               <option value="One Way Silver">One Way Silver</option>
+               <option value="One Way Brown">One Way Brown</option>
+               <option value="One Way Gold">One Way Gold</option>
+               <option value="Frosted">Frosted</option>
+               <option value="Pinhead / Bajri">Pinhead / Bajri</option>
+               <option value="Toughened Clear">Toughened Clear</option>
+               <option value="Toughened Tinted">Toughened Tinted</option>
+               <option value="Laminated">Laminated</option>
+               <option value="Custom">Custom (Write Name)</option>
+             </select>
+           </div>
+           <div class="form-group">
+             <label data-wq-i18n="lbl_finish">Print / Sticker / Finish Note:</label>
+             <input type="text" id="wq_glass_finish" placeholder="e.g. 3D Sticker, UV Print #12...">
+           </div>
          </div>
+         <div class="form-group" id="wq_custom_glass_wrap" style="display:none; margin-bottom:8px;">
+           <label data-wq-i18n="lbl_custom_glass">Custom Glass Name:</label>
+           <input type="text" id="wq_custom_glass_name" placeholder="Write new glass name...">
+         </div>
+       </div>
+
+       <!-- Non-glass spec input -->
+       <div class="form-group" id="wq_non_glass_spec_wrap" style="display:none; margin-bottom:8px;">
+         <label data-wq-i18n="lbl_spec">Color / Spec:</label>
+         <input type="text" id="wq_spec" placeholder="e.g. Silver, Champagne, 2-Track...">
+       </div>
+
+       <!-- Sheet / Stock Size -->
+       <div class="form-grid" style="margin-bottom:8px;">
+         <div class="form-group">
+           <label data-wq-i18n="lbl_sheet_h">Sheet / Stock Height (In):</label>
+           <div class="input-wrapper">
+             <input readonly inputmode="none" onclick="openKeypad('wq_h')" style="cursor:pointer; background:#fff;" type="text" id="wq_h" placeholder="Height (In)">
+             <button type="button" class="keypad-trigger" onclick="openKeypad('wq_h')"><i class="fa-solid fa-calculator"></i></button>
+           </div>
+         </div>
+         <div class="form-group">
+           <label data-wq-i18n="lbl_sheet_w">Sheet / Stock Width (In):</label>
+           <div class="input-wrapper">
+             <input readonly inputmode="none" onclick="openKeypad('wq_w')" style="cursor:pointer; background:#fff;" type="text" id="wq_w" placeholder="Width (In)">
+             <button type="button" class="keypad-trigger" onclick="openKeypad('wq_w')"><i class="fa-solid fa-calculator"></i></button>
+           </div>
+         </div>
+       </div>
+
+       <!-- Glass Required Cut Size & Optional 4-Digit Fabricator PIN -->
+       <div id="wq_glass_cut_box" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:9px; margin-bottom:10px;">
+         <div style="font-size:0.71rem; font-weight:800; color:#0369a1; margin-bottom:6px;" data-wq-i18n="cut_opt_title">
+           Required Cut Size from Sheet (Optional) &amp; Fabricator PIN:
+         </div>
+         <div style="display:grid; grid-template-columns: 1fr 1fr 96px; gap:6px;">
+           <input type="number" step="0.125" id="wq_req_cut_h" placeholder="Cut H (In)" style="width:100%; box-sizing:border-box; padding:7px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.76rem; font-weight:700;">
+           <input type="number" step="0.125" id="wq_req_cut_w" placeholder="Cut W (In)" style="width:100%; box-sizing:border-box; padding:7px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.76rem; font-weight:700;">
+           <input type="text" inputmode="numeric" maxlength="4" id="wq_set_pin" placeholder="4-Digit PIN" style="width:100%; box-sizing:border-box; padding:7px 6px; border:1px solid #0284c7; border-radius:8px; font-size:0.76rem; font-weight:800; text-align:center;">
+         </div>
+         <div style="font-size:0.65rem; color:#64748b; margin-top:4px;" data-wq-i18n="cut_opt_hint">
+           Leave Cut H/W blank to cut full size. Set a 4-digit PIN if only your assigned Glass Fabricator should unlock the PDF code.
+         </div>
+       </div>
+
+       <button type="button" class="action-btn" style="background:#0f766e; width:100%; padding:11px; font-size:0.82rem; font-weight:800; border-radius:10px;" onclick="addManualWastagePiece()">
+         <i class="fa-solid fa-hashtag"></i> <span data-wq-i18n="btn_save_code">GENERATE CODE &amp; SAVE TO STOCK</span>
+       </button>
+     </div>
+
+     <!-- 3. Search & Cut-Size Filter on Private Workshop Stock -->
+     <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:9px; margin-bottom:10px;">
+       <div style="display:grid; grid-template-columns: 1fr; gap:6px; margin-bottom:7px;">
+         <input type="text" id="wq_search_id" placeholder="Search stock code (W-101 / GLC-...) or glass type..." oninput="renderWastageQrStockList()" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.78rem; font-weight:700; background:#fff;">
+       </div>
+       <div style="font-size:0.71rem; font-weight:800; color:#334155; margin-bottom:5px;">
+         <i class="fa-solid fa-filter" style="color:#0284c7;"></i> <span data-wq-i18n="filter_title">Check Required Cut Size in Your Stock (Inches):</span>
+       </div>
+       <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:6px; align-items:center;">
+         <input type="number" id="wq_check_h" placeholder="Need H (In)" oninput="renderWastageQrStockList()" style="width:100%; box-sizing:border-box; padding:7px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.78rem; font-weight:700;">
+         <input type="number" id="wq_check_w" placeholder="Need W (In)" oninput="renderWastageQrStockList()" style="width:100%; box-sizing:border-box; padding:7px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.78rem; font-weight:700;">
+         <button type="button" onclick="document.getElementById('wq_check_h').value=''; document.getElementById('wq_check_w').value=''; renderWastageQrStockList();" style="background:#e2e8f0; color:#334155; border:none; padding:7px 10px; border-radius:8px; font-size:0.74rem; font-weight:800; cursor:pointer;" data-wq-i18n="btn_reset">Reset</button>
        </div>
      </div>
-     <button type="button" class="action-btn" style="background:#0f766e; width:100%; padding:10px; font-size:0.85rem; font-weight:800; margin-bottom:12px;" onclick="addManualWastagePiece()">
-       <i class="fa-solid fa-plus-circle"></i> + GENERATE QR CODE & SAVE TO STOCK
-     </button>
 
-     <!-- 3. Saved Wastage QR Stock List -->
+     <!-- 4. Saved Private Stock List -->
      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-       <span style="font-size:0.78rem; font-weight:800; color:#334155;">SAVED OFFCUT QR STOCK LIST:</span>
-       <button type="button" onclick="clearUsedWastageStock()" style="background:none; border:none; color:#dc2626; font-size:0.72rem; font-weight:800; cursor:pointer;">Clear Used Items</button>
+       <span style="font-size:0.78rem; font-weight:800; color:#334155;" data-wq-i18n="list_title">SAVED STOCK &amp; GLASS CUTTING CODES:</span>
+       <button type="button" onclick="clearUsedWastageStock()" style="background:none; border:none; color:#dc2626; font-size:0.72rem; font-weight:800; cursor:pointer;" data-wq-i18n="btn_clear_used">Clear Used Items</button>
      </div>
      <div id="wq_stock_list_container" style="display:flex; flex-direction:column; gap:10px;"></div>
    </div>
@@ -5577,12 +5745,12 @@ html, body { max-width: 100vw !important; overflow-x: hidden !important; }
  </div>
  </div>
   <!-- Main Web App Script (All 3 parts connected) -->
-  <script src="app.js?v=133"></script>
+  <script src="app.js?v=136"></script>
 <!-- Instant PWA & Offline Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=133').then(function(reg) {
+      navigator.serviceWorker.register('./sw.js?v=136').then(function(reg) {
         console.log('Smart Worker Pro SW Active:', reg.scope);
       }).catch(function(err) {
         console.log('SW registration optional fallback:', err);
